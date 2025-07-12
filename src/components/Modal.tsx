@@ -21,13 +21,13 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-overlay z-[1000]" onClick={onClose}>
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ duration: 0.2 }}
-            className={`modal-content ${sizeClasses[size]}`}
+            className={`modal-content z-[1010] mt-24 ${sizeClasses[size]}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">

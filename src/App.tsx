@@ -9,7 +9,13 @@ import Fornecedores from './pages/Fornecedores'
 import NaoConformidades from './pages/NaoConformidades'
 import Documentos from './pages/Documentos'
 import Relatorios from './pages/Relatorios'
+import Obras from './pages/Obras'
 import Landing from './pages/Landing'
+import DocumentoForm from './components/forms/DocumentoForm'
+import EnsaioForm from './components/forms/EnsaioForm'
+import ChecklistForm from './components/forms/ChecklistForm'
+import NaoConformidadeForm from './components/forms/NaoConformidadeForm'
+import ObraForm from './components/forms/ObraForm'
 import './styles/globals.css'
 
 function App() {
@@ -49,6 +55,13 @@ function App() {
         <Route path="/nao-conformidades" element={<Layout><NaoConformidades /></Layout>} />
         <Route path="/documentos" element={<Layout><Documentos /></Layout>} />
         <Route path="/relatorios" element={<Layout><Relatorios /></Layout>} />
+        <Route path="/obras" element={<Layout><Obras /></Layout>} />
+        {/* Rotas para ações rápidas */}
+        <Route path="/documentos/novo" element={<Layout><DocumentoForm isEditing={false} onSubmit={() => {}} onCancel={() => {}} /></Layout>} />
+        <Route path="/ensaios/novo" element={<Layout><EnsaioForm isEditing={false} onSubmit={() => {}} onCancel={() => {}} /></Layout>} />
+        <Route path="/checklists/novo" element={<Layout><ChecklistForm onSubmit={() => {}} onCancel={() => {}} /></Layout>} />
+        <Route path="/nao-conformidades/nova" element={<Layout><NaoConformidadeForm isEditing={false} onSubmit={() => {}} onCancel={() => {}} /></Layout>} />
+        <Route path="/obras/nova" element={<Layout><ObraForm onSubmit={() => {}} onCancel={() => {}} /></Layout>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>

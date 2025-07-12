@@ -1,631 +1,529 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { motion } from 'framer-motion'
-import { 
-  ClipboardCheck, 
-  AlertCircle, 
-  Calendar, 
-  User, 
-  MapPin, 
-  Upload, 
-  X, 
-  FileText,
-  Plus,
-  Trash2,
-  CheckCircle,
-  XCircle,
-  Eye,
-  EyeOff
-} from 'lucide-react'
-import toast from 'react-hot-toast'
-
-const checklistItemSchema = z.object({
-  id: z.string(),
-  descricao: z.string().min(1, 'Descrição é obrigatória'),
-  criterio: z.string().min(1, 'Critério é obrigatório'),
-  conforme: z.boolean(),
-  observacoes: z.string().optional()
-})
-
-const checklistSchema = z.object({
-  codigo: z.string().min(1, 'Código é obrigatório'),
-  tipo: z.enum(['inspecao', 'verificacao', 'aceitacao', 'outro']),
-  itens: z.array(checklistItemSchema).min(1, 'Pelo menos um item é obrigatório'),
-  percentual_conformidade: z.number().min(0).max(100),
-  data_inspecao: z.string().min(1, 'Data de inspeção é obrigatória'),
-  inspetor: z.string().min(1, 'Inspetor é obrigatório'),
-  responsavel: z.string().min(1, 'Responsável é obrigatório'),
-  zona: z.string().min(1, 'Zona é obrigatória'),
-  estado: z.enum(['pendente', 'em_analise', 'aprovado', 'reprovado', 'concluido']),
-  observacoes: z.string().optional()
-})
-
-type ChecklistFormData = z.infer<typeof checklistSchema>
-type ChecklistItem = z.infer<typeof checklistItemSchema>
+import { Checklist, PontoInspecao, EventoPonto } from '../../types'
+import { Plus, X, Upload, File, Download, Trash2 } from 'lucide-react'
 
 interface ChecklistFormProps {
-  onSubmit: (data: ChecklistFormData) => void
+  initialData?: Partial<Checklist>
   onCancel: () => void
-  initialData?: Partial<ChecklistFormData>
-  isEditing?: boolean
+  onSubmit: (data: Checklist) => void
 }
 
-const checklistTypes = [
-  { value: 'inspecao', label: 'Inspeção', icon: Eye, color: 'text-blue-600' },
-  { value: 'verificacao', label: 'Verificação', icon: CheckCircle, color: 'text-green-600' },
-  { value: 'aceitacao', label: 'Aceitação', icon: CheckCircle, color: 'text-purple-600' },
-  { value: 'outro', label: 'Outro', icon: ClipboardCheck, color: 'text-gray-600' }
-]
-
-const statusOptions = [
-  { value: 'pendente', label: 'Pendente', color: 'bg-warning-100 text-warning-700' },
-  { value: 'em_analise', label: 'Em Análise', color: 'bg-info-100 text-info-700' },
-  { value: 'aprovado', label: 'Aprovado', color: 'bg-success-100 text-success-700' },
-  { value: 'reprovado', label: 'Reprovado', color: 'bg-danger-100 text-danger-700' },
-  { value: 'concluido', label: 'Concluído', color: 'bg-gray-100 text-gray-700' }
-]
-
-const zonas = [
-  'Zona A - Fundações',
-  'Zona B - Pilares', 
-  'Zona C - Lajes',
-  'Zona D - Estrutura',
-  'Armazém Central',
-  'Laboratório',
-  'Escritório'
-]
-
-const defaultItems = [
-  { id: '1', descricao: 'Verificação de dimensões', criterio: 'Dimensões conforme projeto', conforme: true, observacoes: '' },
-  { id: '2', descricao: 'Verificação de alinhamento', criterio: 'Alinhamento vertical < 10mm', conforme: true, observacoes: '' },
-  { id: '3', descricao: 'Verificação de limpeza', criterio: 'Superfície limpa e sem detritos', conforme: false, observacoes: 'Necessita limpeza adicional' }
-]
-
-export default function ChecklistForm({ onSubmit, onCancel, initialData, isEditing = false }: ChecklistFormProps) {
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [items, setItems] = useState<ChecklistItem[]>(initialData?.itens || defaultItems)
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isValid },
-    watch,
-    setValue
-  } = useForm<ChecklistFormData>({
-    resolver: zodResolver(checklistSchema),
-    defaultValues: initialData || {
-      estado: 'pendente',
-      tipo: 'inspecao',
-      itens: defaultItems,
-      percentual_conformidade: 67 // Calculado automaticamente
-    }
+export default function ChecklistForm({ initialData, onCancel, onSubmit }: ChecklistFormProps) {
+  const [formData, setFormData] = useState<Partial<Checklist>>({
+    obra: initialData?.obra || '',
+    titulo: initialData?.titulo || '',
+    status: initialData?.status || 'em_andamento',
+    pontos: initialData?.pontos || [],
+    observacoes: initialData?.observacoes || ''
   })
 
-  const watchedTipo = watch('tipo')
-  const watchedEstado = watch('estado')
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || [])
-    setUploadedFiles(prev => [...prev, ...files])
-    toast.success(`${files.length} ficheiro(s) adicionado(s)`)
+  // Pontos de inspeção dinâmicos
+  const addPonto = () => {
+    setFormData(prev => ({
+      ...prev,
+      pontos: [
+        ...(prev.pontos || []),
+        {
+          id: Date.now().toString(),
+          descricao: '',
+          tipo: '',
+          localizacao: '',
+          responsavel: '',
+          status: 'pendente',
+          data_inspecao: '',
+          linha_tempo: []
+        } as PontoInspecao
+      ]
+    }))
   }
 
-  const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index))
+  const removePonto = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      pontos: (prev.pontos || []).filter((_, i) => i !== index)
+    }))
   }
 
-  const addItem = () => {
-    const newItem: ChecklistItem = {
+  const updatePonto = (index: number, field: keyof PontoInspecao, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      pontos: (prev.pontos || []).map((p, i) =>
+        i === index ? { ...p, [field]: value } : p
+      )
+    }))
+  }
+
+  // Adicionar evento à linha do tempo de um ponto
+  const addEventoPonto = (index: number, acao: EventoPonto['acao'], detalhes: string) => {
+    setFormData(prev => ({
+      ...prev,
+      pontos: (prev.pontos || []).map((p, i) =>
+        i === index
+          ? {
+              ...p,
+              linha_tempo: [
+                ...(p.linha_tempo || []),
+                {
+                  id: Date.now().toString(),
+                  data: new Date().toISOString(),
+                  acao,
+                  responsavel: p.responsavel || '',
+                  detalhes
+                } as EventoPonto
+              ]
+            }
+          : p
+      )
+    }))
+  }
+
+  // Adicionar anexo a um ponto de inspeção
+  const addAnexoPonto = (index: number, file: File) => {
+    const anexo = {
       id: Date.now().toString(),
-      descricao: '',
-      criterio: '',
-      conforme: true,
-      observacoes: ''
+      nome: file.name,
+      tipo: file.type,
+      tamanho: file.size,
+      data_upload: new Date().toISOString(),
+      url: URL.createObjectURL(file) // Simulação - em produção seria upload real
     }
-    const updatedItems = [...items, newItem]
-    setItems(updatedItems)
-    setValue('itens', updatedItems)
-    calculateConformity(updatedItems)
+
+    setFormData(prev => ({
+      ...prev,
+      pontos: (prev.pontos || []).map((p, i) =>
+        i === index
+          ? {
+              ...p,
+              anexos: [...(p.anexos || []), anexo]
+            }
+          : p
+      )
+    }))
   }
 
-  const removeItem = (id: string) => {
-    const updatedItems = items.filter(item => item.id !== id)
-    setItems(updatedItems)
-    setValue('itens', updatedItems)
-    calculateConformity(updatedItems)
+  // Remover anexo de um ponto de inspeção
+  const removeAnexoPonto = (pontoIndex: number, anexoId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      pontos: (prev.pontos || []).map((p, i) =>
+        i === pontoIndex
+          ? {
+              ...p,
+              anexos: (p.anexos || []).filter(a => a.id !== anexoId)
+            }
+          : p
+      )
+    }))
   }
 
-  const updateItem = (id: string, field: keyof ChecklistItem, value: any) => {
-    const updatedItems = items.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    )
-    setItems(updatedItems)
-    setValue('itens', updatedItems)
-    calculateConformity(updatedItems)
-  }
-
-  const calculateConformity = (itemsList: ChecklistItem[]) => {
-    if (itemsList.length === 0) {
-      setValue('percentual_conformidade', 0)
-      return
+  // Adicionar comentário a um ponto de inspeção
+  const addComentarioPonto = (index: number, texto: string) => {
+    const comentario = {
+      id: Date.now().toString(),
+      autor: 'Usuário Atual', // Em produção seria o usuário logado
+      data: new Date().toISOString(),
+      texto,
+      ponto_id: (formData.pontos || [])[index].id
     }
+
+    setFormData(prev => ({
+      ...prev,
+      pontos: (prev.pontos || []).map((p, i) =>
+        i === index
+          ? {
+              ...p,
+              comentarios: [...(p.comentarios || []), comentario]
+            }
+          : p
+      )
+    }))
+  }
+
+  // Remover comentário de um ponto de inspeção
+  const removeComentarioPonto = (pontoIndex: number, comentarioId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      pontos: (prev.pontos || []).map((p, i) =>
+        i === pontoIndex
+          ? {
+              ...p,
+              comentarios: (p.comentarios || []).filter(c => c.id !== comentarioId)
+            }
+          : p
+      )
+    }))
+  }
+
+  // Atualizar status de um ponto de inspeção
+  const updateStatusPonto = (index: number, novoStatus: PontoInspecao['status']) => {
+    setFormData(prev => ({
+      ...prev,
+      pontos: (prev.pontos || []).map((p, i) =>
+        i === index
+          ? {
+              ...p,
+              status: novoStatus,
+              data_inspecao: novoStatus !== 'pendente' ? new Date().toISOString() : p.data_inspecao
+            }
+          : p
+      )
+    }))
+
+    // Adicionar evento à linha do tempo
+    const acao = novoStatus === 'aprovado' ? 'aprovado' : 
+                 novoStatus === 'reprovado' ? 'reprovado' : 
+                 novoStatus === 'correcao' ? 'correcao' : 'inspecionado'
     
-    const conformes = itemsList.filter(item => item.conforme).length
-    const percentual = Math.round((conformes / itemsList.length) * 100)
-    setValue('percentual_conformidade', percentual)
+    addEventoPonto(index, acao, `Status alterado para: ${novoStatus}`)
   }
 
-  const onSubmitForm = async (data: ChecklistFormData) => {
-    setIsSubmitting(true)
-    try {
-      // Simular delay de submissão
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Aqui seria feita a chamada para a API
-      console.log('Dados do checklist:', data)
-      console.log('Ficheiros:', uploadedFiles)
-      
-      onSubmit(data)
-      toast.success(isEditing ? 'Checklist atualizado com sucesso!' : 'Checklist criado com sucesso!')
-    } catch (error) {
-      toast.error('Erro ao salvar checklist')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const generateCode = () => {
-    const date = new Date()
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-    const code = `CHK-${year}-${month}${day}-${random}`
-    setValue('codigo', code)
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSubmit({
+      ...formData,
+      pontos: formData.pontos || []
+    } as Checklist)
   }
 
   return (
-    <motion.form
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      onSubmit={handleSubmit(onSubmitForm)}
-      className="space-y-6"
-    >
-      {/* Header do Formulário */}
-      <div className="flex items-center space-x-3 pb-4 border-b border-gray-200">
-        <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600">
-          <ClipboardCheck className="h-5 w-5 text-white" />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            {isEditing ? 'Editar Checklist' : 'Novo Checklist'}
-          </h3>
-          <p className="text-sm text-gray-600">
-            {isEditing ? 'Atualize as informações do checklist' : 'Crie um novo checklist de inspeção'}
-          </p>
-        </div>
-      </div>
-
-      {/* Informações Básicas */}
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Código */}
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Código do Checklist *
-          </label>
-          <div className="flex space-x-2">
-            <input
-              {...register('codigo')}
-              type="text"
-              placeholder="CHK-2024-001"
-              className={`input flex-1 ${errors.codigo ? 'border-danger-500' : ''}`}
-            />
-            <button
-              type="button"
-              onClick={generateCode}
-              className="btn btn-outline btn-md whitespace-nowrap"
-            >
-              Gerar Código
-            </button>
-          </div>
-          {errors.codigo && (
-            <p className="mt-1 text-sm text-danger-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {errors.codigo.message}
-            </p>
-          )}
-        </div>
-
-        {/* Tipo */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tipo de Checklist *
-          </label>
-          <select
-            {...register('tipo')}
-            className={`select ${errors.tipo ? 'border-danger-500' : ''}`}
-          >
-            {checklistTypes.map(type => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
-          </select>
-          {errors.tipo && (
-            <p className="mt-1 text-sm text-danger-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {errors.tipo.message}
-            </p>
-          )}
+          <label className="block text-sm font-medium text-gray-700 mb-2">Obra *</label>
+          <input
+            type="text"
+            value={formData.obra}
+            onChange={e => setFormData(prev => ({ ...prev, obra: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
         </div>
-
-        {/* Data de Inspeção */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Data de Inspeção *
-          </label>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              {...register('data_inspecao')}
-              type="date"
-              className={`input pl-10 ${errors.data_inspecao ? 'border-danger-500' : ''}`}
-            />
-          </div>
-          {errors.data_inspecao && (
-            <p className="mt-1 text-sm text-danger-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {errors.data_inspecao.message}
-            </p>
-          )}
-        </div>
-
-        {/* Inspetor */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Inspetor *
-          </label>
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              {...register('inspetor')}
-              type="text"
-              placeholder="Nome do inspetor"
-              className={`input pl-10 ${errors.inspetor ? 'border-danger-500' : ''}`}
-            />
-          </div>
-          {errors.inspetor && (
-            <p className="mt-1 text-sm text-danger-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {errors.inspetor.message}
-            </p>
-          )}
-        </div>
-
-        {/* Responsável */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Responsável *
-          </label>
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              {...register('responsavel')}
-              type="text"
-              placeholder="Nome do responsável"
-              className={`input pl-10 ${errors.responsavel ? 'border-danger-500' : ''}`}
-            />
-          </div>
-          {errors.responsavel && (
-            <p className="mt-1 text-sm text-danger-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {errors.responsavel.message}
-            </p>
-          )}
-        </div>
-
-        {/* Zona */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Zona *
-          </label>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <select
-              {...register('zona')}
-              className={`select pl-10 ${errors.zona ? 'border-danger-500' : ''}`}
-            >
-              <option value="">Selecione uma zona</option>
-              {zonas.map(zona => (
-                <option key={zona} value={zona}>
-                  {zona}
-                </option>
-              ))}
-            </select>
-          </div>
-          {errors.zona && (
-            <p className="mt-1 text-sm text-danger-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {errors.zona.message}
-            </p>
-          )}
-        </div>
-
-        {/* Estado */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Estado *
-          </label>
-          <select
-            {...register('estado')}
-            className={`select ${errors.estado ? 'border-danger-500' : ''}`}
-          >
-            {statusOptions.map(status => (
-              <option key={status.value} value={status.value}>
-                {status.label}
-              </option>
-            ))}
-          </select>
-          {errors.estado && (
-            <p className="mt-1 text-sm text-danger-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {errors.estado.message}
-            </p>
-          )}
+          <label className="block text-sm font-medium text-gray-700 mb-2">Título *</label>
+          <input
+            type="text"
+            value={formData.titulo}
+            onChange={e => setFormData(prev => ({ ...prev, titulo: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
         </div>
       </div>
 
-      {/* Itens do Checklist */}
-      <div className="bg-gray-50 rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-lg font-semibold text-gray-900 flex items-center">
-            <ClipboardCheck className="h-5 w-5 mr-2 text-purple-600" />
-            Itens do Checklist
-          </h4>
-          <button
-            type="button"
-            onClick={addItem}
-            className="btn btn-outline btn-sm"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Adicionar Item
-          </button>
-        </div>
-
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Pontos de Inspeção</label>
         <div className="space-y-4">
-          {items.map((item, index) => (
-            <div key={item.id} className="bg-white rounded-lg p-4 border border-gray-200">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-gray-700">Item {index + 1}</span>
-                <button
-                  type="button"
-                  onClick={() => removeItem(item.id)}
-                  className="text-danger-600 hover:text-danger-800"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Descrição *
-                  </label>
-                  <input
-                    type="text"
-                    value={item.descricao}
-                    onChange={(e) => updateItem(item.id, 'descricao', e.target.value)}
-                    placeholder="Descrição do item"
-                    className="input"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Critério *
-                  </label>
-                  <input
-                    type="text"
-                    value={item.criterio}
-                    onChange={(e) => updateItem(item.id, 'criterio', e.target.value)}
-                    placeholder="Critério de aceitação"
-                    className="input"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Conformidade
-                  </label>
-                  <div className="flex items-center space-x-4">
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        checked={item.conforme}
-                        onChange={() => updateItem(item.id, 'conforme', true)}
-                        className="mr-2"
-                      />
-                      <CheckCircle className="h-4 w-4 text-green-600 mr-1" />
-                      Conforme
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        checked={!item.conforme}
-                        onChange={() => updateItem(item.id, 'conforme', false)}
-                        className="mr-2"
-                      />
-                      <XCircle className="h-4 w-4 text-red-600 mr-1" />
-                      Não Conforme
-                    </label>
+          {(formData.pontos || []).map((ponto, idx) => (
+            <div key={ponto.id} className="space-y-2">
+              <div className="p-4 bg-gray-50 rounded-md">
+                {/* Cabeçalho do ponto com status */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      ponto.status === 'aprovado' ? 'bg-green-100 text-green-800' :
+                      ponto.status === 'reprovado' ? 'bg-red-100 text-red-800' :
+                      ponto.status === 'correcao' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {ponto.status === 'aprovado' ? '✓ Aprovado' :
+                       ponto.status === 'reprovado' ? '✗ Reprovado' :
+                       ponto.status === 'correcao' ? '⚠ Correção' :
+                       '⏳ Pendente'}
+                    </span>
+                    {ponto.data_inspecao && (
+                      <span className="text-xs text-gray-500">
+                        Inspecionado em: {new Date(ponto.data_inspecao).toLocaleDateString('pt-PT')}
+                      </span>
+                    )}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => removePonto(idx)}
+                    className="px-2 py-1 bg-red-600 text-white rounded-md hover:bg-red-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Observações
-                  </label>
+                {/* Campos do ponto */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3">
                   <input
                     type="text"
-                    value={item.observacoes}
-                    onChange={(e) => updateItem(item.id, 'observacoes', e.target.value)}
-                    placeholder="Observações adicionais"
-                    className="input"
+                    value={ponto.descricao}
+                    onChange={e => updatePonto(idx, 'descricao', e.target.value)}
+                    placeholder="Descrição do ponto"
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
                   />
+                  <input
+                    type="text"
+                    value={ponto.tipo}
+                    onChange={e => updatePonto(idx, 'tipo', e.target.value)}
+                    placeholder="Tipo"
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <input
+                    type="text"
+                    value={ponto.localizacao}
+                    onChange={e => updatePonto(idx, 'localizacao', e.target.value)}
+                    placeholder="Localização"
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <input
+                    type="text"
+                    value={ponto.responsavel}
+                    onChange={e => updatePonto(idx, 'responsavel', e.target.value)}
+                    placeholder="Responsável"
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Botões de validação */}
+                <div className="flex gap-2 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => updateStatusPonto(idx, 'aprovado')}
+                    className={`px-3 py-1 rounded-md text-sm font-medium ${
+                      ponto.status === 'aprovado'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                    }`}
+                  >
+                    ✓ Aprovar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateStatusPonto(idx, 'reprovado')}
+                    className={`px-3 py-1 rounded-md text-sm font-medium ${
+                      ponto.status === 'reprovado'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-red-100 text-red-700 hover:bg-red-200'
+                    }`}
+                  >
+                    ✗ Reprovado
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateStatusPonto(idx, 'correcao')}
+                    className={`px-3 py-1 rounded-md text-sm font-medium ${
+                      ponto.status === 'correcao'
+                        ? 'bg-yellow-600 text-white'
+                        : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                    }`}
+                  >
+                    ⚠ Correção
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateStatusPonto(idx, 'pendente')}
+                    className={`px-3 py-1 rounded-md text-sm font-medium ${
+                      ponto.status === 'pendente'
+                        ? 'bg-gray-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    ⏳ Pendente
+                  </button>
+                </div>
+              </div>
+              {/* Linha do tempo/histórico do ponto */}
+              <div className="mt-2 bg-white border border-gray-200 rounded-md p-3">
+                <div className="font-semibold text-xs text-gray-500 mb-1">Linha do tempo</div>
+                <ul className="space-y-1 text-xs">
+                  {(ponto.linha_tempo || []).length === 0 && (
+                    <li className="text-gray-400">Sem eventos ainda</li>
+                  )}
+                  {(ponto.linha_tempo || []).map(ev => (
+                    <li key={ev.id} className="flex items-center gap-2">
+                      <span className="font-mono text-gray-400">{new Date(ev.data).toLocaleString('pt-PT')}</span>
+                      <span className="font-semibold">{ev.acao}</span>
+                      <span className="text-gray-600">{ev.detalhes}</span>
+                      <span className="text-gray-400">{ev.responsavel}</span>
+                    </li>
+                  ))}
+                </ul>
+                {/* Simulação de adicionar evento */}
+                <div className="flex gap-2 mt-2">
+                  <input
+                    type="text"
+                    placeholder="Detalhes do evento"
+                    className="flex-1 px-2 py-1 border border-gray-200 rounded-md text-xs"
+                    id={`evento-detalhes-${ponto.id}`}
+                  />
+                  <button
+                    type="button"
+                    className="px-2 py-1 bg-blue-500 text-white rounded text-xs"
+                    onClick={() => {
+                      const input = document.getElementById(`evento-detalhes-${ponto.id}`) as HTMLInputElement
+                      if (input && input.value.trim()) {
+                        addEventoPonto(idx, 'comentario', input.value)
+                        input.value = ''
+                      }
+                    }}
+                  >
+                    + Evento
+                  </button>
+                </div>
+              </div>
+
+              {/* Anexos do ponto de inspeção */}
+              <div className="mt-2 bg-white border border-gray-200 rounded-md p-3">
+                <div className="font-semibold text-xs text-gray-500 mb-2">Anexos</div>
+                
+                {/* Lista de anexos existentes */}
+                {(ponto.anexos || []).length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {(ponto.anexos || []).map(anexo => (
+                      <div key={anexo.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <File className="h-4 w-4 text-gray-500" />
+                          <div className="text-xs">
+                            <div className="font-medium">{anexo.nome}</div>
+                            <div className="text-gray-500">
+                              {(anexo.tamanho / 1024).toFixed(1)} KB • {new Date(anexo.data_upload).toLocaleDateString('pt-PT')}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => window.open(anexo.url, '_blank')}
+                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                            title="Download"
+                          >
+                            <Download className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeAnexoPonto(idx, anexo.id)}
+                            className="p-1 text-red-600 hover:bg-red-50 rounded"
+                            title="Remover"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Upload de novos anexos */}
+                <div className="border-2 border-dashed border-gray-300 rounded-md p-3">
+                  <input
+                    type="file"
+                    id={`file-upload-${ponto.id}`}
+                    className="hidden"
+                    multiple
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || [])
+                      files.forEach(file => addAnexoPonto(idx, file))
+                      e.target.value = '' // Reset input
+                    }}
+                  />
+                  <label
+                    htmlFor={`file-upload-${ponto.id}`}
+                    className="flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 rounded-md p-2"
+                  >
+                    <Upload className="h-6 w-6 text-gray-400 mb-1" />
+                    <span className="text-xs text-gray-600">Clique para adicionar anexos</span>
+                    <span className="text-xs text-gray-400">PDF, DOC, JPG, PNG, XLS (máx. 10MB)</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Comentários do ponto de inspeção */}
+              <div className="mt-2 bg-white border border-gray-200 rounded-md p-3">
+                <div className="font-semibold text-xs text-gray-500 mb-2">Comentários</div>
+                
+                {/* Lista de comentários existentes */}
+                {(ponto.comentarios || []).length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {(ponto.comentarios || []).map(comentario => (
+                      <div key={comentario.id} className="p-2 bg-blue-50 rounded-md">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-medium text-blue-800">{comentario.autor}</span>
+                              <span className="text-xs text-gray-500">{new Date(comentario.data).toLocaleString('pt-PT')}</span>
+                            </div>
+                            <div className="text-xs text-gray-700">{comentario.texto}</div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeComentarioPonto(idx, comentario.id)}
+                            className="p-1 text-red-600 hover:bg-red-50 rounded ml-2"
+                            title="Remover comentário"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Adicionar novo comentário */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Adicionar comentário..."
+                    className="flex-1 px-2 py-1 border border-gray-200 rounded-md text-xs"
+                    id={`comentario-texto-${ponto.id}`}
+                  />
+                  <button
+                    type="button"
+                    className="px-2 py-1 bg-blue-500 text-white rounded text-xs"
+                    onClick={() => {
+                      const input = document.getElementById(`comentario-texto-${ponto.id}`) as HTMLInputElement
+                      if (input && input.value.trim()) {
+                        addComentarioPonto(idx, input.value)
+                        input.value = ''
+                      }
+                    }}
+                  >
+                    + Comentário
+                  </button>
                 </div>
               </div>
             </div>
           ))}
         </div>
-
-        {/* Percentual de Conformidade */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <h5 className="text-sm font-medium text-gray-700">Percentual de Conformidade</h5>
-              <p className="text-xs text-gray-500">Calculado automaticamente</p>
-            </div>
-            <div className="text-right">
-              <span className="text-2xl font-bold text-blue-600">
-                {watch('percentual_conformidade')}%
-              </span>
-              <div className="w-32 bg-gray-200 rounded-full h-2 mt-1">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${watch('percentual_conformidade')}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={addPonto}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Adicionar Ponto de Inspeção
+        </button>
       </div>
 
-      {/* Observações Gerais */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Observações Gerais
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Observações Gerais</label>
         <textarea
-          {...register('observacoes')}
-          placeholder="Observações gerais sobre o checklist..."
-          rows={4}
-          className="textarea"
+          value={formData.observacoes}
+          onChange={e => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
-      {/* Upload de Ficheiros */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Anexos
-        </label>
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-purple-400 transition-colors">
-          <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-600 mb-2">
-            Arraste ficheiros para aqui ou clique para selecionar
-          </p>
-          <input
-            type="file"
-            multiple
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx"
-            onChange={handleFileUpload}
-            className="hidden"
-            id="file-upload"
-          />
-          <label
-            htmlFor="file-upload"
-            className="btn btn-outline btn-sm cursor-pointer"
-          >
-            Selecionar Ficheiros
-          </label>
-        </div>
-
-        {/* Lista de ficheiros */}
-        {uploadedFiles.length > 0 && (
-          <div className="mt-4 space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">Ficheiros selecionados:</h4>
-            {uploadedFiles.map((file, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-700">{file.name}</span>
-                  <span className="text-xs text-gray-500">
-                    ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeFile(index)}
-                  className="text-danger-600 hover:text-danger-800"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Preview do Resultado */}
-      <div className="p-4 bg-gray-50 rounded-xl">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Pré-visualização:</h4>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Tipo:</span>
-            <span className={`badge ${checklistTypes.find(t => t.value === watchedTipo)?.color}`}>
-              {checklistTypes.find(t => t.value === watchedTipo)?.label}
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Estado:</span>
-            <span className={`badge ${statusOptions.find(s => s.value === watchedEstado)?.color}`}>
-              {statusOptions.find(s => s.value === watchedEstado)?.label}
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Conformidade:</span>
-            <span className="badge bg-blue-100 text-blue-700">
-              {watch('percentual_conformidade')}%
-            </span>
-          </div>
-        </div>
-        <div className="mt-2 text-sm text-gray-600">
-          {items.length} item(s) no checklist
-        </div>
-      </div>
-
-      {/* Botões de Ação */}
-      <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+      <div className="flex justify-end space-x-4">
         <button
           type="button"
           onClick={onCancel}
-          className="btn btn-outline btn-md"
-          disabled={isSubmitting}
+          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="btn btn-primary btn-md"
-          disabled={isSubmitting || !isValid}
+          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
         >
-          {isSubmitting ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Salvando...
-            </>
-          ) : (
-            <>
-              {isEditing ? 'Atualizar' : 'Criar'} Checklist
-            </>
-          )}
+          Guardar Checklist
         </button>
       </div>
-    </motion.form>
+    </form>
   )
 } 

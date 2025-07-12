@@ -13,6 +13,44 @@
     @apply bg-gradient-to-br from-gray-50 to-gray-100 text-gray-900 antialiased;
   }
 
+  /* Dark mode base */
+  html.dark body {
+    @apply bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100;
+  }
+  html.dark .card {
+    @apply bg-gray-900/80 border-gray-700 text-gray-100;
+  }
+  html.dark .modal-content {
+    @apply bg-gray-900 text-gray-100;
+  }
+  html.dark .input, html.dark .select, html.dark .textarea {
+    @apply bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400;
+  }
+  html.dark .btn-secondary {
+    @apply bg-gray-800 text-gray-100 border-gray-700 hover:bg-gray-700 hover:border-gray-600;
+  }
+  html.dark .table th {
+    @apply bg-gray-800 text-gray-300 border-gray-700;
+  }
+  html.dark .table td {
+    @apply text-gray-100 border-gray-800;
+  }
+  html.dark .sidebar {
+    @apply bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 border-gray-700;
+  }
+  html.dark .dropdown {
+    @apply bg-gray-900 text-gray-100 border-gray-700;
+  }
+  html.dark .modal-header, html.dark .modal-footer {
+    @apply border-gray-700;
+  }
+  html.dark .badge-secondary {
+    @apply bg-gray-800 text-gray-200 border-gray-700;
+  }
+  html.dark .loading-skeleton {
+    @apply bg-gray-700;
+  }
+
   * {
     @apply border-gray-200;
   }

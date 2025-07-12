@@ -1,59 +1,17 @@
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  TestTube, 
-  AlertCircle, 
-  Calendar, 
-  User, 
-  MapPin, 
-  Upload, 
-  X, 
-  FileText,
-  Calculator,
-  Target,
-  CheckCircle,
-  XCircle,
-  Building,
-  Package
-} from 'lucide-react'
-import toast from 'react-hot-toast'
-
-const ensaioSchema = z.object({
-  codigo: z.string().min(1, 'Código é obrigatório'),
-  tipo: z.enum(['resistencia', 'densidade', 'absorcao', 'durabilidade', 'outro']),
-  material_id: z.string().optional(),
-  resultado: z.string().min(1, 'Resultado é obrigatório'),
-  valor_obtido: z.number().min(0, 'Valor obtido deve ser positivo'),
-  valor_esperado: z.number().min(0, 'Valor esperado deve ser positivo'),
-  unidade: z.string().min(1, 'Unidade é obrigatória'),
-  laboratorio: z.string().min(1, 'Laboratório é obrigatório'),
-  data_ensaio: z.string().min(1, 'Data do ensaio é obrigatória'),
-  conforme: z.boolean(),
-  responsavel: z.string().min(1, 'Responsável é obrigatório'),
-  zona: z.string().min(1, 'Zona é obrigatória'),
-  estado: z.enum(['pendente', 'em_analise', 'aprovado', 'reprovado', 'concluido']),
-  observacoes: z.string().optional()
-})
-
-type EnsaioFormData = z.infer<typeof ensaioSchema>
+import { X, FileText } from 'lucide-react'
+import { EnsaioRecord } from '@/lib/pocketbase'
+import { SeguimentoEnsaio, ContextoAdicional } from '@/types'
 
 interface EnsaioFormProps {
-  onSubmit: (data: EnsaioFormData) => void
+  onSubmit: (data: any) => void
   onCancel: () => void
-  initialData?: Partial<EnsaioFormData>
+  initialData?: Partial<EnsaioRecord>
   isEditing?: boolean
 }
 
-const ensaioTypes = [
-  { value: 'resistencia', label: 'Resistência', icon: Target, color: 'text-red-600' },
-  { value: 'densidade', label: 'Densidade', icon: Calculator, color: 'text-blue-600' },
-  { value: 'absorcao', label: 'Absorção', icon: Package, color: 'text-green-600' },
-  { value: 'durabilidade', label: 'Durabilidade', icon: TestTube, color: 'text-purple-600' },
-  { value: 'outro', label: 'Outro', icon: TestTube, color: 'text-gray-600' }
-]
+
 
 const statusOptions = [
   { value: 'pendente', label: 'Pendente', color: 'bg-warning-100 text-warning-700' },
@@ -67,78 +25,222 @@ const unidades = [
   'MPa', 'N/mm²', 'kg/m³', 'g/cm³', 'mm', 'cm', 'm', 'kg', 'ton', '%', 'ºC', 'h', 'dias'
 ]
 
-const zonas = [
-  'Zona A - Fundações',
-  'Zona B - Pilares', 
-  'Zona C - Lajes',
-  'Zona D - Estrutura',
-  'Armazém Central',
-  'Laboratório',
-  'Escritório'
-]
 
-const laboratorios = [
-  'Laboratório Central',
-  'Laboratório de Betão',
-  'Laboratório de Solos',
-  'Laboratório Externo - CEB',
-  'Laboratório Externo - LNEC',
-  'Outro'
-]
 
 export default function EnsaioForm({ onSubmit, onCancel, initialData, isEditing = false }: EnsaioFormProps) {
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isValid },
-    watch,
-    setValue
-  } = useForm<EnsaioFormData>({
-    resolver: zodResolver(ensaioSchema),
-    defaultValues: initialData || {
-      estado: 'pendente',
-      tipo: 'resistencia',
-      conforme: true,
-      unidade: 'MPa'
-    }
+  const [formData, setFormData] = useState({
+    codigo: initialData?.codigo || '',
+    tipo: initialData?.tipo || '',
+    material_id: initialData?.material_id || '',
+    resultado: initialData?.resultado || '',
+    valor_obtido: initialData?.valor_obtido || 0,
+    valor_esperado: initialData?.valor_esperado || 0,
+    unidade: initialData?.unidade || '',
+    laboratorio: initialData?.laboratorio || '',
+    data_ensaio: initialData?.data_ensaio || '',
+    conforme: initialData?.conforme || false,
+    responsavel: initialData?.responsavel || '',
+    zona: initialData?.zona || '',
+    estado: initialData?.estado || 'pendente',
+    observacoes: initialData?.observacoes || ''
   })
 
-  const watchedTipo = watch('tipo')
-  const watchedEstado = watch('estado')
-  const watchedConforme = watch('conforme')
-  const watchedValorObtido = watch('valor_obtido')
-  const watchedValorEsperado = watch('valor_esperado')
+  // Seguimento dinâmico
+  const [seguimento, setSeguimento] = useState<SeguimentoEnsaio[]>(
+    (initialData as any)?.seguimento || []
+  )
+  const [anexos, setAnexos] = useState<File[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || [])
-    setUploadedFiles(prev => [...prev, ...files])
-    toast.success(`${files.length} ficheiro(s) adicionado(s)`)
-  }
+  // Dropdowns dinâmicos
+  const [tiposEnsaio, setTiposEnsaio] = useState([
+    'Ensaio de Resistência à Compressão',
+    'Ensaio de Resistência à Tração',
+    'Ensaio de Flexão',
+    'Ensaio de Densidade',
+    'Ensaio de Absorção',
+    'Ensaio de Permeabilidade',
+    'Ensaio de Durabilidade',
+    'Ensaio de Consistência',
+    'Ensaio de Slump',
+    'Ensaio de Temperatura',
+    'Ensaio de Umidade',
+    'Ensaio de Granulometria',
+    'Ensaio de Adensamento',
+    'Ensaio de Cisalhamento',
+    'Ensaio de Penetração',
+    'Outro'
+  ])
+  
+  const [laboratorios, setLaboratorios] = useState([
+    'Laboratório Central',
+    'Laboratório de Obra',
+    'Laboratório Externo - CEM',
+    'Laboratório Externo - LNEC',
+    'Laboratório Externo - IST',
+    'Laboratório Externo - FEUP',
+    'Laboratório Externo - FCT',
+    'Laboratório Externo - UA',
+    'Laboratório Externo - UC',
+    'Laboratório Externo - UMinho',
+    'Laboratório Externo - UPorto',
+    'Laboratório Externo - ULisboa',
+    'Laboratório Externo - UAlgarve',
+    'Laboratório Externo - UÉvora',
+    'Laboratório Externo - UCoimbra',
+    'Laboratório Externo - UBraga',
+    'Laboratório Externo - UAveiro',
+    'Laboratório Externo - UBI',
+    'Laboratório Externo - UMaia',
+    'Outro'
+  ])
 
-  const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index))
-  }
+  const [zonas, setZonas] = useState([
+    'Zona A - Fundações',
+    'Zona B - Pilares', 
+    'Zona C - Lajes',
+    'Zona D - Estrutura',
+    'Armazém Central',
+    'Laboratório',
+    'Escritório',
+    'Outro'
+  ])
 
-  const onSubmitForm = async (data: EnsaioFormData) => {
-    setIsSubmitting(true)
-    try {
-      // Simular delay de submissão
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Aqui seria feita a chamada para a API
-      console.log('Dados do ensaio:', data)
-      console.log('Ficheiros:', uploadedFiles)
-      
-      onSubmit(data)
-      toast.success(isEditing ? 'Ensaio atualizado com sucesso!' : 'Ensaio registado com sucesso!')
-    } catch (error) {
-      toast.error('Erro ao salvar ensaio')
-    } finally {
-      setIsSubmitting(false)
+  const [showNovoTipo, setShowNovoTipo] = useState(false)
+  const [showNovoLab, setShowNovoLab] = useState(false)
+  const [showNovaZona, setShowNovaZona] = useState(false)
+  const [novoTipo, setNovoTipo] = useState('')
+  const [novoLab, setNovoLab] = useState('')
+  const [novaZona, setNovaZona] = useState('')
+
+  // Campos de contexto ricos
+  const [contextoAdicional, setContextoAdicional] = useState<ContextoAdicional[]>(
+    (initialData as any)?.contextoAdicional || []
+  )
+
+  // Carregar opções salvas do localStorage
+  useEffect(() => {
+    const savedTipos = localStorage.getItem('tiposEnsaio')
+    const savedLabs = localStorage.getItem('laboratorios')
+    const savedZonas = localStorage.getItem('zonas')
+    
+    if (savedTipos) {
+      setTiposEnsaio(prev => {
+        const saved = JSON.parse(savedTipos)
+        return [...new Set([...prev, ...saved])]
+      })
     }
+    
+    if (savedLabs) {
+      setLaboratorios(prev => {
+        const saved = JSON.parse(savedLabs)
+        return [...new Set([...prev, ...saved])]
+      })
+    }
+
+    if (savedZonas) {
+      setZonas(prev => {
+        const saved = JSON.parse(savedZonas)
+        return [...new Set([...prev, ...saved])]
+      })
+    }
+  }, [])
+
+  const adicionarNovoTipo = () => {
+    if (novoTipo.trim()) {
+      const novosTipos = [...tiposEnsaio.filter(t => t !== 'Outro'), novoTipo.trim(), 'Outro']
+      setTiposEnsaio(novosTipos)
+      setFormData(prev => ({ ...prev, tipo: novoTipo.trim() }))
+      setNovoTipo('')
+      setShowNovoTipo(false)
+      
+      // Salvar no localStorage
+      const saved = JSON.parse(localStorage.getItem('tiposEnsaio') || '[]')
+      localStorage.setItem('tiposEnsaio', JSON.stringify([...saved, novoTipo.trim()]))
+    }
+  }
+
+  const adicionarNovoLab = () => {
+    if (novoLab.trim()) {
+      const novosLabs = [...laboratorios.filter(l => l !== 'Outro'), novoLab.trim(), 'Outro']
+      setLaboratorios(novosLabs)
+      setFormData(prev => ({ ...prev, laboratorio: novoLab.trim() }))
+      setNovoLab('')
+      setShowNovoLab(false)
+      
+      // Salvar no localStorage
+      const saved = JSON.parse(localStorage.getItem('laboratorios') || '[]')
+      localStorage.setItem('laboratorios', JSON.stringify([...saved, novoLab.trim()]))
+    }
+  }
+
+  const adicionarNovaZona = () => {
+    if (novaZona.trim()) {
+      const novasZonas = [...zonas.filter(z => z !== 'Outro'), novaZona.trim(), 'Outro']
+      setZonas(novasZonas)
+      setFormData(prev => ({ ...prev, zona: novaZona.trim() }))
+      setNovaZona('')
+      setShowNovaZona(false)
+      
+      // Salvar no localStorage
+      const saved = JSON.parse(localStorage.getItem('zonas') || '[]')
+      localStorage.setItem('zonas', JSON.stringify([...saved, novaZona.trim()]))
+    }
+  }
+
+  const adicionarCampoContexto = () => {
+    setContextoAdicional(prev => [...prev, { campo: '', valor: '' }])
+  }
+
+  const removerCampoContexto = (index: number) => {
+    setContextoAdicional(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const atualizarCampoContexto = (index: number, campo: string, valor: string) => {
+    setContextoAdicional(prev => prev.map((item, i) => 
+      i === index ? { campo, valor } : item
+    ))
+  }
+
+  const addLinhaSeguimento = () => {
+    setSeguimento(prev => [...prev, { 
+      id: Date.now().toString(), 
+      data: '', 
+      descricao: '', 
+      responsavel: '', 
+      resultado: '', 
+      anexo: null 
+    }])
+  }
+
+  const removeLinhaSeguimento = (index: number) => {
+    setSeguimento(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const updateLinhaSeguimento = (index: number, field: keyof SeguimentoEnsaio, value: string | File | null) => {
+    setSeguimento(prev => prev.map((item, i) => 
+      i === index ? { ...item, [field]: value } : item
+    ))
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    setAnexos(prev => [...prev, ...files])
+  }
+
+  const removeAnexo = (index: number) => {
+    setAnexos(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const dadosCompletos = {
+      ...formData,
+      seguimento,
+      anexos: anexos as any,
+      contextoAdicional: contextoAdicional.filter(c => c.campo.trim() && c.valor.trim())
+    }
+    onSubmit(dadosCompletos)
   }
 
   const generateCode = () => {
@@ -148,17 +250,17 @@ export default function EnsaioForm({ onSubmit, onCancel, initialData, isEditing 
     const day = String(date.getDate()).padStart(2, '0')
     const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
     const code = `ENS-${year}-${month}${day}-${random}`
-    setValue('codigo', code)
+    setFormData(prev => ({ ...prev, codigo: code }))
   }
 
   const calculateConformity = () => {
-    if (watchedValorObtido && watchedValorEsperado) {
+    if (formData.valor_obtido && formData.valor_esperado) {
       const tolerance = 0.05 // 5% de tolerância
-      const minValue = watchedValorEsperado * (1 - tolerance)
-      const maxValue = watchedValorEsperado * (1 + tolerance)
-      const isConforme = watchedValorObtido >= minValue && watchedValorObtido <= maxValue
-      setValue('conforme', isConforme)
-      setValue('resultado', isConforme ? 'Conforme' : 'Não Conforme')
+      const minValue = formData.valor_esperado * (1 - tolerance)
+      const maxValue = formData.valor_esperado * (1 + tolerance)
+      const isConforme = formData.valor_obtido >= minValue && formData.valor_obtido <= maxValue
+      setFormData(prev => ({ ...prev, conforme: isConforme }))
+      setFormData(prev => ({ ...prev, resultado: isConforme ? 'Conforme' : 'Não Conforme' }))
     }
   }
 
@@ -167,448 +269,523 @@ export default function EnsaioForm({ onSubmit, onCancel, initialData, isEditing 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      onSubmit={handleSubmit(onSubmitForm)}
+      onSubmit={handleSubmit}
       className="space-y-6"
     >
-      {/* Header do Formulário */}
-      <div className="flex items-center space-x-3 pb-4 border-b border-gray-200">
-        <div className="p-2 rounded-xl bg-gradient-to-br from-green-500 to-green-600">
-          <TestTube className="h-5 w-5 text-white" />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            {isEditing ? 'Editar Ensaio' : 'Novo Ensaio'}
-          </h3>
-          <p className="text-sm text-gray-600">
-            {isEditing ? 'Atualize as informações do ensaio' : 'Registe um novo ensaio técnico'}
-          </p>
-        </div>
-      </div>
-
       {/* Informações Básicas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Código */}
-        <div className="md:col-span-2">
+        <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Código do Ensaio *
+            Código *
           </label>
-          <div className="flex space-x-2">
+          <div className="flex gap-2">
             <input
-              {...register('codigo')}
               type="text"
-              placeholder="ENS-2024-001"
-              className={`input flex-1 ${errors.codigo ? 'border-danger-500' : ''}`}
+              value={formData.codigo}
+              onChange={(e) => setFormData(prev => ({ ...prev, codigo: e.target.value }))}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Código do ensaio"
+              required
             />
             <button
               type="button"
               onClick={generateCode}
-              className="btn btn-outline btn-md whitespace-nowrap"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              Gerar Código
+              Gerar
             </button>
           </div>
-          {errors.codigo && (
-            <p className="mt-1 text-sm text-danger-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {errors.codigo.message}
-            </p>
-          )}
         </div>
 
-        {/* Tipo */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Material ID *
+          </label>
+          <input
+            type="text"
+            value={formData.material_id}
+            onChange={(e) => setFormData(prev => ({ ...prev, material_id: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="ID do material"
+            required
+          />
+        </div>
+      </div>
+
+      {/* Tipo de Ensaio e Laboratório */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Tipo de Ensaio *
           </label>
           <select
-            {...register('tipo')}
-            className={`select ${errors.tipo ? 'border-danger-500' : ''}`}
+            value={formData.tipo}
+            onChange={(e) => {
+              if (e.target.value === 'Outro') {
+                setShowNovoTipo(true)
+              } else {
+                setFormData(prev => ({ ...prev, tipo: e.target.value }))
+              }
+            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
           >
-            {ensaioTypes.map(type => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
+            <option value="">Selecione o tipo</option>
+            {tiposEnsaio.map(tipo => (
+              <option key={tipo} value={tipo}>{tipo}</option>
             ))}
           </select>
-          {errors.tipo && (
-            <p className="mt-1 text-sm text-danger-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {errors.tipo.message}
-            </p>
+          
+          {showNovoTipo && (
+            <div className="mt-2 p-3 bg-blue-50 rounded-md">
+              <input
+                type="text"
+                value={novoTipo}
+                onChange={(e) => setNovoTipo(e.target.value)}
+                placeholder="Digite o novo tipo de ensaio"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={adicionarNovoTipo}
+                  className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                >
+                  Adicionar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNovoTipo(false)
+                    setNovoTipo('')
+                    setFormData(prev => ({ ...prev, tipo: '' }))
+                  }}
+                  className="px-3 py-1 bg-gray-500 text-white rounded-md text-sm hover:bg-gray-600"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Laboratório */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Laboratório *
           </label>
-          <div className="relative">
-            <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <select
-              {...register('laboratorio')}
-              className={`select pl-10 ${errors.laboratorio ? 'border-danger-500' : ''}`}
-            >
-              <option value="">Selecione um laboratório</option>
-              {laboratorios.map(lab => (
-                <option key={lab} value={lab}>
-                  {lab}
-                </option>
-              ))}
-            </select>
-          </div>
-          {errors.laboratorio && (
-            <p className="mt-1 text-sm text-danger-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {errors.laboratorio.message}
-            </p>
+          <select
+            value={formData.laboratorio}
+            onChange={(e) => {
+              if (e.target.value === 'Outro') {
+                setShowNovoLab(true)
+              } else {
+                setFormData(prev => ({ ...prev, laboratorio: e.target.value }))
+              }
+            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="">Selecione o laboratório</option>
+            {laboratorios.map(lab => (
+              <option key={lab} value={lab}>{lab}</option>
+            ))}
+          </select>
+          
+          {showNovoLab && (
+            <div className="mt-2 p-3 bg-blue-50 rounded-md">
+              <input
+                type="text"
+                value={novoLab}
+                onChange={(e) => setNovoLab(e.target.value)}
+                placeholder="Digite o novo laboratório"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={adicionarNovoLab}
+                  className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                >
+                  Adicionar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNovoLab(false)
+                    setNovoLab('')
+                    setFormData(prev => ({ ...prev, laboratorio: '' }))
+                  }}
+                  className="px-3 py-1 bg-gray-500 text-white rounded-md text-sm hover:bg-gray-600"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
           )}
         </div>
+              </div>
 
-        {/* Data do Ensaio */}
+        {/* Campos de contexto adicionais */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-gray-700">
+            Informações Adicionais do Contexto
+          </label>
+          <button
+            type="button"
+            onClick={adicionarCampoContexto}
+            className="px-3 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700"
+          >
+            + Adicionar Campo
+          </button>
+        </div>
+        
+        {contextoAdicional.map((campo, index) => (
+          <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-md">
+            <input
+              type="text"
+              value={campo.campo}
+              onChange={(e) => atualizarCampoContexto(index, e.target.value, campo.valor)}
+              placeholder="Ex: Localização, Matrícula Camião, Tipo Betão, Planta, etc."
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <input
+              type="text"
+              value={campo.valor}
+              onChange={(e) => atualizarCampoContexto(index, campo.campo, e.target.value)}
+              placeholder="Valor"
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="button"
+              onClick={() => removerCampoContexto(index)}
+              className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            >
+              Remover
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Valores e Resultados */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Valor Obtido *
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            value={formData.valor_obtido}
+            onChange={(e) => setFormData(prev => ({ ...prev, valor_obtido: parseFloat(e.target.value) || 0 }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Valor Esperado *
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            value={formData.valor_esperado}
+            onChange={(e) => setFormData(prev => ({ ...prev, valor_esperado: parseFloat(e.target.value) || 0 }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Unidade *
+          </label>
+          <select
+            value={formData.unidade}
+            onChange={(e) => setFormData(prev => ({ ...prev, unidade: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="">Selecione</option>
+            {unidades.map(unidade => (
+              <option key={unidade} value={unidade}>{unidade}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Conformidade */}
+      <div className="flex items-center gap-4">
+        <label className="flex items-center">
+          <input
+            type="checkbox"
+            checked={formData.conforme}
+            onChange={(e) => setFormData(prev => ({ ...prev, conforme: e.target.checked }))}
+            className="mr-2"
+          />
+          <span className="text-sm font-medium text-gray-700">Conforme</span>
+        </label>
+        <button
+          type="button"
+          onClick={calculateConformity}
+          className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+        >
+          Calcular Conformidade
+        </button>
+      </div>
+
+      {/* Resultado */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Resultado *
+        </label>
+        <input
+          type="text"
+          value={formData.resultado}
+          onChange={(e) => setFormData(prev => ({ ...prev, resultado: e.target.value }))}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Resultado do ensaio"
+          required
+        />
+      </div>
+
+      {/* Informações Adicionais */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Data do Ensaio *
           </label>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              {...register('data_ensaio')}
-              type="date"
-              className={`input pl-10 ${errors.data_ensaio ? 'border-danger-500' : ''}`}
-            />
-          </div>
-          {errors.data_ensaio && (
-            <p className="mt-1 text-sm text-danger-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {errors.data_ensaio.message}
-            </p>
-          )}
+          <input
+            type="date"
+            value={formData.data_ensaio}
+            onChange={(e) => setFormData(prev => ({ ...prev, data_ensaio: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
         </div>
 
-        {/* Estado */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Estado *
-          </label>
-          <select
-            {...register('estado')}
-            className={`select ${errors.estado ? 'border-danger-500' : ''}`}
-          >
-            {statusOptions.map(status => (
-              <option key={status.value} value={status.value}>
-                {status.label}
-              </option>
-            ))}
-          </select>
-          {errors.estado && (
-            <p className="mt-1 text-sm text-danger-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {errors.estado.message}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Resultados do Ensaio */}
-      <div className="bg-gray-50 rounded-xl p-6">
-        <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Target className="h-5 w-5 mr-2 text-green-600" />
-          Resultados do Ensaio
-        </h4>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Valor Esperado */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Valor Esperado *
-            </label>
-            <input
-              {...register('valor_esperado', { valueAsNumber: true })}
-              type="number"
-              step="0.01"
-              placeholder="30.0"
-              className={`input ${errors.valor_esperado ? 'border-danger-500' : ''}`}
-            />
-            {errors.valor_esperado && (
-              <p className="mt-1 text-sm text-danger-600 flex items-center">
-                <AlertCircle className="h-4 w-4 mr-1" />
-                {errors.valor_esperado.message}
-              </p>
-            )}
-          </div>
-
-          {/* Valor Obtido */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Valor Obtido *
-            </label>
-            <input
-              {...register('valor_obtido', { valueAsNumber: true })}
-              type="number"
-              step="0.01"
-              placeholder="28.5"
-              className={`input ${errors.valor_obtido ? 'border-danger-500' : ''}`}
-            />
-            {errors.valor_obtido && (
-              <p className="mt-1 text-sm text-danger-600 flex items-center">
-                <AlertCircle className="h-4 w-4 mr-1" />
-                {errors.valor_obtido.message}
-              </p>
-            )}
-          </div>
-
-          {/* Unidade */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Unidade *
-            </label>
-            <select
-              {...register('unidade')}
-              className={`select ${errors.unidade ? 'border-danger-500' : ''}`}
-            >
-              {unidades.map(unidade => (
-                <option key={unidade} value={unidade}>
-                  {unidade}
-                </option>
-              ))}
-            </select>
-            {errors.unidade && (
-              <p className="mt-1 text-sm text-danger-600 flex items-center">
-                <AlertCircle className="h-4 w-4 mr-1" />
-                {errors.unidade.message}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Resultado e Conformidade */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Resultado *
-            </label>
-            <input
-              {...register('resultado')}
-              type="text"
-              placeholder="Conforme / Não Conforme"
-              className={`input ${errors.resultado ? 'border-danger-500' : ''}`}
-            />
-            {errors.resultado && (
-              <p className="mt-1 text-sm text-danger-600 flex items-center">
-                <AlertCircle className="h-4 w-4 mr-1" />
-                {errors.resultado.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Conformidade
-            </label>
-            <div className="flex items-center space-x-4">
-              <label className="flex items-center">
-                <input
-                  {...register('conforme')}
-                  type="radio"
-                  value="true"
-                  className="mr-2"
-                />
-                <CheckCircle className="h-4 w-4 text-green-600 mr-1" />
-                Conforme
-              </label>
-              <label className="flex items-center">
-                <input
-                  {...register('conforme')}
-                  type="radio"
-                  value="false"
-                  className="mr-2"
-                />
-                <XCircle className="h-4 w-4 text-red-600 mr-1" />
-                Não Conforme
-              </label>
-            </div>
-            <button
-              type="button"
-              onClick={calculateConformity}
-              className="btn btn-outline btn-sm mt-2"
-            >
-              Calcular Conformidade
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Responsável e Zona */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Responsável *
           </label>
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              {...register('responsavel')}
-              type="text"
-              placeholder="Nome do responsável"
-              className={`input pl-10 ${errors.responsavel ? 'border-danger-500' : ''}`}
-            />
-          </div>
-          {errors.responsavel && (
-            <p className="mt-1 text-sm text-danger-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {errors.responsavel.message}
-            </p>
-          )}
+          <input
+            type="text"
+            value={formData.responsavel}
+            onChange={(e) => setFormData(prev => ({ ...prev, responsavel: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Nome do responsável"
+            required
+          />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Zona *
           </label>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <select
-              {...register('zona')}
-              className={`select pl-10 ${errors.zona ? 'border-danger-500' : ''}`}
-            >
-              <option value="">Selecione uma zona</option>
-              {zonas.map(zona => (
-                <option key={zona} value={zona}>
-                  {zona}
-                </option>
-              ))}
-            </select>
-          </div>
-          {errors.zona && (
-            <p className="mt-1 text-sm text-danger-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-1" />
-              {errors.zona.message}
-            </p>
+          <select
+            value={formData.zona}
+            onChange={(e) => {
+              if (e.target.value === 'Outro') {
+                setShowNovaZona(true)
+              } else {
+                setFormData(prev => ({ ...prev, zona: e.target.value }))
+              }
+            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="">Selecione a zona</option>
+            {zonas.map(zona => (
+              <option key={zona} value={zona}>{zona}</option>
+            ))}
+          </select>
+          
+          {showNovaZona && (
+            <div className="mt-2 p-3 bg-blue-50 rounded-md">
+              <input
+                type="text"
+                value={novaZona}
+                onChange={(e) => setNovaZona(e.target.value)}
+                placeholder="Digite a nova zona"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={adicionarNovaZona}
+                  className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                >
+                  Adicionar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNovaZona(false)
+                    setNovaZona('')
+                    setFormData(prev => ({ ...prev, zona: '' }))
+                  }}
+                  className="px-3 py-1 bg-gray-500 text-white rounded-md text-sm hover:bg-gray-600"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Observações */}
+      {/* Estado */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Observações
+          Estado *
+        </label>
+        <select
+          value={formData.estado}
+          onChange={(e) => setFormData(prev => ({ ...prev, estado: e.target.value as any }))}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        >
+          {statusOptions.map(option => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Descrição/Resultados */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Descrição/Resultados/Contexto
         </label>
         <textarea
-          {...register('observacoes')}
-          placeholder="Descrição detalhada do ensaio, condições, observações..."
+          value={formData.observacoes}
+          onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
           rows={4}
-          className="textarea"
+          placeholder="Descreva os resultados, observações, condições do dia, localização específica, matrícula do camião, tipo de betão, planta, etc."
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
-      {/* Upload de Ficheiros */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Anexos
-        </label>
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-400 transition-colors">
-          <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-600 mb-2">
-            Arraste ficheiros para aqui ou clique para selecionar
-          </p>
-          <input
-            type="file"
-            multiple
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx"
-            onChange={handleFileUpload}
-            className="hidden"
-            id="file-upload"
-          />
-          <label
-            htmlFor="file-upload"
-            className="btn btn-outline btn-sm cursor-pointer"
-          >
-            Selecionar Ficheiros
+      {/* Seguimento do Ensaio */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-gray-700">
+            Seguimento do Ensaio (Linha do Tempo)
           </label>
+          <button
+            type="button"
+            onClick={addLinhaSeguimento}
+            className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+          >
+            + Adicionar Linha
+          </button>
         </div>
-
-        {/* Lista de ficheiros */}
-        {uploadedFiles.length > 0 && (
-          <div className="mt-4 space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">Ficheiros selecionados:</h4>
-            {uploadedFiles.map((file, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-700">{file.name}</span>
-                  <span className="text-xs text-gray-500">
-                    ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeFile(index)}
-                  className="text-danger-600 hover:text-danger-800"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        
+        <div className="space-y-2">
+          {seguimento.map((linha, idx) => (
+            <div key={linha.id} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-end border-b pb-2">
+              <input 
+                type="date" 
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                value={linha.data} 
+                onChange={e => updateLinhaSeguimento(idx, 'data', e.target.value)} 
+              />
+              <input 
+                type="text" 
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                placeholder="Descrição" 
+                value={linha.descricao} 
+                onChange={e => updateLinhaSeguimento(idx, 'descricao', e.target.value)} 
+              />
+              <input 
+                type="text" 
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                placeholder="Responsável" 
+                value={linha.responsavel} 
+                onChange={e => updateLinhaSeguimento(idx, 'responsavel', e.target.value)} 
+              />
+              <input 
+                type="text" 
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                placeholder="Resultado" 
+                value={linha.resultado} 
+                onChange={e => updateLinhaSeguimento(idx, 'resultado', e.target.value)} 
+              />
+              <button
+                type="button"
+                onClick={() => removeLinhaSeguimento(idx)}
+                className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Remover
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Preview do Resultado */}
-      <div className="p-4 bg-gray-50 rounded-xl">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Pré-visualização:</h4>
-        <div className="flex items-center space-x-4">
+      {/* Anexos */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Anexos Gerais (Relatórios, PDFs, Imagens, etc.)</label>
+        <input ref={fileInputRef} type="file" multiple className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onChange={handleFileUpload} />
+        <div className="flex flex-wrap gap-2 mt-2">
+          {anexos.map((file, idx) => (
+            <div key={idx} className="flex items-center gap-2 p-2 bg-gray-100 rounded-md">
+              <FileText className="h-4 w-4 text-gray-500" />
+              <span className="text-sm">{file.name}</span>
+              <button
+                type="button"
+                onClick={() => removeAnexo(idx)}
+                className="text-red-600 hover:text-red-800"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Resumo */}
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <h4 className="text-sm font-medium text-gray-700 mb-2">Resumo do Ensaio</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Tipo:</span>
-            <span className={`badge ${ensaioTypes.find(t => t.value === watchedTipo)?.color}`}>
-              {ensaioTypes.find(t => t.value === watchedTipo)?.label}
+            <span className="text-gray-600">Tipo:</span>
+            <span className="font-medium">{formData.tipo || 'Não definido'}</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-gray-600">Estado:</span>
+            <span className={`px-2 py-1 rounded-full text-xs ${statusOptions.find(s => s.value === formData.estado)?.color}`}>
+              {statusOptions.find(s => s.value === formData.estado)?.label}
             </span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Estado:</span>
-            <span className={`badge ${statusOptions.find(s => s.value === watchedEstado)?.color}`}>
-              {statusOptions.find(s => s.value === watchedEstado)?.label}
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Conformidade:</span>
-            <span className={`badge ${watchedConforme ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-700'}`}>
-              {watchedConforme ? 'Conforme' : 'Não Conforme'}
+            <span className="text-gray-600">Conformidade:</span>
+            <span className={`px-2 py-1 rounded-full text-xs ${formData.conforme ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              {formData.conforme ? 'Conforme' : 'Não Conforme'}
             </span>
           </div>
         </div>
-        {watchedValorObtido && watchedValorEsperado && (
+        {formData.valor_obtido && formData.valor_esperado && (
           <div className="mt-2 text-sm text-gray-600">
-            Resultado: {watchedValorObtido} {watch('unidade')} / {watchedValorEsperado} {watch('unidade')}
+            Resultado: {formData.valor_obtido} {formData.unidade} / {formData.valor_esperado} {formData.unidade}
           </div>
         )}
       </div>
 
-      {/* Botões de Ação */}
-      <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+      {/* Botões */}
+      <div className="flex justify-end space-x-4">
         <button
           type="button"
           onClick={onCancel}
-          className="btn btn-outline btn-md"
-          disabled={isSubmitting}
+          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="btn btn-primary btn-md"
-          disabled={isSubmitting || !isValid}
+          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
         >
-          {isSubmitting ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Salvando...
-            </>
-          ) : (
-            <>
-              {isEditing ? 'Atualizar' : 'Registar'} Ensaio
-            </>
-          )}
+          {isEditing ? 'Atualizar Ensaio' : 'Registar Ensaio'}
         </button>
       </div>
     </motion.form>

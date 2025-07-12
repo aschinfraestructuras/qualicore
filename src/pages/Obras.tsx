@@ -1,0 +1,475 @@
+import { useState, useEffect } from 'react'
+import { 
+  Plus, 
+  Search, 
+  Download, 
+  Edit, 
+  Trash2, 
+  Eye,
+  Building,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  X,
+  FileText,
+  Users,
+  Calendar,
+  MapPin,
+  Euro,
+  TrendingUp,
+  BarChart3
+} from 'lucide-react'
+import { Obra } from '@/types'
+import toast from 'react-hot-toast'
+import ObraForm from '@/components/forms/ObraForm'
+
+// Mock data para demonstração
+const mockObras: Obra[] = [
+  {
+    id: '1',
+    codigo: 'OBR-2024-001',
+    nome: 'Edifício Residencial Solar',
+    cliente: 'Construtora ABC',
+    localizacao: 'Lisboa, Portugal',
+    data_inicio: '2024-01-15',
+    data_fim_prevista: '2024-12-31',
+    valor_contrato: 2500000,
+    valor_executado: 1250000,
+    percentual_execucao: 50,
+    status: 'em_execucao',
+    tipo_obra: 'residencial',
+    categoria: 'grande',
+    responsavel_tecnico: 'Eng. João Silva',
+    coordenador_obra: 'Eng. Maria Santos',
+    fiscal_obra: 'Eng. Carlos Mendes',
+    engenheiro_responsavel: 'Eng. Ana Costa',
+    arquiteto: 'Arq. Pedro Alves',
+    zonas: [],
+    fases: [],
+    equipas: [],
+    fornecedores_principais: [],
+    riscos: [],
+    indicadores: [],
+    responsavel: 'Eng. João Silva',
+    zona: 'Lisboa',
+    estado: 'em_analise',
+    data_criacao: '2024-01-15T09:00:00Z',
+    data_atualizacao: '2024-01-15T09:00:00Z'
+  },
+  {
+    id: '2',
+    codigo: 'OBR-2024-002',
+    nome: 'Centro Comercial Plaza',
+    cliente: 'Desenvolvimento XYZ',
+    localizacao: 'Porto, Portugal',
+    data_inicio: '2024-02-01',
+    data_fim_prevista: '2025-06-30',
+    valor_contrato: 5000000,
+    valor_executado: 750000,
+    percentual_execucao: 15,
+    status: 'em_execucao',
+    tipo_obra: 'comercial',
+    categoria: 'mega',
+    responsavel_tecnico: 'Eng. Sofia Martins',
+    coordenador_obra: 'Eng. Ricardo Pereira',
+    fiscal_obra: 'Eng. Luísa Ferreira',
+    engenheiro_responsavel: 'Eng. Manuel Santos',
+    arquiteto: 'Arq. Teresa Silva',
+    zonas: [],
+    fases: [],
+    equipas: [],
+    fornecedores_principais: [],
+    riscos: [],
+    indicadores: [],
+    responsavel: 'Eng. Sofia Martins',
+    zona: 'Porto',
+    estado: 'em_analise',
+    data_criacao: '2024-02-01T10:00:00Z',
+    data_atualizacao: '2024-02-01T10:00:00Z'
+  },
+  {
+    id: '3',
+    codigo: 'OBR-2024-003',
+    nome: 'Ponte Pedonal Rio',
+    cliente: 'Câmara Municipal',
+    localizacao: 'Coimbra, Portugal',
+    data_inicio: '2024-03-01',
+    data_fim_prevista: '2024-08-31',
+    valor_contrato: 800000,
+    valor_executado: 600000,
+    percentual_execucao: 75,
+    status: 'em_execucao',
+    tipo_obra: 'infraestrutura',
+    categoria: 'media',
+    responsavel_tecnico: 'Eng. António Costa',
+    coordenador_obra: 'Eng. Filipa Santos',
+    fiscal_obra: 'Eng. João Pereira',
+    engenheiro_responsavel: 'Eng. Maria Silva',
+    arquiteto: 'Arq. Carlos Mendes',
+    zonas: [],
+    fases: [],
+    equipas: [],
+    fornecedores_principais: [],
+    riscos: [],
+    indicadores: [],
+    responsavel: 'Eng. António Costa',
+    zona: 'Coimbra',
+    estado: 'aprovado',
+    data_criacao: '2024-03-01T08:00:00Z',
+    data_atualizacao: '2024-03-01T08:00:00Z'
+  }
+]
+
+export default function Obras() {
+  const [obras, setObras] = useState<Obra[]>(mockObras)
+  const [loading, setLoading] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+
+  const [editingObra, setEditingObra] = useState<Obra | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+
+  const handleCreate = () => {
+    setEditingObra(null)
+    setShowForm(true)
+  }
+
+  const handleEdit = (obra: Obra) => {
+    setEditingObra(obra)
+    setShowForm(true)
+  }
+
+  const handleFormSubmit = async (data: Obra) => {
+    try {
+      if (editingObra) {
+        const updatedObras = obras.map(o => o.id === editingObra.id ? { ...data, id: o.id } : o)
+        setObras(updatedObras)
+        toast.success('Obra atualizada com sucesso!')
+      } else {
+        const newObra = { ...data, id: Date.now().toString() }
+        setObras([...obras, newObra])
+        toast.success('Obra criada com sucesso!')
+      }
+      setShowForm(false)
+    } catch (error) {
+      console.error('Erro ao salvar obra:', error)
+      toast.error('Erro ao salvar obra')
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Tem certeza que deseja excluir esta obra?')) {
+      try {
+        setObras(obras.filter(o => o.id !== id))
+        toast.success('Obra excluída com sucesso!')
+      } catch (error) {
+        console.error('Erro ao excluir obra:', error)
+        toast.error('Erro ao excluir obra')
+      }
+    }
+  }
+
+  const filteredObras = obras.filter(obra => {
+    const matchesSearch = obra.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         obra.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         obra.cliente.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = !filterStatus || obra.status === filterStatus
+    return matchesSearch && matchesStatus
+  })
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'em_execucao': return <TrendingUp className="h-4 w-4 text-blue-600" />
+      case 'concluida': return <CheckCircle className="h-4 w-4 text-green-600" />
+      case 'paralisada': return <AlertTriangle className="h-4 w-4 text-yellow-600" />
+      case 'cancelada': return <X className="h-4 w-4 text-red-600" />
+      default: return <Clock className="h-4 w-4 text-gray-600" />
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'em_execucao': return 'bg-blue-100 text-blue-800'
+      case 'concluida': return 'bg-green-100 text-green-800'
+      case 'paralisada': return 'bg-yellow-100 text-yellow-800'
+      case 'cancelada': return 'bg-red-100 text-red-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'em_execucao': return 'Em Execução'
+      case 'concluida': return 'Concluída'
+      case 'paralisada': return 'Paralisada'
+      case 'cancelada': return 'Cancelada'
+      case 'planeamento': return 'Planeamento'
+      default: return status
+    }
+  }
+
+  const stats = {
+    total: obras.length,
+    em_execucao: obras.filter(o => o.status === 'em_execucao').length,
+    concluidas: obras.filter(o => o.status === 'concluida').length,
+    valor_total: obras.reduce((acc, o) => acc + o.valor_contrato, 0),
+    valor_executado: obras.reduce((acc, o) => acc + o.valor_executado, 0)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Gestão de Obras</h1>
+          <p className="text-gray-600">Controlo completo de projetos e obras</p>
+        </div>
+        <button 
+          className="btn btn-primary btn-md"
+          onClick={handleCreate}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Nova Obra
+        </button>
+      </div>
+
+      {/* Estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+        <div className="card">
+          <div className="card-content">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total de Obras</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+              </div>
+              <Building className="h-8 w-8 text-blue-500" />
+            </div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-content">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Em Execução</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.em_execucao}</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-blue-500" />
+            </div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-content">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Concluídas</p>
+                <p className="text-2xl font-bold text-green-600">{stats.concluidas}</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-500" />
+            </div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-content">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Valor Total</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(stats.valor_total)}
+                </p>
+              </div>
+              <Euro className="h-8 w-8 text-orange-500" />
+            </div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-content">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Executado</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(stats.valor_executado)}
+                </p>
+              </div>
+              <BarChart3 className="h-8 w-8 text-purple-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <div className="card">
+        <div className="card-content">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <input
+                  type="text"
+                  placeholder="Pesquisar obras..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div className="md:w-48">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Todos os status</option>
+                <option value="planeamento">Planeamento</option>
+                <option value="em_execucao">Em Execução</option>
+                <option value="paralisada">Paralisada</option>
+                <option value="concluida">Concluída</option>
+                <option value="cancelada">Cancelada</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Lista de Obras */}
+      <div className="card">
+        <div className="card-header">
+          <h3 className="card-title">Lista de Obras</h3>
+          <p className="card-description">
+            {filteredObras.length} obra(s) encontrada(s)
+          </p>
+        </div>
+        <div className="card-content">
+          {filteredObras.length === 0 ? (
+            <div className="text-center py-12">
+              <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">Nenhuma obra encontrada</p>
+              <button 
+                className="btn btn-primary btn-sm mt-4"
+                onClick={handleCreate}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Primeira Obra
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredObras.map((obra) => (
+                <div key={obra.id} className="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-4">
+                      <div className="p-3 bg-blue-100 rounded-lg">
+                        <Building className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h4 className="font-semibold text-gray-900">{obra.nome}</h4>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(obra.status)}`}>
+                            {getStatusText(obra.status)}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium">Código:</span>
+                            <span>{obra.codigo}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium">Cliente:</span>
+                            <span>{obra.cliente}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="h-4 w-4" />
+                            <span>{obra.localizacao}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="h-4 w-4" />
+                            <span>{new Date(obra.data_inicio).toLocaleDateString('pt-PT')}</span>
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700">Progresso</span>
+                            <span className="text-sm text-gray-600">{obra.percentual_execucao}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${obra.percentual_execucao}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                          <div className="flex items-center space-x-2">
+                            <Users className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-600">{obra.responsavel_tecnico}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Euro className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-600">
+                              {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(obra.valor_contrato)}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-gray-600 capitalize">{obra.tipo_obra} - {obra.categoria}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button 
+                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                        onClick={() => handleEdit(obra)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button 
+                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                        onClick={() => handleDelete(obra.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Modal do Formulário */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">
+                {editingObra ? 'Editar Obra' : 'Nova Obra'}
+              </h2>
+              <button 
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                onClick={() => setShowForm(false)}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <ObraForm 
+                initialData={editingObra || undefined}
+                onSubmit={handleFormSubmit}
+                onCancel={() => setShowForm(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+
+    </div>
+  )
+} 

@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Home, FileText, TestTube, ClipboardCheck, Package, Truck, AlertTriangle, BarChart3, FilePlus, Shield, Settings, Menu, X, ChevronDown, Search } from 'lucide-react'
+import { Home, FileText, TestTube, ClipboardCheck, Package, Truck, AlertTriangle, BarChart3, FilePlus, Shield, Settings, Menu, X, ChevronDown, Search, Building } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
 import { useState } from 'react'
 
 const menuItems = [
   { path: '/', icon: Home, label: 'Dashboard', description: 'Visão geral do projeto', color: 'from-blue-500 to-blue-600' },
+  { path: '/obras', icon: Building, label: 'Obras', description: 'Gestão de projetos e obras', color: 'from-slate-500 to-slate-600' },
   { path: '/documentos', icon: FileText, label: 'Documentos', description: 'Gestão de documentação', color: 'from-indigo-500 to-indigo-600' },
   { path: '/ensaios', icon: TestTube, label: 'Ensaios', description: 'Controlo de ensaios técnicos', color: 'from-emerald-500 to-emerald-600' },
   { path: '/checklists', icon: ClipboardCheck, label: 'Checklists', description: 'Inspeções e verificações', color: 'from-purple-500 to-purple-600' },
@@ -15,6 +16,7 @@ const menuItems = [
 ]
 
 const quickActions = [
+  { path: '/obras/nova', icon: Building, label: 'Nova Obra', color: 'from-slate-500 to-slate-600' },
   { path: '/documentos/novo', icon: FilePlus, label: 'Novo Documento', color: 'from-blue-500 to-blue-600' },
   { path: '/ensaios/novo', icon: TestTube, label: 'Registar Ensaio', color: 'from-emerald-500 to-emerald-600' },
   { path: '/checklists/novo', icon: ClipboardCheck, label: 'Criar Checklist', color: 'from-purple-500 to-purple-600' },

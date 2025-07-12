@@ -36,6 +36,13 @@ const menuItems = [
     color: 'from-blue-500 to-blue-600'
   },
   { 
+    path: '/obras', 
+    icon: Building, 
+    label: 'Obras',
+    description: 'Gestão de projetos e obras',
+    color: 'from-slate-500 to-slate-600'
+  },
+  { 
     path: '/documentos', 
     icon: FileText, 
     label: 'Documentos',
@@ -87,6 +94,12 @@ const menuItems = [
 ]
 
 const quickActions = [
+  { 
+    path: '/obras/nova', 
+    icon: Building, 
+    label: 'Nova Obra',
+    color: 'from-slate-500 to-slate-600'
+  },
   { 
     path: '/documentos/novo', 
     icon: FilePlus, 

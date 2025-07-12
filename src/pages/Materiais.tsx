@@ -1,15 +1,111 @@
-import { useState, useEffect } from 'react'
-import { Plus, Package, CheckCircle, XCircle, Edit, Trash2, X } from 'lucide-react'
-import { materiaisAPI } from '@/lib/pocketbase'
+import { useState, useEffect, useMemo } from 'react'
+import { 
+  Plus, 
+  Package, 
+  CheckCircle, 
+  Edit, 
+  Trash2, 
+  X, 
+  Search, 
+  Filter, 
+  Download, 
+  Printer, 
+  Calendar,
+  MapPin,
+  User,
+  AlertCircle,
+  Eye,
+  Clock
+} from 'lucide-react'
 import { MaterialRecord } from '@/lib/pocketbase'
 import toast from 'react-hot-toast'
 import MaterialForm from '@/components/forms/MaterialForm'
+import MaterialView from '@/components/MaterialView'
+
+// Mock data for demonstration - will be replaced with real API calls
+const mockMateriais: MaterialRecord[] = [
+  {
+    id: '1',
+    codigo: 'MAT-2024-001',
+    nome: 'Betão C30/37',
+    tipo: 'betao',
+    fornecedor_id: '1',
+    certificado_id: 'CERT-2024-001',
+    data_rececao: '2024-01-15',
+    quantidade: 50,
+    unidade: 'm³',
+    lote: 'L20240115-01',
+    responsavel: 'João Silva',
+    zona: 'Zona A - Fundações',
+    estado: 'aprovado',
+    observacoes: 'Betão de alta resistência para fundações',
+    created: '2024-01-15T10:00:00Z',
+    updated: '2024-01-15T10:00:00Z'
+  },
+  {
+    id: '2',
+    codigo: 'MAT-2024-002',
+    nome: 'Aço B500B Ø12',
+    tipo: 'aco',
+    fornecedor_id: '2',
+    certificado_id: 'CERT-2024-002',
+    data_rececao: '2024-01-16',
+    quantidade: 2000,
+    unidade: 'kg',
+    lote: 'L20240116-01',
+    responsavel: 'Maria Santos',
+    zona: 'Zona B - Pilares',
+    estado: 'em_analise',
+    observacoes: 'Aço para armaduras de pilares',
+    created: '2024-01-16T09:00:00Z',
+    updated: '2024-01-16T09:00:00Z'
+  },
+  {
+    id: '3',
+    codigo: 'MAT-2024-003',
+    nome: 'Agregado 0/20',
+    tipo: 'agregado',
+    fornecedor_id: '3',
+    certificado_id: 'CERT-2024-003',
+    data_rececao: '2024-01-17',
+    quantidade: 100,
+    unidade: 'm³',
+    lote: 'L20240117-01',
+    responsavel: 'Pedro Costa',
+    zona: 'Armazém Central',
+    estado: 'pendente',
+    observacoes: 'Agregado para betão estrutural',
+    created: '2024-01-17T14:00:00Z',
+    updated: '2024-01-17T14:00:00Z'
+  }
+]
+
+interface Filtros {
+  search: string
+  tipo: string
+  estado: string
+  zona: string
+  fornecedor: string
+  dataInicio: string
+  dataFim: string
+}
 
 export default function Materiais() {
   const [materiais, setMateriais] = useState<MaterialRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingMaterial, setEditingMaterial] = useState<MaterialRecord | null>(null)
+  const [viewingMaterial, setViewingMaterial] = useState<MaterialRecord | null>(null)
+  const [showFilters, setShowFilters] = useState(false)
+  const [filtros, setFiltros] = useState<Filtros>({
+    search: '',
+    tipo: '',
+    estado: '',
+    zona: '',
+    fornecedor: '',
+    dataInicio: '',
+    dataFim: ''
+  })
 
   useEffect(() => {
     loadMateriais()
@@ -18,8 +114,9 @@ export default function Materiais() {
   const loadMateriais = async () => {
     try {
       setLoading(true)
-      const data = await materiaisAPI.getAll()
-      setMateriais(data)
+      // Simular carregamento da API
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      setMateriais(mockMateriais)
     } catch (error) {
       console.error('Erro ao carregar materiais:', error)
       toast.error('Erro ao carregar materiais')
@@ -27,6 +124,50 @@ export default function Materiais() {
       setLoading(false)
     }
   }
+
+  // Filtros e pesquisa
+  const materiaisFiltrados = useMemo(() => {
+    return materiais.filter(material => {
+      const matchSearch = !filtros.search || 
+        material.codigo.toLowerCase().includes(filtros.search.toLowerCase()) ||
+        material.nome.toLowerCase().includes(filtros.search.toLowerCase()) ||
+        material.lote.toLowerCase().includes(filtros.search.toLowerCase())
+      
+      const matchTipo = !filtros.tipo || material.tipo === filtros.tipo
+      const matchEstado = !filtros.estado || material.estado === filtros.estado
+      const matchZona = !filtros.zona || material.zona === filtros.zona
+      const matchFornecedor = !filtros.fornecedor || material.fornecedor_id === filtros.fornecedor
+      
+      const matchData = !filtros.dataInicio || !filtros.dataFim || 
+        (material.data_rececao >= filtros.dataInicio && material.data_rececao <= filtros.dataFim)
+      
+      return matchSearch && matchTipo && matchEstado && matchZona && matchFornecedor && matchData
+    })
+  }, [materiais, filtros])
+
+  // Estatísticas
+  const stats = useMemo(() => {
+    const total = materiais.length
+    const aprovados = materiais.filter(m => m.estado === 'aprovado').length
+    const pendentes = materiais.filter(m => m.estado === 'pendente').length
+    const emAnalise = materiais.filter(m => m.estado === 'em_analise').length
+    const reprovados = materiais.filter(m => m.estado === 'reprovado').length
+    const concluidos = materiais.filter(m => m.estado === 'concluido').length
+    
+    const totalQuantidade = materiais.reduce((sum, m) => sum + m.quantidade, 0)
+    const valorEstimado = totalQuantidade * 150 // Valor estimado por unidade
+    
+    return {
+      total,
+      aprovados,
+      pendentes,
+      emAnalise,
+      reprovados,
+      concluidos,
+      totalQuantidade,
+      valorEstimado
+    }
+  }, [materiais])
 
   const handleCreate = () => {
     setEditingMaterial(null)
@@ -38,17 +179,32 @@ export default function Materiais() {
     setShowForm(true)
   }
 
+  const handleView = (material: MaterialRecord) => {
+    setViewingMaterial(material)
+  }
+
   const handleFormSubmit = async (data: any) => {
     try {
       if (editingMaterial) {
-        await materiaisAPI.update(editingMaterial.id, data)
+        // Simular atualização
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        setMateriais(prev => prev.map(m => 
+          m.id === editingMaterial.id ? { ...m, ...data, updated: new Date().toISOString() } : m
+        ))
         toast.success('Material atualizado com sucesso!')
       } else {
-        await materiaisAPI.create(data)
+        // Simular criação
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        const newMaterial: MaterialRecord = {
+          id: Date.now().toString(),
+          ...data,
+          created: new Date().toISOString(),
+          updated: new Date().toISOString()
+        }
+        setMateriais(prev => [...prev, newMaterial])
         toast.success('Material criado com sucesso!')
       }
       setShowForm(false)
-      loadMateriais()
     } catch (error) {
       console.error('Erro ao salvar material:', error)
       toast.error('Erro ao salvar material')
@@ -58,13 +214,160 @@ export default function Materiais() {
   const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir este material?')) {
       try {
-        await materiaisAPI.delete(id)
+        // Simular exclusão
+        await new Promise(resolve => setTimeout(resolve, 500))
+        setMateriais(prev => prev.filter(m => m.id !== id))
         toast.success('Material excluído com sucesso!')
-        loadMateriais()
       } catch (error) {
         console.error('Erro ao excluir material:', error)
         toast.error('Erro ao excluir material')
       }
+    }
+  }
+
+  const handleExport = () => {
+    const csvContent = generateCSV(materiaisFiltrados)
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `materiais_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success('Relatório exportado com sucesso!')
+  }
+
+  const handlePrint = () => {
+    const printContent = generatePrintContent(materiaisFiltrados)
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write(printContent)
+      printWindow.document.close()
+      printWindow.print()
+    }
+    toast.success('Relatório enviado para impressão!')
+  }
+
+  const generateCSV = (materiais: MaterialRecord[]) => {
+    const headers = ['Código', 'Nome', 'Tipo', 'Fornecedor', 'Data Receção', 'Quantidade', 'Unidade', 'Lote', 'Estado', 'Zona', 'Responsável']
+    const rows = materiais.map(m => [
+      m.codigo,
+      m.nome,
+      m.tipo,
+      m.fornecedor_id,
+      m.data_rececao,
+      m.quantidade,
+      m.unidade,
+      m.lote,
+      m.estado,
+      m.zona,
+      m.responsavel
+    ])
+    
+    return [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
+  }
+
+  const generatePrintContent = (materiais: MaterialRecord[]) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Relatório de Materiais</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .stats { display: flex; justify-content: space-between; margin-bottom: 20px; }
+            .stat { text-align: center; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Relatório de Materiais</h1>
+            <p>Data: ${new Date().toLocaleDateString('pt-PT')}</p>
+            <p>Total: ${materiais.length} materiais</p>
+          </div>
+          
+          <div class="stats">
+            <div class="stat">
+              <h3>Aprovados</h3>
+              <p>${stats.aprovados}</p>
+            </div>
+            <div class="stat">
+              <h3>Pendentes</h3>
+              <p>${stats.pendentes}</p>
+            </div>
+            <div class="stat">
+              <h3>Em Análise</h3>
+              <p>${stats.emAnalise}</p>
+            </div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Quantidade</th>
+                <th>Estado</th>
+                <th>Zona</th>
+                <th>Responsável</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${materiais.map(m => `
+                <tr>
+                  <td>${m.codigo}</td>
+                  <td>${m.nome}</td>
+                  <td>${m.tipo}</td>
+                  <td>${m.quantidade} ${m.unidade}</td>
+                  <td>${m.estado}</td>
+                  <td>${m.zona}</td>
+                  <td>${m.responsavel}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `
+  }
+
+  const clearFilters = () => {
+    setFiltros({
+      search: '',
+      tipo: '',
+      estado: '',
+      zona: '',
+      fornecedor: '',
+      dataInicio: '',
+      dataFim: ''
+    })
+  }
+
+  const getEstadoColor = (estado: string) => {
+    switch (estado) {
+      case 'aprovado': return 'text-green-600 bg-green-100'
+      case 'pendente': return 'text-yellow-600 bg-yellow-100'
+      case 'em_analise': return 'text-blue-600 bg-blue-100'
+      case 'reprovado': return 'text-red-600 bg-red-100'
+      case 'concluido': return 'text-gray-600 bg-gray-100'
+      default: return 'text-gray-600 bg-gray-100'
+    }
+  }
+
+  const getTipoIcon = (tipo: string) => {
+    switch (tipo) {
+      case 'betao': return <Package className="h-5 w-5 text-gray-600" />
+      case 'aco': return <Package className="h-5 w-5 text-blue-600" />
+      case 'agregado': return <Package className="h-5 w-5 text-yellow-600" />
+      case 'cimento': return <Package className="h-5 w-5 text-gray-800" />
+      default: return <Package className="h-5 w-5 text-gray-600" />
     }
   }
 
@@ -78,114 +381,302 @@ export default function Materiais() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Gestão de Materiais</h1>
           <p className="text-gray-600">Controlo de materiais e stocks</p>
         </div>
-        <button 
-          className="btn btn-primary btn-md"
-          onClick={handleCreate}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Material
-        </button>
+        <div className="flex items-center space-x-3">
+          <button 
+            className="btn btn-outline btn-md"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filtros
+          </button>
+          <button 
+            className="btn btn-outline btn-md"
+            onClick={handleExport}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Exportar
+          </button>
+          <button 
+            className="btn btn-outline btn-md"
+            onClick={handlePrint}
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            Imprimir
+          </button>
+          <button 
+            className="btn btn-primary btn-md"
+            onClick={handleCreate}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Material
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Filtros */}
+      {showFilters && (
+        <div className="card">
+          <div className="card-header">
+            <h3 className="card-title">Filtros</h3>
+            <button 
+              className="btn btn-outline btn-sm"
+              onClick={clearFilters}
+            >
+              Limpar Filtros
+            </button>
+          </div>
+          <div className="card-content">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Pesquisar
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Código, nome, lote..."
+                    value={filtros.search}
+                    onChange={(e) => setFiltros(prev => ({ ...prev, search: e.target.value }))}
+                    className="input pl-10"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo
+                </label>
+                <select
+                  value={filtros.tipo}
+                  onChange={(e) => setFiltros(prev => ({ ...prev, tipo: e.target.value }))}
+                  className="select"
+                >
+                  <option value="">Todos os tipos</option>
+                  <option value="betao">Betão</option>
+                  <option value="aco">Aço</option>
+                  <option value="agregado">Agregado</option>
+                  <option value="cimento">Cimento</option>
+                  <option value="outro">Outro</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Estado
+                </label>
+                <select
+                  value={filtros.estado}
+                  onChange={(e) => setFiltros(prev => ({ ...prev, estado: e.target.value }))}
+                  className="select"
+                >
+                  <option value="">Todos os estados</option>
+                  <option value="pendente">Pendente</option>
+                  <option value="em_analise">Em Análise</option>
+                  <option value="aprovado">Aprovado</option>
+                  <option value="reprovado">Reprovado</option>
+                  <option value="concluido">Concluído</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Zona
+                </label>
+                <select
+                  value={filtros.zona}
+                  onChange={(e) => setFiltros(prev => ({ ...prev, zona: e.target.value }))}
+                  className="select"
+                >
+                  <option value="">Todas as zonas</option>
+                  <option value="Zona A - Fundações">Zona A - Fundações</option>
+                  <option value="Zona B - Pilares">Zona B - Pilares</option>
+                  <option value="Zona C - Lajes">Zona C - Lajes</option>
+                  <option value="Zona D - Estrutura">Zona D - Estrutura</option>
+                  <option value="Armazém Central">Armazém Central</option>
+                  <option value="Laboratório">Laboratório</option>
+                  <option value="Escritório">Escritório</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Data Início
+                </label>
+                <input
+                  type="date"
+                  value={filtros.dataInicio}
+                  onChange={(e) => setFiltros(prev => ({ ...prev, dataInicio: e.target.value }))}
+                  className="input"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Data Fim
+                </label>
+                <input
+                  type="date"
+                  value={filtros.dataFim}
+                  onChange={(e) => setFiltros(prev => ({ ...prev, dataFim: e.target.value }))}
+                  className="input"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="card">
           <div className="card-content">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total</p>
-                <p className="text-2xl font-bold text-gray-900">{materiais.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-xs text-gray-500">{stats.totalQuantidade} unidades</p>
               </div>
               <Package className="h-8 w-8 text-blue-500" />
             </div>
           </div>
         </div>
+        
         <div className="card">
           <div className="card-content">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Aprovados</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {materiais.filter(m => m.estado === 'aprovado').length}
+                <p className="text-2xl font-bold text-green-600">{stats.aprovados}</p>
+                <p className="text-xs text-gray-500">
+                  {stats.total > 0 ? ((stats.aprovados / stats.total) * 100).toFixed(1) : 0}%
                 </p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
           </div>
         </div>
+        
         <div className="card">
           <div className="card-content">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pendentes</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {materiais.filter(m => m.estado === 'pendente').length}
+                <p className="text-2xl font-bold text-yellow-600">{stats.pendentes}</p>
+                <p className="text-xs text-gray-500">
+                  {stats.total > 0 ? ((stats.pendentes / stats.total) * 100).toFixed(1) : 0}%
                 </p>
               </div>
-              <XCircle className="h-8 w-8 text-yellow-500" />
+              <Clock className="h-8 w-8 text-yellow-500" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="card">
+          <div className="card-content">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Em Análise</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.emAnalise}</p>
+                <p className="text-xs text-gray-500">
+                  {stats.total > 0 ? ((stats.emAnalise / stats.total) * 100).toFixed(1) : 0}%
+                </p>
+              </div>
+              <AlertCircle className="h-8 w-8 text-blue-500" />
             </div>
           </div>
         </div>
       </div>
 
+      {/* Lista de Materiais */}
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">Lista de Materiais</h3>
           <p className="card-description">
-            {materiais.length} material(is) encontrado(s)
+            {materiaisFiltrados.length} de {materiais.length} material(is) encontrado(s)
           </p>
         </div>
         <div className="card-content">
-          {materiais.length === 0 ? (
+          {materiaisFiltrados.length === 0 ? (
             <div className="text-center py-12">
               <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Nenhum material encontrado</p>
-              <button 
-                className="btn btn-primary btn-sm mt-4"
-                onClick={handleCreate}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Primeiro Material
-              </button>
+              <p className="text-gray-500">
+                {materiais.length === 0 ? 'Nenhum material encontrado' : 'Nenhum material corresponde aos filtros aplicados'}
+              </p>
+              {materiais.length === 0 && (
+                <button 
+                  className="btn btn-primary btn-sm mt-4"
+                  onClick={handleCreate}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar Primeiro Material
+                </button>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
-              {materiais.map((material) => (
+              {materiaisFiltrados.map((material) => (
                 <div key={material.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="p-2 bg-orange-100 rounded-lg">
-                        <Package className="h-6 w-6 text-orange-600" />
+                        {getTipoIcon(material.tipo)}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1">
                           <h4 className="font-medium text-gray-900">{material.codigo}</h4>
-                          <span className={`badge ${material.estado === 'aprovado' ? 'badge-success' : 'badge-warning'}`}>
-                            {material.estado}
+                          <span className={`badge ${getEstadoColor(material.estado)}`}>
+                            {material.estado.replace('_', ' ')}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 mb-2">
                           {material.nome} - {material.tipo}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {material.quantidade} {material.unidade} - Lote: {material.lote}
-                        </p>
+                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                          <span className="flex items-center">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {new Date(material.data_rececao).toLocaleDateString('pt-PT')}
+                          </span>
+                          <span className="flex items-center">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            {material.zona}
+                          </span>
+                          <span className="flex items-center">
+                            <User className="h-3 w-3 mr-1" />
+                            {material.responsavel}
+                          </span>
+                          <span className="flex items-center">
+                            <Package className="h-3 w-3 mr-1" />
+                            {material.quantidade} {material.unidade}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <button 
                         className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                        onClick={() => handleView(material)}
+                        title="Visualizar"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button 
+                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                         onClick={() => handleEdit(material)}
+                        title="Editar"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button 
                         className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                         onClick={() => handleDelete(material.id)}
+                        title="Excluir"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -232,10 +723,19 @@ export default function Materiais() {
                 } : undefined}
                 onSubmit={handleFormSubmit}
                 onCancel={() => setShowForm(false)}
+                isEditing={!!editingMaterial}
               />
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de Visualização */}
+      {viewingMaterial && (
+        <MaterialView 
+          material={viewingMaterial}
+          onClose={() => setViewingMaterial(null)}
+        />
       )}
     </div>
   )

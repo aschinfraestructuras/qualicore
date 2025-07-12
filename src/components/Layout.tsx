@@ -8,10 +8,10 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 flex flex-col">
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 flex flex-col overflow-x-hidden">
       <Navbar />
       <Header />
-      <main className="flex-1 pt-20 px-8 pb-8 w-full max-w-7xl mx-auto" style={{ marginTop: '160px' }}>
+      <main className="flex-1 pt-20 px-4 pb-8 w-full" style={{ marginTop: '160px' }}>
         {children}
       </main>
     </div>

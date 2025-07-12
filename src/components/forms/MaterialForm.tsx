@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -13,19 +13,14 @@ import {
   X, 
   FileText,
   Building,
-  Hash,
-  Scale,
-  Barcode,
-  CheckCircle,
-  XCircle,
-  Truck
+  Scale
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const materialSchema = z.object({
   codigo: z.string().min(1, 'Código é obrigatório'),
   nome: z.string().min(1, 'Nome é obrigatório'),
-  tipo: z.enum(['betao', 'aco', 'agregado', 'cimento', 'outro']),
+  tipo: z.string().min(1, 'Tipo é obrigatório'),
   fornecedor_id: z.string().optional(),
   certificado_id: z.string().optional(),
   data_rececao: z.string().min(1, 'Data de receção é obrigatória'),
@@ -88,6 +83,12 @@ const fornecedores = [
 export default function MaterialForm({ onSubmit, onCancel, initialData, isEditing = false }: MaterialFormProps) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showCustomTipo, setShowCustomTipo] = useState(false)
+  const [showCustomFornecedor, setShowCustomFornecedor] = useState(false)
+  const [showCustomZona, setShowCustomZona] = useState(false)
+  const [customTipo, setCustomTipo] = useState('')
+  const [customFornecedor, setCustomFornecedor] = useState('')
+  const [customZona, setCustomZona] = useState('')
 
   const {
     register,
@@ -104,9 +105,40 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
     }
   })
 
+  // Inicializar campos customizados se há dados iniciais
+  useEffect(() => {
+    if (initialData) {
+      // Verificar se o tipo é customizado (não está na lista padrão)
+      const isCustomTipo = !materialTypes.find(t => t.value === initialData.tipo)
+      if (isCustomTipo && initialData.tipo) {
+        setShowCustomTipo(true)
+        setCustomTipo(initialData.tipo)
+        setValue('tipo', 'outro')
+      }
+      
+      // Verificar se o fornecedor é customizado
+      const isCustomFornecedor = !fornecedores.find(f => f.id === initialData.fornecedor_id)
+      if (isCustomFornecedor && initialData.fornecedor_id) {
+        setShowCustomFornecedor(true)
+        setCustomFornecedor(initialData.fornecedor_id)
+        setValue('fornecedor_id', 'outro')
+      }
+      
+      // Verificar se a zona é customizada
+      const isCustomZona = !zonas.find(z => z === initialData.zona)
+      if (isCustomZona && initialData.zona) {
+        setShowCustomZona(true)
+        setCustomZona(initialData.zona)
+        setValue('zona', 'outro')
+      }
+    }
+  }, [initialData, setValue])
+
   const watchedTipo = watch('tipo')
   const watchedEstado = watch('estado')
   const watchedQuantidade = watch('quantidade')
+  const watchedFornecedor = watch('fornecedor_id')
+  const watchedZona = watch('zona')
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
@@ -124,11 +156,29 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
       // Simular delay de submissão
       await new Promise(resolve => setTimeout(resolve, 1000))
       
+      // Processar dados customizados
+      const processedData = { ...data }
+      
+      // Se tipo é "outro" e há um tipo customizado, usar o customizado
+      if (data.tipo === 'outro' && customTipo.trim()) {
+        processedData.tipo = customTipo.trim()
+      }
+      
+      // Se fornecedor é "outro" e há um fornecedor customizado, usar o customizado
+      if (data.fornecedor_id === 'outro' && customFornecedor.trim()) {
+        processedData.fornecedor_id = customFornecedor.trim()
+      }
+      
+      // Se zona é "outro" e há uma zona customizada, usar a customizada
+      if (data.zona === 'outro' && customZona.trim()) {
+        processedData.zona = customZona.trim()
+      }
+      
       // Aqui seria feita a chamada para a API
-      console.log('Dados do material:', data)
+      console.log('Dados do material:', processedData)
       console.log('Ficheiros:', uploadedFiles)
       
-      onSubmit(data)
+      onSubmit(processedData)
       toast.success(isEditing ? 'Material atualizado com sucesso!' : 'Material registado com sucesso!')
     } catch (error) {
       toast.error('Erro ao salvar material')
@@ -236,6 +286,10 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
           </label>
           <select
             {...register('tipo')}
+            onChange={(e) => {
+              setValue('tipo', e.target.value)
+              setShowCustomTipo(e.target.value === 'outro')
+            }}
             className={`select ${errors.tipo ? 'border-danger-500' : ''}`}
           >
             {materialTypes.map(type => (
@@ -244,6 +298,22 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
               </option>
             ))}
           </select>
+          
+          {showCustomTipo && (
+            <div className="mt-2">
+              <input
+                type="text"
+                placeholder="Especifique o tipo de material..."
+                value={customTipo}
+                onChange={(e) => setCustomTipo(e.target.value)}
+                className="input"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Digite o tipo específico do material
+              </p>
+            </div>
+          )}
+          
           {errors.tipo && (
             <p className="mt-1 text-sm text-danger-600 flex items-center">
               <AlertCircle className="h-4 w-4 mr-1" />
@@ -261,6 +331,10 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
             <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <select
               {...register('fornecedor_id')}
+              onChange={(e) => {
+                setValue('fornecedor_id', e.target.value)
+                setShowCustomFornecedor(e.target.value === 'outro')
+              }}
               className="select pl-10"
             >
               <option value="">Selecione um fornecedor</option>
@@ -269,8 +343,24 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
                   {fornecedor.nome}
                 </option>
               ))}
+              <option value="outro">Outro (especificar)</option>
             </select>
           </div>
+          
+          {showCustomFornecedor && (
+            <div className="mt-2">
+              <input
+                type="text"
+                placeholder="Nome do fornecedor..."
+                value={customFornecedor}
+                onChange={(e) => setCustomFornecedor(e.target.value)}
+                className="input"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Digite o nome do fornecedor
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Data de Receção */}
@@ -446,6 +536,10 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
             <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <select
               {...register('zona')}
+              onChange={(e) => {
+                setValue('zona', e.target.value)
+                setShowCustomZona(e.target.value === 'outro')
+              }}
               className={`select pl-10 ${errors.zona ? 'border-danger-500' : ''}`}
             >
               <option value="">Selecione uma zona</option>
@@ -454,8 +548,25 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
                   {zona}
                 </option>
               ))}
+              <option value="outro">Outra (especificar)</option>
             </select>
           </div>
+          
+          {showCustomZona && (
+            <div className="mt-2">
+              <input
+                type="text"
+                placeholder="Nome da zona..."
+                value={customZona}
+                onChange={(e) => setCustomZona(e.target.value)}
+                className="input"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Digite o nome da zona ou localização
+              </p>
+            </div>
+          )}
+          
           {errors.zona && (
             <p className="mt-1 text-sm text-danger-600 flex items-center">
               <AlertCircle className="h-4 w-4 mr-1" />
@@ -536,8 +647,8 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">Tipo:</span>
-            <span className={`badge ${materialTypes.find(t => t.value === watchedTipo)?.color}`}>
-              {materialTypes.find(t => t.value === watchedTipo)?.label}
+            <span className={`badge ${materialTypes.find(t => t.value === watchedTipo)?.color || 'bg-gray-100 text-gray-700'}`}>
+              {watchedTipo === 'outro' && customTipo ? customTipo : materialTypes.find(t => t.value === watchedTipo)?.label || watchedTipo}
             </span>
           </div>
           <div className="flex items-center space-x-2">
@@ -552,6 +663,22 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
               {watchedQuantidade} {watch('unidade')}
             </span>
           </div>
+          {watchedFornecedor && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Fornecedor:</span>
+              <span className="badge bg-blue-100 text-blue-700">
+                {watchedFornecedor === 'outro' && customFornecedor ? customFornecedor : fornecedores.find(f => f.id === watchedFornecedor)?.nome || watchedFornecedor}
+              </span>
+            </div>
+          )}
+          {watchedZona && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Zona:</span>
+              <span className="badge bg-purple-100 text-purple-700">
+                {watchedZona === 'outro' && customZona ? customZona : watchedZona}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

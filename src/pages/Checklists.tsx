@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react'
-import { Plus, ClipboardCheck, CheckCircle, Edit, Trash2, X } from 'lucide-react'
+import { Plus, ClipboardCheck, CheckCircle, Edit, Trash2, X, FileText } from 'lucide-react'
 import { checklistsAPI } from '@/lib/pocketbase'
 import { ChecklistRecord } from '@/lib/pocketbase'
 import toast from 'react-hot-toast'
 import ChecklistForm from '@/components/forms/ChecklistForm'
+import RelatorioChecklist from '@/components/RelatorioChecklist'
 
 export default function Checklists() {
   const [checklists, setChecklists] = useState<ChecklistRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingChecklist, setEditingChecklist] = useState<ChecklistRecord | null>(null)
+  const [showRelatorio, setShowRelatorio] = useState(false)
 
   useEffect(() => {
     loadChecklists()
@@ -83,13 +85,22 @@ export default function Checklists() {
           <h1 className="text-2xl font-bold text-gray-900">Checklists de Inspeção</h1>
           <p className="text-gray-600">Gestão de checklists e inspeções</p>
         </div>
-        <button 
-          className="btn btn-primary btn-md"
-          onClick={handleCreate}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Checklist
-        </button>
+        <div className="flex gap-3">
+          <button 
+            className="btn btn-secondary btn-md"
+            onClick={() => setShowRelatorio(true)}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Relatório
+          </button>
+          <button 
+            className="btn btn-primary btn-md"
+            onClick={handleCreate}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Checklist
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -203,15 +214,11 @@ export default function Checklists() {
             <div className="p-6">
               <ChecklistForm 
                 initialData={editingChecklist ? {
-                  codigo: editingChecklist.codigo,
-                  tipo: editingChecklist.tipo as any,
-                  itens: editingChecklist.itens,
-                  percentual_conformidade: editingChecklist.percentual_conformidade,
-                  data_inspecao: editingChecklist.data_inspecao,
-                  inspetor: editingChecklist.inspetor,
+                  obra: editingChecklist.codigo,
+                  titulo: editingChecklist.tipo,
+                  status: editingChecklist.estado as any,
                   responsavel: editingChecklist.responsavel,
                   zona: editingChecklist.zona,
-                  estado: editingChecklist.estado as any,
                   observacoes: editingChecklist.observacoes
                 } : undefined}
                 onSubmit={handleFormSubmit}
@@ -220,6 +227,27 @@ export default function Checklists() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de Relatório */}
+      {showRelatorio && (
+        <RelatorioChecklist
+          checklists={checklists.map(c => ({
+            id: c.id,
+            codigo: c.codigo,
+            titulo: c.tipo,
+            obra: c.codigo,
+            status: c.estado as any,
+            responsavel: c.responsavel,
+            zona: c.zona,
+            estado: c.estado as any,
+            data_criacao: c.data_inspecao,
+            data_atualizacao: c.data_inspecao,
+            pontos: [],
+            observacoes: c.observacoes
+          }))}
+          onClose={() => setShowRelatorio(false)}
+        />
       )}
     </div>
   )

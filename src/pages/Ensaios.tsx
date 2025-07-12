@@ -9,17 +9,20 @@ import {
   TestTube,
   CheckCircle,
   XCircle,
-  X
+  X,
+  FileText
 } from 'lucide-react'
 import { ensaiosAPI } from '@/lib/pocketbase'
 import { EnsaioRecord } from '@/lib/pocketbase'
 import toast from 'react-hot-toast'
 import EnsaioForm from '@/components/forms/EnsaioForm'
+import RelatorioExport from '@/components/RelatorioExport'
 
 export default function Ensaios() {
   const [ensaios, setEnsaios] = useState<EnsaioRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [showRelatorio, setShowRelatorio] = useState(false)
   const [editingEnsaio, setEditingEnsaio] = useState<EnsaioRecord | null>(null)
 
   useEffect(() => {
@@ -94,13 +97,22 @@ export default function Ensaios() {
           <h1 className="text-2xl font-bold text-gray-900">Ensaios Técnicos</h1>
           <p className="text-gray-600">Gestão de ensaios laboratoriais e testes</p>
         </div>
-        <button 
-          className="btn btn-primary btn-md"
-          onClick={handleCreate}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Ensaio
-        </button>
+        <div className="flex items-center space-x-3">
+          <button 
+            className="btn btn-secondary btn-md"
+            onClick={() => setShowRelatorio(true)}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Exportar Relatório
+          </button>
+          <button 
+            className="btn btn-primary btn-md"
+            onClick={handleCreate}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Ensaio
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -209,41 +221,37 @@ export default function Ensaios() {
         </div>
       </div>
 
-      {/* Modal do Formulário */}
+      {/* Modal de Relatório */}
+      {showRelatorio && (
+        <RelatorioExport
+          ensaios={ensaios}
+          onClose={() => setShowRelatorio(false)}
+        />
+      )}
+
+      {/* Modal de Formulário */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {editingEnsaio ? 'Editar Ensaio' : 'Novo Ensaio'}
-              </h2>
-              <button 
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                onClick={() => setShowForm(false)}
-              >
-                <X className="h-5 w-5" />
-              </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {editingEnsaio ? 'Editar Ensaio' : 'Novo Ensaio'}
+                </h2>
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
             </div>
             <div className="p-6">
-              <EnsaioForm 
-                initialData={editingEnsaio ? {
-                  codigo: editingEnsaio.codigo,
-                  tipo: editingEnsaio.tipo as any,
-                  material_id: editingEnsaio.material_id,
-                  resultado: editingEnsaio.resultado,
-                  valor_obtido: editingEnsaio.valor_obtido,
-                  valor_esperado: editingEnsaio.valor_esperado,
-                  unidade: editingEnsaio.unidade,
-                  laboratorio: editingEnsaio.laboratorio,
-                  data_ensaio: editingEnsaio.data_ensaio,
-                  conforme: editingEnsaio.conforme,
-                  responsavel: editingEnsaio.responsavel,
-                  zona: editingEnsaio.zona,
-                  estado: editingEnsaio.estado as any,
-                  observacoes: editingEnsaio.observacoes
-                } : undefined}
+              <EnsaioForm
                 onSubmit={handleFormSubmit}
                 onCancel={() => setShowForm(false)}
+                initialData={editingEnsaio || undefined}
+                isEditing={!!editingEnsaio}
               />
             </div>
           </div>

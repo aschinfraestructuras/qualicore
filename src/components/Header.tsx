@@ -1,15 +1,61 @@
 import { Bell, Menu, Search, Settings, User, LogOut, HelpCircle, Sun, Moon } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Modal from './Modal'
+import { useForm } from 'react-hook-form'
+import { User as UserType } from '@/types'
 
 export default function Header() {
-  const { sidebarOpen, toggleSidebar, notifications, user } = useAppStore()
+  const { sidebarOpen, toggleSidebar, notifications, user, setUser } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
+  const [showProfileModal, setShowProfileModal] = useState(false)
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const navigate = useNavigate();
   
   const unreadNotifications = notifications.filter(n => !n.lida).length
+
+  // Dark mode inicial: ler do localStorage ou preferências do sistema
+  useEffect(() => {
+    const saved = localStorage.getItem('theme')
+    if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark')
+      setDarkMode(true)
+    } else {
+      document.documentElement.classList.remove('dark')
+      setDarkMode(false)
+    }
+  }, [])
+
+  const toggleDarkMode = () => {
+    setDarkMode((prev) => {
+      const next = !prev
+      if (next) {
+        document.documentElement.classList.add('dark')
+        localStorage.setItem('theme', 'dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+        localStorage.setItem('theme', 'light')
+      }
+      return next
+    })
+  }
+
+  // Perfil editável
+  const { register, handleSubmit, setValue: setFormValue, reset } = useForm<UserType>({
+    defaultValues: user || { nome: '', email: '', perfil: 'qualidade', avatar: '' }
+  })
+  useEffect(() => {
+    if (user) reset(user)
+  }, [user, reset])
+  const handleProfileSave = (data: UserType) => {
+    setUser({ ...user, ...data })
+    setShowProfileModal(false)
+    localStorage.setItem('user', JSON.stringify({ ...user, ...data }))
+  }
 
   return (
     <header className="bg-white/80 backdrop-blur-sm shadow-soft border-b border-gray-200/60 fixed w-full z-30 left-0 top-0 h-20 flex items-center" style={{ top: '80px' }}>
@@ -42,14 +88,14 @@ export default function Header() {
         <div className="flex items-center space-x-4">
           {/* Dark mode toggle */}
           <button 
-            onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+            onClick={toggleDarkMode}
+            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title={darkMode ? 'Modo claro' : 'Modo escuro'}
           >
             {darkMode ? (
-              <Sun className="h-5 w-5 text-gray-600" />
+              <Sun className="h-5 w-5 text-gray-600 dark:text-gray-200" />
             ) : (
-              <Moon className="h-5 w-5 text-gray-600" />
+              <Moon className="h-5 w-5 text-gray-600 dark:text-gray-200" />
             )}
           </button>
 
@@ -134,16 +180,35 @@ export default function Header() {
                   <p className="text-xs text-gray-500">{user?.email || 'jose.antunes@qualicore.pt'}</p>
                 </div>
                 <div className="py-2">
-                  <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                  <button 
+                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      setShowProfileModal(true);
+                    }}
+                  >
                     <User className="h-4 w-4 mr-3 text-gray-500" />
                     Perfil
                   </button>
-                  <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                  <button 
+                    className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      setShowSettingsModal(true);
+                    }}
+                  >
                     <Settings className="h-4 w-4 mr-3 text-gray-500" />
                     Configurações
                   </button>
                   <div className="border-t border-gray-100 my-2" />
-                  <button className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                  <button 
+                    className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    onClick={() => {
+                      setUser(null);
+                      setShowUserMenu(false);
+                      navigate('/');
+                    }}
+                  >
                     <LogOut className="h-4 w-4 mr-3" />
                     Sair
                   </button>
@@ -164,6 +229,44 @@ export default function Header() {
           }}
         />
       )}
+
+      {/* Modal de Perfil Editável */}
+      <Modal isOpen={showProfileModal} onClose={() => setShowProfileModal(false)} title="Perfil do Utilizador">
+        <form className="space-y-4" onSubmit={handleSubmit(handleProfileSave)}>
+          <div>
+            <label className="block text-sm font-medium mb-1">Nome</label>
+            <input {...register('nome')} className="input" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Email</label>
+            <input {...register('email')} className="input" type="email" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Avatar (URL)</label>
+            <input {...register('avatar')} className="input" />
+          </div>
+          <div className="flex justify-end gap-2">
+            <button type="button" className="btn btn-secondary" onClick={() => setShowProfileModal(false)}>Cancelar</button>
+            <button type="submit" className="btn btn-primary">Guardar</button>
+          </div>
+        </form>
+      </Modal>
+      {/* Modal de Configurações */}
+      <Modal isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} title="Configurações">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-700 dark:text-gray-200">Modo Escuro</span>
+            <button
+              className={`btn btn-secondary ${darkMode ? 'bg-gray-900 text-white' : ''}`}
+              onClick={toggleDarkMode}
+              type="button"
+            >
+              {darkMode ? 'Desativar' : 'Ativar'}
+            </button>
+          </div>
+          {/* Outras preferências podem ser adicionadas aqui */}
+        </div>
+      </Modal>
     </header>
   )
 } 
