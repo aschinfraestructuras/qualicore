@@ -8,8 +8,37 @@ import {
   localNaoConformidadesAPI 
 } from './storage'
 
-// PocketBase client - conecta automaticamente ao servidor local
-export const pb = new PocketBase('http://127.0.0.1:8090')
+// Configuração para PocketBase online no Render
+const POCKETBASE_URL = import.meta.env.VITE_POCKETBASE_URL || 'https://qualicore-pocketbase.onrender.com'
+
+export const pb = new PocketBase(POCKETBASE_URL)
+
+// Configurar autenticação automática
+pb.authStore.onChange(() => {
+  // Salvar token no localStorage para persistir sessão
+  if (pb.authStore.isValid) {
+    localStorage.setItem('pocketbase_auth', JSON.stringify({
+      token: pb.authStore.token,
+      model: pb.authStore.model
+    }))
+  } else {
+    localStorage.removeItem('pocketbase_auth')
+  }
+})
+
+// Restaurar sessão ao carregar a página
+const savedAuth = localStorage.getItem('pocketbase_auth')
+if (savedAuth) {
+  try {
+    const { token, model } = JSON.parse(savedAuth)
+    pb.authStore.save(token, model)
+  } catch (error) {
+    console.error('Erro ao restaurar sessão:', error)
+    localStorage.removeItem('pocketbase_auth')
+  }
+}
+
+export default pb
 
 // Função para verificar se o PocketBase está disponível
 const isPocketBaseAvailable = async (): Promise<boolean> => {
