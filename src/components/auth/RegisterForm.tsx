@@ -42,19 +42,19 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
     }
   })
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (data: any) => {
+    // Garantir que todos os campos obrigatórios estão definidos
+    if (!data.email || !data.password || !data.nome || !data.perfil || !data.passwordConfirm) {
+      toast.error('Preencha todos os campos obrigatórios.');
+      return;
+    }
     setIsLoading(true)
     try {
       await authService.register(data)
       toast.success('Conta criada com sucesso!')
       onSuccess()
-    } catch (error) {
-      console.error('Erro no registro:', error)
-      setError('root', {
-        type: 'manual',
-        message: error instanceof Error ? error.message : 'Erro no registro'
-      })
-      toast.error('Falha no registro')
+    } catch (error: any) {
+      toast.error(error.message || 'Erro no registro')
     } finally {
       setIsLoading(false)
     }

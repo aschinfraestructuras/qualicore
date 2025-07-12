@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: qualicore-pocketbase
+    env: docker
+    plan: free
+    buildCommand: |
+      # Download PocketBase
+      wget https://github.com/pocketbase/pocketbase/releases/download/v0.22.6/pocketbase_0.22.6_linux_amd64.zip
+      unzip pocketbase_0.22.6_linux_amd64.zip
+      chmod +x pocketbase
+    startCommand: ./pocketbase serve --http 0.0.0.0:$PORT
+    envVars:
+      - key: POCKETBASE_ADMIN_EMAIL
+        value: admin@qualicore.pt
+      - key: POCKETBASE_ADMIN_PASSWORD
+        generateValue: true 

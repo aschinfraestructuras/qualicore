@@ -33,19 +33,19 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToRes
     resolver: zodResolver(loginSchema),
   })
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: any) => {
+    // Garantir que email e password estão definidos
+    if (!data.email || !data.password) {
+      toast.error('Preencha o email e a password.');
+      return;
+    }
     setIsLoading(true)
     try {
-      await authService.login(data)
-      toast.success('Login realizado com sucesso!')
+      await authService.login({ email: data.email, password: data.password })
+      toast.success('Login efetuado com sucesso!')
       onSuccess()
-    } catch (error) {
-      console.error('Erro no login:', error)
-      setError('root', {
-        type: 'manual',
-        message: error instanceof Error ? error.message : 'Erro no login'
-      })
-      toast.error('Falha na autenticação')
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao fazer login')
     } finally {
       setIsLoading(false)
     }
