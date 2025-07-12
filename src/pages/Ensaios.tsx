@@ -11,18 +11,18 @@ import {
   X,
   FileText
 } from 'lucide-react'
-import { ensaiosAPI } from '@/lib/pocketbase'
-import { EnsaioRecord } from '@/lib/pocketbase'
+import { ensaiosAPI } from '@/lib/data-api'
+import { Ensaio } from '@/lib/data-api'
 import toast from 'react-hot-toast'
 import EnsaioForm from '@/components/forms/EnsaioForm'
 import RelatorioExport from '@/components/RelatorioExport'
 
 export default function Ensaios() {
-  const [ensaios, setEnsaios] = useState<EnsaioRecord[]>([])
+  const [ensaios, setEnsaios] = useState<Ensaio[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [showRelatorio, setShowRelatorio] = useState(false)
-  const [editingEnsaio, setEditingEnsaio] = useState<EnsaioRecord | null>(null)
+  const [editingEnsaio, setEditingEnsaio] = useState<Ensaio | null>(null)
 
   useEffect(() => {
     loadEnsaios()
@@ -46,7 +46,7 @@ export default function Ensaios() {
     setShowForm(true)
   }
 
-  const handleEdit = (ensaio: EnsaioRecord) => {
+  const handleEdit = (ensaio: Ensaio) => {
     setEditingEnsaio(ensaio)
     setShowForm(true)
   }

@@ -1,73 +1,19 @@
-// Remover imports e funções não utilizadas
+// Sistema de armazenamento local como fallback quando PocketBase não está disponível
 
-// Chaves para LocalStorage
-const STORAGE_KEYS = {
-  DOCUMENTOS: 'qualicore_documentos',
-  ENSAIOS: 'qualicore_ensaios',
-  CHECKLISTS: 'qualicore_checklists',
-  MATERIAIS: 'qualicore_materiais',
-  FORNECEDORES: 'qualicore_fornecedores',
-  NAO_CONFORMIDADES: 'qualicore_nao_conformidades',
-  ANEXOS: 'qualicore_anexos',
-  SETTINGS: 'qualicore_settings'
+export interface LocalStorageData {
+  ensaios: any[]
+  documentos: any[]
+  checklists: any[]
+  materiais: any[]
+  fornecedores: any[]
+  nao_conformidades: any[]
+  rfis: any[]
 }
 
-// Funções utilitárias
-const generateId = () => Date.now().toString(36) + Math.random().toString(36).substr(2)
+const STORAGE_KEY = 'qualicore_data'
 
-const getCurrentTimestamp = () => new Date().toISOString()
-
-// Funções de armazenamento genéricas
-const getFromStorage = <T>(key: string, defaultValue: T[] = []): T[] => {
-  try {
-    const item = localStorage.getItem(key)
-    return item ? JSON.parse(item) : defaultValue
-  } catch (error) {
-    console.error(`Erro ao ler ${key}:`, error)
-    return defaultValue
-  }
-}
-
-const saveToStorage = <T>(key: string, data: T[]): void => {
-  try {
-    localStorage.setItem(key, JSON.stringify(data))
-  } catch (error) {
-    console.error(`Erro ao guardar ${key}:`, error)
-  }
-}
-
-// Dados iniciais para demonstração
-const initialData = {
-  documentos: [
-    {
-      id: '1',
-      codigo: 'DOC-001',
-      tipo: 'projeto',
-      versao: '1.0',
-      data_validade: '2024-12-31',
-      fornecedor_id: '1',
-      responsavel: 'João Silva',
-      zona: 'Zona A - Fundações',
-      estado: 'aprovado',
-      observacoes: 'Documento de projeto estrutural aprovado',
-      data_criacao: '2024-01-15T10:00:00Z',
-      data_atualizacao: '2024-01-15T10:00:00Z'
-    },
-    {
-      id: '2',
-      codigo: 'DOC-002',
-      tipo: 'especificacao',
-      versao: '2.1',
-      data_validade: '2024-06-30',
-      fornecedor_id: '2',
-      responsavel: 'Maria Santos',
-      zona: 'Zona B - Estrutura',
-      estado: 'em_analise',
-      observacoes: 'Especificações técnicas para betão armado',
-      data_criacao: '2024-01-20T14:30:00Z',
-      data_atualizacao: '2024-01-20T14:30:00Z'
-    }
-  ],
+// Inicializar dados padrão
+const defaultData: LocalStorageData = {
   ensaios: [
     {
       id: '1',
@@ -85,27 +31,24 @@ const initialData = {
       zona: 'Zona A - Fundações',
       estado: 'aprovado',
       observacoes: 'Ensaio de resistência à compressão',
-      data_criacao: '2024-01-18T09:00:00Z',
-      data_atualizacao: '2024-01-18T09:00:00Z'
-    },
+      created: new Date().toISOString(),
+      updated: new Date().toISOString()
+    }
+  ],
+  documentos: [
     {
-      id: '2',
-      codigo: 'ENS-002',
-      tipo: 'densidade',
-      material_id: '2',
-      resultado: 'Não Conforme',
-      valor_obtido: 2.1,
-      valor_esperado: 2.4,
-      unidade: 'g/cm³',
-      laboratorio: 'LabTec',
-      data_ensaio: '2024-01-19',
-      conforme: false,
-      responsavel: 'Maria Santos',
-      zona: 'Zona B - Estrutura',
-      estado: 'reprovado',
-      observacoes: 'Densidade abaixo do especificado',
-      data_criacao: '2024-01-19T11:00:00Z',
-      data_atualizacao: '2024-01-19T11:00:00Z'
+      id: '1',
+      codigo: 'DOC-001',
+      tipo: 'projeto',
+      versao: '1.0',
+      data_validade: '2024-12-31',
+      fornecedor_id: '1',
+      responsavel: 'João Silva',
+      zona: 'Zona A - Fundações',
+      estado: 'aprovado',
+      observacoes: 'Documento de projeto estrutural aprovado',
+      created: new Date().toISOString(),
+      updated: new Date().toISOString()
     }
   ],
   checklists: [
@@ -114,19 +57,19 @@ const initialData = {
       codigo: 'CHK-001',
       tipo: 'inspecao',
       itens: [
-        { id: '1', descricao: 'Verificar armaduras', conforme: true, observacoes: 'OK' },
-        { id: '2', descricao: 'Verificar cofragem', conforme: true, observacoes: 'OK' },
-        { id: '3', descricao: 'Verificar betão', conforme: false, observacoes: 'Falta cura' }
+        { item: 'Verificar equipamentos de segurança', obrigatorio: true },
+        { item: 'Inspecionar qualidade do betão', obrigatorio: true },
+        { item: 'Verificar limpeza do local', obrigatorio: false }
       ],
-      percentual_conformidade: 66.7,
+      percentual_conformidade: 95,
       data_inspecao: '2024-01-20',
-      inspetor: 'João Silva',
+      inspetor: 'Carlos Oliveira',
       responsavel: 'João Silva',
       zona: 'Zona A - Fundações',
-      estado: 'pendente',
-      observacoes: 'Necessita correções na cura do betão',
-      data_criacao: '2024-01-20T08:00:00Z',
-      data_atualizacao: '2024-01-20T08:00:00Z'
+      estado: 'aprovado',
+      observacoes: 'Inspeção diária de obra',
+      created: new Date().toISOString(),
+      updated: new Date().toISOString()
     }
   ],
   materiais: [
@@ -145,8 +88,8 @@ const initialData = {
       zona: 'Armazém Central',
       estado: 'aprovado',
       observacoes: 'Material conforme especificações',
-      data_criacao: '2024-01-10T10:00:00Z',
-      data_atualizacao: '2024-01-10T10:00:00Z'
+      created: new Date().toISOString(),
+      updated: new Date().toISOString()
     }
   ],
   fornecedores: [
@@ -158,19 +101,9 @@ const initialData = {
       telefone: '213456789',
       email: 'contacto@cimpor.pt',
       contacto: 'Eng. António Costa',
-      data_registo: '2024-01-01',
-      estado: 'ativo'
-    },
-    {
-      id: '2',
-      nome: 'Aços de Portugal',
-      nif: '500789123',
-      morada: 'Av. da Siderurgia, 456, Porto',
-      telefone: '225789123',
-      email: 'info@acoportugal.pt',
-      contacto: 'Dra. Ana Silva',
-      data_registo: '2024-01-05',
-      estado: 'ativo'
+      estado: 'ativo',
+      created: new Date().toISOString(),
+      updated: new Date().toISOString()
     }
   ],
   nao_conformidades: [
@@ -179,425 +112,355 @@ const initialData = {
       codigo: 'NC-001',
       tipo: 'material',
       severidade: 'media',
-      data_deteccao: '2024-01-19',
-      data_resolucao: null,
-      acao_corretiva: null,
-      responsavel_resolucao: null,
-      custo_estimado: 5000,
-      relacionado_ensaio_id: '2',
+      data_deteccao: '2024-01-15',
+      data_resolucao: '2024-01-18',
+      acao_corretiva: 'Material substituído por lote conforme',
+      responsavel_resolucao: 'João Silva',
+      custo_estimado: 2500,
+      relacionado_ensaio_id: '1',
       relacionado_material_id: '1',
-      responsavel: 'Maria Santos',
-      zona: 'Zona B - Estrutura',
-      estado: 'pendente',
-      observacoes: 'Densidade do agregado abaixo do especificado',
-      data_criacao: '2024-01-19T15:00:00Z',
-      data_atualizacao: '2024-01-19T15:00:00Z'
+      responsavel: 'João Silva',
+      zona: 'Zona A - Fundações',
+      estado: 'resolvido',
+      observacoes: 'Não conformidade resolvida com sucesso',
+      created: new Date().toISOString(),
+      updated: new Date().toISOString()
     }
   ],
-  anexos: [
+  rfis: [
     {
       id: '1',
-      nome: 'especificacao_betao.pdf',
-      tipo: 'application/pdf',
-      tamanho: 2048576,
-      url: 'data:application/pdf;base64,JVBERi0xLjQKJcOkw7zDtsO...',
-      data_upload: '2024-01-15T10:00:00Z',
-      entidade_id: '1',
-      entidade_tipo: 'documento'
+      numero: 'RFI-2024-001',
+      titulo: 'Dúvida sobre especificação de betão',
+      descricao: 'Qual a resistência mínima exigida para o betão da laje?',
+      solicitante: 'João Silva',
+      destinatario: 'Eng. Responsável',
+      data_solicitacao: '2024-01-15',
+      prioridade: 'alta',
+      status: 'pendente',
+      impacto_custo: 0,
+      impacto_prazo: 0,
+      observacoes: 'Pendente de resposta técnica',
+      created: new Date().toISOString(),
+      updated: new Date().toISOString()
     }
   ]
 }
 
-// Inicializar dados se não existirem
-const initializeData = () => {
-  const hasData = localStorage.getItem(STORAGE_KEYS.DOCUMENTOS)
-  if (!hasData) {
-    saveToStorage(STORAGE_KEYS.DOCUMENTOS, initialData.documentos)
-    saveToStorage(STORAGE_KEYS.ENSAIOS, initialData.ensaios)
-    saveToStorage(STORAGE_KEYS.CHECKLISTS, initialData.checklists)
-    saveToStorage(STORAGE_KEYS.MATERIAIS, initialData.materiais)
-    saveToStorage(STORAGE_KEYS.FORNECEDORES, initialData.fornecedores)
-    saveToStorage(STORAGE_KEYS.NAO_CONFORMIDADES, initialData.nao_conformidades)
-    saveToStorage(STORAGE_KEYS.ANEXOS, initialData.anexos)
+// Funções para gerir dados locais
+export const getLocalData = (): LocalStorageData => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      return JSON.parse(stored)
+    }
+    // Se não existir, inicializar com dados padrão
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData))
+    return defaultData
+  } catch (error) {
+    console.error('Erro ao carregar dados locais:', error)
+    return defaultData
   }
 }
 
-// API para Documentos
-export const documentosAPI = {
-  getAll: () => {
-    initializeData()
-    return getFromStorage<any>(STORAGE_KEYS.DOCUMENTOS)
+export const saveLocalData = (data: LocalStorageData): void => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  } catch (error) {
+    console.error('Erro ao salvar dados locais:', error)
+  }
+}
+
+export const updateLocalCollection = <T>(
+  collection: keyof LocalStorageData,
+  data: T[],
+  id: string,
+  updates: Partial<T>
+): T[] => {
+  return data.map(item => 
+    (item as any).id === id 
+      ? { ...item, ...updates, updated: new Date().toISOString() }
+      : item
+  )
+}
+
+export const addToLocalCollection = <T>(
+  collection: keyof LocalStorageData,
+  data: T[],
+  newItem: T
+): T[] => {
+  const itemWithId = {
+    ...newItem,
+    id: Date.now().toString(),
+    created: new Date().toISOString(),
+    updated: new Date().toISOString()
+  }
+  return [...data, itemWithId]
+}
+
+export const removeFromLocalCollection = <T>(
+  collection: keyof LocalStorageData,
+  data: T[],
+  id: string
+): T[] => {
+  return data.filter(item => (item as any).id !== id)
+}
+
+// API local para ensaios
+export const localEnsaiosAPI = {
+  getAll: async (): Promise<any[]> => {
+    const data = getLocalData()
+    return data.ensaios
   },
   
-  getById: (id: string) => {
-    const documentos = documentosAPI.getAll()
-    return documentos.find(d => d.id === id)
+  getById: async (id: string): Promise<any | null> => {
+    const data = getLocalData()
+    return data.ensaios.find(e => e.id === id) || null
   },
   
-  create: (documento: any) => {
-    const documentos = documentosAPI.getAll()
-    const newDocumento = {
-      ...documento,
-      id: generateId(),
-      data_criacao: getCurrentTimestamp(),
-      data_atualizacao: getCurrentTimestamp()
-    }
-    documentos.push(newDocumento)
-    saveToStorage(STORAGE_KEYS.DOCUMENTOS, documentos)
-    return newDocumento
+  create: async (newEnsaio: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedEnsaios = addToLocalCollection('ensaios', data.ensaios, newEnsaio)
+    const newData = { ...data, ensaios: updatedEnsaios }
+    saveLocalData(newData)
+    return updatedEnsaios[updatedEnsaios.length - 1]
   },
   
-  update: (id: string, updates: any) => {
-    const documentos = documentosAPI.getAll()
-    const index = documentos.findIndex(d => d.id === id)
-    if (index === -1) return null
-    
-    documentos[index] = {
-      ...documentos[index],
-      ...updates,
-      data_atualizacao: getCurrentTimestamp()
-    }
-    saveToStorage(STORAGE_KEYS.DOCUMENTOS, documentos)
-    return documentos[index]
+  update: async (id: string, updates: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedEnsaios = updateLocalCollection('ensaios', data.ensaios, id, updates)
+    const newData = { ...data, ensaios: updatedEnsaios }
+    saveLocalData(newData)
+    return updatedEnsaios.find(e => e.id === id) || null
   },
   
-  delete: (id: string) => {
-    const documentos = documentosAPI.getAll()
-    const filtered = documentos.filter(d => d.id !== id)
-    if (filtered.length === documentos.length) return false
-    
-    saveToStorage(STORAGE_KEYS.DOCUMENTOS, filtered)
+  delete: async (id: string): Promise<boolean> => {
+    const data = getLocalData()
+    const updatedEnsaios = removeFromLocalCollection('ensaios', data.ensaios, id)
+    const newData = { ...data, ensaios: updatedEnsaios }
+    saveLocalData(newData)
     return true
   }
 }
 
-// API para Ensaios
-export const ensaiosAPI = {
-  getAll: () => {
-    initializeData()
-    return getFromStorage<any>(STORAGE_KEYS.ENSAIOS)
+// API local para documentos
+export const localDocumentosAPI = {
+  getAll: async (): Promise<any[]> => {
+    const data = getLocalData()
+    return data.documentos
   },
   
-  getById: (id: string) => {
-    const ensaios = ensaiosAPI.getAll()
-    return ensaios.find(e => e.id === id)
+  getById: async (id: string): Promise<any | null> => {
+    const data = getLocalData()
+    return data.documentos.find(d => d.id === id) || null
   },
   
-  create: (ensaio: any) => {
-    const ensaios = ensaiosAPI.getAll()
-    const newEnsaio = {
-      ...ensaio,
-      id: generateId(),
-      data_criacao: getCurrentTimestamp(),
-      data_atualizacao: getCurrentTimestamp()
-    }
-    ensaios.push(newEnsaio)
-    saveToStorage(STORAGE_KEYS.ENSAIOS, ensaios)
-    return newEnsaio
+  create: async (newDocumento: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedDocumentos = addToLocalCollection('documentos', data.documentos, newDocumento)
+    const newData = { ...data, documentos: updatedDocumentos }
+    saveLocalData(newData)
+    return updatedDocumentos[updatedDocumentos.length - 1]
   },
   
-  update: (id: string, updates: any) => {
-    const ensaios = ensaiosAPI.getAll()
-    const index = ensaios.findIndex(e => e.id === id)
-    if (index === -1) return null
-    
-    ensaios[index] = {
-      ...ensaios[index],
-      ...updates,
-      data_atualizacao: getCurrentTimestamp()
-    }
-    saveToStorage(STORAGE_KEYS.ENSAIOS, ensaios)
-    return ensaios[index]
+  update: async (id: string, updates: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedDocumentos = updateLocalCollection('documentos', data.documentos, id, updates)
+    const newData = { ...data, documentos: updatedDocumentos }
+    saveLocalData(newData)
+    return updatedDocumentos.find(d => d.id === id) || null
   },
   
-  delete: (id: string) => {
-    const ensaios = ensaiosAPI.getAll()
-    const filtered = ensaios.filter(e => e.id !== id)
-    if (filtered.length === ensaios.length) return false
-    
-    saveToStorage(STORAGE_KEYS.ENSAIOS, filtered)
+  delete: async (id: string): Promise<boolean> => {
+    const data = getLocalData()
+    const updatedDocumentos = removeFromLocalCollection('documentos', data.documentos, id)
+    const newData = { ...data, documentos: updatedDocumentos }
+    saveLocalData(newData)
     return true
   }
 }
 
-// API para Checklists
-export const checklistsAPI = {
-  getAll: () => {
-    initializeData()
-    return getFromStorage<any>(STORAGE_KEYS.CHECKLISTS)
+// API local para checklists
+export const localChecklistsAPI = {
+  getAll: async (): Promise<any[]> => {
+    const data = getLocalData()
+    return data.checklists
   },
   
-  getById: (id: string) => {
-    const checklists = checklistsAPI.getAll()
-    return checklists.find(c => c.id === id)
+  getById: async (id: string): Promise<any | null> => {
+    const data = getLocalData()
+    return data.checklists.find(c => c.id === id) || null
   },
   
-  create: (checklist: any) => {
-    const checklists = checklistsAPI.getAll()
-    const newChecklist = {
-      ...checklist,
-      id: generateId(),
-      data_criacao: getCurrentTimestamp(),
-      data_atualizacao: getCurrentTimestamp()
-    }
-    checklists.push(newChecklist)
-    saveToStorage(STORAGE_KEYS.CHECKLISTS, checklists)
-    return newChecklist
+  create: async (newChecklist: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedChecklists = addToLocalCollection('checklists', data.checklists, newChecklist)
+    const newData = { ...data, checklists: updatedChecklists }
+    saveLocalData(newData)
+    return updatedChecklists[updatedChecklists.length - 1]
   },
   
-  update: (id: string, updates: any) => {
-    const checklists = checklistsAPI.getAll()
-    const index = checklists.findIndex(c => c.id === id)
-    if (index === -1) return null
-    
-    checklists[index] = {
-      ...checklists[index],
-      ...updates,
-      data_atualizacao: getCurrentTimestamp()
-    }
-    saveToStorage(STORAGE_KEYS.CHECKLISTS, checklists)
-    return checklists[index]
+  update: async (id: string, updates: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedChecklists = updateLocalCollection('checklists', data.checklists, id, updates)
+    const newData = { ...data, checklists: updatedChecklists }
+    saveLocalData(newData)
+    return updatedChecklists.find(c => c.id === id) || null
   },
   
-  delete: (id: string) => {
-    const checklists = checklistsAPI.getAll()
-    const filtered = checklists.filter(c => c.id !== id)
-    if (filtered.length === checklists.length) return false
-    
-    saveToStorage(STORAGE_KEYS.CHECKLISTS, filtered)
+  delete: async (id: string): Promise<boolean> => {
+    const data = getLocalData()
+    const updatedChecklists = removeFromLocalCollection('checklists', data.checklists, id)
+    const newData = { ...data, checklists: updatedChecklists }
+    saveLocalData(newData)
     return true
   }
 }
 
-// API para Materiais
-export const materiaisAPI = {
-  getAll: () => {
-    initializeData()
-    return getFromStorage<any>(STORAGE_KEYS.MATERIAIS)
+// API local para materiais
+export const localMateriaisAPI = {
+  getAll: async (): Promise<any[]> => {
+    const data = getLocalData()
+    return data.materiais
   },
   
-  getById: (id: string) => {
-    const materiais = materiaisAPI.getAll()
-    return materiais.find(m => m.id === id)
+  getById: async (id: string): Promise<any | null> => {
+    const data = getLocalData()
+    return data.materiais.find(m => m.id === id) || null
   },
   
-  create: (material: any) => {
-    const materiais = materiaisAPI.getAll()
-    const newMaterial = {
-      ...material,
-      id: generateId(),
-      data_criacao: getCurrentTimestamp(),
-      data_atualizacao: getCurrentTimestamp()
-    }
-    materiais.push(newMaterial)
-    saveToStorage(STORAGE_KEYS.MATERIAIS, materiais)
-    return newMaterial
+  create: async (newMaterial: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedMateriais = addToLocalCollection('materiais', data.materiais, newMaterial)
+    const newData = { ...data, materiais: updatedMateriais }
+    saveLocalData(newData)
+    return updatedMateriais[updatedMateriais.length - 1]
   },
   
-  update: (id: string, updates: any) => {
-    const materiais = materiaisAPI.getAll()
-    const index = materiais.findIndex(m => m.id === id)
-    if (index === -1) return null
-    
-    materiais[index] = {
-      ...materiais[index],
-      ...updates,
-      data_atualizacao: getCurrentTimestamp()
-    }
-    saveToStorage(STORAGE_KEYS.MATERIAIS, materiais)
-    return materiais[index]
+  update: async (id: string, updates: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedMateriais = updateLocalCollection('materiais', data.materiais, id, updates)
+    const newData = { ...data, materiais: updatedMateriais }
+    saveLocalData(newData)
+    return updatedMateriais.find(m => m.id === id) || null
   },
   
-  delete: (id: string) => {
-    const materiais = materiaisAPI.getAll()
-    const filtered = materiais.filter(m => m.id !== id)
-    if (filtered.length === materiais.length) return false
-    
-    saveToStorage(STORAGE_KEYS.MATERIAIS, filtered)
+  delete: async (id: string): Promise<boolean> => {
+    const data = getLocalData()
+    const updatedMateriais = removeFromLocalCollection('materiais', data.materiais, id)
+    const newData = { ...data, materiais: updatedMateriais }
+    saveLocalData(newData)
     return true
   }
 }
 
-// API para Fornecedores
-export const fornecedoresAPI = {
-  getAll: () => {
-    initializeData()
-    return getFromStorage<any>(STORAGE_KEYS.FORNECEDORES)
+// API local para fornecedores
+export const localFornecedoresAPI = {
+  getAll: async (): Promise<any[]> => {
+    const data = getLocalData()
+    return data.fornecedores
   },
   
-  getById: (id: string) => {
-    const fornecedores = fornecedoresAPI.getAll()
-    return fornecedores.find(f => f.id === id)
+  getById: async (id: string): Promise<any | null> => {
+    const data = getLocalData()
+    return data.fornecedores.find(f => f.id === id) || null
   },
   
-  create: (fornecedor: any) => {
-    const fornecedores = fornecedoresAPI.getAll()
-    const newFornecedor = {
-      ...fornecedor,
-      id: generateId(),
-      data_registo: getCurrentTimestamp()
-    }
-    fornecedores.push(newFornecedor)
-    saveToStorage(STORAGE_KEYS.FORNECEDORES, fornecedores)
-    return newFornecedor
+  create: async (newFornecedor: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedFornecedores = addToLocalCollection('fornecedores', data.fornecedores, newFornecedor)
+    const newData = { ...data, fornecedores: updatedFornecedores }
+    saveLocalData(newData)
+    return updatedFornecedores[updatedFornecedores.length - 1]
   },
   
-  update: (id: string, updates: any) => {
-    const fornecedores = fornecedoresAPI.getAll()
-    const index = fornecedores.findIndex(f => f.id === id)
-    if (index === -1) return null
-    
-    fornecedores[index] = {
-      ...fornecedores[index],
-      ...updates
-    }
-    saveToStorage(STORAGE_KEYS.FORNECEDORES, fornecedores)
-    return fornecedores[index]
+  update: async (id: string, updates: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedFornecedores = updateLocalCollection('fornecedores', data.fornecedores, id, updates)
+    const newData = { ...data, fornecedores: updatedFornecedores }
+    saveLocalData(newData)
+    return updatedFornecedores.find(f => f.id === id) || null
   },
   
-  delete: (id: string) => {
-    const fornecedores = fornecedoresAPI.getAll()
-    const filtered = fornecedores.filter(f => f.id !== id)
-    if (filtered.length === fornecedores.length) return false
-    
-    saveToStorage(STORAGE_KEYS.FORNECEDORES, filtered)
+  delete: async (id: string): Promise<boolean> => {
+    const data = getLocalData()
+    const updatedFornecedores = removeFromLocalCollection('fornecedores', data.fornecedores, id)
+    const newData = { ...data, fornecedores: updatedFornecedores }
+    saveLocalData(newData)
     return true
   }
 }
 
-// API para Não Conformidades
-export const naoConformidadesAPI = {
-  getAll: () => {
-    initializeData()
-    return getFromStorage<any>(STORAGE_KEYS.NAO_CONFORMIDADES)
+// API local para não conformidades
+export const localNaoConformidadesAPI = {
+  getAll: async (): Promise<any[]> => {
+    const data = getLocalData()
+    return data.nao_conformidades
   },
   
-  getById: (id: string) => {
-    const ncs = naoConformidadesAPI.getAll()
-    return ncs.find(nc => nc.id === id)
+  getById: async (id: string): Promise<any | null> => {
+    const data = getLocalData()
+    return data.nao_conformidades.find(nc => nc.id === id) || null
   },
   
-  create: (nc: any) => {
-    const ncs = naoConformidadesAPI.getAll()
-    const newNC = {
-      ...nc,
-      id: generateId(),
-      data_criacao: getCurrentTimestamp(),
-      data_atualizacao: getCurrentTimestamp()
-    }
-    ncs.push(newNC)
-    saveToStorage(STORAGE_KEYS.NAO_CONFORMIDADES, ncs)
-    return newNC
+  create: async (newNaoConformidade: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedNaoConformidades = addToLocalCollection('nao_conformidades', data.nao_conformidades, newNaoConformidade)
+    const newData = { ...data, nao_conformidades: updatedNaoConformidades }
+    saveLocalData(newData)
+    return updatedNaoConformidades[updatedNaoConformidades.length - 1]
   },
   
-  update: (id: string, updates: any) => {
-    const ncs = naoConformidadesAPI.getAll()
-    const index = ncs.findIndex(nc => nc.id === id)
-    if (index === -1) return null
-    
-    ncs[index] = {
-      ...ncs[index],
-      ...updates,
-      data_atualizacao: getCurrentTimestamp()
-    }
-    saveToStorage(STORAGE_KEYS.NAO_CONFORMIDADES, ncs)
-    return ncs[index]
+  update: async (id: string, updates: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedNaoConformidades = updateLocalCollection('nao_conformidades', data.nao_conformidades, id, updates)
+    const newData = { ...data, nao_conformidades: updatedNaoConformidades }
+    saveLocalData(newData)
+    return updatedNaoConformidades.find(nc => nc.id === id) || null
   },
   
-  delete: (id: string) => {
-    const ncs = naoConformidadesAPI.getAll()
-    const filtered = ncs.filter(nc => nc.id !== id)
-    if (filtered.length === ncs.length) return false
-    
-    saveToStorage(STORAGE_KEYS.NAO_CONFORMIDADES, filtered)
+  delete: async (id: string): Promise<boolean> => {
+    const data = getLocalData()
+    const updatedNaoConformidades = removeFromLocalCollection('nao_conformidades', data.nao_conformidades, id)
+    const newData = { ...data, nao_conformidades: updatedNaoConformidades }
+    saveLocalData(newData)
     return true
   }
 }
 
-// API para Anexos
-export const anexosAPI = {
-  getAll: () => {
-    initializeData()
-    return getFromStorage<any>(STORAGE_KEYS.ANEXOS)
+// API local para RFIs
+export const localRFIsAPI = {
+  getAll: async (): Promise<any[]> => {
+    const data = getLocalData()
+    return data.rfis
   },
   
-  getByEntity: (entidadeId: string, entidadeTipo: string) => {
-    const anexos = anexosAPI.getAll()
-    return anexos.filter(a => a.entidade_id === entidadeId && a.entidade_tipo === entidadeTipo)
+  getById: async (id: string): Promise<any | null> => {
+    const data = getLocalData()
+    return data.rfis.find(rfi => rfi.id === id) || null
   },
   
-  create: (anexo: any) => {
-    const anexos = anexosAPI.getAll()
-    const newAnexo = {
-      ...anexo,
-      id: generateId(),
-      data_upload: getCurrentTimestamp()
-    }
-    anexos.push(newAnexo)
-    saveToStorage(STORAGE_KEYS.ANEXOS, anexos)
-    return newAnexo
+  create: async (newRFI: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedRFIs = addToLocalCollection('rfis', data.rfis, newRFI)
+    const newData = { ...data, rfis: updatedRFIs }
+    saveLocalData(newData)
+    return updatedRFIs[updatedRFIs.length - 1]
   },
   
-  delete: (id: string) => {
-    const anexos = anexosAPI.getAll()
-    const filtered = anexos.filter(a => a.id !== id)
-    if (filtered.length === anexos.length) return false
-    
-    saveToStorage(STORAGE_KEYS.ANEXOS, filtered)
+  update: async (id: string, updates: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedRFIs = updateLocalCollection('rfis', data.rfis, id, updates)
+    const newData = { ...data, rfis: updatedRFIs }
+    saveLocalData(newData)
+    return updatedRFIs.find(rfi => rfi.id === id) || null
+  },
+  
+  delete: async (id: string): Promise<boolean> => {
+    const data = getLocalData()
+    const updatedRFIs = removeFromLocalCollection('rfis', data.rfis, id)
+    const newData = { ...data, rfis: updatedRFIs }
+    saveLocalData(newData)
     return true
   }
-}
-
-// Funções de exportação/importação
-export const exportData = () => {
-  const data = {
-    documentos: documentosAPI.getAll(),
-    ensaios: ensaiosAPI.getAll(),
-    checklists: checklistsAPI.getAll(),
-    materiais: materiaisAPI.getAll(),
-    fornecedores: fornecedoresAPI.getAll(),
-    nao_conformidades: naoConformidadesAPI.getAll(),
-    anexos: anexosAPI.getAll(),
-    exportDate: new Date().toISOString()
-  }
-  
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `qualicore_backup_${new Date().toISOString().split('T')[0]}.json`
-  a.click()
-  URL.revokeObjectURL(url)
-}
-
-export const importData = (file: File): Promise<boolean> => {
-  return new Promise((resolve) => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target?.result as string)
-        
-        if (data.documentos) saveToStorage(STORAGE_KEYS.DOCUMENTOS, data.documentos)
-        if (data.ensaios) saveToStorage(STORAGE_KEYS.ENSAIOS, data.ensaios)
-        if (data.checklists) saveToStorage(STORAGE_KEYS.CHECKLISTS, data.checklists)
-        if (data.materiais) saveToStorage(STORAGE_KEYS.MATERIAIS, data.materiais)
-        if (data.fornecedores) saveToStorage(STORAGE_KEYS.FORNECEDORES, data.fornecedores)
-        if (data.nao_conformidades) saveToStorage(STORAGE_KEYS.NAO_CONFORMIDADES, data.nao_conformidades)
-        if (data.anexos) saveToStorage(STORAGE_KEYS.ANEXOS, data.anexos)
-        
-        resolve(true)
-      } catch (error) {
-        console.error('Erro ao importar dados:', error)
-        resolve(false)
-      }
-    }
-    reader.readAsText(file)
-  })
-}
-
-// Limpar todos os dados
-export const clearAllData = () => {
-  Object.values(STORAGE_KEYS).forEach(key => {
-    localStorage.removeItem(key)
-  })
 } 

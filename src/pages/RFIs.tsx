@@ -1,61 +1,35 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { HelpCircle, Plus, Search, Filter, FileText, X, CheckCircle, Clock, AlertTriangle } from 'lucide-react'
 import RFIForm from '../components/forms/RFIForm'
 import { RFI } from '../types'
 import Modal from '../components/Modal'
-
-const mockRFIs: RFI[] = [
-  {
-    id: '1',
-    codigo: 'RFI-2024-001',
-    numero: 'RFI-2024-001',
-    titulo: 'Dúvida sobre especificação de betão',
-    descricao: 'Qual a resistência mínima exigida para o betão da laje?',
-    solicitante: 'João Silva',
-    destinatario: 'Eng. Responsável',
-    data_solicitacao: '2024-06-01',
-    prioridade: 'alta',
-    status: 'pendente',
-    resposta: '',
-    impacto_custo: 0,
-    impacto_prazo: 0,
-    observacoes: '',
-    timeline: [],
-    data_criacao: '2024-06-01',
-    data_atualizacao: '2024-06-01',
-    responsavel: 'João Silva',
-    zona: 'Zona A',
-    estado: 'pendente',
-  },
-  {
-    id: '2',
-    codigo: 'RFI-2024-002',
-    numero: 'RFI-2024-002',
-    titulo: 'Solicitação de detalhe construtivo',
-    descricao: 'Favor enviar detalhe do encontro entre pilar e viga.',
-    solicitante: 'Ana Costa',
-    destinatario: 'Projetista',
-    data_solicitacao: '2024-06-02',
-    prioridade: 'media',
-    status: 'em_analise',
-    resposta: '',
-    impacto_custo: 0,
-    impacto_prazo: 0,
-    observacoes: '',
-    timeline: [],
-    data_criacao: '2024-06-02',
-    data_atualizacao: '2024-06-02',
-    responsavel: 'Ana Costa',
-    zona: 'Zona B',
-    estado: 'em_analise',
-  }
-]
+import { localRFIsAPI } from '../lib/storage'
+import toast from 'react-hot-toast'
 
 export default function RFIs() {
-  const [rfis, setRFIs] = useState<RFI[]>(mockRFIs)
+  const [rfis, setRFIs] = useState<RFI[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingRFI, setEditingRFI] = useState<RFI | null>(null)
+
+  // Carregar RFIs
+  useEffect(() => {
+    loadRFIs()
+  }, [])
+
+  const loadRFIs = async () => {
+    try {
+      setLoading(true)
+      const data = await localRFIsAPI.getAll()
+      setRFIs(data)
+    } catch (error) {
+      toast.error('Erro ao carregar RFIs')
+      console.error('Erro ao carregar RFIs:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredRFIs = rfis.filter(rfi =>
     rfi.titulo.toLowerCase().includes(search.toLowerCase()) ||
@@ -73,13 +47,42 @@ export default function RFIs() {
     setShowForm(true)
   }
 
-  const handleSubmit = (data: RFI) => {
-    if (editingRFI) {
-      setRFIs(rfis.map(r => r.id === editingRFI.id ? { ...data, id: editingRFI.id } : r))
-    } else {
-      setRFIs([{ ...data, id: Date.now().toString() }, ...rfis])
+  const handleSubmit = async (data: any) => {
+    try {
+      if (editingRFI) {
+        await localRFIsAPI.update(editingRFI.id, data)
+        toast.success('RFI atualizado com sucesso!')
+      } else {
+        await localRFIsAPI.create(data)
+        toast.success('RFI criado com sucesso!')
+      }
+      await loadRFIs()
+      setShowForm(false)
+    } catch (error) {
+      toast.error('Erro ao salvar RFI')
+      console.error('Erro ao salvar RFI:', error)
     }
-    setShowForm(false)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Tem certeza que deseja eliminar este RFI?')) {
+      try {
+        await localRFIsAPI.delete(id)
+        toast.success('RFI eliminado com sucesso!')
+        await loadRFIs()
+      } catch (error) {
+        toast.error('Erro ao eliminar RFI')
+        console.error('Erro ao eliminar RFI:', error)
+      }
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    )
   }
 
   return (
@@ -109,7 +112,8 @@ export default function RFIs() {
           />
         </div>
       </div>
-      <div className="overflow-x-auto rounded-xl shadow bg-white">
+      
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-blue-50">
             <tr>
@@ -123,7 +127,7 @@ export default function RFIs() {
               <th className="px-4 py-3 text-right text-xs font-semibold text-blue-700">Ações</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-200">
             {filteredRFIs.length === 0 && (
               <tr>
                 <td colSpan={8} className="text-center py-8 text-gray-400">Nenhum RFI encontrado.</td>
@@ -144,6 +148,7 @@ export default function RFIs() {
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button onClick={() => handleEdit(rfi)} className="btn btn-xs btn-outline mr-2">Editar</button>
+                  <button onClick={() => handleDelete(rfi.id)} className="btn btn-xs btn-danger">Eliminar</button>
                 </td>
               </tr>
             ))}

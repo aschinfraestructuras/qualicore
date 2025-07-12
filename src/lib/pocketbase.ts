@@ -1,7 +1,26 @@
 import PocketBase from 'pocketbase'
+import { 
+  localEnsaiosAPI, 
+  localDocumentosAPI, 
+  localChecklistsAPI, 
+  localMateriaisAPI, 
+  localFornecedoresAPI, 
+  localNaoConformidadesAPI 
+} from './storage'
 
 // PocketBase client - conecta automaticamente ao servidor local
 export const pb = new PocketBase('http://127.0.0.1:8090')
+
+// Função para verificar se o PocketBase está disponível
+const isPocketBaseAvailable = async (): Promise<boolean> => {
+  try {
+    await pb.health.check()
+    return true
+  } catch (error) {
+    console.log('PocketBase não disponível, usando localStorage')
+    return false
+  }
+}
 
 // Tipos para as coleções do PocketBase
 export interface DocumentoRecord {
@@ -169,51 +188,76 @@ export const documentosAPI = {
 export const ensaiosAPI = {
   getAll: async (): Promise<EnsaioRecord[]> => {
     try {
-      const records = await pb.collection('ensaios').getFullList<EnsaioRecord>()
-      return records
+      const isAvailable = await isPocketBaseAvailable()
+      if (isAvailable) {
+        const records = await pb.collection('ensaios').getFullList<EnsaioRecord>()
+        return records
+      } else {
+        return await localEnsaiosAPI.getAll()
+      }
     } catch (error) {
       console.error('Erro ao buscar ensaios:', error)
-      return []
+      return await localEnsaiosAPI.getAll()
     }
   },
   
   getById: async (id: string): Promise<EnsaioRecord | null> => {
     try {
-      const record = await pb.collection('ensaios').getOne<EnsaioRecord>(id)
-      return record
+      const isAvailable = await isPocketBaseAvailable()
+      if (isAvailable) {
+        const record = await pb.collection('ensaios').getOne<EnsaioRecord>(id)
+        return record
+      } else {
+        return await localEnsaiosAPI.getById(id)
+      }
     } catch (error) {
       console.error('Erro ao buscar ensaio:', error)
-      return null
+      return await localEnsaiosAPI.getById(id)
     }
   },
   
   create: async (data: Omit<EnsaioRecord, 'id' | 'created' | 'updated'>): Promise<EnsaioRecord | null> => {
     try {
-      const record = await pb.collection('ensaios').create<EnsaioRecord>(data)
-      return record
+      const isAvailable = await isPocketBaseAvailable()
+      if (isAvailable) {
+        const record = await pb.collection('ensaios').create<EnsaioRecord>(data)
+        return record
+      } else {
+        return await localEnsaiosAPI.create(data)
+      }
     } catch (error) {
       console.error('Erro ao criar ensaio:', error)
-      return null
+      return await localEnsaiosAPI.create(data)
     }
   },
   
   update: async (id: string, data: Partial<EnsaioRecord>): Promise<EnsaioRecord | null> => {
     try {
-      const record = await pb.collection('ensaios').update<EnsaioRecord>(id, data)
-      return record
+      const isAvailable = await isPocketBaseAvailable()
+      if (isAvailable) {
+        const record = await pb.collection('ensaios').update<EnsaioRecord>(id, data)
+        return record
+      } else {
+        return await localEnsaiosAPI.update(id, data)
+      }
     } catch (error) {
       console.error('Erro ao atualizar ensaio:', error)
-      return null
+      return await localEnsaiosAPI.update(id, data)
     }
   },
   
   delete: async (id: string): Promise<boolean> => {
     try {
-      await pb.collection('ensaios').delete(id)
-      return true
+      const isAvailable = await isPocketBaseAvailable()
+      if (isAvailable) {
+        await pb.collection('ensaios').delete(id)
+        return true
+      } else {
+        return await localEnsaiosAPI.delete(id)
+      }
     } catch (error) {
       console.error('Erro ao deletar ensaio:', error)
-      return false
+      return await localEnsaiosAPI.delete(id)
     }
   }
 }
