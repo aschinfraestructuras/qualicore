@@ -23,12 +23,20 @@ export default function Landing() {
         </div>
         <h2 className="text-2xl md:text-3xl font-bold text-blue-800 mb-2 text-center">Gestão da Qualidade para Construção Civil</h2>
         <p className="text-lg text-blue-700 mb-8 text-center max-w-xl">Modernize o controlo de qualidade da sua obra com tecnologia de ponta, formulários inteligentes e dashboards em tempo real.</p>
-        <button
-          className="btn btn-primary btn-lg text-lg px-8 py-3 shadow-glow hover:scale-105 transition-all"
-          onClick={() => navigate('/dashboard')}
-        >
-          Entrar no Sistema
-        </button>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button
+            className="btn btn-primary btn-lg text-lg px-8 py-3 shadow-glow hover:scale-105 transition-all"
+            onClick={() => navigate('/login')}
+          >
+            Entrar no Sistema
+          </button>
+          <button
+            className="btn btn-outline btn-lg text-lg px-8 py-3 hover:scale-105 transition-all"
+            onClick={() => navigate('/dashboard')}
+          >
+            Ver Demo
+          </button>
+        </div>
         <div className="mt-12 text-blue-900/80 text-sm font-medium flex flex-col items-center">
           <span>Desenvolvido por</span>
           <span className="text-lg font-bold tracking-wide">José Antunes</span>

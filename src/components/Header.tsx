@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom'
 import Modal from './Modal'
 import { useForm } from 'react-hook-form'
 import { User as UserType } from '@/types'
+import { authService } from '@/lib/auth'
+import toast from 'react-hot-toast'
 
 export default function Header() {
   const { toggleSidebar, notifications, user, setUser } = useAppStore()
@@ -56,6 +58,17 @@ export default function Header() {
     setUser({ ...user, ...data })
     setShowProfileModal(false)
     localStorage.setItem('user', JSON.stringify({ ...user, ...data }))
+  }
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout()
+      navigate('/login')
+      toast.success('Logout realizado com sucesso!')
+    } catch (error) {
+      console.error('Erro no logout:', error)
+      toast.error('Erro ao fazer logout')
+    }
   }
 
   return (
@@ -209,9 +222,8 @@ export default function Header() {
                   <button 
                     className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     onClick={() => {
-                      setUser(null);
+                      handleLogout();
                       setShowUserMenu(false);
-                      navigate('/');
                     }}
                   >
                     <LogOut className="h-4 w-4 mr-3" />
