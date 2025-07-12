@@ -17,14 +17,75 @@ import toast from 'react-hot-toast'
 
 const documentoSchema = z.object({
   codigo: z.string().min(1, 'Código é obrigatório'),
-  tipo: z.enum(['projeto', 'especificacao', 'relatorio', 'certificado', 'outro']),
+  tipo: z.enum(['projeto', 'especificacao', 'relatorio', 'certificado', 'rfi', 'procedimento', 'plano_ensaio', 'plano_qualidade', 'manual', 'instrucao_trabalho', 'formulario', 'registro', 'outro']),
+  tipo_outro: z.string().optional(),
   versao: z.string().min(1, 'Versão é obrigatória'),
   data_validade: z.string().optional(),
+  data_aprovacao: z.string().optional(),
+  data_revisao: z.string().optional(),
   responsavel: z.string().min(1, 'Responsável é obrigatório'),
   zona: z.string().min(1, 'Zona é obrigatória'),
+  zona_outro: z.string().optional(),
   estado: z.enum(['pendente', 'em_analise', 'aprovado', 'reprovado', 'concluido']),
+  aprovador: z.string().optional(),
+  revisor: z.string().optional(),
+  categoria: z.enum(['tecnico', 'administrativo', 'seguranca', 'ambiente', 'qualidade', 'comercial', 'outro']).optional(),
+  categoria_outro: z.string().optional(),
   observacoes: z.string().optional(),
-  fornecedor_id: z.string().optional()
+  palavras_chave: z.array(z.string()).optional(),
+  classificacao_confidencialidade: z.enum(['publico', 'interno', 'confidencial', 'restrito']).optional(),
+  distribuicao: z.array(z.string()).optional(),
+  
+  // Integração com outros módulos
+  relacionado_obra_id: z.string().optional(),
+  relacionado_obra_outro: z.string().optional(),
+  relacionado_zona_id: z.string().optional(),
+  relacionado_zona_outro: z.string().optional(),
+  relacionado_ensaio_id: z.string().optional(),
+  relacionado_ensaio_outro: z.string().optional(),
+  relacionado_material_id: z.string().optional(),
+  relacionado_material_outro: z.string().optional(),
+  relacionado_fornecedor_id: z.string().optional(),
+  relacionado_fornecedor_outro: z.string().optional(),
+  relacionado_checklist_id: z.string().optional(),
+  relacionado_checklist_outro: z.string().optional(),
+  
+  // Campos específicos RFI
+  numero_rfi: z.string().optional(),
+  solicitante: z.string().optional(),
+  data_solicitacao: z.string().optional(),
+  data_resposta: z.string().optional(),
+  prioridade: z.enum(['baixa', 'media', 'alta', 'urgente']).optional(),
+  impacto_custo: z.number().optional(),
+  impacto_prazo: z.number().optional(),
+  resposta: z.string().optional(),
+  
+  // Campos específicos Procedimento
+  escopo: z.string().optional(),
+  responsabilidades: z.array(z.string()).optional(),
+  recursos_necessarios: z.array(z.string()).optional(),
+  criterios_aceitacao: z.array(z.string()).optional(),
+  registros_obrigatorios: z.array(z.string()).optional(),
+  frequencia_revisao: z.string().optional(),
+  
+  // Campos específicos Plano de Ensaio
+  material_ensaio: z.string().optional(),
+  tipo_ensaio: z.string().optional(),
+  normas_referencia: z.array(z.string()).optional(),
+  equipamentos_necessarios: z.array(z.string()).optional(),
+  laboratorio_responsavel: z.string().optional(),
+  frequencia_ensaios: z.string().optional(),
+  acoes_nao_conformidade: z.array(z.string()).optional(),
+  
+  // Campos específicos Plano de Qualidade
+  escopo_obra: z.string().optional(),
+  objetivos_qualidade: z.array(z.string()).optional(),
+  responsabilidades_qualidade: z.array(z.string()).optional(),
+  recursos_qualidade: z.array(z.string()).optional(),
+  controlos_qualidade: z.array(z.string()).optional(),
+  indicadores_qualidade: z.array(z.string()).optional(),
+  auditorias_planeadas: z.array(z.string()).optional(),
+  acoes_melhoria: z.array(z.string()).optional()
 })
 
 type DocumentoFormData = z.infer<typeof documentoSchema>
@@ -41,7 +102,39 @@ const documentTypes = [
   { value: 'especificacao', label: 'Especificação', icon: FileText, color: 'text-green-600' },
   { value: 'relatorio', label: 'Relatório', icon: FileText, color: 'text-purple-600' },
   { value: 'certificado', label: 'Certificado', icon: FileText, color: 'text-orange-600' },
+  { value: 'rfi', label: 'RFI (Request for Information)', icon: FileText, color: 'text-red-600' },
+  { value: 'procedimento', label: 'Procedimento', icon: FileText, color: 'text-indigo-600' },
+  { value: 'plano_ensaio', label: 'Plano de Ensaio', icon: FileText, color: 'text-yellow-600' },
+  { value: 'plano_qualidade', label: 'Plano de Qualidade', icon: FileText, color: 'text-teal-600' },
+  { value: 'manual', label: 'Manual', icon: FileText, color: 'text-pink-600' },
+  { value: 'instrucao_trabalho', label: 'Instrução de Trabalho', icon: FileText, color: 'text-cyan-600' },
+  { value: 'formulario', label: 'Formulário', icon: FileText, color: 'text-lime-600' },
+  { value: 'registro', label: 'Registro', icon: FileText, color: 'text-amber-600' },
   { value: 'outro', label: 'Outro', icon: FileText, color: 'text-gray-600' }
+]
+
+const categorias = [
+  { value: 'tecnico', label: 'Técnico' },
+  { value: 'administrativo', label: 'Administrativo' },
+  { value: 'seguranca', label: 'Segurança' },
+  { value: 'ambiente', label: 'Ambiente' },
+  { value: 'qualidade', label: 'Qualidade' },
+  { value: 'comercial', label: 'Comercial' },
+  { value: 'outro', label: 'Outro' }
+]
+
+const classificacoes = [
+  { value: 'publico', label: 'Público' },
+  { value: 'interno', label: 'Interno' },
+  { value: 'confidencial', label: 'Confidencial' },
+  { value: 'restrito', label: 'Restrito' }
+]
+
+const prioridades = [
+  { value: 'baixa', label: 'Baixa', color: 'text-green-600' },
+  { value: 'media', label: 'Média', color: 'text-yellow-600' },
+  { value: 'alta', label: 'Alta', color: 'text-orange-600' },
+  { value: 'urgente', label: 'Urgente', color: 'text-red-600' }
 ]
 
 const statusOptions = [
@@ -190,6 +283,14 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
               </option>
             ))}
           </select>
+          {watchedTipo === 'outro' && (
+            <input
+              {...register('tipo_outro')}
+              type="text"
+              placeholder="Descreva o tipo de documento..."
+              className="input mt-2"
+            />
+          )}
           {errors.tipo && (
             <p className="mt-1 text-sm text-danger-600 flex items-center">
               <AlertCircle className="h-4 w-4 mr-1" />
@@ -295,14 +396,404 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
                   {zona}
                 </option>
               ))}
+              <option value="outro">Outro</option>
             </select>
           </div>
+          {watch('zona') === 'outro' && (
+            <input
+              {...register('zona_outro')}
+              type="text"
+              placeholder="Descreva a zona..."
+              className="input mt-2"
+            />
+          )}
           {errors.zona && (
             <p className="mt-1 text-sm text-danger-600 flex items-center">
               <AlertCircle className="h-4 w-4 mr-1" />
               {errors.zona.message}
             </p>
           )}
+        </div>
+      </div>
+
+      {/* Campos específicos por tipo de documento */}
+      {watchedTipo === 'rfi' && (
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <h4 className="text-sm font-semibold text-blue-900 mb-4">Informações RFI</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Número RFI</label>
+              <input
+                {...register('numero_rfi')}
+                type="text"
+                placeholder="RFI-2024-001"
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Solicitante</label>
+              <input
+                {...register('solicitante')}
+                type="text"
+                placeholder="Nome do solicitante"
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Data de Solicitação</label>
+              <input
+                {...register('data_solicitacao')}
+                type="date"
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
+              <select {...register('prioridade')} className="select">
+                <option value="">Selecione...</option>
+                {prioridades.map(pri => (
+                  <option key={pri.value} value={pri.value}>{pri.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Impacto no Custo (€)</label>
+              <input
+                {...register('impacto_custo')}
+                type="number"
+                placeholder="0.00"
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Impacto no Prazo (dias)</label>
+              <input
+                {...register('impacto_prazo')}
+                type="number"
+                placeholder="0"
+                className="input"
+              />
+            </div>
+          </div>
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Resposta</label>
+            <textarea
+              {...register('resposta')}
+              rows={3}
+              placeholder="Resposta à solicitação..."
+              className="textarea"
+            />
+          </div>
+        </div>
+      )}
+
+      {watchedTipo === 'procedimento' && (
+        <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+          <h4 className="text-sm font-semibold text-indigo-900 mb-4">Informações do Procedimento</h4>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Escopo</label>
+              <textarea
+                {...register('escopo')}
+                rows={2}
+                placeholder="Descrição do escopo do procedimento..."
+                className="textarea"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Responsabilidades</label>
+              <textarea
+                {...register('responsabilidades')}
+                rows={2}
+                placeholder="Lista de responsabilidades (separadas por vírgula)..."
+                className="textarea"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Recursos Necessários</label>
+              <textarea
+                {...register('recursos_necessarios')}
+                rows={2}
+                placeholder="Lista de recursos necessários..."
+                className="textarea"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Critérios de Aceitação</label>
+              <textarea
+                {...register('criterios_aceitacao')}
+                rows={2}
+                placeholder="Critérios de aceitação..."
+                className="textarea"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Frequência de Revisão</label>
+              <input
+                {...register('frequencia_revisao')}
+                type="text"
+                placeholder="ex: Anual, Semestral, etc."
+                className="input"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {watchedTipo === 'plano_ensaio' && (
+        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+          <h4 className="text-sm font-semibold text-yellow-900 mb-4">Informações do Plano de Ensaio</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Material do Ensaio</label>
+              <input
+                {...register('material_ensaio')}
+                type="text"
+                placeholder="ex: Betão, Aço, etc."
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Ensaio</label>
+              <input
+                {...register('tipo_ensaio')}
+                type="text"
+                placeholder="ex: Resistência, Qualidade, etc."
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Laboratório Responsável</label>
+              <input
+                {...register('laboratorio_responsavel')}
+                type="text"
+                placeholder="Nome do laboratório"
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Frequência de Ensaios</label>
+              <input
+                {...register('frequencia_ensaios')}
+                type="text"
+                placeholder="ex: Diário, Semanal, etc."
+                className="input"
+              />
+            </div>
+          </div>
+          <div className="mt-4 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Normas de Referência</label>
+              <textarea
+                {...register('normas_referencia')}
+                rows={2}
+                placeholder="Lista de normas de referência..."
+                className="textarea"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Equipamentos Necessários</label>
+              <textarea
+                {...register('equipamentos_necessarios')}
+                rows={2}
+                placeholder="Lista de equipamentos..."
+                className="textarea"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {watchedTipo === 'plano_qualidade' && (
+        <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
+          <h4 className="text-sm font-semibold text-teal-900 mb-4">Informações do Plano de Qualidade</h4>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Escopo da Obra</label>
+              <textarea
+                {...register('escopo_obra')}
+                rows={2}
+                placeholder="Descrição do escopo da obra..."
+                className="textarea"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Objetivos de Qualidade</label>
+              <textarea
+                {...register('objetivos_qualidade')}
+                rows={2}
+                placeholder="Lista de objetivos de qualidade..."
+                className="textarea"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Responsabilidades de Qualidade</label>
+              <textarea
+                {...register('responsabilidades_qualidade')}
+                rows={2}
+                placeholder="Lista de responsabilidades..."
+                className="textarea"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Controlos de Qualidade</label>
+              <textarea
+                {...register('controlos_qualidade')}
+                rows={2}
+                placeholder="Lista de controlos..."
+                className="textarea"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Indicadores de Qualidade</label>
+              <textarea
+                {...register('indicadores_qualidade')}
+                rows={2}
+                placeholder="Lista de indicadores..."
+                className="textarea"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Integração com outros módulos */}
+      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <h4 className="text-sm font-semibold text-gray-900 mb-4">Integração com outros módulos</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Obra Relacionada</label>
+            <select {...register('relacionado_obra_id')} className="select">
+              <option value="">Selecionar obra...</option>
+              <option value="obra-001">Residencial Lisboa</option>
+              <option value="obra-002">Comercial Porto</option>
+              <option value="outro">Outro</option>
+            </select>
+            {watch('relacionado_obra_id') === 'outro' && (
+              <input
+                {...register('relacionado_obra_outro')}
+                type="text"
+                placeholder="Descreva a obra..."
+                className="input mt-2"
+              />
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Zona Relacionada</label>
+            <select {...register('relacionado_zona_id')} className="select">
+              <option value="">Selecionar zona...</option>
+              <option value="zona-001">Zona A - Fundações</option>
+              <option value="zona-002">Zona B - Pilares</option>
+              <option value="outro">Outro</option>
+            </select>
+            {watch('relacionado_zona_id') === 'outro' && (
+              <input
+                {...register('relacionado_zona_outro')}
+                type="text"
+                placeholder="Descreva a zona..."
+                className="input mt-2"
+              />
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Ensaio Relacionado</label>
+            <select {...register('relacionado_ensaio_id')} className="select">
+              <option value="">Selecionar ensaio...</option>
+              <option value="ensaio-001">Ensaio de Resistência</option>
+              <option value="ensaio-002">Ensaio de Qualidade</option>
+              <option value="outro">Outro</option>
+            </select>
+            {watch('relacionado_ensaio_id') === 'outro' && (
+              <input
+                {...register('relacionado_ensaio_outro')}
+                type="text"
+                placeholder="Descreva o ensaio..."
+                className="input mt-2"
+              />
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Material Relacionado</label>
+            <select {...register('relacionado_material_id')} className="select">
+              <option value="">Selecionar material...</option>
+              <option value="mat-001">Cimento</option>
+              <option value="mat-002">Aço</option>
+              <option value="outro">Outro</option>
+            </select>
+            {watch('relacionado_material_id') === 'outro' && (
+              <input
+                {...register('relacionado_material_outro')}
+                type="text"
+                placeholder="Descreva o material..."
+                className="input mt-2"
+              />
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Fornecedor Relacionado</label>
+            <select {...register('relacionado_fornecedor_id')} className="select">
+              <option value="">Selecionar fornecedor...</option>
+              <option value="for-001">Fornecedor A</option>
+              <option value="for-002">Fornecedor B</option>
+              <option value="outro">Outro</option>
+            </select>
+            {watch('relacionado_fornecedor_id') === 'outro' && (
+              <input
+                {...register('relacionado_fornecedor_outro')}
+                type="text"
+                placeholder="Descreva o fornecedor..."
+                className="input mt-2"
+              />
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Checklist Relacionado</label>
+            <select {...register('relacionado_checklist_id')} className="select">
+              <option value="">Selecionar checklist...</option>
+              <option value="chk-001">Checklist Fundações</option>
+              <option value="chk-002">Checklist Estrutura</option>
+              <option value="outro">Outro</option>
+            </select>
+            {watch('relacionado_checklist_id') === 'outro' && (
+              <input
+                {...register('relacionado_checklist_outro')}
+                type="text"
+                placeholder="Descreva o checklist..."
+                className="input mt-2"
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Campos adicionais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
+          <select {...register('categoria')} className="select">
+            <option value="">Selecione...</option>
+            {categorias.map(cat => (
+              <option key={cat.value} value={cat.value}>{cat.label}</option>
+            ))}
+            <option value="outro">Outro</option>
+          </select>
+          {watch('categoria') === 'outro' && (
+            <input
+              {...register('categoria_outro')}
+              type="text"
+              placeholder="Descreva a categoria..."
+              className="input mt-2"
+            />
+          )}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Classificação de Confidencialidade</label>
+          <select {...register('classificacao_confidencialidade')} className="select">
+            <option value="">Selecione...</option>
+            {classificacoes.map(cls => (
+              <option key={cls.value} value={cls.value}>{cls.label}</option>
+            ))}
+          </select>
         </div>
       </div>
 

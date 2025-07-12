@@ -462,16 +462,6 @@ export const initializeSampleData = async () => {
       estado: 'ativo'
     })
     
-    const fornecedor2 = await fornecedoresAPI.create({
-      nome: 'Aços de Portugal',
-      nif: '500789123',
-      morada: 'Av. da Siderurgia, 456, Porto',
-      telefone: '225789123',
-      email: 'info@acoportugal.pt',
-      contacto: 'Dra. Ana Silva',
-      estado: 'ativo'
-    })
-    
     // Criar materiais
     const material1 = await materiaisAPI.create({
       codigo: 'MAT-001',

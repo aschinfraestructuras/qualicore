@@ -2,28 +2,26 @@ import { useState, useEffect } from 'react'
 import { 
   Plus, 
   Search, 
-  Filter, 
+ 
   Download, 
   Edit, 
   Trash2, 
   Eye,
   FileText,
-  Calendar,
-  User,
-  MapPin,
+
   Printer,
   Upload,
-  MoreVertical,
+
   CheckCircle,
   Clock,
   AlertTriangle,
   File,
   FileCheck,
-  FileX,
+
   ArrowUpDown,
-  Filter as FilterIcon
+
 } from 'lucide-react'
-import { documentosAPI } from '@/lib/pocketbase'
+
 import { DocumentoRecord } from '@/lib/pocketbase'
 import toast from 'react-hot-toast'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -96,6 +94,71 @@ const mockDocumentos = [
     observacoes: 'Projeto de ligações estruturais - necessita revisão',
     created: '2024-01-06T13:15:00Z',
     updated: '2024-01-09T17:20:00Z'
+  },
+  {
+    id: '6',
+    codigo: 'RFI-2024-001',
+    tipo: 'rfi',
+    versao: '1.0',
+    data_validade: '2024-02-15',
+    responsavel: 'Luís Ferreira',
+    zona: 'Zona A - Fundações',
+    estado: 'pendente',
+    observacoes: 'Solicitação de esclarecimento sobre especificações de betão',
+    created: '2024-01-15T09:00:00Z',
+    updated: '2024-01-15T09:00:00Z'
+  },
+  {
+    id: '7',
+    codigo: 'PROC-2024-001',
+    tipo: 'procedimento',
+    versao: '2.0',
+    data_validade: '2025-12-31',
+    responsavel: 'Sofia Martins',
+    zona: 'Geral',
+    estado: 'aprovado',
+    observacoes: 'Procedimento de controlo de qualidade de materiais',
+    created: '2024-01-12T14:30:00Z',
+    updated: '2024-01-14T16:45:00Z'
+  },
+  {
+    id: '8',
+    codigo: 'PE-2024-001',
+    tipo: 'plano_ensaio',
+    versao: '1.0',
+    data_validade: '2024-12-31',
+    responsavel: 'Ricardo Oliveira',
+    zona: 'Laboratório',
+    estado: 'aprovado',
+    observacoes: 'Plano de ensaios de resistência à compressão do betão',
+    created: '2024-01-11T11:20:00Z',
+    updated: '2024-01-13T10:15:00Z'
+  },
+  {
+    id: '9',
+    codigo: 'PQ-2024-001',
+    tipo: 'plano_qualidade',
+    versao: '1.0',
+    data_validade: '2025-06-30',
+    responsavel: 'Teresa Silva',
+    zona: 'Geral',
+    estado: 'aprovado',
+    observacoes: 'Plano de qualidade geral da obra',
+    created: '2024-01-10T08:45:00Z',
+    updated: '2024-01-12T17:30:00Z'
+  },
+  {
+    id: '10',
+    codigo: 'MAN-2024-001',
+    tipo: 'manual',
+    versao: '1.0',
+    data_validade: '2026-01-01',
+    responsavel: 'António Costa',
+    zona: 'Geral',
+    estado: 'aprovado',
+    observacoes: 'Manual de procedimentos de segurança na obra',
+    created: '2024-01-09T13:15:00Z',
+    updated: '2024-01-11T15:20:00Z'
   }
 ]
 
@@ -104,6 +167,14 @@ const documentTypes = [
   { value: 'especificacao', label: 'Especificação', icon: FileCheck, color: 'text-green-600' },
   { value: 'relatorio', label: 'Relatório', icon: File, color: 'text-purple-600' },
   { value: 'certificado', label: 'Certificado', icon: FileCheck, color: 'text-orange-600' },
+  { value: 'rfi', label: 'RFI', icon: FileText, color: 'text-red-600' },
+  { value: 'procedimento', label: 'Procedimento', icon: FileText, color: 'text-indigo-600' },
+  { value: 'plano_ensaio', label: 'Plano de Ensaio', icon: FileText, color: 'text-yellow-600' },
+  { value: 'plano_qualidade', label: 'Plano de Qualidade', icon: FileText, color: 'text-teal-600' },
+  { value: 'manual', label: 'Manual', icon: FileText, color: 'text-pink-600' },
+  { value: 'instrucao_trabalho', label: 'Instrução de Trabalho', icon: FileText, color: 'text-cyan-600' },
+  { value: 'formulario', label: 'Formulário', icon: FileText, color: 'text-lime-600' },
+  { value: 'registro', label: 'Registro', icon: FileText, color: 'text-amber-600' },
   { value: 'outro', label: 'Outro', icon: File, color: 'text-gray-600' }
 ]
 
@@ -338,7 +409,7 @@ export default function Documentos() {
           { label: 'Aprovados', value: documentos.filter(d => d.estado === 'aprovado').length, icon: CheckCircle, color: 'bg-gradient-to-br from-green-500 to-green-600' },
           { label: 'Pendentes', value: documentos.filter(d => d.estado === 'pendente').length, icon: Clock, color: 'bg-gradient-to-br from-warning-500 to-warning-600' },
           { label: 'Em Análise', value: documentos.filter(d => d.estado === 'em_analise').length, icon: AlertTriangle, color: 'bg-gradient-to-br from-info-500 to-info-600' }
-        ].map((stat, index) => {
+        ].map((stat) => {
           const Icon = stat.icon
           return (
             <div key={stat.label} className="stat-card">

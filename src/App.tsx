@@ -14,8 +14,9 @@ import Landing from './pages/Landing'
 import DocumentoForm from './components/forms/DocumentoForm'
 import EnsaioForm from './components/forms/EnsaioForm'
 import ChecklistForm from './components/forms/ChecklistForm'
-import NaoConformidadeForm from './components/forms/NaoConformidadeForm'
+
 import ObraForm from './components/forms/ObraForm'
+import RFIs from './pages/RFIs'
 import './styles/globals.css'
 
 function App() {
@@ -56,11 +57,12 @@ function App() {
         <Route path="/documentos" element={<Layout><Documentos /></Layout>} />
         <Route path="/relatorios" element={<Layout><Relatorios /></Layout>} />
         <Route path="/obras" element={<Layout><Obras /></Layout>} />
+        <Route path="/rfis" element={<Layout><RFIs /></Layout>} />
         {/* Rotas para ações rápidas */}
         <Route path="/documentos/novo" element={<Layout><DocumentoForm isEditing={false} onSubmit={() => {}} onCancel={() => {}} /></Layout>} />
         <Route path="/ensaios/novo" element={<Layout><EnsaioForm isEditing={false} onSubmit={() => {}} onCancel={() => {}} /></Layout>} />
         <Route path="/checklists/novo" element={<Layout><ChecklistForm onSubmit={() => {}} onCancel={() => {}} /></Layout>} />
-        <Route path="/nao-conformidades/nova" element={<Layout><NaoConformidadeForm isEditing={false} onSubmit={() => {}} onCancel={() => {}} /></Layout>} />
+
         <Route path="/obras/nova" element={<Layout><ObraForm onSubmit={() => {}} onCancel={() => {}} /></Layout>} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

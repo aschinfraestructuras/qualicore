@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Checklist, PontoInspecao } from '../types'
+import { Checklist } from '../types'
 import { Download, Printer, Filter, CheckCircle, XCircle, AlertCircle, Clock } from 'lucide-react'
 
 interface RelatorioChecklistProps {

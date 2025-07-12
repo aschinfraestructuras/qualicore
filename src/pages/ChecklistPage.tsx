@@ -11,7 +11,7 @@ const mockChecklists: Checklist[] = [
     data_atualizacao: '2024-06-01',
     responsavel: 'João Silva',
     zona: 'Zona A',
-    estado: 'em_andamento',
+    estado: 'em_analise',
     obra: 'Edifício Central',
     titulo: 'Checklist Estrutural',
     status: 'em_andamento',
@@ -23,7 +23,7 @@ const mockChecklists: Checklist[] = [
 export default function ChecklistPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingChecklist, setEditingChecklist] = useState<Checklist | null>(null)
-  const [checklists, setChecklists] = useState<Checklist[]>(mockChecklists)
+  const [checklists] = useState<Checklist[]>(mockChecklists)
 
   const handleCreate = () => {
     setEditingChecklist(null)

@@ -1,23 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { 
   Plus, 
   Search, 
-  Download, 
   Edit, 
   Trash2, 
-  Eye,
   Building,
   CheckCircle,
-  Clock,
-  AlertTriangle,
   X,
-  FileText,
-  Users,
-  Calendar,
-  MapPin,
-  Euro,
-  TrendingUp,
-  BarChart3
+  TrendingUp
 } from 'lucide-react'
 import { Obra } from '@/types'
 import toast from 'react-hot-toast'
@@ -122,7 +112,6 @@ const mockObras: Obra[] = [
 
 export default function Obras() {
   const [obras, setObras] = useState<Obra[]>(mockObras)
-  const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
 
   const [editingObra, setEditingObra] = useState<Obra | null>(null)
@@ -177,16 +166,6 @@ export default function Obras() {
     return matchesSearch && matchesStatus
   })
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'em_execucao': return <TrendingUp className="h-4 w-4 text-blue-600" />
-      case 'concluida': return <CheckCircle className="h-4 w-4 text-green-600" />
-      case 'paralisada': return <AlertTriangle className="h-4 w-4 text-yellow-600" />
-      case 'cancelada': return <X className="h-4 w-4 text-red-600" />
-      default: return <Clock className="h-4 w-4 text-gray-600" />
-    }
-  }
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'em_execucao': return 'bg-blue-100 text-blue-800'
@@ -214,14 +193,6 @@ export default function Obras() {
     concluidas: obras.filter(o => o.status === 'concluida').length,
     valor_total: obras.reduce((acc, o) => acc + o.valor_contrato, 0),
     valor_executado: obras.reduce((acc, o) => acc + o.valor_executado, 0)
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-      </div>
-    )
   }
 
   return (
@@ -284,7 +255,6 @@ export default function Obras() {
                   {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(stats.valor_total)}
                 </p>
               </div>
-              <Euro className="h-8 w-8 text-orange-500" />
             </div>
           </div>
         </div>
@@ -297,7 +267,6 @@ export default function Obras() {
                   {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(stats.valor_executado)}
                 </p>
               </div>
-              <BarChart3 className="h-8 w-8 text-purple-500" />
             </div>
           </div>
         </div>
@@ -384,11 +353,11 @@ export default function Obras() {
                             <span>{obra.cliente}</span>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <MapPin className="h-4 w-4" />
+                            <span className="font-medium">Localização:</span>
                             <span>{obra.localizacao}</span>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Calendar className="h-4 w-4" />
+                            <span className="font-medium">Início:</span>
                             <span>{new Date(obra.data_inicio).toLocaleDateString('pt-PT')}</span>
                           </div>
                         </div>
@@ -406,11 +375,11 @@ export default function Obras() {
                         </div>
                         <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                           <div className="flex items-center space-x-2">
-                            <Users className="h-4 w-4 text-gray-400" />
+                            <span className="font-medium">Responsável:</span>
                             <span className="text-gray-600">{obra.responsavel_tecnico}</span>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Euro className="h-4 w-4 text-gray-400" />
+                            <span className="font-medium">Contrato:</span>
                             <span className="text-gray-600">
                               {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(obra.valor_contrato)}
                             </span>

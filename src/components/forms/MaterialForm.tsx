@@ -13,7 +13,8 @@ import {
   X, 
   FileText,
   Building,
-  Scale
+  Scale,
+  Award
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -639,6 +640,56 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
             ))}
           </div>
         )}
+      </div>
+
+      {/* Receção do Material */}
+      <div className="bg-gray-50 rounded-xl p-6 mt-8">
+        <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <FileText className="h-5 w-5 mr-2 text-cyan-600" />
+          Receção do Material
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Data de Receção</label>
+            <input type="date" className="input" name="data_rececao" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Responsável pela Receção</label>
+            <input type="text" className="input" name="responsavel_rececao" placeholder="Nome do responsável" />
+          </div>
+        </div>
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Documento de Receção (upload)</label>
+          <input type="file" className="input" name="documento_rececao" />
+        </div>
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Observações de Receção</label>
+          <textarea className="textarea" name="observacoes_rececao" rows={3} placeholder="Observações sobre a receção..." />
+        </div>
+      </div>
+
+      {/* Conformidade do Material */}
+      <div className="bg-white rounded-xl p-6 mt-8 border border-gray-200">
+        <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Award className="h-5 w-5 mr-2 text-green-600" />
+          Conformidade
+        </h4>
+        <div className="flex items-center space-x-4 mb-4">
+          <label className="text-sm font-medium text-gray-700">Material Conforme?</label>
+          <select className="input" name="conforme">
+            <option value="">Selecionar</option>
+            <option value="sim">Sim</option>
+            <option value="nao">Não</option>
+          </select>
+        </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Observações de Conformidade</label>
+          <textarea className="textarea" name="observacoes_conformidade" rows={3} placeholder="Observações sobre a conformidade..." />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Anexos de Conformidade (upload)</label>
+          <input type="file" className="input" name="anexos_conformidade" multiple />
+        </div>
       </div>
 
       {/* Preview do Resultado */}

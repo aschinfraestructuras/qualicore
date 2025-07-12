@@ -15,9 +15,6 @@ import {
   User,
   Hash,
   Globe,
-  CheckCircle,
-  XCircle,
-  Truck,
   Award
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -29,7 +26,11 @@ const fornecedorSchema = z.object({
   telefone: z.string().min(1, 'Telefone é obrigatório'),
   email: z.string().email('Email inválido'),
   contacto: z.string().min(1, 'Contacto é obrigatório'),
-  estado: z.enum(['ativo', 'inativo'])
+  estado: z.enum(['ativo', 'inativo']),
+  website: z.string().optional(),
+  certificacoes: z.string().optional(),
+  produtos_servicos: z.string().optional(),
+  observacoes: z.string().optional()
 })
 
 type FornecedorFormData = z.infer<typeof fornecedorSchema>
@@ -49,6 +50,8 @@ const statusOptions = [
 export default function FornecedorForm({ onSubmit, onCancel, initialData, isEditing = false }: FornecedorFormProps) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showAvaliacaoModal, setShowAvaliacaoModal] = useState(false)
+  const [avaliacoes, setAvaliacoes] = useState<any[]>([]) // Mock data
 
   const {
     register,
@@ -59,11 +62,18 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
   } = useForm<FornecedorFormData>({
     resolver: zodResolver(fornecedorSchema),
     defaultValues: initialData || {
-      estado: 'ativo'
+      estado: 'ativo',
+      website: '',
+      certificacoes: '',
+      produtos_servicos: '',
+      observacoes: ''
     }
   })
 
   const watchedEstado = watch('estado')
+  const watchedWebsite = watch('website')
+  const watchedCertificacoes = watch('certificacoes')
+  const watchedProdutosServicos = watch('produtos_servicos')
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
@@ -308,6 +318,7 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
             <div className="relative">
               <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
+                {...register('website')}
                 type="url"
                 placeholder="https://www.empresa.pt"
                 className="input pl-10"
@@ -360,6 +371,7 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
               Certificações
             </label>
             <textarea
+              {...register('certificacoes')}
               placeholder="ISO 9001, ISO 14001, etc."
               rows={3}
               className="textarea"
@@ -372,6 +384,7 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
               Produtos/Serviços
             </label>
             <textarea
+              {...register('produtos_servicos')}
               placeholder="Principais produtos ou serviços fornecidos"
               rows={3}
               className="textarea"
@@ -379,6 +392,217 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
           </div>
         </div>
       </div>
+
+      {/* Observações */}
+      <div className="bg-gray-50 rounded-xl p-6">
+        <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <FileText className="h-5 w-5 mr-2 text-cyan-600" />
+          Observações
+        </h4>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Observações Adicionais
+          </label>
+          <textarea
+            {...register('observacoes')}
+            placeholder="Observações, notas ou comentários adicionais sobre o fornecedor"
+            rows={4}
+            className="textarea"
+          />
+        </div>
+      </div>
+
+      {/* Avaliações do Fornecedor */}
+      <div className="bg-white rounded-xl p-6 mt-8 border border-gray-200">
+        <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Award className="h-5 w-5 mr-2 text-yellow-500" />
+          Avaliações do Fornecedor
+        </h4>
+        {/* Listagem de avaliações (mock) */}
+        <div className="space-y-4 mb-4">
+          {/* Aqui será listado cada avaliação (mock) */}
+          {avaliacoes.map(avaliacao => (
+            <div key={avaliacao.id} className="p-4 bg-gray-50 rounded flex flex-col md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="font-medium text-gray-800">Nota Global: <span className="text-yellow-600 font-bold">{avaliacao.nota}</span></div>
+                <div className="text-xs text-gray-500">Por: {avaliacao.avaliador} em {new Date(avaliacao.data).toLocaleDateString()}</div>
+                <div className="text-xs text-gray-500">Qualidade: {avaliacao.criterios.qualidade} | Prazo: {avaliacao.criterios.prazo} | Preço: {avaliacao.criterios.preco} | Atendimento: {avaliacao.criterios.atendimento}</div>
+                <div className="text-sm text-gray-700 mt-1">"{avaliacao.comentarios}"</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setShowAvaliacaoModal(true)}
+        >
+          + Nova Avaliação
+        </button>
+        {/* Modal de avaliação será implementado depois */}
+      </div>
+
+      {/* Modal de Avaliação */}
+      {showAvaliacaoModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Award className="h-5 w-5 mr-2 text-yellow-500" />
+                  Nova Avaliação
+                </h3>
+                <button
+                  onClick={() => setShowAvaliacaoModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                const formData = new FormData(e.currentTarget)
+                                 const novaAvaliacao = {
+                   id: Date.now().toString(),
+                   fornecedor_id: 'mock-id', // Será substituído pelo ID real quando integrado com backend
+                   data: new Date().toISOString(),
+                   avaliador: formData.get('avaliador') as string,
+                   nota: parseInt(formData.get('nota') as string),
+                   criterios: {
+                     qualidade: parseInt(formData.get('qualidade') as string),
+                     prazo: parseInt(formData.get('prazo') as string),
+                     preco: parseInt(formData.get('preco') as string),
+                     atendimento: parseInt(formData.get('atendimento') as string),
+                   },
+                   comentarios: formData.get('comentarios') as string,
+                 }
+                setAvaliacoes([...avaliacoes, novaAvaliacao])
+                setShowAvaliacaoModal(false)
+                toast.success('Avaliação registada com sucesso!')
+              }}>
+                <div className="space-y-4">
+                  {/* Avaliador */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Avaliador
+                    </label>
+                    <input
+                      name="avaliador"
+                      type="text"
+                      required
+                      placeholder="Nome do avaliador"
+                      className="input"
+                    />
+                  </div>
+
+                  {/* Nota Global */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nota Global
+                    </label>
+                    <select name="nota" required className="input">
+                      <option value="">Selecionar nota</option>
+                      <option value="1">1 - Muito Mau</option>
+                      <option value="2">2 - Mau</option>
+                      <option value="3">3 - Regular</option>
+                      <option value="4">4 - Bom</option>
+                      <option value="5">5 - Excelente</option>
+                    </select>
+                  </div>
+
+                  {/* Critérios */}
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Critérios de Avaliação
+                    </label>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Qualidade</label>
+                        <select name="qualidade" required className="input text-sm">
+                          <option value="">-</option>
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="5">5</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Prazo</label>
+                        <select name="prazo" required className="input text-sm">
+                          <option value="">-</option>
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="5">5</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Preço</label>
+                        <select name="preco" required className="input text-sm">
+                          <option value="">-</option>
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="5">5</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Atendimento</label>
+                        <select name="atendimento" required className="input text-sm">
+                          <option value="">-</option>
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="5">5</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Comentários */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Comentários
+                    </label>
+                    <textarea
+                      name="comentarios"
+                      rows={3}
+                      placeholder="Observações sobre a avaliação..."
+                      className="textarea"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowAvaliacaoModal(false)}
+                    className="btn btn-secondary flex-1"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary flex-1"
+                  >
+                    Guardar Avaliação
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Upload de Ficheiros */}
       <div>
@@ -435,7 +659,7 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
       {/* Preview do Resultado */}
       <div className="p-4 bg-gray-50 rounded-xl">
         <h4 className="text-sm font-medium text-gray-700 mb-3">Pré-visualização:</h4>
-        <div className="flex items-center space-x-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">Estado:</span>
             <span className={`badge ${statusOptions.find(s => s.value === watchedEstado)?.color}`}>
@@ -454,6 +678,30 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
               {watch('contacto')}
             </span>
           </div>
+          {watchedWebsite && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Website:</span>
+              <span className="badge bg-blue-100 text-blue-700">
+                {watchedWebsite}
+              </span>
+            </div>
+          )}
+          {watchedCertificacoes && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Certificações:</span>
+              <span className="badge bg-purple-100 text-purple-700">
+                {watchedCertificacoes}
+              </span>
+            </div>
+          )}
+          {watchedProdutosServicos && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Produtos/Serviços:</span>
+              <span className="badge bg-green-100 text-green-700">
+                {watchedProdutosServicos}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

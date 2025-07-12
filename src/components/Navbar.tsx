@@ -1,12 +1,13 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Home, FileText, TestTube, ClipboardCheck, Package, Truck, AlertTriangle, BarChart3, FilePlus, Shield, Settings, Menu, X, ChevronDown, Search, Building } from 'lucide-react'
-import { useAppStore } from '@/stores/appStore'
+import { Home, FileText, TestTube, ClipboardCheck, Package, Truck, AlertTriangle, BarChart3, FilePlus, Shield, Settings, Menu, X, ChevronDown, Search, Building, HelpCircle } from 'lucide-react'
+
 import { useState } from 'react'
 
 const menuItems = [
-  { path: '/', icon: Home, label: 'Dashboard', description: 'Visão geral do projeto', color: 'from-blue-500 to-blue-600' },
+  { path: '/dashboard', icon: Home, label: 'Dashboard', description: 'Visão geral do projeto', color: 'from-blue-500 to-blue-600' },
   { path: '/obras', icon: Building, label: 'Obras', description: 'Gestão de projetos e obras', color: 'from-slate-500 to-slate-600' },
   { path: '/documentos', icon: FileText, label: 'Documentos', description: 'Gestão de documentação', color: 'from-indigo-500 to-indigo-600' },
+  { path: '/rfis', icon: HelpCircle, label: 'RFIs', description: 'Pedidos de Informação', color: 'from-blue-400 to-blue-700' },
   { path: '/ensaios', icon: TestTube, label: 'Ensaios', description: 'Controlo de ensaios técnicos', color: 'from-emerald-500 to-emerald-600' },
   { path: '/checklists', icon: ClipboardCheck, label: 'Checklists', description: 'Inspeções e verificações', color: 'from-purple-500 to-purple-600' },
   { path: '/materiais', icon: Package, label: 'Materiais', description: 'Gestão de materiais', color: 'from-orange-500 to-orange-600' },
@@ -25,7 +26,6 @@ const quickActions = [
 
 export default function Navbar() {
   const location = useLocation()
-  const { user } = useAppStore()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showQuickActions, setShowQuickActions] = useState(false)
@@ -126,28 +126,27 @@ export default function Navbar() {
         </div>
 
         {/* Stats */}
-        <div className="flex items-center space-x-6">
-          <div className="flex flex-col items-center">
-            <span className="text-xs text-blue-200">Conformidade</span>
-            <span className="text-sm font-bold text-white">94.2%</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-xs text-blue-200">NCs Abertas</span>
-            <span className="text-xs font-bold text-red-200">3</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-xs text-blue-200">Ensaios Pendentes</span>
-            <span className="text-xs font-bold text-yellow-200">7</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-xs text-blue-200">Documentos</span>
-            <span className="text-xs font-bold text-white">156</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-xs text-blue-200">Materiais</span>
-            <span className="text-xs font-bold text-white">67</span>
-          </div>
+        {/* REMOVIDO: Indicadores/KPIs da barra superior */}
+        {/* <div className="flex flex-col items-center">
+          <span className="text-xs text-blue-200">Conformidade</span>
+          <span className="text-sm font-bold text-white">94.2%</span>
         </div>
+        <div className="flex flex-col items-center">
+          <span className="text-xs text-blue-200">NCs Abertas</span>
+          <span className="text-xs font-bold text-red-200">3</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-xs text-blue-200">Ensaios Pendentes</span>
+          <span className="text-xs font-bold text-yellow-200">7</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-xs text-blue-200">Documentos</span>
+          <span className="text-xs font-bold text-white">156</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="text-xs text-blue-200">Materiais</span>
+          <span className="text-xs font-bold text-white">67</span>
+        </div> */}
 
         {/* Perfil do utilizador */}
         <div className="flex items-center space-x-3">
@@ -227,22 +226,22 @@ export default function Navbar() {
           <div className="border-t border-white/20 pt-4">
             <h3 className="text-xs font-semibold text-blue-200 uppercase tracking-wider mb-3 px-4">Estatísticas</h3>
             <div className="grid grid-cols-2 gap-4 px-4">
-              <div className="flex flex-col items-center">
+              {/* <div className="flex flex-col items-center">
                 <span className="text-xs text-blue-200">Conformidade</span>
                 <span className="text-sm font-bold text-white">94.2%</span>
-              </div>
-              <div className="flex flex-col items-center">
+              </div> */}
+              {/* <div className="flex flex-col items-center">
                 <span className="text-xs text-blue-200">NCs Abertas</span>
                 <span className="text-xs font-bold text-red-200">3</span>
-              </div>
-              <div className="flex flex-col items-center">
+              </div> */}
+              {/* <div className="flex flex-col items-center">
                 <span className="text-xs text-blue-200">Ensaios Pendentes</span>
                 <span className="text-xs font-bold text-yellow-200">7</span>
-              </div>
-              <div className="flex flex-col items-center">
+              </div> */}
+              {/* <div className="flex flex-col items-center">
                 <span className="text-xs text-blue-200">Documentos</span>
                 <span className="text-xs font-bold text-white">156</span>
-              </div>
+              </div> */}
             </div>
           </div>
 

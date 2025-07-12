@@ -7,13 +7,14 @@ import { useForm } from 'react-hook-form'
 import { User as UserType } from '@/types'
 
 export default function Header() {
-  const { sidebarOpen, toggleSidebar, notifications, user, setUser } = useAppStore()
+  const { toggleSidebar, notifications, user, setUser } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [showHelpModal, setShowHelpModal] = useState(false)
   const navigate = useNavigate();
   
   const unreadNotifications = notifications.filter(n => !n.lida).length
@@ -45,7 +46,7 @@ export default function Header() {
   }
 
   // Perfil editável
-  const { register, handleSubmit, setValue: setFormValue, reset } = useForm<UserType>({
+  const { register, handleSubmit, reset } = useForm<UserType>({
     defaultValues: user || { nome: '', email: '', perfil: 'qualidade', avatar: '' }
   })
   useEffect(() => {
@@ -100,7 +101,11 @@ export default function Header() {
           </button>
 
           {/* Help */}
-          <button className="p-2 rounded-xl hover:bg-gray-100 transition-colors" title="Ajuda">
+          <button 
+            className="p-2 rounded-xl hover:bg-gray-100 transition-colors" 
+            title="Ajuda"
+            onClick={() => setShowHelpModal(true)}
+          >
             <HelpCircle className="h-5 w-5 text-gray-600" />
           </button>
 
@@ -265,6 +270,32 @@ export default function Header() {
             </button>
           </div>
           {/* Outras preferências podem ser adicionadas aqui */}
+        </div>
+      </Modal>
+      {/* Modal de Ajuda */}
+      <Modal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        title="Ajuda & Suporte"
+        size="md"
+      >
+        <div className="p-2">
+          <h2 className="text-lg font-bold mb-2 text-blue-700 flex items-center gap-2">
+            <HelpCircle className="h-5 w-5 text-blue-500" /> Ajuda & Suporte
+          </h2>
+          <p className="mb-4 text-gray-700">
+            Bem-vindo ao sistema de Gestão da Qualidade!<br/>
+            Aqui pode gerir documentos, ensaios, checklists, materiais, fornecedores, não conformidades e muito mais.<br/>
+            Use o menu lateral para navegar entre módulos e as ações rápidas para criar novos registos.
+          </p>
+          <ul className="mb-4 space-y-2">
+            <li><a href="mailto:support@qualicore.pt" className="text-blue-600 hover:underline">Contactar suporte: support@qualicore.pt</a></li>
+            <li><a href="https://faq.qualicore.pt" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">FAQ e Dicas Rápidas</a></li>
+            <li><a href="https://docs.qualicore.pt" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Documentação Completa</a></li>
+          </ul>
+          <div className="flex justify-end">
+            <button onClick={() => setShowHelpModal(false)} className="btn btn-primary">Fechar</button>
+          </div>
         </div>
       </Modal>
     </header>

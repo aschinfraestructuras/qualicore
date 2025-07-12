@@ -1,9 +1,8 @@
-import { createClient } from '@supabase/supabase-js'
+// Remover import se não usado
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// Remover referência a createClient se não usada
 
 // Tipos para as tabelas do Supabase
 export interface Database {

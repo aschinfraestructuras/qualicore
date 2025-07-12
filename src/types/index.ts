@@ -22,12 +22,109 @@ export interface Anexo {
   entidade_tipo: string;
 }
 
+export interface EventoDocumento {
+  id: string;
+  data: string;
+  tipo: 'criacao' | 'revisao' | 'aprovacao' | 'reprovacao' | 'distribuicao' | 'arquivamento' | 'comentario' | 'anexo' | 'rfi_solicitacao' | 'rfi_resposta' | 'outro';
+  responsavel: string;
+  descricao: string;
+  detalhes?: string;
+  anexo?: Anexo;
+  versao?: string;
+}
+
 // Tipos específicos para cada módulo
 export interface Documento extends BaseEntity {
-  tipo: 'projeto' | 'especificacao' | 'relatorio' | 'certificado' | 'outro';
+  tipo: 'projeto' | 'especificacao' | 'relatorio' | 'certificado' | 'rfi' | 'procedimento' | 'plano_ensaio' | 'plano_qualidade' | 'manual' | 'instrucao_trabalho' | 'formulario' | 'registro' | 'outro';
+  tipo_outro?: string;
   versao: string;
   data_validade?: string;
-  fornecedor_id?: string;
+  data_aprovacao?: string;
+  data_revisao?: string;
+  aprovador?: string;
+  revisor?: string;
+  
+  // Campos específicos por tipo
+  categoria?: 'tecnico' | 'administrativo' | 'seguranca' | 'ambiente' | 'qualidade' | 'comercial' | 'outro';
+  categoria_outro?: string;
+  
+  // Para RFI (Request for Information)
+  rfi?: {
+    numero_rfi: string;
+    solicitante: string;
+    data_solicitacao: string;
+    data_resposta?: string;
+    prioridade: 'baixa' | 'media' | 'alta' | 'urgente';
+    status: 'pendente' | 'em_analise' | 'respondido' | 'fechado';
+    impacto_custo?: number;
+    impacto_prazo?: number;
+    resposta?: string;
+    anexos_resposta?: Anexo[];
+  };
+  
+  // Para Procedimentos
+  procedimento?: {
+    escopo: string;
+    responsabilidades: string[];
+    recursos_necessarios: string[];
+    criterios_aceitacao: string[];
+    registros_obrigatorios: string[];
+    frequencia_revisao: string;
+    ultima_revisao?: string;
+    proxima_revisao?: string;
+  };
+  
+  // Para Planos de Ensaio
+  plano_ensaio?: {
+    material_ensaio: string;
+    tipo_ensaio: string;
+    normas_referencia: string[];
+    equipamentos_necessarios: string[];
+    laboratorio_responsavel: string;
+    frequencia_ensaios: string;
+    criterios_aceitacao: string;
+    acoes_nao_conformidade: string[];
+  };
+  
+  // Para Planos de Qualidade
+  plano_qualidade?: {
+    escopo_obra: string;
+    objetivos_qualidade: string[];
+    responsabilidades_qualidade: string[];
+    recursos_qualidade: string[];
+    controlos_qualidade: string[];
+    indicadores_qualidade: string[];
+    auditorias_planeadas: string[];
+    acoes_melhoria: string[];
+  };
+  
+  // Integração com outros módulos
+  relacionado_obra_id?: string;
+  relacionado_obra_outro?: string;
+  relacionado_zona_id?: string;
+  relacionado_zona_outro?: string;
+  relacionado_ensaio_id?: string;
+  relacionado_ensaio_outro?: string;
+  relacionado_material_id?: string;
+  relacionado_material_outro?: string;
+  relacionado_fornecedor_id?: string;
+  relacionado_fornecedor_outro?: string;
+  relacionado_checklist_id?: string;
+  relacionado_checklist_outro?: string;
+  
+  // Timeline e histórico
+  timeline: EventoDocumento[];
+  
+  // Anexos específicos
+  anexos_principal?: Anexo[];
+  anexos_apendices?: Anexo[];
+  anexos_revisoes?: Anexo[];
+  
+  // Campos adicionais
+  observacoes?: string;
+  palavras_chave?: string[];
+  classificacao_confidencialidade?: 'publico' | 'interno' | 'confidencial' | 'restrito';
+  distribuicao?: string[];
 }
 
 export interface Ensaio extends BaseEntity {
@@ -140,15 +237,257 @@ export interface Fornecedor {
 }
 
 export interface NaoConformidade extends BaseEntity {
-  tipo: 'material' | 'execucao' | 'documentacao' | 'seguranca' | 'outro';
+  // Informações básicas
+  tipo: 'material' | 'execucao' | 'documentacao' | 'seguranca' | 'ambiente' | 'qualidade' | 'prazo' | 'custo' | 'outro';
+  tipo_outro?: string;
   severidade: 'baixa' | 'media' | 'alta' | 'critica';
+  categoria: 'auditoria' | 'inspecao' | 'reclamacao' | 'acidente' | 'incidente' | 'desvio' | 'outro';
+  categoria_outro?: string;
+  
+  // Datas importantes
   data_deteccao: string;
   data_resolucao?: string;
-  acao_corretiva?: string;
+  data_limite_resolucao?: string;
+  data_verificacao_eficacia?: string;
+  
+  // Descrição e contexto
+  descricao: string;
+  causa_raiz?: string;
+  impacto: 'baixo' | 'medio' | 'alto' | 'critico';
+  area_afetada: string;
+  
+  // Responsabilidades
+  responsavel_deteccao: string;
   responsavel_resolucao?: string;
+  responsavel_verificacao?: string;
+  
+  // Ações
+  acao_corretiva?: string;
+  acao_preventiva?: string;
+  medidas_implementadas?: string[];
+  
+  // Custos
   custo_estimado?: number;
+  custo_real?: number;
+  custo_preventivo?: number;
+  
+  // Integração com outros módulos
   relacionado_ensaio_id?: string;
+  relacionado_ensaio_outro?: string;
   relacionado_material_id?: string;
+  relacionado_material_outro?: string;
+  relacionado_checklist_id?: string;
+  relacionado_checklist_outro?: string;
+  relacionado_documento_id?: string;
+  relacionado_fornecedor_id?: string;
+  relacionado_fornecedor_outro?: string;
+  relacionado_obra_id?: string;
+  relacionado_obra_outro?: string;
+  relacionado_zona_id?: string;
+  relacionado_zona_outro?: string;
+  
+  // Auditoria relacionada
+  auditoria_id?: string;
+  auditoria_outro?: string;
+  
+  // Timeline e eventos
+  timeline: EventoNaoConformidade[];
+  
+  // Verificação de eficácia
+  verificacao_eficacia?: VerificacaoEficacia;
+  
+  // Anexos específicos
+  anexos_evidencia?: Anexo[];
+  anexos_corretiva?: Anexo[];
+  anexos_verificacao?: Anexo[];
+  
+  // Campos adicionais
+  observacoes?: string;
+  lições_aprendidas?: string;
+  recomendacoes?: string;
+}
+
+export interface EventoNaoConformidade {
+  id: string;
+  data: string;
+  tipo: 'deteccao' | 'analise' | 'acao_corretiva' | 'verificacao' | 'resolucao' | 'reabertura' | 'comentario' | 'anexo';
+  responsavel: string;
+  descricao: string;
+  detalhes?: string;
+  anexo?: Anexo;
+  custo?: number;
+}
+
+export interface VerificacaoEficacia {
+  id: string;
+  data: string;
+  responsavel: string;
+  eficaz: boolean;
+  justificativa: string;
+  evidencia: string;
+  proxima_verificacao?: string;
+  anexos?: Anexo[];
+}
+
+// Tipos para Auditorias
+export interface Auditoria extends BaseEntity {
+  tipo: 'interna' | 'externa' | 'certificacao' | 'fornecedor' | 'seguranca' | 'ambiente' | 'qualidade';
+  escopo: string;
+  data_inicio: string;
+  data_fim: string;
+  data_realizada?: string;
+  auditor_principal: string;
+  auditores: string[];
+  entidade_auditada: string;
+  
+  // Critérios e normas
+  normas_referencia: string[];
+  criterios_auditoria: string[];
+  
+  // Resultados
+  conformidade_geral: number; // percentual
+  nao_conformidades_encontradas: number;
+  observacoes_encontradas: number;
+  recomendacoes: number;
+  
+  // Status
+  status: 'planeada' | 'em_execucao' | 'concluida' | 'cancelada' | 'atrasada';
+  
+  // Relatórios
+  relatorio_auditoria?: string;
+  plano_acao?: string;
+  
+  // Checklist de auditoria
+  checklist_auditoria: ItemChecklistAuditoria[];
+  
+  // Não conformidades encontradas
+  nao_conformidades: string[]; // IDs das NCs
+  
+  // Anexos
+  anexos?: Anexo[];
+  observacoes?: string;
+}
+
+export interface ItemChecklistAuditoria {
+  id: string;
+  criterio: string;
+  norma_referencia: string;
+  descricao: string;
+  conformidade: 'conforme' | 'nao_conforme' | 'observacao' | 'nao_aplicavel';
+  evidencia: string;
+  responsavel: string;
+  data_verificacao: string;
+  acao_corretiva?: string;
+  prazo_correcao?: string;
+  anexos?: Anexo[];
+}
+
+// Tipos para Medidas Corretivas e Preventivas
+export interface MedidaCorretiva extends BaseEntity {
+  nao_conformidade_id: string;
+  tipo: 'corretiva' | 'preventiva' | 'melhoria';
+  descricao: string;
+  causa_raiz: string;
+  acao_especifica: string;
+  
+  // Responsabilidades
+  responsavel_implementacao: string;
+  responsavel_verificacao: string;
+  
+  // Prazos
+  data_inicio: string;
+  data_limite: string;
+  data_conclusao?: string;
+  
+  // Recursos
+  recursos_necessarios: string[];
+  custo_estimado: number;
+  custo_real?: number;
+  
+  // Status e acompanhamento
+  status: 'planeada' | 'em_execucao' | 'concluida' | 'verificada' | 'atrasada' | 'cancelada';
+  percentual_execucao: number;
+  
+  // Verificação
+  verificacao_eficacia?: VerificacaoEficacia;
+  
+  // Anexos
+  anexos?: Anexo[];
+  observacoes?: string;
+}
+
+// Tipos para Relatórios de Não Conformidades
+export interface RelatorioNaoConformidade {
+  id: string;
+  titulo: string;
+  periodo_inicio: string;
+  periodo_fim: string;
+  gerado_por: string;
+  data_geracao: string;
+  
+  // Estatísticas
+  estatisticas: {
+    total_nc: number;
+    nc_por_tipo: Record<string, number>;
+    nc_por_severidade: Record<string, number>;
+    nc_por_status: Record<string, number>;
+    nc_resolvidas: number;
+    nc_pendentes: number;
+    tempo_medio_resolucao: number;
+    custo_total: number;
+  };
+  
+  // Análise por módulo
+  analise_por_modulo: {
+    ensaios: {
+      total: number;
+      nao_conformes: number;
+      percentual: number;
+    };
+    materiais: {
+      total: number;
+      com_problemas: number;
+      percentual: number;
+    };
+    checklists: {
+      total: number;
+      com_falhas: number;
+      percentual: number;
+    };
+    fornecedores: {
+      total: number;
+      com_nc: number;
+      percentual: number;
+    };
+  };
+  
+  // Auditorias realizadas
+  auditorias: {
+    total: number;
+    internas: number;
+    externas: number;
+    conformidade_media: number;
+  };
+  
+  // Medidas implementadas
+  medidas: {
+    corretivas: number;
+    preventivas: number;
+    eficazes: number;
+    custo_total: number;
+  };
+  
+  // Conteúdo detalhado
+  nao_conformidades: NaoConformidade[];
+  auditorias_realizadas: Auditoria[];
+  medidas_implementadas: MedidaCorretiva[];
+  
+  // Recomendações
+  recomendacoes: string[];
+  acoes_futuras: string[];
+  
+  // Anexos
+  anexos?: Anexo[];
 }
 
 export interface Relatorio {
@@ -479,4 +818,52 @@ export interface Notification {
   mensagem: string;
   data: string;
   lida: boolean;
+}
+
+export interface AvaliacaoFornecedor {
+  id: string;
+  fornecedor_id: string;
+  data: string;
+  avaliador: string;
+  nota: number; // 1-5
+  criterios: {
+    qualidade: number;
+    prazo: number;
+    preco: number;
+    atendimento: number;
+  };
+  comentarios: string;
+} 
+
+export interface RFI extends BaseEntity {
+  numero: string;
+  titulo: string;
+  descricao: string;
+  solicitante: string;
+  destinatario: string;
+  data_solicitacao: string;
+  data_resposta?: string;
+  prioridade: 'baixa' | 'media' | 'alta' | 'urgente';
+  status: 'pendente' | 'em_analise' | 'respondido' | 'fechado';
+  resposta?: string;
+  anexos?: Anexo[];
+  impacto_custo?: number;
+  impacto_prazo?: number;
+  relacionado_obra_id?: string;
+  relacionado_zona_id?: string;
+  relacionado_documento_id?: string;
+  relacionado_ensaio_id?: string;
+  relacionado_material_id?: string;
+  observacoes?: string;
+  timeline?: EventoRFI[];
+}
+
+export interface EventoRFI {
+  id: string;
+  data: string;
+  tipo: 'criado' | 'respondido' | 'comentario' | 'anexo' | 'outro';
+  responsavel: string;
+  descricao: string;
+  detalhes?: string;
+  anexo?: Anexo;
 } 
