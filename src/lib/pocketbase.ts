@@ -160,6 +160,40 @@ export interface NaoConformidadeRecord {
   updated: string
 }
 
+export interface ObraRecord {
+  id: string
+  codigo: string
+  nome: string
+  cliente: string
+  localizacao: string
+  data_inicio: string
+  data_fim_prevista: string
+  data_fim_real?: string
+  valor_contrato: number
+  valor_executado: number
+  percentual_execucao: number
+  status: string
+  tipo_obra: string
+  categoria: string
+  responsavel_tecnico: string
+  coordenador_obra: string
+  fiscal_obra: string
+  engenheiro_responsavel: string
+  arquiteto: string
+  zonas?: any[]
+  fases?: any[]
+  equipas?: any[]
+  fornecedores_principais?: string[]
+  riscos?: any[]
+  indicadores?: any[]
+  responsavel: string
+  zona: string
+  estado: string
+  observacoes?: string
+  created: string
+  updated: string
+}
+
 // API para Documentos
 export const documentosAPI = {
   getAll: async (): Promise<DocumentoRecord[]> => {
@@ -498,6 +532,122 @@ export const naoConformidadesAPI = {
       return true
     } catch (error) {
       console.error('Erro ao deletar não conformidade:', error)
+      return false
+    }
+  }
+}
+
+// API para Obras
+export const obrasAPI = {
+  getAll: async (): Promise<ObraRecord[]> => {
+    try {
+      const isAvailable = await isPocketBaseAvailable()
+      if (isAvailable) {
+        const records = await pb.collection('obras').getFullList<ObraRecord>()
+        return records
+      } else {
+        // Fallback para localStorage
+        const stored = localStorage.getItem('qualicore_obras')
+        return stored ? JSON.parse(stored) : []
+      }
+    } catch (error) {
+      console.error('Erro ao buscar obras:', error)
+      // Fallback para localStorage
+      const stored = localStorage.getItem('qualicore_obras')
+      return stored ? JSON.parse(stored) : []
+    }
+  },
+  
+  getById: async (id: string): Promise<ObraRecord | null> => {
+    try {
+      const isAvailable = await isPocketBaseAvailable()
+      if (isAvailable) {
+        const record = await pb.collection('obras').getOne<ObraRecord>(id)
+        return record
+      } else {
+        // Fallback para localStorage
+        const stored = localStorage.getItem('qualicore_obras')
+        if (stored) {
+          const obras = JSON.parse(stored)
+          return obras.find((o: any) => o.id === id) || null
+        }
+        return null
+      }
+    } catch (error) {
+      console.error('Erro ao buscar obra:', error)
+      return null
+    }
+  },
+  
+  create: async (data: Omit<ObraRecord, 'id' | 'created' | 'updated'>): Promise<ObraRecord | null> => {
+    try {
+      const isAvailable = await isPocketBaseAvailable()
+      if (isAvailable) {
+        const record = await pb.collection('obras').create<ObraRecord>(data)
+        return record
+      } else {
+        // Fallback para localStorage
+        const stored = localStorage.getItem('qualicore_obras')
+        const obras = stored ? JSON.parse(stored) : []
+        const newObra = {
+          ...data,
+          id: Date.now().toString(),
+          created: new Date().toISOString(),
+          updated: new Date().toISOString()
+        }
+        const updatedObras = [...obras, newObra]
+        localStorage.setItem('qualicore_obras', JSON.stringify(updatedObras))
+        return newObra
+      }
+    } catch (error) {
+      console.error('Erro ao criar obra:', error)
+      return null
+    }
+  },
+  
+  update: async (id: string, data: Partial<ObraRecord>): Promise<ObraRecord | null> => {
+    try {
+      const isAvailable = await isPocketBaseAvailable()
+      if (isAvailable) {
+        const record = await pb.collection('obras').update<ObraRecord>(id, data)
+        return record
+      } else {
+        // Fallback para localStorage
+        const stored = localStorage.getItem('qualicore_obras')
+        if (stored) {
+          const obras = JSON.parse(stored)
+          const updatedObras = obras.map((o: any) => 
+            o.id === id ? { ...o, ...data, updated: new Date().toISOString() } : o
+          )
+          localStorage.setItem('qualicore_obras', JSON.stringify(updatedObras))
+          return updatedObras.find((o: any) => o.id === id) || null
+        }
+        return null
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar obra:', error)
+      return null
+    }
+  },
+  
+  delete: async (id: string): Promise<boolean> => {
+    try {
+      const isAvailable = await isPocketBaseAvailable()
+      if (isAvailable) {
+        await pb.collection('obras').delete(id)
+        return true
+      } else {
+        // Fallback para localStorage
+        const stored = localStorage.getItem('qualicore_obras')
+        if (stored) {
+          const obras = JSON.parse(stored)
+          const updatedObras = obras.filter((o: any) => o.id !== id)
+          localStorage.setItem('qualicore_obras', JSON.stringify(updatedObras))
+        }
+        return true
+      }
+    } catch (error) {
+      console.error('Erro ao deletar obra:', error)
       return false
     }
   }

@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Upload, Plus, Trash2, AlertTriangle, CheckCircle, Clock } from 'lucide-react'
+import { X, Upload, Plus, Trash2, AlertTriangle, CheckCircle, Clock, Building } from 'lucide-react'
 import { NaoConformidade } from '@/types'
 import toast from 'react-hot-toast'
 
@@ -72,6 +72,23 @@ export default function NaoConformidadeForm({ naoConformidade, onSubmit, onCance
     corretiva: [],
     verificacao: []
   })
+  const [obras, setObras] = useState<any[]>([])
+
+  // Carregar obras do localStorage
+  useEffect(() => {
+    const loadObras = () => {
+      try {
+        const stored = localStorage.getItem('qualicore_obras')
+        if (stored) {
+          const obrasData = JSON.parse(stored)
+          setObras(obrasData)
+        }
+      } catch (error) {
+        console.error('Erro ao carregar obras:', error)
+      }
+    }
+    loadObras()
+  }, [])
 
   const {
     register,
@@ -503,8 +520,11 @@ export default function NaoConformidadeForm({ naoConformidade, onSubmit, onCance
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Selecionar obra...</option>
-                    <option value="obra-001">Residencial Lisboa</option>
-                    <option value="obra-002">Comercial Porto</option>
+                    {obras.map((obra) => (
+                      <option key={obra.id} value={obra.id}>
+                        {obra.codigo} - {obra.nome}
+                      </option>
+                    ))}
                     <option value="outro">Outro</option>
                   </select>
                   {relacionado_obra_id === 'outro' && (

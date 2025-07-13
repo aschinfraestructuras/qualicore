@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import Modal from './Modal'
 import { useForm } from 'react-hook-form'
 import { User as UserType } from '@/types'
-import { authService } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 import toast from 'react-hot-toast'
 
 export default function Header() {
@@ -62,7 +62,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      await authService.logout()
+      await auth.logout()
       navigate('/login')
       toast.success('Logout realizado com sucesso!')
     } catch (error) {

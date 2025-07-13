@@ -2,27 +2,23 @@ import { useState, useEffect } from 'react'
 import { 
   Plus, 
   Search, 
- 
   Download, 
   Edit, 
   Trash2, 
   Eye,
   FileText,
-
   Printer,
   Upload,
-
   CheckCircle,
   Clock,
   AlertTriangle,
   File,
   FileCheck,
-
   ArrowUpDown,
-
 } from 'lucide-react'
 
-import { DocumentoRecord } from '@/lib/pocketbase'
+import { Documento } from '@/types'
+import { documentosAPI } from '@/lib/api'
 import toast from 'react-hot-toast'
 import { motion, AnimatePresence } from 'framer-motion'
 import Modal from '@/components/Modal'
@@ -187,13 +183,13 @@ const statusOptions = [
 ]
 
 export default function Documentos() {
-  const [documentos, setDocumentos] = useState<DocumentoRecord[]>(mockDocumentos)
+  const [documentos, setDocumentos] = useState<Documento[]>([])
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterEstado, setFilterEstado] = useState('')
   const [filterTipo, setFilterTipo] = useState('')
   const [filterZona, setFilterZona] = useState('')
-  const [sortBy, setSortBy] = useState('created')
+  const [sortBy, setSortBy] = useState('data_criacao')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([])
@@ -202,8 +198,8 @@ export default function Documentos() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
-  const [editingDocument, setEditingDocument] = useState<DocumentoRecord | null>(null)
-  const [viewingDocument, setViewingDocument] = useState<DocumentoRecord | null>(null)
+  const [editingDocument, setEditingDocument] = useState<Documento | null>(null)
+  const [viewingDocument, setViewingDocument] = useState<Documento | null>(null)
 
   useEffect(() => {
     loadDocumentos()
@@ -212,13 +208,13 @@ export default function Documentos() {
   const loadDocumentos = async () => {
     try {
       setLoading(true)
-      // const data = await documentosAPI.getAll()
-      // setDocumentos(data)
-      // Usando dados mockados por enquanto
-      setDocumentos(mockDocumentos)
+      const response = await documentosAPI.getAll({
+        sort: `${sortOrder === 'desc' ? '-' : ''}${sortBy}`,
+        perPage: 100
+      })
+      setDocumentos(response.items)
     } catch (error) {
-      console.error('Erro ao carregar documentos:', error)
-      toast.error('Erro ao carregar documentos')
+      console.error(error)
     } finally {
       setLoading(false)
     }
@@ -237,8 +233,8 @@ export default function Documentos() {
   })
 
   const sortedDocumentos = [...filteredDocumentos].sort((a, b) => {
-    const aValue = a[sortBy as keyof DocumentoRecord] || ''
-    const bValue = b[sortBy as keyof DocumentoRecord] || ''
+    const aValue = a[sortBy as keyof Documento] || ''
+    const bValue = b[sortBy as keyof Documento] || ''
     
     if (sortOrder === 'asc') {
       return aValue > bValue ? 1 : -1
@@ -255,41 +251,39 @@ export default function Documentos() {
     return documentTypes.find(t => t.value === tipo) || documentTypes[4]
   }
 
-  const handleCreateDocument = (data: any) => {
-    const newDocument: DocumentoRecord = {
-      id: Date.now().toString(),
-      ...data,
-      created: new Date().toISOString(),
-      updated: new Date().toISOString()
+  const handleCreateDocument = async (data: any) => {
+    try {
+      const newDocument = await documentosAPI.create(data)
+      setDocumentos(prev => [newDocument, ...prev])
+      setShowCreateModal(false)
+      toast.success('Documento criado com sucesso!')
+    } catch (error) {
+      console.error(error)
     }
-    setDocumentos(prev => [newDocument, ...prev])
-    setShowCreateModal(false)
-    toast.success('Documento criado com sucesso!')
   }
 
-  const handleEditDocument = (data: any) => {
+  const handleEditDocument = async (data: any) => {
     if (!editingDocument) return
     
-    const updatedDocument: DocumentoRecord = {
-      ...editingDocument,
-      ...data,
-      updated: new Date().toISOString()
+    try {
+      const updatedDocument = await documentosAPI.update(editingDocument.id, data)
+      setDocumentos(prev => prev.map(doc => 
+        doc.id === editingDocument.id ? updatedDocument : doc
+      ))
+      setShowEditModal(false)
+      setEditingDocument(null)
+      toast.success('Documento atualizado com sucesso!')
+    } catch (error) {
+      console.error(error)
     }
-    
-    setDocumentos(prev => prev.map(doc => 
-      doc.id === editingDocument.id ? updatedDocument : doc
-    ))
-    setShowEditModal(false)
-    setEditingDocument(null)
-    toast.success('Documento atualizado com sucesso!')
   }
 
-  const handleViewDocument = (document: DocumentoRecord) => {
+  const handleViewDocument = (document: Documento) => {
     setViewingDocument(document)
     setShowViewModal(true)
   }
 
-  const handleEditClick = (document: DocumentoRecord) => {
+  const handleEditClick = (document: Documento) => {
     setEditingDocument(document)
     setShowEditModal(true)
   }
@@ -354,8 +348,25 @@ export default function Documentos() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="loading-spinner h-8 w-8"></div>
+      <div className="space-y-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-glow">
+              <FileText className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 font-display">Documentos</h1>
+              <p className="text-gray-600 mt-1">Gestão completa de documentação técnica</p>
+            </div>
+          </div>
+        </motion.div>
+        
+        <div>Carregando...</div>
       </div>
     )
   }
@@ -610,7 +621,7 @@ export default function Documentos() {
                   <th>
                     <button
                       onClick={() => {
-                        setSortBy('created')
+                        setSortBy('data_criacao')
                         setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
                       }}
                       className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
@@ -624,111 +635,119 @@ export default function Documentos() {
               </thead>
               <tbody>
                 <AnimatePresence>
-                  {sortedDocumentos.map((doc, index) => {
-                    const tipoInfo = getTipoInfo(doc.tipo)
-                    const estadoInfo = getEstadoInfo(doc.estado)
-                    const TipoIcon = tipoInfo.icon
-                    
-                    return (
-                      <motion.tr
-                        key={doc.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.05 }}
-                        className="hover:bg-gray-50/50"
-                      >
-                        <td>
-                          <input
-                            type="checkbox"
-                            checked={selectedDocuments.includes(doc.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedDocuments([...selectedDocuments, doc.id])
-                              } else {
-                                setSelectedDocuments(selectedDocuments.filter(id => id !== doc.id))
-                              }
-                            }}
-                            className="rounded border-gray-300"
-                          />
-                        </td>
-                        <td>
-                          <div className="flex items-center space-x-2">
-                            <TipoIcon className={`h-4 w-4 ${tipoInfo.color}`} />
-                            <span className="font-medium text-gray-900">{doc.codigo}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className="text-sm text-gray-700">{tipoInfo.label}</span>
-                        </td>
-                        <td>
-                          <span className="text-sm font-medium text-gray-900">{doc.versao}</span>
-                        </td>
-                        <td>
-                          <div className="flex items-center space-x-2">
-                            <div className="h-6 w-6 rounded-full bg-gradient-primary flex items-center justify-center">
-                              <span className="text-xs font-bold text-white">
-                                {doc.responsavel.split(' ').map(n => n[0]).join('')}
-                              </span>
-                            </div>
-                            <span className="text-sm text-gray-700">{doc.responsavel}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className="text-sm text-gray-700">{doc.zona}</span>
-                        </td>
-                        <td>
-                          <span className={`badge ${estadoInfo.color}`}>
-                            {estadoInfo.label}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="text-sm text-gray-700">
-                            {doc.data_validade ? new Date(doc.data_validade).toLocaleDateString('pt-BR') : '-'}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="text-sm text-gray-500">
-                            {new Date(doc.created).toLocaleDateString('pt-BR')}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="flex items-center space-x-1">
-                            <button 
-                              onClick={() => handleViewDocument(doc)}
-                              className="p-1 rounded-lg hover:bg-gray-100 transition-colors" 
-                              title="Visualizar"
-                            >
-                              <Eye className="h-4 w-4 text-gray-600" />
-                            </button>
-                            <button 
-                              onClick={() => handleEditClick(doc)}
-                              className="p-1 rounded-lg hover:bg-gray-100 transition-colors" 
-                              title="Editar"
-                            >
-                              <Edit className="h-4 w-4 text-gray-600" />
-                            </button>
-                            <button 
-                              onClick={() => {
-                                // Implementar impressão
-                                toast.success('Funcionalidade de impressão em desenvolvimento')
+                  {sortedDocumentos.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="py-12">
+                        <div>Nenhum documento encontrado</div>
+                      </td>
+                    </tr>
+                  ) : (
+                    sortedDocumentos.map((doc, index) => {
+                      const tipoInfo = getTipoInfo(doc.tipo)
+                      const estadoInfo = getEstadoInfo(doc.estado)
+                      const TipoIcon = tipoInfo.icon
+                      
+                      return (
+                        <motion.tr
+                          key={doc.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                          className="hover:bg-gray-50/50"
+                        >
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={selectedDocuments.includes(doc.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedDocuments([...selectedDocuments, doc.id])
+                                } else {
+                                  setSelectedDocuments(selectedDocuments.filter(id => id !== doc.id))
+                                }
                               }}
-                              className="p-1 rounded-lg hover:bg-gray-100 transition-colors" 
-                              title="Imprimir"
-                            >
-                              <Printer className="h-4 w-4 text-gray-600" />
-                            </button>
-                            <button 
-                              onClick={() => handleDelete(doc.id)}
-                              className="p-1 rounded-lg hover:bg-red-100 transition-colors" 
-                              title="Eliminar"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </button>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    )
-                  })}
+                              className="rounded border-gray-300"
+                            />
+                          </td>
+                          <td>
+                            <div className="flex items-center space-x-2">
+                              <TipoIcon className={`h-4 w-4 ${tipoInfo.color}`} />
+                              <span className="font-medium text-gray-900">{doc.codigo}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <span className="text-sm text-gray-700">{tipoInfo.label}</span>
+                          </td>
+                          <td>
+                            <span className="text-sm font-medium text-gray-900">{doc.versao}</span>
+                          </td>
+                          <td>
+                            <div className="flex items-center space-x-2">
+                              <div className="h-6 w-6 rounded-full bg-gradient-primary flex items-center justify-center">
+                                <span className="text-xs font-bold text-white">
+                                  {doc.responsavel.split(' ').map(n => n[0]).join('')}
+                                </span>
+                              </div>
+                              <span className="text-sm text-gray-700">{doc.responsavel}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <span className="text-sm text-gray-700">{doc.zona}</span>
+                          </td>
+                          <td>
+                            <span className={`badge ${estadoInfo.color}`}>
+                              {estadoInfo.label}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="text-sm text-gray-700">
+                              {doc.data_validade ? new Date(doc.data_validade).toLocaleDateString('pt-BR') : '-'}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="text-sm text-gray-500">
+                              {new Date(doc.data_criacao).toLocaleDateString('pt-BR')}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="flex items-center space-x-1">
+                              <button 
+                                onClick={() => handleViewDocument(doc)}
+                                className="p-1 rounded-lg hover:bg-gray-100 transition-colors" 
+                                title="Visualizar"
+                              >
+                                <Eye className="h-4 w-4 text-gray-600" />
+                              </button>
+                              <button 
+                                onClick={() => handleEditClick(doc)}
+                                className="p-1 rounded-lg hover:bg-gray-100 transition-colors" 
+                                title="Editar"
+                              >
+                                <Edit className="h-4 w-4 text-gray-600" />
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  // Implementar impressão
+                                  toast.success('Funcionalidade de impressão em desenvolvimento')
+                                }}
+                                className="p-1 rounded-lg hover:bg-gray-100 transition-colors" 
+                                title="Imprimir"
+                              >
+                                <Printer className="h-4 w-4 text-gray-600" />
+                              </button>
+                              <button 
+                                onClick={() => handleDelete(doc.id)}
+                                className="p-1 rounded-lg hover:bg-red-100 transition-colors" 
+                                title="Eliminar"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </button>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      )
+                    })
+                  )}
                 </AnimatePresence>
               </tbody>
             </table>
@@ -836,7 +855,7 @@ export default function Documentos() {
 
             <div className="flex items-center justify-between pt-4 border-t border-gray-200">
               <div className="text-sm text-gray-500">
-                Criado em: {new Date(viewingDocument.created).toLocaleString('pt-BR')}
+                Criado em: {new Date(viewingDocument.data_criacao).toLocaleString('pt-BR')}
               </div>
               <div className="flex space-x-2">
                 <button

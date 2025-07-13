@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Eye, EyeOff, Lock, Mail, User, AlertCircle, Loader2, CheckCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { authService, RegisterData } from '@/lib/auth'
+import { auth, RegisterData } from '@/lib/auth'
 import toast from 'react-hot-toast'
 
 const registerSchema = z.object({
@@ -50,7 +50,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
     }
     setIsLoading(true)
     try {
-      await authService.register(data)
+      await auth.register(data)
       toast.success('Conta criada com sucesso!')
       onSuccess()
     } catch (error: any) {

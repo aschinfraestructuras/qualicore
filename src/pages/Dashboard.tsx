@@ -23,7 +23,8 @@ import {
   Calendar,
   Search,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Building
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { calcularMetricasReais, MetricasReais } from '@/services/metricsService'
@@ -130,6 +131,11 @@ export default function Dashboard() {
   const handleNovoDocumento = () => {
     navigate('/documentos')
     toast.success('Redirecionando para criar novo documento...')
+  }
+
+  const handleNovaObra = () => {
+    navigate('/obras')
+    toast.success('Redirecionando para criar nova obra...')
   }
 
   const handleVerDetalhes = (modulo: string) => {
@@ -652,6 +658,61 @@ export default function Dashboard() {
             </div>
           </div>
         </motion.div>
+
+        {/* Obras */}
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="card card-hover cursor-pointer"
+          onClick={() => handleVerDetalhes('obras')}
+        >
+          <div className="card-header">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="card-title">Obras</h3>
+                <p className="card-description">Gestão de projetos e construções</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Building className="h-8 w-8 text-indigo-500" />
+                <Eye className="h-5 w-5 text-gray-400" />
+              </div>
+            </div>
+          </div>
+          <div className="card-content">
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-indigo-600">{metricas.obras.total_obras}</div>
+                <div className="text-sm text-gray-600">Total</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{metricas.obras.obras_em_execucao}</div>
+                <div className="text-sm text-gray-600">Em Execução</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{metricas.obras.obras_concluidas}</div>
+                <div className="text-sm text-gray-600">Concluídas</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-600">{metricas.obras.obras_paralisadas}</div>
+                <div className="text-sm text-gray-600">Paralisadas</div>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Execução média:</span>
+                <span className="font-medium">{metricas.obras.percentual_execucao_medio}%</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Valor contratos:</span>
+                <span className="font-medium text-sm">
+                  {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(metricas.obras.valor_total_contratos)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Alertas e Ações Rápidas */}
@@ -711,6 +772,21 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <Eye className="h-4 w-4 text-blue-400" />
+                </div>
+              )}
+              
+              {metricas.obras.obras_paralisadas > 0 && (
+                <div className="flex items-center p-3 bg-orange-50 rounded-lg border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors" onClick={() => handleVerDetalhes('obras')}>
+                  <Building className="h-5 w-5 text-orange-500 mr-3" />
+                  <div className="flex-1">
+                    <div className="font-medium text-orange-800">
+                      {metricas.obras.obras_paralisadas} obras paralisadas
+                    </div>
+                    <div className="text-sm text-orange-600">
+                      Requerem atenção
+                    </div>
+                  </div>
+                  <Eye className="h-4 w-4 text-orange-400" />
                 </div>
               )}
               
@@ -787,6 +863,18 @@ export default function Dashboard() {
                 </div>
                 <div className="text-sm font-medium">Novo Documento</div>
                 <div className="text-xs opacity-80 mt-1">Adicionar ficheiro</div>
+              </button>
+              
+              <button 
+                onClick={handleNovaObra}
+                className="p-4 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all group"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <Building className="h-6 w-6" />
+                  <Plus className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <div className="text-sm font-medium">Nova Obra</div>
+                <div className="text-xs opacity-80 mt-1">Criar projeto</div>
               </button>
             </div>
           </div>

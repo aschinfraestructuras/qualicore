@@ -4,7 +4,8 @@ import {
   checklistsAPI, 
   materiaisAPI, 
   fornecedoresAPI, 
-  naoConformidadesAPI 
+  naoConformidadesAPI,
+  obrasAPI
 } from '@/lib/pocketbase'
 
 // Tipos para métricas reais
@@ -15,6 +16,7 @@ export interface MetricasReais {
   naoConformidades: KPIsNCs;
   documentos: KPIsDocumentos;
   fornecedores: KPIsFornecedores;
+  obras: KPIsObras;
   geral: KPIsGerais;
 }
 
@@ -78,6 +80,19 @@ export interface KPIsFornecedores {
   performance_media: number;
 }
 
+export interface KPIsObras {
+  total_obras: number;
+  obras_em_execucao: number;
+  obras_concluidas: number;
+  obras_paralisadas: number;
+  valor_total_contratos: number;
+  valor_total_executado: number;
+  percentual_execucao_medio: number;
+  obras_por_tipo: Record<string, number>;
+  obras_por_categoria: Record<string, number>;
+  obras_por_status: Record<string, number>;
+}
+
 export interface KPIsGerais {
   conformidade_geral: number;
   total_registros: number;
@@ -89,13 +104,14 @@ export interface KPIsGerais {
 export const calcularMetricasReais = async (): Promise<MetricasReais> => {
   try {
     // Buscar todos os dados
-    const [ensaios, checklists, materiais, naoConformidades, documentos, fornecedores] = await Promise.all([
+    const [ensaios, checklists, materiais, naoConformidades, documentos, fornecedores, obras] = await Promise.all([
       ensaiosAPI.getAll(),
       checklistsAPI.getAll(),
       materiaisAPI.getAll(),
       naoConformidadesAPI.getAll(),
       documentosAPI.getAll(),
-      fornecedoresAPI.getAll()
+      fornecedoresAPI.getAll(),
+      obrasAPI.getAll()
     ])
 
     // Calcular métricas de ensaios
@@ -116,6 +132,9 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
     // Calcular métricas de fornecedores
     const kpisFornecedores = calcularKPIsFornecedores(fornecedores)
     
+    // Calcular métricas de obras
+    const kpisObras = calcularKPIsObras(obras)
+    
     // Calcular métricas gerais
     const kpisGerais = calcularKPIsGerais({
       ensaios: kpisEnsaios,
@@ -123,7 +142,8 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       materiais: kpisMateriais,
       naoConformidades: kpisNCs,
       documentos: kpisDocumentos,
-      fornecedores: kpisFornecedores
+      fornecedores: kpisFornecedores,
+      obras: kpisObras
     })
 
     return {
@@ -133,6 +153,7 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       naoConformidades: kpisNCs,
       documentos: kpisDocumentos,
       fornecedores: kpisFornecedores,
+      obras: kpisObras,
       geral: kpisGerais
     }
   } catch (error) {
@@ -369,6 +390,48 @@ const calcularKPIsFornecedores = (fornecedores: any[]): KPIsFornecedores => {
   }
 }
 
+const calcularKPIsObras = (obras: any[]): KPIsObras => {
+  const total = obras.length
+  const emExecucao = obras.filter(o => o.status === 'em_execucao').length
+  const concluidas = obras.filter(o => o.status === 'concluida').length
+  const paralisadas = obras.filter(o => o.status === 'paralisada').length
+
+  const valorTotalContratos = obras.reduce((sum, o) => sum + o.valor_contrato, 0)
+  const valorTotalExecutado = obras.reduce((sum, o) => sum + o.valor_executado, 0)
+  const percentualExecucaoMedio = total > 0 ? (valorTotalExecutado / valorTotalContratos) * 100 : 0
+
+  // Obras por tipo
+  const obrasPorTipo = obras.reduce((acc, o) => {
+    acc[o.tipo] = (acc[o.tipo] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  // Obras por categoria
+  const obrasPorCategoria = obras.reduce((acc, o) => {
+    acc[o.categoria] = (acc[o.categoria] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  // Obras por status
+  const obrasPorStatus = obras.reduce((acc, o) => {
+    acc[o.status] = (acc[o.status] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  return {
+    total_obras: total,
+    obras_em_execucao: emExecucao,
+    obras_concluidas: concluidas,
+    obras_paralisadas: paralisadas,
+    valor_total_contratos: valorTotalContratos,
+    valor_total_executado: valorTotalExecutado,
+    percentual_execucao_medio: Math.round(percentualExecucaoMedio * 100) / 100,
+    obras_por_tipo: obrasPorTipo,
+    obras_por_categoria: obrasPorCategoria,
+    obras_por_status: obrasPorStatus
+  }
+}
+
 const calcularKPIsGerais = (metricas: Omit<MetricasReais, 'geral'>): KPIsGerais => {
   // Conformidade geral (média ponderada)
   const conformidadeGeral = (
@@ -383,13 +446,15 @@ const calcularKPIsGerais = (metricas: Omit<MetricasReais, 'geral'>): KPIsGerais 
     metricas.checklists.total_checklists +
     metricas.materiais.total_materiais +
     metricas.naoConformidades.total_ncs +
-    metricas.documentos.total_documentos
+    metricas.documentos.total_documentos +
+    metricas.obras.total_obras
 
   // Alertas críticos
   const alertasCriticos = 
     metricas.naoConformidades.ncs_pendentes +
     metricas.documentos.documentos_vencidos +
-    metricas.materiais.materiais_pendentes
+    metricas.materiais.materiais_pendentes +
+    metricas.obras.obras_paralisadas
 
   // Tendência (simulada - seria baseada em dados históricos)
   const tendencia: 'melhorando' | 'estavel' | 'piorando' = 'estavel'
@@ -427,3 +492,5 @@ const calcularTempoMedioEntreDatas = (datas: Date[]): number => {
     ? intervalos.reduce((a, b) => a + b, 0) / intervalos.length 
     : 0
 } 
+
+ 

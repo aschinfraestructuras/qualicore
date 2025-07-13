@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Mail, AlertCircle, Loader2, CheckCircle, ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { authService } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 import toast from 'react-hot-toast'
 
 const resetSchema = z.object({
@@ -33,7 +33,7 @@ export default function ResetPasswordForm({ onSwitchToLogin }: ResetPasswordForm
   const onSubmit = async (data: ResetFormData) => {
     setIsLoading(true)
     try {
-      await authService.requestPasswordReset(data.email)
+      await auth.resetPassword(data.email)
       setIsSuccess(true)
       toast.success('Email de reset enviado com sucesso!')
     } catch (error) {

@@ -8,6 +8,7 @@ export interface LocalStorageData {
   fornecedores: any[]
   nao_conformidades: any[]
   rfis: any[]
+  obras: any[]
 }
 
 const STORAGE_KEY = 'qualicore_data'
@@ -143,6 +144,39 @@ const defaultData: LocalStorageData = {
       observacoes: 'Pendente de resposta técnica',
       created: new Date().toISOString(),
       updated: new Date().toISOString()
+    }
+  ],
+  obras: [
+    {
+      id: '1',
+      codigo: 'OBR-2024-001',
+      nome: 'Edifício Residencial Solar',
+      cliente: 'Construtora ABC',
+      localizacao: 'Lisboa, Portugal',
+      data_inicio: '2024-01-15',
+      data_fim_prevista: '2024-12-31',
+      valor_contrato: 2500000,
+      valor_executado: 1250000,
+      percentual_execucao: 50,
+      status: 'em_execucao',
+      tipo_obra: 'residencial',
+      categoria: 'grande',
+      responsavel_tecnico: 'Eng. João Silva',
+      coordenador_obra: 'Eng. Maria Santos',
+      fiscal_obra: 'Eng. Carlos Mendes',
+      engenheiro_responsavel: 'Eng. Ana Costa',
+      arquiteto: 'Arq. Pedro Alves',
+      zonas: [],
+      fases: [],
+      equipas: [],
+      fornecedores_principais: [],
+      riscos: [],
+      indicadores: [],
+      responsavel: 'Eng. João Silva',
+      zona: 'Lisboa',
+      estado: 'em_analise',
+      data_criacao: '2024-01-15T09:00:00Z',
+      data_atualizacao: '2024-01-15T09:00:00Z'
     }
   ]
 }
@@ -460,6 +494,43 @@ export const localRFIsAPI = {
     const data = getLocalData()
     const updatedRFIs = removeFromLocalCollection('rfis', data.rfis, id)
     const newData = { ...data, rfis: updatedRFIs }
+    saveLocalData(newData)
+    return true
+  }
+}
+
+// API local para obras
+export const localObrasAPI = {
+  getAll: async (): Promise<any[]> => {
+    const data = getLocalData()
+    return data.obras
+  },
+  
+  getById: async (id: string): Promise<any | null> => {
+    const data = getLocalData()
+    return data.obras.find(obra => obra.id === id) || null
+  },
+  
+  create: async (newObra: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedObras = addToLocalCollection('obras', data.obras, newObra)
+    const newData = { ...data, obras: updatedObras }
+    saveLocalData(newData)
+    return updatedObras[updatedObras.length - 1]
+  },
+  
+  update: async (id: string, updates: any): Promise<any | null> => {
+    const data = getLocalData()
+    const updatedObras = updateLocalCollection('obras', data.obras, id, updates)
+    const newData = { ...data, obras: updatedObras }
+    saveLocalData(newData)
+    return updatedObras.find(obra => obra.id === id) || null
+  },
+  
+  delete: async (id: string): Promise<boolean> => {
+    const data = getLocalData()
+    const updatedObras = removeFromLocalCollection('obras', data.obras, id)
+    const newData = { ...data, obras: updatedObras }
     saveLocalData(newData)
     return true
   }

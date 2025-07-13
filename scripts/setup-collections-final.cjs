@@ -89,6 +89,58 @@ async function setupCollections() {
       console.log('✅ Autenticação bem-sucedida!');
     }
     
+    // Autenticação bem-sucedida!
+    let adminToken = (authResponse.status === 200 ? authResponse.data.token : authResponse2.data.token);
+
+    // Função para criar coleção se não existir
+    async function createCollection(name, schema) {
+      const res = await makeRequest(`${POCKETBASE_URL}/api/collections`, {
+        method: 'POST',
+        headers: { 'Authorization': adminToken ? `Bearer ${adminToken}` : undefined },
+        body: {
+          name,
+          type: 'base',
+          schema,
+        }
+      });
+      if (res.status === 200) {
+        console.log(`✅ Coleção '${name}' criada!`);
+      } else if (res.data?.code === 400 && res.data?.data?.name?.code === 'validation_collection_name_exists') {
+        console.log(`⚠️  Coleção '${name}' já existe.`);
+      } else {
+        console.log(`❌ Erro ao criar coleção '${name}':`, res.data);
+      }
+    }
+
+    // Criar coleção 'obras'
+    await createCollection('obras', [
+      { name: 'codigo', type: 'text', required: true },
+      { name: 'nome', type: 'text', required: true },
+      { name: 'cliente', type: 'text' },
+      { name: 'localizacao', type: 'text' },
+      { name: 'data_inicio', type: 'date' },
+      { name: 'data_fim_prevista', type: 'date' },
+      { name: 'valor_contrato', type: 'number' },
+      { name: 'valor_executado', type: 'number' },
+      { name: 'percentual_execucao', type: 'number' },
+      { name: 'status', type: 'select', options: { values: ['planeamento','em_execucao','paralisada','concluida','cancelada'] } },
+      { name: 'tipo_obra', type: 'select', options: { values: ['residencial','comercial','industrial','infraestrutura'] } },
+      { name: 'categoria', type: 'text' },
+      { name: 'responsavel_tecnico', type: 'text' },
+      { name: 'coordenador_obra', type: 'text' },
+      { name: 'fiscal_obra', type: 'text' },
+      { name: 'engenheiro_responsavel', type: 'text' },
+      { name: 'arquiteto', type: 'text' },
+      { name: 'zonas', type: 'json' },
+      { name: 'fases', type: 'json' },
+      { name: 'equipas', type: 'json' },
+      { name: 'observacoes', type: 'text' }
+    ]);
+
+    console.log('\n🎯 Para iniciar a aplicação:');
+    console.log('   npm run dev');
+    return;
+    
     // For now, let's create collections manually via the admin interface
     console.log('\n📋 Como o endpoint de autenticação não está funcionando,');
     console.log('vou criar as coleções manualmente via interface admin.');

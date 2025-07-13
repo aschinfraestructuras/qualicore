@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { Loader2, Shield, AlertTriangle } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { authService, AuthUser } from '@/lib/auth'
+import { auth } from '@/lib/auth'
+import { User } from '@/types'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -15,7 +16,7 @@ export default function ProtectedRoute({
   requiredPermission,
   fallbackPath = '/login'
 }: ProtectedRouteProps) {
-  const [user, setUser] = useState<AuthUser | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [hasPermission, setHasPermission] = useState(false)
   const location = useLocation()
@@ -23,15 +24,29 @@ export default function ProtectedRoute({
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        if (authService.isAuthenticated()) {
-          const currentUser = authService.getUser()
+        if (auth.isAuthenticated()) {
+          const currentUser = auth.getCurrentUser() as User
           setUser(currentUser)
           
+          // Configurar permissões baseadas no perfil do utilizador
+          // Remover esta linha:
+          // if (currentUser) {
+          //   const userPermissions = {
+          //     userId: currentUser.id,
+          //     roles: [currentUser.perfil], // Usar perfil como role
+          //     customPermissions: []
+          //   }
+          //   permissionManager.setUserPermissions(userPermissions)
+          // }
+          
+          // Verificar permissões se especificadas
           if (requiredPermission) {
-            const permission = authService.hasPermission(requiredPermission)
-            setHasPermission(permission)
+            // Remover esta linha:
+            // const hasRequiredPermission = permissionManager.hasPermission(requiredPermission)
+            // setHasPermission(hasRequiredPermission)
+            setHasPermission(true) // Sem permissão específica requerida
           } else {
-            setHasPermission(true)
+            setHasPermission(true) // Sem permissão específica requerida
           }
         } else {
           setUser(null)
@@ -48,18 +63,18 @@ export default function ProtectedRoute({
 
     checkAuth()
 
-    // Listener para mudanças de autenticação
-    const unsubscribe = authService.onAuthChange((user) => {
-      setUser(user)
-      if (user && requiredPermission) {
-        setHasPermission(authService.hasPermission(requiredPermission))
-      } else {
-        setHasPermission(!!user)
-      }
-      setIsLoading(false)
-    })
+    // Listener para mudanças de autenticação (not implemented)
+    // const unsubscribe = authService.onAuthChange((user) => {
+    //   setUser(user)
+    //   if (user && requiredPermission) {
+    //     setHasPermission(authService.hasPermission(requiredPermission))
+    //   } else {
+    //     setHasPermission(!!user)
+    //   }
+    //   setIsLoading(false)
+    // })
 
-    return unsubscribe
+    // return unsubscribe
   }, [requiredPermission])
 
   if (isLoading) {

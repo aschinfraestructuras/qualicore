@@ -25,13 +25,20 @@ export const auth = {
       )
       
       if (pb.authStore.isValid) {
+        toast.success('Login realizado com sucesso!')
         return authData
       } else {
         throw new Error('Credenciais inválidas')
       }
     } catch (error: any) {
-      console.error('Erro no login:', error)
-      throw new Error(error.message || 'Erro ao fazer login')
+      // Tratar erros específicos do PocketBase
+      if (error?.status === 400) {
+        throw new Error('Email ou palavra-passe incorretos')
+      } else if (error?.status === 401) {
+        throw new Error('Credenciais inválidas')
+      } else {
+        throw new Error('Erro desconhecido')
+      }
     }
   },
 
@@ -46,6 +53,8 @@ export const auth = {
         perfil: data.perfil
       })
       
+      toast.success('Registo realizado com sucesso!')
+      
       // Fazer login automaticamente após registo
       await this.login({
         email: data.email,
@@ -54,8 +63,16 @@ export const auth = {
       
       return record
     } catch (error: any) {
-      console.error('Erro no registo:', error)
-      throw new Error(error.message || 'Erro ao registar')
+      // Tratar erros específicos do PocketBase
+      if (error?.data?.email?.code === 'validation_invalid_email') {
+        throw new Error('Email inválido')
+      } else if (error?.data?.password?.code === 'validation_min_length') {
+        throw new Error('A palavra-passe deve ter pelo menos 8 caracteres')
+      } else if (error?.data?.email?.code === 'validation_invalid_duplicate') {
+        throw new Error('Este email já está registado')
+      } else {
+        throw new Error('Erro desconhecido')
+      }
     }
   },
 
@@ -63,6 +80,7 @@ export const auth = {
   logout() {
     pb.authStore.clear()
     localStorage.removeItem('pocketbase_auth')
+    toast.success('Logout realizado com sucesso!')
   },
 
   // Verificar se está autenticado
@@ -79,10 +97,16 @@ export const auth = {
   async resetPassword(email: string) {
     try {
       await pb.collection('users').requestPasswordReset(email)
+      toast.success('Email de reset enviado com sucesso!')
       return true
     } catch (error: any) {
-      console.error('Erro no reset password:', error)
-      throw new Error(error.message || 'Erro ao resetar password')
+      if (error?.data?.email?.code === 'validation_invalid_email') {
+        throw new Error('Email inválido')
+      } else if (error?.status === 404) {
+        throw new Error('Utilizador não encontrado')
+      } else {
+        throw new Error('Erro desconhecido')
+      }
     }
   }
 }

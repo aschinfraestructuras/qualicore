@@ -1,17 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { 
-  FileText, 
-  Upload, 
-  Calendar,
-  User,
-  MapPin,
-  AlertCircle,
-  CheckCircle,
-  X
-} from 'lucide-react'
+import { Documento } from '@/types'
+import { Plus, X, FileText, Calendar, User, MapPin, Building, AlertCircle, Upload, CheckCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 
@@ -158,6 +150,24 @@ const zonas = [
 export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditing = false }: DocumentoFormProps) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [obras, setObras] = useState<any[]>([])
+
+  // Carregar obras do localStorage
+  useEffect(() => {
+    const loadObras = () => {
+      try {
+        const stored = localStorage.getItem('qualicore_obras')
+        if (stored) {
+          const obrasData = JSON.parse(stored)
+          setObras(obrasData)
+        }
+      } catch (error) {
+        console.error('Erro ao carregar obras:', error)
+      }
+    }
+    loadObras()
+  }, [])
 
   const {
     register,
@@ -665,8 +675,11 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
             <label className="block text-sm font-medium text-gray-700 mb-1">Obra Relacionada</label>
             <select {...register('relacionado_obra_id')} className="select">
               <option value="">Selecionar obra...</option>
-              <option value="obra-001">Residencial Lisboa</option>
-              <option value="obra-002">Comercial Porto</option>
+              {obras.map((obra) => (
+                <option key={obra.id} value={obra.id}>
+                  {obra.codigo} - {obra.nome}
+                </option>
+              ))}
               <option value="outro">Outro</option>
             </select>
             {watch('relacionado_obra_id') === 'outro' && (

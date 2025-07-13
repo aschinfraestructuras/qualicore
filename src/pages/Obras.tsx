@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Plus, 
   Search, 
@@ -12,8 +12,9 @@ import {
 import { Obra } from '@/types'
 import toast from 'react-hot-toast'
 import ObraForm from '@/components/forms/ObraForm'
+import { obrasAPI } from '@/lib/pocketbase'
 
-// Mock data para demonstração
+// Dados mock iniciais para demonstração
 const mockObras: Obra[] = [
   {
     id: '1',
@@ -110,13 +111,28 @@ const mockObras: Obra[] = [
   }
 ]
 
-export default function Obras() {
-  const [obras, setObras] = useState<Obra[]>(mockObras)
-  const [showForm, setShowForm] = useState(false)
 
+
+export default function Obras() {
+  const [obras, setObras] = useState<any[]>([])
+  const [showForm, setShowForm] = useState(false)
   const [editingObra, setEditingObra] = useState<Obra | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
+
+  // Carregar obras da API ao montar o componente
+  useEffect(() => {
+    const loadObras = async () => {
+      try {
+        const loadedObras = await obrasAPI.getAll()
+        setObras(loadedObras)
+      } catch (error) {
+        console.error('Erro ao carregar obras:', error)
+        toast.error('Erro ao carregar obras')
+      }
+    }
+    loadObras()
+  }, [])
 
   const handleCreate = () => {
     setEditingObra(null)
@@ -130,27 +146,100 @@ export default function Obras() {
 
   const handleFormSubmit = async (data: Obra) => {
     try {
+      console.log('Dados do formulário:', data)
+      
+      // Validação dos campos obrigatórios
+      if (!data.codigo || !data.nome || !data.cliente || !data.localizacao || 
+          !data.data_inicio || !data.data_fim_prevista || !data.valor_contrato) {
+        toast.error('Por favor, preencha todos os campos obrigatórios')
+        return
+      }
+      
+      // Converter dados do formulário para o formato da API
+      const obraData = {
+        codigo: data.codigo,
+        nome: data.nome,
+        cliente: data.cliente,
+        localizacao: data.localizacao,
+        data_inicio: data.data_inicio,
+        data_fim_prevista: data.data_fim_prevista,
+        data_fim_real: data.data_fim_real,
+        valor_contrato: Number(data.valor_contrato) || 0,
+        valor_executado: Number(data.valor_executado) || 0,
+        percentual_execucao: Number(data.percentual_execucao) || 0,
+        status: data.status,
+        tipo_obra: data.tipo_obra,
+        categoria: data.categoria,
+        responsavel_tecnico: data.responsavel_tecnico,
+        coordenador_obra: data.coordenador_obra,
+        fiscal_obra: data.fiscal_obra,
+        engenheiro_responsavel: data.engenheiro_responsavel,
+        arquiteto: data.arquiteto,
+        zonas: data.zonas || [],
+        fases: data.fases || [],
+        equipas: data.equipas || [],
+        fornecedores_principais: data.fornecedores_principais || [],
+        riscos: data.riscos || [],
+        indicadores: data.indicadores || [],
+        responsavel: data.responsavel || 'Sistema',
+        zona: data.zona || 'Geral',
+        estado: data.estado || 'pendente',
+        observacoes: data.observacoes
+      }
+
+      console.log('Dados convertidos para API:', obraData)
+
       if (editingObra) {
-        const updatedObras = obras.map(o => o.id === editingObra.id ? { ...data, id: o.id } : o)
-        setObras(updatedObras)
-        toast.success('Obra atualizada com sucesso!')
+        // Atualizar obra existente
+        const updatedObra = await obrasAPI.update(editingObra.id, obraData)
+        if (updatedObra) {
+          setObras(obras.map(o => o.id === editingObra.id ? updatedObra : o))
+          toast.success('Obra atualizada com sucesso!')
+        } else {
+          toast.error('Erro ao atualizar obra')
+        }
       } else {
-        const newObra = { ...data, id: Date.now().toString() }
-        setObras([...obras, newObra])
-        toast.success('Obra criada com sucesso!')
+        // Criar nova obra
+        console.log('Tentando criar obra com dados:', obraData)
+        
+        // Verificar se o PocketBase está disponível
+        try {
+          const isAvailable = await fetch('http://localhost:8090/api/health').then(() => true).catch(() => false)
+          console.log('PocketBase disponível:', isAvailable)
+        } catch (e) {
+          console.log('Erro ao verificar PocketBase:', e)
+        }
+        
+        const newObra = await obrasAPI.create(obraData)
+        console.log('Resultado da criação:', newObra)
+        if (newObra) {
+          setObras([...obras, newObra])
+          toast.success('Obra criada com sucesso!')
+        } else {
+          toast.error('Erro ao criar obra')
+        }
       }
       setShowForm(false)
     } catch (error) {
       console.error('Erro ao salvar obra:', error)
-      toast.error('Erro ao salvar obra')
+      if (error instanceof Error) {
+        toast.error(`Erro ao salvar obra: ${error.message}`)
+      } else {
+        toast.error('Erro ao salvar obra')
+      }
     }
   }
 
   const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta obra?')) {
       try {
-        setObras(obras.filter(o => o.id !== id))
-        toast.success('Obra excluída com sucesso!')
+        const success = await obrasAPI.delete(id)
+        if (success) {
+          setObras(obras.filter(o => o.id !== id))
+          toast.success('Obra excluída com sucesso!')
+        } else {
+          toast.error('Erro ao excluir obra')
+        }
       } catch (error) {
         console.error('Erro ao excluir obra:', error)
         toast.error('Erro ao excluir obra')

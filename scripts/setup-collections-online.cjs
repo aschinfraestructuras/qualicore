@@ -1,9 +1,9 @@
-const PocketBase = require('pocketbase')
+const PocketBase = require('pocketbase').default
 
 // Configuração para PocketBase online
 const POCKETBASE_URL = 'https://qualicore-pocketbase.onrender.com'
-const ADMIN_EMAIL = 'admin@qualicore.pt'
-const ADMIN_PASSWORD = 'admin123456' // Mude esta password!
+const ADMIN_EMAIL = 'sitecore.quality@gmail.com'
+const ADMIN_PASSWORD = 'Hercules2.1'
 
 async function setupCollections() {
   const pb = new PocketBase(POCKETBASE_URL)

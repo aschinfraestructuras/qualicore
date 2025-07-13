@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Eye, EyeOff, Lock, Mail, AlertCircle, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { authService, LoginCredentials } from '@/lib/auth'
+import { auth, LoginCredentials } from '@/lib/auth'
 import toast from 'react-hot-toast'
 
 const loginSchema = z.object({
@@ -41,7 +41,7 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToRes
     }
     setIsLoading(true)
     try {
-      await authService.login({ email: data.email, password: data.password })
+      await auth.login({ email: data.email, password: data.password })
       toast.success('Login efetuado com sucesso!')
       onSuccess()
     } catch (error: any) {

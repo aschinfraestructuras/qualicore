@@ -64,6 +64,21 @@ export default function NaoConformidades() {
   const [filterTipo, setFilterTipo] = useState('')
   const [filterSeveridade, setFilterSeveridade] = useState('')
 
+  // Função para obter nome da obra
+  const getObraNome = (obraId: string): string => {
+    try {
+      const stored = localStorage.getItem('qualicore_obras')
+      if (stored) {
+        const obras = JSON.parse(stored)
+        const obra = obras.find((o: any) => o.id === obraId)
+        return obra ? obra.nome : obraId
+      }
+    } catch (error) {
+      console.error('Erro ao buscar obra:', error)
+    }
+    return obraId
+  }
+
   // KPIs simulados
   const total = naoConformidades.length
   const pendentes = naoConformidades.filter(nc => nc.estado === 'pendente').length
@@ -189,7 +204,12 @@ export default function NaoConformidades() {
               <div>
                 <div className="font-semibold">{nc.descricao}</div>
                 <div className="text-xs text-gray-500">{nc.tipo} | {nc.severidade} | {nc.estado} | {nc.data_deteccao}</div>
-                <div className="text-xs text-gray-400">Obra: {nc.relacionado_obra_id} | Zona: {nc.relacionado_zona_id}</div>
+                <div className="text-xs text-gray-400">
+                  {nc.relacionado_obra_id && nc.relacionado_obra_id !== 'outro' && (
+                    <>Obra: {getObraNome(nc.relacionado_obra_id)} | </>
+                  )}
+                  Zona: {nc.relacionado_zona_id}
+                </div>
               </div>
               <div className="flex gap-2 mt-2 md:mt-0">
                 <button className="btn btn-sm btn-outline">Ver detalhes</button>
