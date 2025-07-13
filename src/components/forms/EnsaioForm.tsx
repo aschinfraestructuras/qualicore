@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { X, FileText } from 'lucide-react'
-import { EnsaioRecord } from '@/lib/pocketbase'
 import { SeguimentoEnsaio, ContextoAdicional } from '@/types'
 
 interface EnsaioFormProps {
   onSubmit: (data: any) => void
   onCancel: () => void
-  initialData?: Partial<EnsaioRecord>
+  initialData?: Partial<Ensaio>
   isEditing?: boolean
 }
 
@@ -234,8 +233,18 @@ export default function EnsaioForm({ onSubmit, onCancel, initialData, isEditing 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    let codigo = formData.codigo
+    if (!codigo) {
+      const date = new Date()
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+      codigo = `ENS-${year}-${month}${day}-${random}`
+    }
     const dadosCompletos = {
       ...formData,
+      codigo,
       seguimento,
       anexos: anexos as any,
       contextoAdicional: contextoAdicional.filter(c => c.campo.trim() && c.valor.trim())

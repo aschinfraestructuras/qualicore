@@ -1,3 +1,4 @@
+import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
 import { Link, useLocation } from 'react-router-dom'
 import { Home, FileText, TestTube, ClipboardCheck, Package, Truck, AlertTriangle, BarChart3, FilePlus, Shield, Settings, Menu, X, ChevronDown, Search, Building, HelpCircle } from 'lucide-react'
 

@@ -1,3 +1,4 @@
+import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
 import { 
   documentosAPI, 
   ensaiosAPI, 
@@ -6,7 +7,7 @@ import {
   fornecedoresAPI, 
   naoConformidadesAPI,
   obrasAPI
-} from '@/lib/pocketbase'
+} from '@/lib/supabase-api'
 
 // Tipos para métricas reais
 export interface MetricasReais {

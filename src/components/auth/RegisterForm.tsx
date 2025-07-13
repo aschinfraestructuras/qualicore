@@ -1,10 +1,11 @@
+import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Eye, EyeOff, Lock, Mail, User, AlertCircle, Loader2, CheckCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { auth, RegisterData } from '@/lib/auth'
+import { useAuthStore } from '@/lib/auth'
 import toast from 'react-hot-toast'
 
 const registerSchema = z.object({
@@ -29,6 +30,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
   const [showPassword, setShowPassword] = useState(false)
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const { signUp } = useAuthStore()
 
   const {
     register,
@@ -50,9 +52,13 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
     }
     setIsLoading(true)
     try {
-      await auth.register(data)
-      toast.success('Conta criada com sucesso!')
-      onSuccess()
+      const result = await signUp(data.email, data.password)
+      if (result.success) {
+        toast.success('Conta criada com sucesso!')
+        onSuccess()
+      } else {
+        toast.error(result.error || 'Erro no registro')
+      }
     } catch (error: any) {
       toast.error(error.message || 'Erro no registro')
     } finally {

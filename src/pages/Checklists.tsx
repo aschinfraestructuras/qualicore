@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Plus, ClipboardCheck, CheckCircle, Edit, Trash2, X, FileText } from 'lucide-react'
-import { checklistsAPI } from '@/lib/pocketbase'
-import { ChecklistRecord } from '@/lib/pocketbase'
+import { checklistsAPI } from '@/lib/supabase-api'
 import toast from 'react-hot-toast'
 import ChecklistForm from '@/components/forms/ChecklistForm'
 import RelatorioChecklist from '@/components/RelatorioChecklist'
 
 export default function Checklists() {
-  const [checklists, setChecklists] = useState<ChecklistRecord[]>([])
+  const [checklists, setChecklists] = useState<any[]>([]) // Changed type to any[] as Checklist type is removed
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [editingChecklist, setEditingChecklist] = useState<ChecklistRecord | null>(null)
+  const [editingChecklist, setEditingChecklist] = useState<any | null>(null) // Changed type to any
   const [showRelatorio, setShowRelatorio] = useState(false)
 
   useEffect(() => {
@@ -35,24 +34,44 @@ export default function Checklists() {
     setShowForm(true)
   }
 
-  const handleEdit = (checklist: ChecklistRecord) => {
+  const handleEdit = (checklist: any) => { // Changed type to any
     setEditingChecklist(checklist)
     setShowForm(true)
   }
 
   const handleFormSubmit = async (data: any) => {
     try {
+      console.log('Dados recebidos do formulário de checklist:', data)
+      
+      // Separar pontos de inspeção dos dados básicos
+      const { pontos, ...checklistData } = data
+      
+      // Filtrar apenas os campos válidos do schema Supabase
+      const validChecklistData = {
+        codigo: checklistData.codigo,
+        obra_id: checklistData.obra_id || null,
+        titulo: checklistData.titulo,
+        status: checklistData.status,
+        responsavel: checklistData.responsavel,
+        zona: checklistData.zona,
+        estado: checklistData.estado || 'pendente',
+        observacoes: checklistData.observacoes
+      }
+      
+      console.log('Dados corrigidos para envio:', validChecklistData)
+      console.log('Pontos de inspeção:', pontos)
+      
       if (editingChecklist) {
-        await checklistsAPI.update(editingChecklist.id, data)
+        await checklistsAPI.updateWithPontos(editingChecklist.id, validChecklistData, pontos || [])
         toast.success('Checklist atualizado com sucesso!')
       } else {
-        await checklistsAPI.create(data)
+        await checklistsAPI.createWithPontos(validChecklistData, pontos || [])
         toast.success('Checklist criado com sucesso!')
       }
       setShowForm(false)
       loadChecklists()
     } catch (error) {
-      console.error('Erro ao salvar checklist:', error)
+      console.error('Erro detalhado ao salvar checklist:', error)
       toast.error('Erro ao salvar checklist')
     }
   }

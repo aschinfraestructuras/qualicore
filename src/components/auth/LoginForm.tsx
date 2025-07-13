@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Eye, EyeOff, Lock, Mail, AlertCircle, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { auth, LoginCredentials } from '@/lib/auth'
+import { useAuthStore } from '@/lib/auth'
 import toast from 'react-hot-toast'
 
 const loginSchema = z.object({
@@ -22,7 +22,7 @@ interface LoginFormProps {
 
 export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToReset }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const { signIn, loading } = useAuthStore()
 
   const {
     register,
@@ -39,15 +39,13 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToRes
       toast.error('Preencha o email e a password.');
       return;
     }
-    setIsLoading(true)
-    try {
-      await auth.login({ email: data.email, password: data.password })
+    
+    const result = await signIn(data.email, data.password)
+    if (result.success) {
       toast.success('Login efetuado com sucesso!')
       onSuccess()
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao fazer login')
-    } finally {
-      setIsLoading(false)
+    } else {
+      toast.error(result.error || 'Erro ao fazer login')
     }
   }
 
@@ -81,7 +79,7 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToRes
               id="email"
               className="input pl-10 w-full"
               placeholder="seu@email.com"
-              disabled={isLoading}
+              disabled={loading}
             />
           </div>
           {errors.email && (
@@ -109,13 +107,13 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToRes
               id="password"
               className="input pl-10 pr-10 w-full"
               placeholder="••••••••"
-              disabled={isLoading}
+              disabled={loading}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-              disabled={isLoading}
+              disabled={loading}
             >
               {showPassword ? (
                 <EyeOff className="h-5 w-5" />
@@ -151,10 +149,10 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToRes
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={loading}
           className="btn btn-primary w-full h-12 text-base font-semibold"
         >
-          {isLoading ? (
+          {loading ? (
             <>
               <Loader2 className="h-5 w-5 mr-2 animate-spin" />
               Entrando...
@@ -170,7 +168,7 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToRes
             type="button"
             onClick={onSwitchToReset}
             className="text-primary-600 hover:text-primary-700 font-medium transition-colors"
-            disabled={isLoading}
+            disabled={loading}
           >
             Esqueceu a senha?
           </button>
@@ -178,7 +176,7 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToRes
             type="button"
             onClick={onSwitchToRegister}
             className="text-primary-600 hover:text-primary-700 font-medium transition-colors"
-            disabled={isLoading}
+            disabled={loading}
           >
             Criar conta
           </button>

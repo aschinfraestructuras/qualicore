@@ -1,4 +1,4 @@
-import { MaterialRecord } from '@/lib/pocketbase'
+import { Material } from '@/types'
 import { 
   Package, 
   Calendar, 
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 
 interface MaterialViewProps {
-  material: MaterialRecord
+  material: Material
   onClose: () => void
 }
 

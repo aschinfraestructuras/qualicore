@@ -1,88 +1,39 @@
-import { useState } from 'react'
-import { NaoConformidade } from '@/types'
+import { useState, useEffect } from 'react'
+import { NaoConformidade, naoConformidadesAPI } from '@/lib/supabase-api'
 import NaoConformidadeForm from '@/components/forms/NaoConformidadeForm'
 import toast from 'react-hot-toast'
-
-// MOCKS REALISTAS
-const mockNCs: NaoConformidade[] = [
-  {
-    id: 'nc-001',
-    codigo: 'NC-001',
-    data_criacao: '2024-06-01',
-    data_atualizacao: '2024-06-01',
-    responsavel: 'João Silva',
-    zona: 'zona-001',
-    estado: 'pendente',
-    tipo: 'material',
-    severidade: 'alta',
-    categoria: 'auditoria',
-    data_deteccao: '2024-06-01',
-    descricao: 'Fissuras em blocos de alvenaria na Zona A',
-    impacto: 'alto',
-    area_afetada: 'Zona A - Fundações',
-    responsavel_deteccao: 'João Silva',
-    responsavel_resolucao: 'Maria Costa',
-    // Integração correta
-    relacionado_obra_id: 'obra-001',
-    relacionado_zona_id: 'zona-001',
-    relacionado_ensaio_id: 'ensaio-001',
-    relacionado_material_id: 'mat-001',
-    relacionado_checklist_id: 'chk-001',
-    relacionado_fornecedor_id: 'forn-001',
-    auditoria_id: 'aud-001',
-    timeline: [
-      {
-        id: 'evt-001',
-        data: '2024-06-01',
-        tipo: 'deteccao',
-        responsavel: 'João Silva',
-        descricao: 'Detectada em auditoria interna.'
-      },
-      {
-        id: 'evt-002',
-        data: '2024-06-02',
-        tipo: 'analise',
-        responsavel: 'Maria Costa',
-        descricao: 'Análise de causa: possível problema de cura do material.'
-      }
-    ],
-    observacoes: 'Detectada durante auditoria.',
-    anexos_evidencia: [],
-    anexos_corretiva: [],
-    anexos_verificacao: []
-  }
-]
-
-
+import { sanitizeUUIDField } from '@/utils/uuid'
 
 export default function NaoConformidades() {
-  const [naoConformidades, setNaoConformidades] = useState<NaoConformidade[]>(mockNCs)
+  const [naoConformidades, setNaoConformidades] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [editingNC, setEditingNC] = useState<NaoConformidade | null>(null)
+  const [editingNC, setEditingNC] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterStatus, setFilterStatus] = useState('')
   const [filterTipo, setFilterTipo] = useState('')
   const [filterSeveridade, setFilterSeveridade] = useState('')
 
-  // Função para obter nome da obra
-  const getObraNome = (obraId: string): string => {
+  useEffect(() => {
+    loadNaoConformidades()
+  }, [])
+
+  const loadNaoConformidades = async () => {
     try {
-      const stored = localStorage.getItem('qualicore_obras')
-      if (stored) {
-        const obras = JSON.parse(stored)
-        const obra = obras.find((o: any) => o.id === obraId)
-        return obra ? obra.nome : obraId
-      }
+      setLoading(true)
+      const data = await naoConformidadesAPI.getAll()
+      setNaoConformidades(data as any[])
     } catch (error) {
-      console.error('Erro ao buscar obra:', error)
+      console.error('Erro ao carregar não conformidades:', error)
+      toast.error('Erro ao carregar não conformidades')
+    } finally {
+      setLoading(false)
     }
-    return obraId
   }
 
-  // KPIs simulados
+  // KPIs - usando data_resolucao para determinar status
   const total = naoConformidades.length
-  const pendentes = naoConformidades.filter(nc => nc.estado === 'pendente').length
-  const resolvidas = naoConformidades.filter(nc => nc.estado === 'concluido').length
+  const pendentes = naoConformidades.filter(nc => !nc.data_resolucao).length
+  const resolvidas = naoConformidades.filter(nc => nc.data_resolucao).length
   const criticas = naoConformidades.filter(nc => nc.severidade === 'critica').length
 
   const handleCreateNC = () => {
@@ -102,38 +53,116 @@ export default function NaoConformidades() {
 
   const handleSubmitNC = async (data: any) => {
     try {
+      console.log('Dados recebidos do formulário NC:', data)
+      
+      // Filtrar apenas os campos válidos do schema Supabase e sanitizar UUIDs
+      const validNCData = {
+        codigo: data.codigo,
+        tipo: data.tipo,
+        tipo_outro: data.tipo_outro,
+        severidade: data.severidade,
+        categoria: data.categoria,
+        categoria_outro: data.categoria_outro,
+        data_deteccao: data.data_deteccao,
+        data_resolucao: data.data_resolucao,
+        data_limite_resolucao: data.data_limite_resolucao,
+        data_verificacao_eficacia: data.data_verificacao_eficacia,
+        descricao: data.descricao,
+        causa_raiz: data.causa_raiz,
+        impacto: data.impacto,
+        area_afetada: data.area_afetada,
+        responsavel_deteccao: data.responsavel_deteccao,
+        responsavel_resolucao: data.responsavel_resolucao,
+        responsavel_verificacao: data.responsavel_verificacao,
+        acao_corretiva: data.acao_corretiva,
+        acao_preventiva: data.acao_preventiva,
+        medidas_implementadas: data.medidas_implementadas || [],
+        custo_estimado: data.custo_estimado,
+        custo_real: data.custo_real,
+        custo_preventivo: data.custo_preventivo,
+        observacoes: data.observacoes,
+        relacionado_obra_id: sanitizeUUIDField(data.relacionado_obra_id),
+        relacionado_obra_outro: data.relacionado_obra_outro,
+        relacionado_zona_id: sanitizeUUIDField(data.relacionado_zona_id),
+        relacionado_zona_outro: data.relacionado_zona_outro,
+        relacionado_ensaio_id: sanitizeUUIDField(data.relacionado_ensaio_id),
+        relacionado_ensaio_outro: data.relacionado_ensaio_outro,
+        relacionado_material_id: sanitizeUUIDField(data.relacionado_material_id),
+        relacionado_material_outro: data.relacionado_material_outro,
+        relacionado_checklist_id: sanitizeUUIDField(data.relacionado_checklist_id),
+        relacionado_checklist_outro: data.relacionado_checklist_outro,
+        relacionado_documento_id: sanitizeUUIDField(data.relacionado_documento_id),
+        relacionado_fornecedor_id: sanitizeUUIDField(data.relacionado_fornecedor_id),
+        relacionado_fornecedor_outro: data.relacionado_fornecedor_outro,
+        auditoria_id: sanitizeUUIDField(data.auditoria_id),
+        auditoria_outro: data.auditoria_outro
+      }
+      
+      console.log('Dados corrigidos para envio:', validNCData)
+      
       if (editingNC) {
-        // Atualizar NC existente
-        const updatedNCs = naoConformidades.map(nc => 
-          nc.id === editingNC.id ? { ...nc, ...data } : nc
-        )
-        setNaoConformidades(updatedNCs)
+        await naoConformidadesAPI.update(editingNC.id, validNCData)
         toast.success('Não conformidade atualizada com sucesso!')
       } else {
-        // Criar nova NC
-        const newNC: NaoConformidade = {
-          id: `nc-${Date.now()}`,
-          codigo: data.codigo,
-          data_criacao: new Date().toISOString(),
-          data_atualizacao: new Date().toISOString(),
-          responsavel: data.responsavel_deteccao,
-          zona: data.area_afetada,
-          estado: 'pendente',
-          ...data
-        }
-        setNaoConformidades(prev => [newNC, ...prev])
+        await naoConformidadesAPI.create(validNCData)
         toast.success('Não conformidade criada com sucesso!')
       }
+      await loadNaoConformidades()
       setShowForm(false)
     } catch (error) {
+      console.error('Erro detalhado ao salvar NC:', error)
       toast.error('Erro ao salvar não conformidade')
-      console.error(error)
     }
   }
 
   const handleCancelForm = () => {
     setShowForm(false)
     setEditingNC(null)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Tem certeza que deseja eliminar esta não conformidade?')) {
+      try {
+        await naoConformidadesAPI.delete(id)
+        toast.success('Não conformidade eliminada com sucesso!')
+        await loadNaoConformidades()
+      } catch (error) {
+        toast.error('Erro ao eliminar não conformidade')
+        console.error(error)
+      }
+    }
+  }
+
+  const filteredNCs = naoConformidades.filter(nc => {
+    const matchSearch = !searchTerm || 
+      nc.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      nc.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      nc.area_afetada.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchTipo = !filterTipo || nc.tipo === filterTipo
+    const matchSeveridade = !filterSeveridade || nc.severidade === filterSeveridade
+    
+    return matchSearch && matchTipo && matchSeveridade
+  })
+
+  const getStatusColor = (nc: any) => {
+    if (nc.data_resolucao) return 'bg-green-100 text-green-800'
+    if (nc.data_limite_resolucao && new Date(nc.data_limite_resolucao) < new Date()) return 'bg-red-100 text-red-800'
+    return 'bg-yellow-100 text-yellow-800'
+  }
+
+  const getStatusText = (nc: any) => {
+    if (nc.data_resolucao) return 'Resolvida'
+    if (nc.data_limite_resolucao && new Date(nc.data_limite_resolucao) < new Date()) return 'Atrasada'
+    return 'Pendente'
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    )
   }
 
   return (
@@ -187,47 +216,85 @@ export default function NaoConformidades() {
             <option value="alta">Alta</option>
             <option value="critica">Crítica</option>
           </select>
-          <select className="input" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-            <option value="">Status</option>
-            <option value="pendente">Pendente</option>
-            <option value="em_analise">Em análise</option>
-            <option value="aprovado">Aprovado</option>
-            <option value="reprovado">Reprovado</option>
-            <option value="concluido">Concluído</option>
-          </select>
         </div>
 
         {/* LISTA DE NCs */}
-        <div className="bg-white rounded-lg shadow divide-y">
-          {naoConformidades.map(nc => (
-            <div key={nc.id} className="p-4 flex flex-col md:flex-row md:items-center md:justify-between hover:bg-gray-50 transition">
-              <div>
-                <div className="font-semibold">{nc.descricao}</div>
-                <div className="text-xs text-gray-500">{nc.tipo} | {nc.severidade} | {nc.estado} | {nc.data_deteccao}</div>
-                <div className="text-xs text-gray-400">
-                  {nc.relacionado_obra_id && nc.relacionado_obra_id !== 'outro' && (
-                    <>Obra: {getObraNome(nc.relacionado_obra_id)} | </>
-                  )}
-                  Zona: {nc.relacionado_zona_id}
-                </div>
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Lista de Não Conformidades</h2>
+            
+            {filteredNCs.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">Nenhuma não conformidade encontrada</p>
               </div>
-              <div className="flex gap-2 mt-2 md:mt-0">
-                <button className="btn btn-sm btn-outline">Ver detalhes</button>
-                <button className="btn btn-sm btn-secondary">Ação corretiva</button>
+            ) : (
+              <div className="space-y-4">
+                {filteredNCs.map((nc) => (
+                  <div key={nc.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold">{nc.codigo}</h3>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            nc.severidade === 'critica' ? 'bg-red-100 text-red-800' :
+                            nc.severidade === 'alta' ? 'bg-orange-100 text-orange-800' :
+                            nc.severidade === 'media' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {nc.severidade}
+                          </span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(nc)}`}>
+                            {getStatusText(nc)}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 mb-2">{nc.descricao}</p>
+                        <div className="text-sm text-gray-500">
+                          <span>Área: {nc.area_afetada}</span>
+                          <span className="mx-2">•</span>
+                          <span>Detectada: {new Date(nc.data_deteccao).toLocaleDateString()}</span>
+                          <span className="mx-2">•</span>
+                          <span>Responsável: {nc.responsavel_deteccao}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => setEditingNC(nc)}
+                          className="btn btn-sm btn-outline"
+                        >
+                          Editar
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(nc.id)}
+                          className="btn btn-sm btn-danger"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
-          {naoConformidades.length === 0 && <div className="p-4 text-center text-gray-400">Nenhuma não conformidade encontrada.</div>}
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Modal do Formulário */}
+      {/* MODAL DO FORMULÁRIO */}
       {showForm && (
-        <NaoConformidadeForm
-          naoConformidade={editingNC || undefined}
-          onSubmit={handleSubmitNC}
-          onCancel={handleCancelForm}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold mb-4">
+                {editingNC ? 'Editar Não Conformidade' : 'Nova Não Conformidade'}
+              </h2>
+              <NaoConformidadeForm
+                naoConformidade={editingNC || undefined}
+                onSubmit={handleSubmitNC}
+                onCancel={handleCancelForm}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

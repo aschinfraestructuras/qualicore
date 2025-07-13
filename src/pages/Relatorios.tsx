@@ -1,3 +1,4 @@
+import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
 import { useState, useEffect } from 'react'
 import { 
   BarChart3, 

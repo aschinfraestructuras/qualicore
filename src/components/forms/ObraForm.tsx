@@ -1,5 +1,5 @@
+import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra, ZonaObra } from '../../types'
 import { useState } from 'react'
-import { Obra, ZonaObra } from '../../types'
 import { Plus, X, Building, MapPin, Calendar, Users, BarChart3 } from 'lucide-react'
 
 interface ObraFormProps {

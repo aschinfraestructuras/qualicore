@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Mail, AlertCircle, Loader2, CheckCircle, ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { auth } from '@/lib/auth'
+import { useAuthStore } from '@/lib/auth'
 import toast from 'react-hot-toast'
 
 const resetSchema = z.object({
@@ -19,6 +19,7 @@ interface ResetPasswordFormProps {
 
 export default function ResetPasswordForm({ onSwitchToLogin }: ResetPasswordFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const { resetPassword } = useAuthStore()
   const [isSuccess, setIsSuccess] = useState(false)
 
   const {
@@ -30,13 +31,20 @@ export default function ResetPasswordForm({ onSwitchToLogin }: ResetPasswordForm
     resolver: zodResolver(resetSchema),
   })
 
-  const onSubmit = async (data: ResetFormData) => {
+  const onSubmit = async (data: any) => {
+    if (!data.email) {
+      toast.error('Preencha o email.');
+      return;
+    }
     setIsLoading(true)
     try {
-      await auth.resetPassword(data.email)
-      setIsSuccess(true)
-      toast.success('Email de reset enviado com sucesso!')
-    } catch (error) {
+      const result = await resetPassword(data.email)
+      if (result.success) {
+        toast.success('Email de redefinição enviado!')
+      } else {
+        toast.error(result.error || 'Erro ao enviar email de redefinição')
+      }
+    } catch (error: any) {
       console.error('Erro ao solicitar reset:', error)
       setError('root', {
         type: 'manual',

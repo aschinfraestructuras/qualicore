@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { HelpCircle, Plus, Search, Filter, FileText, X, CheckCircle, Clock, AlertTriangle } from 'lucide-react'
 import RFIForm from '../components/forms/RFIForm'
-import { RFI } from '../types'
+import { RFI, rfisAPI } from '@/lib/supabase-api'
 import Modal from '../components/Modal'
-import { localRFIsAPI } from '../lib/storage'
 import toast from 'react-hot-toast'
 
 export default function RFIs() {
@@ -21,8 +20,8 @@ export default function RFIs() {
   const loadRFIs = async () => {
     try {
       setLoading(true)
-      const data = await localRFIsAPI.getAll()
-      setRFIs(data)
+      const data = await rfisAPI.getAll()
+      setRFIs(data || [])
     } catch (error) {
       toast.error('Erro ao carregar RFIs')
       console.error('Erro ao carregar RFIs:', error)
@@ -49,11 +48,28 @@ export default function RFIs() {
 
   const handleSubmit = async (data: any) => {
     try {
+      // Garante que o campo 'codigo' está presente
+      const rfiData = {
+        codigo: data.codigo,
+        numero: data.numero,
+        titulo: data.titulo,
+        descricao: data.descricao,
+        solicitante: data.solicitante,
+        destinatario: data.destinatario,
+        data_solicitacao: data.data_solicitacao,
+        data_resposta: data.data_resposta,
+        prioridade: data.prioridade,
+        status: data.status,
+        resposta: data.resposta,
+        impacto_custo: data.impacto_custo,
+        impacto_prazo: data.impacto_prazo,
+        observacoes: data.observacoes
+      }
       if (editingRFI) {
-        await localRFIsAPI.update(editingRFI.id, data)
+        await rfisAPI.update(editingRFI.id, rfiData)
         toast.success('RFI atualizado com sucesso!')
       } else {
-        await localRFIsAPI.create(data)
+        await rfisAPI.create(rfiData)
         toast.success('RFI criado com sucesso!')
       }
       await loadRFIs()
@@ -67,7 +83,7 @@ export default function RFIs() {
   const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja eliminar este RFI?')) {
       try {
-        await localRFIsAPI.delete(id)
+        await rfisAPI.delete(id)
         toast.success('RFI eliminado com sucesso!')
         await loadRFIs()
       } catch (error) {

@@ -1,3 +1,4 @@
+import { Material } from '@/types'
 import { useState, useEffect, useMemo } from 'react'
 import { 
   Plus, 
@@ -17,68 +18,11 @@ import {
   Eye,
   Clock
 } from 'lucide-react'
-import { MaterialRecord } from '@/lib/pocketbase'
 import toast from 'react-hot-toast'
 import MaterialForm from '@/components/forms/MaterialForm'
 import MaterialView from '@/components/MaterialView'
-
-// Mock data for demonstration - will be replaced with real API calls
-const mockMateriais: MaterialRecord[] = [
-  {
-    id: '1',
-    codigo: 'MAT-2024-001',
-    nome: 'Betão C30/37',
-    tipo: 'betao',
-    fornecedor_id: '1',
-    certificado_id: 'CERT-2024-001',
-    data_rececao: '2024-01-15',
-    quantidade: 50,
-    unidade: 'm³',
-    lote: 'L20240115-01',
-    responsavel: 'João Silva',
-    zona: 'Zona A - Fundações',
-    estado: 'aprovado',
-    observacoes: 'Betão de alta resistência para fundações',
-    created: '2024-01-15T10:00:00Z',
-    updated: '2024-01-15T10:00:00Z'
-  },
-  {
-    id: '2',
-    codigo: 'MAT-2024-002',
-    nome: 'Aço B500B Ø12',
-    tipo: 'aco',
-    fornecedor_id: '2',
-    certificado_id: 'CERT-2024-002',
-    data_rececao: '2024-01-16',
-    quantidade: 2000,
-    unidade: 'kg',
-    lote: 'L20240116-01',
-    responsavel: 'Maria Santos',
-    zona: 'Zona B - Pilares',
-    estado: 'em_analise',
-    observacoes: 'Aço para armaduras de pilares',
-    created: '2024-01-16T09:00:00Z',
-    updated: '2024-01-16T09:00:00Z'
-  },
-  {
-    id: '3',
-    codigo: 'MAT-2024-003',
-    nome: 'Agregado 0/20',
-    tipo: 'agregado',
-    fornecedor_id: '3',
-    certificado_id: 'CERT-2024-003',
-    data_rececao: '2024-01-17',
-    quantidade: 100,
-    unidade: 'm³',
-    lote: 'L20240117-01',
-    responsavel: 'Pedro Costa',
-    zona: 'Armazém Central',
-    estado: 'pendente',
-    observacoes: 'Agregado para betão estrutural',
-    created: '2024-01-17T14:00:00Z',
-    updated: '2024-01-17T14:00:00Z'
-  }
-]
+import { materiaisAPI } from '@/lib/supabase-api'
+import { sanitizeUUIDField } from '@/utils/uuid'
 
 interface Filtros {
   search: string
@@ -91,11 +35,11 @@ interface Filtros {
 }
 
 export default function Materiais() {
-  const [materiais, setMateriais] = useState<MaterialRecord[]>([])
+  const [materiais, setMateriais] = useState<Material[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [editingMaterial, setEditingMaterial] = useState<MaterialRecord | null>(null)
-  const [viewingMaterial, setViewingMaterial] = useState<MaterialRecord | null>(null)
+  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null)
+  const [viewingMaterial, setViewingMaterial] = useState<Material | null>(null)
   const [showFilters, setShowFilters] = useState(false)
   const [filtros, setFiltros] = useState<Filtros>({
     search: '',
@@ -114,12 +58,12 @@ export default function Materiais() {
   const loadMateriais = async () => {
     try {
       setLoading(true)
-      // Simular carregamento da API
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setMateriais(mockMateriais)
+      const data = await materiaisAPI.getAll()
+      setMateriais(data || [])
     } catch (error) {
       console.error('Erro ao carregar materiais:', error)
       toast.error('Erro ao carregar materiais')
+      setMateriais([])
     } finally {
       setLoading(false)
     }
@@ -174,53 +118,47 @@ export default function Materiais() {
     setShowForm(true)
   }
 
-  const handleEdit = (material: MaterialRecord) => {
+  const handleEdit = (material: Material) => {
     setEditingMaterial(material)
     setShowForm(true)
   }
 
-  const handleView = (material: MaterialRecord) => {
+  const handleView = (material: Material) => {
     setViewingMaterial(material)
   }
 
   const handleFormSubmit = async (data: any) => {
     try {
+      // Sanitizar campos UUID
+      const payload = {
+        ...data,
+        fornecedor_id: sanitizeUUIDField(data.fornecedor_id),
+        certificado_id: sanitizeUUIDField(data.certificado_id)
+      }
       if (editingMaterial) {
-        // Simular atualização
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        setMateriais(prev => prev.map(m => 
-          m.id === editingMaterial.id ? { ...m, ...data, updated: new Date().toISOString() } : m
-        ))
+        await materiaisAPI.update(editingMaterial.id, payload)
         toast.success('Material atualizado com sucesso!')
       } else {
-        // Simular criação
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        const newMaterial: MaterialRecord = {
-          id: Date.now().toString(),
-          ...data,
-          created: new Date().toISOString(),
-          updated: new Date().toISOString()
-        }
-        setMateriais(prev => [...prev, newMaterial])
+        await materiaisAPI.create(payload)
         toast.success('Material criado com sucesso!')
       }
+      await loadMateriais()
       setShowForm(false)
     } catch (error) {
-      console.error('Erro ao salvar material:', error)
       toast.error('Erro ao salvar material')
+      console.error('Erro ao salvar material:', error)
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este material?')) {
+    if (confirm('Tem certeza que deseja eliminar este material?')) {
       try {
-        // Simular exclusão
-        await new Promise(resolve => setTimeout(resolve, 500))
-        setMateriais(prev => prev.filter(m => m.id !== id))
-        toast.success('Material excluído com sucesso!')
+        await materiaisAPI.delete(id)
+        toast.success('Material eliminado com sucesso!')
+        await loadMateriais()
       } catch (error) {
-        console.error('Erro ao excluir material:', error)
-        toast.error('Erro ao excluir material')
+        toast.error('Erro ao eliminar material')
+        console.error('Erro ao eliminar material:', error)
       }
     }
   }
@@ -250,7 +188,7 @@ export default function Materiais() {
     toast.success('Relatório enviado para impressão!')
   }
 
-  const generateCSV = (materiais: MaterialRecord[]) => {
+  const generateCSV = (materiais: Material[]) => {
     const headers = ['Código', 'Nome', 'Tipo', 'Fornecedor', 'Data Receção', 'Quantidade', 'Unidade', 'Lote', 'Estado', 'Zona', 'Responsável']
     const rows = materiais.map(m => [
       m.codigo,
@@ -269,7 +207,7 @@ export default function Materiais() {
     return [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
   }
 
-  const generatePrintContent = (materiais: MaterialRecord[]) => {
+  const generatePrintContent = (materiais: Material[]) => {
     return `
       <!DOCTYPE html>
       <html>

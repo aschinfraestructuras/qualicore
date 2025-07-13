@@ -1,5 +1,5 @@
+import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '../types'
 import { useState } from 'react'
-import { Checklist } from '../types'
 import { Download, Printer, Filter, CheckCircle, XCircle, AlertCircle, Clock } from 'lucide-react'
 
 interface RelatorioChecklistProps {

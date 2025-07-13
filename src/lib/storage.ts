@@ -1,3 +1,4 @@
+import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
 // Sistema de armazenamento local como fallback quando PocketBase não está disponível
 
 export interface LocalStorageData {

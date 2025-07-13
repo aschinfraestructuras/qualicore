@@ -9,13 +9,12 @@ import {
   X,
   TrendingUp
 } from 'lucide-react'
-import { Obra } from '@/types'
 import toast from 'react-hot-toast'
 import ObraForm from '@/components/forms/ObraForm'
-import { obrasAPI } from '@/lib/pocketbase'
+import { obrasAPI } from '@/lib/supabase-api'
 
 // Dados mock iniciais para demonstração
-const mockObras: Obra[] = [
+const mockObras: any[] = [
   {
     id: '1',
     codigo: 'OBR-2024-001',
@@ -116,7 +115,7 @@ const mockObras: Obra[] = [
 export default function Obras() {
   const [obras, setObras] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
-  const [editingObra, setEditingObra] = useState<Obra | null>(null)
+  const [editingObra, setEditingObra] = useState<any | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
 
@@ -139,12 +138,12 @@ export default function Obras() {
     setShowForm(true)
   }
 
-  const handleEdit = (obra: Obra) => {
+  const handleEdit = (obra: any) => {
     setEditingObra(obra)
     setShowForm(true)
   }
 
-  const handleFormSubmit = async (data: Obra) => {
+  const handleFormSubmit = async (data: any) => {
     try {
       console.log('Dados do formulário:', data)
       
@@ -175,15 +174,7 @@ export default function Obras() {
         fiscal_obra: data.fiscal_obra,
         engenheiro_responsavel: data.engenheiro_responsavel,
         arquiteto: data.arquiteto,
-        zonas: data.zonas || [],
-        fases: data.fases || [],
-        equipas: data.equipas || [],
         fornecedores_principais: data.fornecedores_principais || [],
-        riscos: data.riscos || [],
-        indicadores: data.indicadores || [],
-        responsavel: data.responsavel || 'Sistema',
-        zona: data.zona || 'Geral',
-        estado: data.estado || 'pendente',
         observacoes: data.observacoes
       }
 

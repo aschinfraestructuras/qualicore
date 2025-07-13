@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react'
 import { Plus, Building, Phone, Edit, Trash2, X, Search, Download, Eye, FileText, MapPin, Award, Hash, User } from 'lucide-react'
-import { fornecedoresAPI } from '@/lib/pocketbase'
-import { FornecedorRecord } from '@/lib/pocketbase'
+import { fornecedoresAPI } from '@/lib/supabase-api'
+import { Fornecedor } from '@/types'
 import toast from 'react-hot-toast'
 import FornecedorForm from '@/components/forms/FornecedorForm'
 
 
 export default function Fornecedores() {
-  const [fornecedores, setFornecedores] = useState<FornecedorRecord[]>([])
-  const [filteredFornecedores, setFilteredFornecedores] = useState<FornecedorRecord[]>([])
+  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([])
+  const [filteredFornecedores, setFilteredFornecedores] = useState<Fornecedor[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
-  const [editingFornecedor, setEditingFornecedor] = useState<FornecedorRecord | null>(null)
-  const [selectedFornecedor, setSelectedFornecedor] = useState<FornecedorRecord | null>(null)
+  const [editingFornecedor, setEditingFornecedor] = useState<Fornecedor | null>(null)
+  const [selectedFornecedor, setSelectedFornecedor] = useState<Fornecedor | null>(null)
   
   // Filtros
   const [searchTerm, setSearchTerm] = useState('')
@@ -63,8 +63,8 @@ export default function Fornecedores() {
 
     // Ordenação
     filtered.sort((a, b) => {
-      let aValue = a[sortBy as keyof FornecedorRecord]
-      let bValue = b[sortBy as keyof FornecedorRecord]
+      let aValue = a[sortBy as keyof Fornecedor]
+      let bValue = b[sortBy as keyof Fornecedor]
       
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         aValue = aValue.toLowerCase()
@@ -84,12 +84,12 @@ export default function Fornecedores() {
     setShowForm(true)
   }
 
-  const handleEdit = (fornecedor: FornecedorRecord) => {
+  const handleEdit = (fornecedor: Fornecedor) => {
     setEditingFornecedor(fornecedor)
     setShowForm(true)
   }
 
-  const handleView = (fornecedor: FornecedorRecord) => {
+  const handleView = (fornecedor: Fornecedor) => {
     setSelectedFornecedor(fornecedor)
     setShowViewModal(true)
   }

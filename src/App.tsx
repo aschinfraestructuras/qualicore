@@ -1,7 +1,9 @@
+import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import { useEffect } from 'react'
+import { useAuthStore } from './lib/auth'
 import Layout from './components/Layout'
-import ProtectedRoute from './components/auth/ProtectedRoute'
 import Dashboard from './pages/Dashboard'
 import Ensaios from './pages/Ensaios'
 import Checklists from './pages/Checklists'
@@ -21,6 +23,21 @@ import RFIs from './pages/RFIs'
 import './styles/globals.css'
 
 function App() {
+  const { user, loading } = useAuthStore()
+
+  useEffect(() => {
+    // Verificar autenticação ao carregar a app
+    useAuthStore.getState().checkUser()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="App">
       <Toaster 
@@ -52,90 +69,62 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         
-        {/* Rotas protegidas */}
+        {/* Rotas protegidas - apenas para usuários autenticados */}
         <Route path="/dashboard" element={
-          <ProtectedRoute requiredPermission="dashboard">
-            <Layout><Dashboard /></Layout>
-          </ProtectedRoute>
+          user ? <Layout><Dashboard /></Layout> : <Navigate to="/login" replace />
         } />
         
         <Route path="/ensaios" element={
-          <ProtectedRoute requiredPermission="ensaios">
-            <Layout><Ensaios /></Layout>
-          </ProtectedRoute>
+          user ? <Layout><Ensaios /></Layout> : <Navigate to="/login" replace />
         } />
         
         <Route path="/checklists" element={
-          <ProtectedRoute requiredPermission="checklists">
-            <Layout><Checklists /></Layout>
-          </ProtectedRoute>
+          user ? <Layout><Checklists /></Layout> : <Navigate to="/login" replace />
         } />
         
         <Route path="/materiais" element={
-          <ProtectedRoute requiredPermission="materiais">
-            <Layout><Materiais /></Layout>
-          </ProtectedRoute>
+          user ? <Layout><Materiais /></Layout> : <Navigate to="/login" replace />
         } />
         
         <Route path="/fornecedores" element={
-          <ProtectedRoute requiredPermission="fornecedores">
-            <Layout><Fornecedores /></Layout>
-          </ProtectedRoute>
+          user ? <Layout><Fornecedores /></Layout> : <Navigate to="/login" replace />
         } />
         
         <Route path="/nao-conformidades" element={
-          <ProtectedRoute requiredPermission="nao-conformidades">
-            <Layout><NaoConformidades /></Layout>
-          </ProtectedRoute>
+          user ? <Layout><NaoConformidades /></Layout> : <Navigate to="/login" replace />
         } />
         
         <Route path="/documentos" element={
-          <ProtectedRoute requiredPermission="documentos">
-            <Layout><Documentos /></Layout>
-          </ProtectedRoute>
+          user ? <Layout><Documentos /></Layout> : <Navigate to="/login" replace />
         } />
         
         <Route path="/relatorios" element={
-          <ProtectedRoute requiredPermission="relatorios">
-            <Layout><Relatorios /></Layout>
-          </ProtectedRoute>
+          user ? <Layout><Relatorios /></Layout> : <Navigate to="/login" replace />
         } />
         
         <Route path="/obras" element={
-          <ProtectedRoute requiredPermission="dashboard">
-            <Layout><Obras /></Layout>
-          </ProtectedRoute>
+          user ? <Layout><Obras /></Layout> : <Navigate to="/login" replace />
         } />
         
         <Route path="/rfis" element={
-          <ProtectedRoute requiredPermission="documentos">
-            <Layout><RFIs /></Layout>
-          </ProtectedRoute>
+          user ? <Layout><RFIs /></Layout> : <Navigate to="/login" replace />
         } />
         
         {/* Rotas para ações rápidas */}
         <Route path="/documentos/novo" element={
-          <ProtectedRoute requiredPermission="documentos">
-            <Layout><DocumentoForm isEditing={false} onSubmit={() => {}} onCancel={() => {}} /></Layout>
-          </ProtectedRoute>
+          user ? <Layout><DocumentoForm isEditing={false} onSubmit={() => {}} onCancel={() => {}} /></Layout> : <Navigate to="/login" replace />
         } />
         
         <Route path="/ensaios/novo" element={
-          <ProtectedRoute requiredPermission="ensaios">
-            <Layout><EnsaioForm isEditing={false} onSubmit={() => {}} onCancel={() => {}} /></Layout>
-          </ProtectedRoute>
+          user ? <Layout><EnsaioForm isEditing={false} onSubmit={() => {}} onCancel={() => {}} /></Layout> : <Navigate to="/login" replace />
         } />
         
         <Route path="/checklists/novo" element={
-          <ProtectedRoute requiredPermission="checklists">
-            <Layout><ChecklistForm onSubmit={() => {}} onCancel={() => {}} /></Layout>
-          </ProtectedRoute>
+          user ? <Layout><ChecklistForm onSubmit={() => {}} onCancel={() => {}} /></Layout> : <Navigate to="/login" replace />
         } />
         
         <Route path="/obras/nova" element={
-          <ProtectedRoute requiredPermission="dashboard">
-            <Layout><ObraForm onSubmit={() => {}} onCancel={() => {}} /></Layout>
-          </ProtectedRoute>
+          user ? <Layout><ObraForm onSubmit={() => {}} onCancel={() => {}} /></Layout> : <Navigate to="/login" replace />
         } />
         
         {/* Fallback */}

@@ -8,20 +8,15 @@
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "pocketbase": "./pocketbase.exe serve",
     "setup": "node scripts/setup.cjs",
     "setup-simple": "node scripts/setup-simple.cjs",
-    "setup-admin": "node scripts/create-admin.cjs",
-    "setup-collections": "node scripts/setup-pocketbase.cjs",
-    "setup-collections-simple": "node scripts/setup-collections-simple.cjs",
-    "setup-collections-final": "node scripts/setup-collections-final.cjs",
-    "test-pocketbase": "node scripts/test-pocketbase.cjs"
+    "setup-admin": "node scripts/create-admin.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
+    "@supabase/supabase-js": "^2.50.5",
     "framer-motion": "^10.18.0",
     "lucide-react": "^0.294.0",
-    "pocketbase": "^0.21.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.48.2",

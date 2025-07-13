@@ -1,3 +1,4 @@
+import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
 // Import de ícones removido
 
 

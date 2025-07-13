@@ -11,18 +11,17 @@ import {
   X,
   FileText
 } from 'lucide-react'
-import { ensaiosAPI } from '@/lib/data-api'
-import { Ensaio } from '@/lib/data-api'
+import { ensaiosAPI } from '@/lib/supabase-api'
 import toast from 'react-hot-toast'
 import EnsaioForm from '@/components/forms/EnsaioForm'
 import RelatorioExport from '@/components/RelatorioExport'
 
 export default function Ensaios() {
-  const [ensaios, setEnsaios] = useState<Ensaio[]>([])
+  const [ensaios, setEnsaios] = useState<any[]>([]) // Changed type to any[] as Ensaio type is removed
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [showRelatorio, setShowRelatorio] = useState(false)
-  const [editingEnsaio, setEditingEnsaio] = useState<Ensaio | null>(null)
+  const [editingEnsaio, setEditingEnsaio] = useState<any | null>(null) // Changed type to any
 
   useEffect(() => {
     loadEnsaios()
@@ -46,24 +45,56 @@ export default function Ensaios() {
     setShowForm(true)
   }
 
-  const handleEdit = (ensaio: Ensaio) => {
+  const handleEdit = (ensaio: any) => { // Changed type to any
     setEditingEnsaio(ensaio)
     setShowForm(true)
   }
 
   const handleFormSubmit = async (data: any) => {
     try {
+      console.log('Dados recebidos do formulário de ensaio:', data)
+      
+      // Filtrar apenas os campos válidos do schema Supabase
+      let material_id = data.material_id
+      
+      // Verificar se material_id é um UUID válido ou null
+      if (!material_id || material_id === '' || material_id === 'undefined' || material_id === 'null') {
+        material_id = null
+      } else if (typeof material_id === 'string' && !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(material_id)) {
+        console.log('material_id inválido, convertendo para null:', material_id)
+        material_id = null
+      }
+      
+      const ensaioData = {
+        codigo: data.codigo,
+        tipo: data.tipo,
+        material_id,
+        resultado: data.resultado,
+        valor_obtido: data.valor_obtido,
+        valor_esperado: data.valor_esperado,
+        unidade: data.unidade,
+        laboratorio: data.laboratorio,
+        data_ensaio: data.data_ensaio,
+        conforme: data.conforme,
+        responsavel: data.responsavel,
+        zona: data.zona,
+        estado: data.estado,
+        observacoes: data.observacoes
+      }
+      
+      console.log('Dados corrigidos para envio:', ensaioData)
+      
       if (editingEnsaio) {
-        await ensaiosAPI.update(editingEnsaio.id, data)
+        await ensaiosAPI.update(editingEnsaio.id, ensaioData)
         toast.success('Ensaio atualizado com sucesso!')
       } else {
-        await ensaiosAPI.create(data)
+        await ensaiosAPI.create(ensaioData)
         toast.success('Ensaio criado com sucesso!')
       }
       setShowForm(false)
       loadEnsaios()
     } catch (error) {
-      console.error('Erro ao salvar ensaio:', error)
+      console.error('Erro detalhado ao salvar ensaio:', error)
       toast.error('Erro ao salvar ensaio')
     }
   }

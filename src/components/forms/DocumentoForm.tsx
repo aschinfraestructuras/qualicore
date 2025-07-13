@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Documento } from '@/types'
 import { Plus, X, FileText, Calendar, User, MapPin, Building, AlertCircle, Upload, CheckCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
@@ -199,14 +198,68 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
   const onSubmitForm = async (data: DocumentoFormData) => {
     setIsSubmitting(true)
     try {
-      // Simular delay de submissão
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Aqui seria feita a chamada para a API
-      console.log('Dados do formulário:', data)
-      console.log('Ficheiros:', uploadedFiles)
-      
-      onSubmit(data)
+      // Filtrar apenas os campos válidos do schema Supabase
+      const docData: any = {
+        codigo: data.codigo,
+        tipo: data.tipo,
+        versao: data.versao,
+        data_validade: data.data_validade,
+        data_aprovacao: data.data_aprovacao,
+        data_revisao: data.data_revisao,
+        responsavel: data.responsavel,
+        zona: data.zona,
+        estado: data.estado,
+        aprovador: data.aprovador,
+        revisor: data.revisor,
+        categoria: data.categoria,
+        categoria_outro: data.categoria_outro,
+        observacoes: data.observacoes,
+        palavras_chave: data.palavras_chave,
+        classificacao_confidencialidade: data.classificacao_confidencialidade,
+        distribuicao: data.distribuicao,
+        numero_rfi: data.numero_rfi,
+        solicitante: data.solicitante,
+        data_solicitacao: data.data_solicitacao,
+        data_resposta: data.data_resposta,
+        prioridade: data.prioridade,
+        impacto_custo: data.impacto_custo,
+        impacto_prazo: data.impacto_prazo,
+        resposta: data.resposta,
+        escopo: data.escopo,
+        responsabilidades: data.responsabilidades,
+        recursos_necessarios: data.recursos_necessarios,
+        criterios_aceitacao: data.criterios_aceitacao,
+        registros_obrigatorios: data.registros_obrigatorios,
+        frequencia_revisao: data.frequencia_revisao,
+        material_ensaio: data.material_ensaio,
+        tipo_ensaio: data.tipo_ensaio,
+        normas_referencia: data.normas_referencia,
+        equipamentos_necessarios: data.equipamentos_necessarios,
+        laboratorio_responsavel: data.laboratorio_responsavel,
+        frequencia_ensaios: data.frequencia_ensaios,
+        acoes_nao_conformidade: data.acoes_nao_conformidade,
+        escopo_obra: data.escopo_obra,
+        objetivos_qualidade: data.objetivos_qualidade,
+        responsabilidades_qualidade: data.responsabilidades_qualidade,
+        recursos_qualidade: data.recursos_qualidade,
+        controlos_qualidade: data.controlos_qualidade,
+        indicadores_qualidade: data.indicadores_qualidade,
+        auditorias_planeadas: data.auditorias_planeadas,
+        acoes_melhoria: data.acoes_melhoria,
+        relacionado_obra_id: data.relacionado_obra_id,
+        relacionado_obra_outro: data.relacionado_obra_outro,
+        relacionado_zona_id: data.relacionado_zona_id,
+        relacionado_zona_outro: data.relacionado_zona_outro,
+        relacionado_ensaio_id: data.relacionado_ensaio_id,
+        relacionado_ensaio_outro: data.relacionado_ensaio_outro,
+        relacionado_material_id: data.relacionado_material_id,
+        relacionado_material_outro: data.relacionado_material_outro,
+        relacionado_fornecedor_id: data.relacionado_fornecedor_id,
+        relacionado_fornecedor_outro: data.relacionado_fornecedor_outro,
+        relacionado_checklist_id: data.relacionado_checklist_id,
+        relacionado_checklist_outro: data.relacionado_checklist_outro
+      }
+      onSubmit(docData)
       toast.success(isEditing ? 'Documento atualizado com sucesso!' : 'Documento criado com sucesso!')
     } catch (error) {
       toast.error('Erro ao salvar documento')

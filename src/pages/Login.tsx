@@ -1,3 +1,4 @@
+import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Shield, ArrowLeft } from 'lucide-react'

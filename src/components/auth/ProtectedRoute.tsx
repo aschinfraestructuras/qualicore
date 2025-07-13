@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { Loader2, Shield, AlertTriangle } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { auth } from '@/lib/auth'
+import { useAuthStore } from '@/lib/auth'
 import { User } from '@/types'
 
 interface ProtectedRouteProps {
@@ -24,8 +24,8 @@ export default function ProtectedRoute({
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        if (auth.isAuthenticated()) {
-          const currentUser = auth.getCurrentUser() as User
+        const currentUser = useAuthStore.getState().user as User | null
+        if (currentUser) {
           setUser(currentUser)
           
           // Configurar permissões baseadas no perfil do utilizador

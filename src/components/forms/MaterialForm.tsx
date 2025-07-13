@@ -1,3 +1,4 @@
+import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -154,31 +155,31 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
   const onSubmitForm = async (data: MaterialFormData) => {
     setIsSubmitting(true)
     try {
-      // Simular delay de submissão
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Processar dados customizados
-      const processedData = { ...data }
-      
+      let processedData = { ...data }
+      if (!processedData.codigo) {
+        const date = new Date()
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+        processedData.codigo = `MAT-${year}-${month}${day}-${random}`
+      }
       // Se tipo é "outro" e há um tipo customizado, usar o customizado
       if (data.tipo === 'outro' && customTipo.trim()) {
         processedData.tipo = customTipo.trim()
       }
-      
       // Se fornecedor é "outro" e há um fornecedor customizado, usar o customizado
       if (data.fornecedor_id === 'outro' && customFornecedor.trim()) {
         processedData.fornecedor_id = customFornecedor.trim()
       }
-      
       // Se zona é "outro" e há uma zona customizada, usar a customizada
       if (data.zona === 'outro' && customZona.trim()) {
         processedData.zona = customZona.trim()
       }
-      
       // Aqui seria feita a chamada para a API
       console.log('Dados do material:', processedData)
       console.log('Ficheiros:', uploadedFiles)
-      
       onSubmit(processedData)
       toast.success(isEditing ? 'Material atualizado com sucesso!' : 'Material registado com sucesso!')
     } catch (error) {

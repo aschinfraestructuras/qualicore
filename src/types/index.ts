@@ -1,3 +1,4 @@
+import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
 // Tipos base para todos os módulos
 export interface BaseEntity {
   id: string;

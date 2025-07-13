@@ -3,10 +3,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 // import { RFI } from '../../types'
 import { HelpCircle, AlertCircle, Upload, X, FileText } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 
 const rfiSchema = z.object({
+  codigo: z.string().min(1, 'Código é obrigatório'),
   numero: z.string().min(1, 'Número é obrigatório'),
   titulo: z.string().min(1, 'Título é obrigatório'),
   descricao: z.string().min(1, 'Descrição é obrigatória'),
@@ -43,20 +44,35 @@ const statusOptions = [
   { value: 'fechado', label: 'Fechado' },
 ]
 
+const generateCodigo = () => {
+  const date = new Date()
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+  return `RFI-${year}-${month}${day}-${random}`
+}
+
 export default function RFIForm({ initialData, onSubmit, onCancel }: RFIFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
-
   const {
     register,
     handleSubmit,
-    formState: { errors, isValid }
-    // watch,
-    // setValue
-  } = useForm<RFIFormData>({
+    formState: { errors, isValid },
+    setValue,
+    watch
+  } = useForm<RFIFormData & { codigo: string }>({
     resolver: zodResolver(rfiSchema),
-    defaultValues: initialData || { prioridade: 'media', status: 'pendente' }
+    defaultValues: { prioridade: 'media', status: 'pendente', ...initialData, codigo: initialData?.codigo || generateCodigo() }
   })
+
+  // Garante que sempre há um código gerado
+  useEffect(() => {
+    if (!watch('codigo')) {
+      setValue('codigo', generateCodigo())
+    }
+  }, [])
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
@@ -72,6 +88,11 @@ export default function RFIForm({ initialData, onSubmit, onCancel }: RFIFormProp
     setIsSubmitting(true)
     try {
       await new Promise(resolve => setTimeout(resolve, 500))
+      // Garante que o campo 'codigo' está presente
+      if (!data.codigo) {
+        setValue('codigo', generateCodigo())
+        data.codigo = generateCodigo()
+      }
       onSubmit(data)
       toast.success('RFI salvo com sucesso!')
     } catch (error) {
@@ -88,6 +109,14 @@ export default function RFIForm({ initialData, onSubmit, onCancel }: RFIFormProp
         <h3 className="text-lg font-semibold text-blue-900">{initialData ? 'Editar RFI' : 'Novo RFI'}</h3>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Código *</label>
+          <div className="flex gap-2">
+            <input {...register('codigo')} type="text" className="input" placeholder="RFI-2024-001" />
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => setValue('codigo', generateCodigo())}>Gerar Código</button>
+          </div>
+          {errors.codigo && <p className="text-xs text-danger-600 mt-1 flex items-center"><AlertCircle className="h-4 w-4 mr-1" />{errors.codigo.message}</p>}
+        </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Número *</label>
           <input {...register('numero')} type="text" className="input" placeholder="RFI-2024-001" />

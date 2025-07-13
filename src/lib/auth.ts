@@ -1,120 +1,146 @@
-import { pb } from './pocketbase'
-import toast from 'react-hot-toast'
+import { supabase } from './supabase'
+import { create } from 'zustand'
 
-export interface LoginCredentials {
-  email: string
-  password: string
+interface AuthState {
+  user: any | null
+  loading: boolean
+  signUp: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  signOut: () => Promise<void>
+  resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>
+  checkUser: () => Promise<void>
 }
 
-export interface RegisterData {
-  email: string
-  password: string
-  passwordConfirm: string
-  nome: string
-  perfil: 'qualidade' | 'producao' | 'fiscal'
-}
+export const useAuthStore = create<AuthState>((set, get) => ({
+  user: null,
+  loading: true,
 
-// Sistema de autenticação com PocketBase online
-export const auth = {
-  // Login com PocketBase
-  async login(credentials: LoginCredentials) {
+  signUp: async (email: string, password: string) => {
     try {
-      const authData = await pb.collection('users').authWithPassword(
-        credentials.email,
-        credentials.password
-      )
-      
-      if (pb.authStore.isValid) {
-        toast.success('Login realizado com sucesso!')
-        return authData
-      } else {
-        throw new Error('Credenciais inválidas')
-      }
-    } catch (error: any) {
-      // Tratar erros específicos do PocketBase
-      if (error?.status === 400) {
-        throw new Error('Email ou palavra-passe incorretos')
-      } else if (error?.status === 401) {
-        throw new Error('Credenciais inválidas')
-      } else {
-        throw new Error('Erro desconhecido')
-      }
-    }
-  },
-
-  // Registo com PocketBase
-  async register(data: RegisterData) {
-    try {
-      const record = await pb.collection('users').create({
-        email: data.email,
-        password: data.password,
-        passwordConfirm: data.passwordConfirm,
-        nome: data.nome,
-        perfil: data.perfil
+      set({ loading: true })
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
       })
-      
-      toast.success('Registo realizado com sucesso!')
-      
-      // Fazer login automaticamente após registo
-      await this.login({
-        email: data.email,
-        password: data.password
-      })
-      
-      return record
-    } catch (error: any) {
-      // Tratar erros específicos do PocketBase
-      if (error?.data?.email?.code === 'validation_invalid_email') {
-        throw new Error('Email inválido')
-      } else if (error?.data?.password?.code === 'validation_min_length') {
-        throw new Error('A palavra-passe deve ter pelo menos 8 caracteres')
-      } else if (error?.data?.email?.code === 'validation_invalid_duplicate') {
-        throw new Error('Este email já está registado')
-      } else {
-        throw new Error('Erro desconhecido')
+
+      if (error) {
+        return { success: false, error: error.message }
       }
+
+      if (data.user) {
+        set({ user: data.user, loading: false })
+        return { success: true }
+      }
+
+      return { success: false, error: 'Erro desconhecido no registro' }
+    } catch (error: any) {
+      set({ loading: false })
+      return { success: false, error: error.message }
     }
   },
 
-  // Logout
-  logout() {
-    pb.authStore.clear()
-    localStorage.removeItem('pocketbase_auth')
-    toast.success('Logout realizado com sucesso!')
-  },
-
-  // Verificar se está autenticado
-  isAuthenticated() {
-    return pb.authStore.isValid
-  },
-
-  // Obter utilizador atual
-  getCurrentUser() {
-    return pb.authStore.model
-  },
-
-  // Reset password
-  async resetPassword(email: string) {
+  signIn: async (email: string, password: string) => {
     try {
-      await pb.collection('users').requestPasswordReset(email)
-      toast.success('Email de reset enviado com sucesso!')
-      return true
-    } catch (error: any) {
-      if (error?.data?.email?.code === 'validation_invalid_email') {
-        throw new Error('Email inválido')
-      } else if (error?.status === 404) {
-        throw new Error('Utilizador não encontrado')
-      } else {
-        throw new Error('Erro desconhecido')
+      set({ loading: true })
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        return { success: false, error: error.message }
       }
+
+      if (data.user) {
+        set({ user: data.user, loading: false })
+        return { success: true }
+      }
+
+      return { success: false, error: 'Erro desconhecido no login' }
+    } catch (error: any) {
+      set({ loading: false })
+      return { success: false, error: error.message }
     }
-  }
+  },
+
+  signOut: async () => {
+    try {
+      set({ loading: true })
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        console.error('Erro no logout:', error)
+      }
+      
+      set({ user: null, loading: false })
+    } catch (error) {
+      console.error('Erro no logout:', error)
+      set({ loading: false })
+    }
+  },
+
+  resetPassword: async (email: string) => {
+    try {
+      set({ loading: true })
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      })
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      set({ loading: false })
+      return { success: true }
+    } catch (error: any) {
+      set({ loading: false })
+      return { success: false, error: error.message }
+    }
+  },
+
+  checkUser: async () => {
+    try {
+      set({ loading: true })
+      
+      // Primeiro, verificar se há uma sessão ativa
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError) {
+        console.error('Erro ao verificar sessão:', sessionError)
+        set({ user: null, loading: false })
+        return
+      }
+
+      if (session?.user) {
+        set({ user: session.user, loading: false })
+      } else {
+        // Se não há sessão, tentar obter usuário
+        const { data: { user }, error } = await supabase.auth.getUser()
+        
+        if (error) {
+          console.error('Erro ao verificar usuário:', error)
+          set({ user: null, loading: false })
+          return
+        }
+
+        set({ user, loading: false })
+      }
+
+      // Configurar listener para mudanças de autenticação
+      supabase.auth.onAuthStateChange((event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email)
+        set({ user: session?.user || null, loading: false })
+      })
+    } catch (error) {
+      console.error('Erro ao verificar usuário:', error)
+      set({ user: null, loading: false })
+    }
+  },
+}))
+
+// Inicializar verificação de usuário apenas se estivermos no browser
+if (typeof window !== 'undefined') {
+  useAuthStore.getState().checkUser()
 }
 
-// Exportar funções individuais para compatibilidade
-export const login = auth.login
-export const register = auth.register
-export const logout = auth.logout
-export const isAuthenticated = auth.isAuthenticated
-export const getCurrentUser = auth.getCurrentUser
-export const resetPassword = auth.resetPassword 
+export default useAuthStore 

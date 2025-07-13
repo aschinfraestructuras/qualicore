@@ -17,8 +17,7 @@ import {
   ArrowUpDown,
 } from 'lucide-react'
 
-import { Documento } from '@/types'
-import { documentosAPI } from '@/lib/api'
+import { documentosAPI } from '@/lib/supabase-api'
 import toast from 'react-hot-toast'
 import { motion, AnimatePresence } from 'framer-motion'
 import Modal from '@/components/Modal'
@@ -183,7 +182,7 @@ const statusOptions = [
 ]
 
 export default function Documentos() {
-  const [documentos, setDocumentos] = useState<Documento[]>([])
+  const [documentos, setDocumentos] = useState<any[]>([]) // Changed to any[] as Documento type is removed
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterEstado, setFilterEstado] = useState('')
@@ -198,8 +197,8 @@ export default function Documentos() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
-  const [editingDocument, setEditingDocument] = useState<Documento | null>(null)
-  const [viewingDocument, setViewingDocument] = useState<Documento | null>(null)
+  const [editingDocument, setEditingDocument] = useState<any | null>(null) // Changed to any
+  const [viewingDocument, setViewingDocument] = useState<any | null>(null) // Changed to any
 
   useEffect(() => {
     loadDocumentos()
@@ -208,19 +207,17 @@ export default function Documentos() {
   const loadDocumentos = async () => {
     try {
       setLoading(true)
-      const response = await documentosAPI.getAll({
-        sort: `${sortOrder === 'desc' ? '-' : ''}${sortBy}`,
-        perPage: 100
-      })
-      setDocumentos(response.items)
+      const response = await documentosAPI.getAll()
+      setDocumentos(response || [])
     } catch (error) {
       console.error(error)
+      setDocumentos([])
     } finally {
       setLoading(false)
     }
   }
 
-  const filteredDocumentos = documentos.filter(doc => {
+  const filteredDocumentos = (documentos || []).filter(doc => {
     const matchesSearch = doc.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doc.responsavel.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doc.zona.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -233,8 +230,8 @@ export default function Documentos() {
   })
 
   const sortedDocumentos = [...filteredDocumentos].sort((a, b) => {
-    const aValue = a[sortBy as keyof Documento] || ''
-    const bValue = b[sortBy as keyof Documento] || ''
+    const aValue = a[sortBy as keyof any] || '' // Changed to any
+    const bValue = b[sortBy as keyof any] || '' // Changed to any
     
     if (sortOrder === 'asc') {
       return aValue > bValue ? 1 : -1
@@ -253,20 +250,116 @@ export default function Documentos() {
 
   const handleCreateDocument = async (data: any) => {
     try {
-      const newDocument = await documentosAPI.create(data)
+      console.log('Dados recebidos do formulário:', data)
+      
+      // Corrigir campos UUID vazios para null
+      const uuidFields = [
+        'relacionado_obra_id',
+        'relacionado_zona_id',
+        'relacionado_ensaio_id',
+        'relacionado_material_id',
+        'relacionado_fornecedor_id',
+        'relacionado_checklist_id'
+      ]
+      const docData = { ...data }
+      
+      // Limpar todos os campos UUID vazios ou inválidos
+      uuidFields.forEach(field => {
+        if (docData[field] === '' || docData[field] === undefined || docData[field] === null) {
+          docData[field] = null
+        }
+      })
+      
+      // Limpar arrays vazios
+      const arrayFields = [
+        'palavras_chave',
+        'distribuicao',
+        'responsabilidades',
+        'recursos_necessarios',
+        'criterios_aceitacao',
+        'registros_obrigatorios',
+        'normas_referencia',
+        'equipamentos_necessarios',
+        'acoes_nao_conformidade',
+        'objetivos_qualidade',
+        'responsabilidades_qualidade',
+        'recursos_qualidade',
+        'controlos_qualidade',
+        'indicadores_qualidade',
+        'auditorias_planeadas',
+        'acoes_melhoria'
+      ]
+      
+      arrayFields.forEach(field => {
+        if (!Array.isArray(docData[field]) || docData[field].length === 0) {
+          docData[field] = []
+        }
+      })
+      
+      console.log('Dados corrigidos para envio:', docData)
+      
+      const newDocument = await documentosAPI.create(docData)
       setDocumentos(prev => [newDocument, ...prev])
       setShowCreateModal(false)
       toast.success('Documento criado com sucesso!')
     } catch (error) {
-      console.error(error)
+      console.error('Erro detalhado:', error)
+      toast.error('Erro ao criar documento')
     }
   }
 
   const handleEditDocument = async (data: any) => {
     if (!editingDocument) return
-    
     try {
-      const updatedDocument = await documentosAPI.update(editingDocument.id, data)
+      console.log('Dados recebidos para edição:', data)
+      
+      // Corrigir campos UUID vazios para null
+      const uuidFields = [
+        'relacionado_obra_id',
+        'relacionado_zona_id',
+        'relacionado_ensaio_id',
+        'relacionado_material_id',
+        'relacionado_fornecedor_id',
+        'relacionado_checklist_id'
+      ]
+      const docData = { ...data }
+      
+      // Limpar todos os campos UUID vazios ou inválidos
+      uuidFields.forEach(field => {
+        if (docData[field] === '' || docData[field] === undefined || docData[field] === null) {
+          docData[field] = null
+        }
+      })
+      
+      // Limpar arrays vazios
+      const arrayFields = [
+        'palavras_chave',
+        'distribuicao',
+        'responsabilidades',
+        'recursos_necessarios',
+        'criterios_aceitacao',
+        'registros_obrigatorios',
+        'normas_referencia',
+        'equipamentos_necessarios',
+        'acoes_nao_conformidade',
+        'objetivos_qualidade',
+        'responsabilidades_qualidade',
+        'recursos_qualidade',
+        'controlos_qualidade',
+        'indicadores_qualidade',
+        'auditorias_planeadas',
+        'acoes_melhoria'
+      ]
+      
+      arrayFields.forEach(field => {
+        if (!Array.isArray(docData[field]) || docData[field].length === 0) {
+          docData[field] = []
+        }
+      })
+      
+      console.log('Dados corrigidos para edição:', docData)
+      
+      const updatedDocument = await documentosAPI.update(editingDocument.id, docData)
       setDocumentos(prev => prev.map(doc => 
         doc.id === editingDocument.id ? updatedDocument : doc
       ))
@@ -274,16 +367,17 @@ export default function Documentos() {
       setEditingDocument(null)
       toast.success('Documento atualizado com sucesso!')
     } catch (error) {
-      console.error(error)
+      console.error('Erro detalhado:', error)
+      toast.error('Erro ao atualizar documento')
     }
   }
 
-  const handleViewDocument = (document: Documento) => {
+  const handleViewDocument = (document: any) => { // Changed to any
     setViewingDocument(document)
     setShowViewModal(true)
   }
 
-  const handleEditClick = (document: Documento) => {
+  const handleEditClick = (document: any) => { // Changed to any
     setEditingDocument(document)
     setShowEditModal(true)
   }
@@ -416,10 +510,10 @@ export default function Documentos() {
         className="grid grid-cols-1 md:grid-cols-4 gap-6"
       >
         {[
-          { label: 'Total', value: documentos.length, icon: FileText, color: 'bg-gradient-to-br from-blue-500 to-blue-600' },
-          { label: 'Aprovados', value: documentos.filter(d => d.estado === 'aprovado').length, icon: CheckCircle, color: 'bg-gradient-to-br from-green-500 to-green-600' },
-          { label: 'Pendentes', value: documentos.filter(d => d.estado === 'pendente').length, icon: Clock, color: 'bg-gradient-to-br from-warning-500 to-warning-600' },
-          { label: 'Em Análise', value: documentos.filter(d => d.estado === 'em_analise').length, icon: AlertTriangle, color: 'bg-gradient-to-br from-info-500 to-info-600' }
+          { label: 'Total', value: (documentos || []).length, icon: FileText, color: 'bg-gradient-to-br from-blue-500 to-blue-600' },
+          { label: 'Aprovados', value: (documentos || []).filter(d => d.estado === 'aprovado').length, icon: CheckCircle, color: 'bg-gradient-to-br from-green-500 to-green-600' },
+          { label: 'Pendentes', value: (documentos || []).filter(d => d.estado === 'pendente').length, icon: Clock, color: 'bg-gradient-to-br from-warning-500 to-warning-600' },
+          { label: 'Em Análise', value: (documentos || []).filter(d => d.estado === 'em_analise').length, icon: AlertTriangle, color: 'bg-gradient-to-br from-info-500 to-info-600' }
         ].map((stat) => {
           const Icon = stat.icon
           return (

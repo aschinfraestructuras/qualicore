@@ -1,7 +1,7 @@
+import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
 import { useState } from 'react'
 import { Plus, FileText, ClipboardList } from 'lucide-react'
 import ChecklistForm from '../components/forms/ChecklistForm'
-import { Checklist } from '../types'
 
 const mockChecklists: Checklist[] = [
   {
