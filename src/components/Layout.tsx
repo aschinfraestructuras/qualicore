@@ -13,7 +13,7 @@ export default function Layout({ children }: LayoutProps) {
       <Header />
       <main
         className="flex-1 pt-14 px-4 pb-8 w-full"
-        style={{ marginTop: "130px" }}
+        style={{ marginTop: "110px" }}
       >
         {children}
       </main>

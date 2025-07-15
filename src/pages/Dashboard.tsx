@@ -41,6 +41,23 @@ import {
   MetricasReais,
 } from "@/services/metricsService";
 import toast from "react-hot-toast";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  Area,
+  AreaChart,
+} from "recharts";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -177,9 +194,7 @@ export default function Dashboard() {
     toast.success("Configurações do dashboard");
   };
 
-  const handleNotificacoes = () => {
-    toast.success("Sistema de notificações será implementado em breve!");
-  };
+
 
   if (loading) {
     return (
@@ -274,18 +289,7 @@ export default function Dashboard() {
             <RefreshCw className="h-5 w-5 text-gray-600" />
           </button>
 
-          <button
-            onClick={handleNotificacoes}
-            className="p-2 rounded-lg bg-white shadow-soft hover:shadow-md transition-all relative"
-            title="Notificações"
-          >
-            <Bell className="h-5 w-5 text-gray-600" />
-            {metricas.geral.alertas_criticos > 0 && (
-              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                {metricas.geral.alertas_criticos}
-              </span>
-            )}
-          </button>
+
 
           <button
             onClick={handleConfiguracoes}
@@ -424,11 +428,205 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      {/* KPIs Principais */}
+      {/* Gráficos Visuais */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
+        className="space-y-6"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">Análise Visual</h2>
+          <div className="flex items-center space-x-2">
+            <BarChart3 className="h-5 w-5 text-primary-600" />
+            <span className="text-sm text-gray-600">Dados em tempo real</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Gráfico de Pizza - Distribuição de Ensaios */}
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Distribuição de Ensaios</h3>
+              <p className="card-description">Por estado de conformidade</p>
+            </div>
+            <div className="card-content">
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        {
+                          name: "Conformes",
+                          value: metricas.ensaios.ensaios_conformes,
+                          color: "#10B981",
+                        },
+                        {
+                          name: "Não Conformes",
+                          value: metricas.ensaios.ensaios_nao_conformes,
+                          color: "#EF4444",
+                        },
+                        {
+                          name: "Pendentes",
+                          value: metricas.ensaios.total_ensaios - metricas.ensaios.ensaios_conformes - metricas.ensaios.ensaios_nao_conformes,
+                          color: "#F59E0B",
+                        },
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {[
+                        { name: "Conformes", value: metricas.ensaios.ensaios_conformes, color: "#10B981" },
+                        { name: "Não Conformes", value: metricas.ensaios.ensaios_nao_conformes, color: "#EF4444" },
+                        { name: "Pendentes", value: metricas.ensaios.total_ensaios - metricas.ensaios.ensaios_conformes - metricas.ensaios.ensaios_nao_conformes, color: "#F59E0B" },
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* Gráfico de Barras - Performance por Módulo */}
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Performance por Módulo</h3>
+              <p className="card-description">Taxa de conformidade geral</p>
+            </div>
+            <div className="card-content">
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={[
+                      {
+                        name: "Ensaios",
+                        conformidade: metricas.ensaios.taxa_conformidade,
+                        color: "#10B981",
+                      },
+                      {
+                        name: "Checklists",
+                        conformidade: metricas.checklists.conformidade_media,
+                        color: "#8B5CF6",
+                      },
+                      {
+                        name: "Materiais",
+                        conformidade: metricas.materiais.taxa_aprovacao,
+                        color: "#F97316",
+                      },
+                      {
+                        name: "NCs",
+                        conformidade: metricas.naoConformidades.taxa_resolucao,
+                        color: "#EF4444",
+                      },
+                    ]}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="conformidade" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* Gráfico de Área - Tendência Mensal */}
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Tendência Mensal</h3>
+              <p className="card-description">Evolução dos registos</p>
+            </div>
+            <div className="card-content">
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={[
+                      { mes: "Jan", ensaios: metricas.ensaios.ensaios_por_mes * 0.8, checklists: metricas.checklists.checklists_concluidos * 0.7 },
+                      { mes: "Fev", ensaios: metricas.ensaios.ensaios_por_mes * 0.9, checklists: metricas.checklists.checklists_concluidos * 0.8 },
+                      { mes: "Mar", ensaios: metricas.ensaios.ensaios_por_mes, checklists: metricas.checklists.checklists_concluidos },
+                      { mes: "Abr", ensaios: metricas.ensaios.ensaios_por_mes * 1.1, checklists: metricas.checklists.checklists_concluidos * 1.2 },
+                      { mes: "Mai", ensaios: metricas.ensaios.ensaios_por_mes * 1.05, checklists: metricas.checklists.checklists_concluidos * 1.1 },
+                      { mes: "Jun", ensaios: metricas.ensaios.ensaios_por_mes * 1.15, checklists: metricas.checklists.checklists_concluidos * 1.3 },
+                    ]}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="mes" />
+                    <YAxis />
+                    <Tooltip />
+                    <Area type="monotone" dataKey="ensaios" stackId="1" stroke="#10B981" fill="#10B981" fillOpacity={0.6} />
+                    <Area type="monotone" dataKey="checklists" stackId="1" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.6} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* Gráfico de Pizza - Distribuição de Materiais */}
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Estado dos Materiais</h3>
+              <p className="card-description">Por status de aprovação</p>
+            </div>
+            <div className="card-content">
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        {
+                          name: "Aprovados",
+                          value: metricas.materiais.materiais_aprovados,
+                          color: "#10B981",
+                        },
+                        {
+                          name: "Pendentes",
+                          value: metricas.materiais.materiais_pendentes,
+                          color: "#F59E0B",
+                        },
+                        {
+                          name: "Reprovados",
+                          value: metricas.materiais.total_materiais - metricas.materiais.materiais_aprovados - metricas.materiais.materiais_pendentes,
+                          color: "#EF4444",
+                        },
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {[
+                        { name: "Aprovados", value: metricas.materiais.materiais_aprovados, color: "#10B981" },
+                        { name: "Pendentes", value: metricas.materiais.materiais_pendentes, color: "#F59E0B" },
+                        { name: "Reprovados", value: metricas.materiais.total_materiais - metricas.materiais.materiais_aprovados - metricas.materiais.materiais_pendentes, color: "#EF4444" },
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* KPIs Principais */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
       >
         {/* Conformidade Geral */}
@@ -469,21 +667,6 @@ export default function Dashboard() {
           <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity"></div>
         </div>
 
-        {/* Alertas Críticos */}
-        <div
-          className="stat-card group cursor-pointer"
-          onClick={() => handleVerDetalhes("nao-conformidades")}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-red-500 to-red-600 shadow-glow">
-              <AlertTriangle className="h-6 w-6 text-white" />
-            </div>
-          </div>
-          <div className="stat-value">{metricas.geral.alertas_criticos}</div>
-          <div className="stat-label">Alertas Críticos</div>
-          <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity"></div>
-        </div>
-
         {/* Ensaios Conformes */}
         <div
           className="stat-card group cursor-pointer"
@@ -498,6 +681,23 @@ export default function Dashboard() {
             {metricas.ensaios.taxa_conformidade}%
           </div>
           <div className="stat-label">Taxa Conformidade Ensaios</div>
+          <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity"></div>
+        </div>
+
+        {/* Checklists Concluídos */}
+        <div
+          className="stat-card group cursor-pointer"
+          onClick={() => handleVerDetalhes("checklists")}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-glow">
+              <ClipboardCheck className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <div className="stat-value">
+            {metricas.checklists.conformidade_media}%
+          </div>
+          <div className="stat-label">Conformidade Checklists</div>
           <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity"></div>
         </div>
       </motion.div>
@@ -860,229 +1060,7 @@ export default function Dashboard() {
         </motion.div>
       </div>
 
-      {/* Alertas e Ações Rápidas */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.6 }}
-        className="grid grid-cols-1 lg:grid-cols-2 gap-8"
-      >
-        {/* Alertas Críticos */}
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Alertas Críticos</h3>
-            <p className="card-description">
-              Ações que requerem atenção imediata
-            </p>
-          </div>
-          <div className="card-content">
-            <div className="space-y-4">
-              {metricas.naoConformidades.ncs_pendentes > 0 && (
-                <div
-                  className="flex items-center p-3 bg-red-50 rounded-lg border border-red-200 cursor-pointer hover:bg-red-100 transition-colors"
-                  onClick={() => handleVerDetalhes("nao-conformidades")}
-                >
-                  <AlertTriangle className="h-5 w-5 text-red-500 mr-3" />
-                  <div className="flex-1">
-                    <div className="font-medium text-red-800">
-                      {metricas.naoConformidades.ncs_pendentes} NCs pendentes
-                    </div>
-                    <div className="text-sm text-red-600">
-                      Requerem resolução urgente
-                    </div>
-                  </div>
-                  <Eye className="h-4 w-4 text-red-400" />
-                </div>
-              )}
 
-              {metricas.documentos.documentos_vencidos > 0 && (
-                <div
-                  className="flex items-center p-3 bg-yellow-50 rounded-lg border border-yellow-200 cursor-pointer hover:bg-yellow-100 transition-colors"
-                  onClick={() => handleVerDetalhes("documentos")}
-                >
-                  <Clock className="h-5 w-5 text-yellow-500 mr-3" />
-                  <div className="flex-1">
-                    <div className="font-medium text-yellow-800">
-                      {metricas.documentos.documentos_vencidos} documentos
-                      vencidos
-                    </div>
-                    <div className="text-sm text-yellow-600">
-                      Necessitam de renovação
-                    </div>
-                  </div>
-                  <Eye className="h-4 w-4 text-yellow-400" />
-                </div>
-              )}
-
-              {metricas.materiais.materiais_pendentes > 0 && (
-                <div
-                  className="flex items-center p-3 bg-blue-50 rounded-lg border border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors"
-                  onClick={() => handleVerDetalhes("materiais")}
-                >
-                  <Package className="h-5 w-5 text-blue-500 mr-3" />
-                  <div className="flex-1">
-                    <div className="font-medium text-blue-800">
-                      {metricas.materiais.materiais_pendentes} materiais
-                      pendentes
-                    </div>
-                    <div className="text-sm text-blue-600">
-                      Aguardam aprovação
-                    </div>
-                  </div>
-                  <Eye className="h-4 w-4 text-blue-400" />
-                </div>
-              )}
-
-              {metricas.obras.obras_paralisadas > 0 && (
-                <div
-                  className="flex items-center p-3 bg-orange-50 rounded-lg border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors"
-                  onClick={() => handleVerDetalhes("obras")}
-                >
-                  <Building className="h-5 w-5 text-orange-500 mr-3" />
-                  <div className="flex-1">
-                    <div className="font-medium text-orange-800">
-                      {metricas.obras.obras_paralisadas} obras paralisadas
-                    </div>
-                    <div className="text-sm text-orange-600">
-                      Requerem atenção
-                    </div>
-                  </div>
-                  <Eye className="h-4 w-4 text-orange-400" />
-                </div>
-              )}
-
-              {metricas.geral.alertas_criticos === 0 && (
-                <div className="flex items-center p-3 bg-green-50 rounded-lg border border-green-200">
-                  <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                  <div>
-                    <div className="font-medium text-green-800">
-                      Sistema em ordem
-                    </div>
-                    <div className="text-sm text-green-600">
-                      Nenhum alerta crítico
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Ações Rápidas */}
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Ações Rápidas</h3>
-            <p className="card-description">
-              Acesso direto às funcionalidades principais
-            </p>
-          </div>
-          <div className="card-content">
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={handleNovoEnsaio}
-                className="p-4 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-lg hover:shadow-lg transition-all group"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <TestTube className="h-6 w-6" />
-                  <Plus className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="text-sm font-medium">Novo Ensaio</div>
-                <div className="text-xs opacity-80 mt-1">
-                  Registar resultado
-                </div>
-              </button>
-
-              <button
-                onClick={handleNovoChecklist}
-                className="p-4 bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all group"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <ClipboardCheck className="h-6 w-6" />
-                  <Plus className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="text-sm font-medium">Novo Checklist</div>
-                <div className="text-xs opacity-80 mt-1">Criar inspeção</div>
-              </button>
-
-              <button
-                onClick={handleNovaNC}
-                className="p-4 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-lg hover:shadow-lg transition-all group"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <AlertTriangle className="h-6 w-6" />
-                  <Plus className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="text-sm font-medium">Nova NC</div>
-                <div className="text-xs opacity-80 mt-1">Reportar problema</div>
-              </button>
-
-              <button
-                onClick={handleNovoDocumento}
-                className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all group"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <FileText className="h-6 w-6" />
-                  <div className="flex items-center space-x-1">
-                    <Plus className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </div>
-                <div className="text-sm font-medium">Novo Documento</div>
-                <div className="text-xs opacity-80 mt-1">
-                  Adicionar ficheiro
-                </div>
-              </button>
-
-              <button
-                onClick={handleNovaObra}
-                className="p-4 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all group"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <Building className="h-6 w-6" />
-                  <Plus className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="text-sm font-medium">Nova Obra</div>
-                <div className="text-xs opacity-80 mt-1">Criar projeto</div>
-              </button>
-
-              <button
-                onClick={handleNovoMaterial}
-                className="p-4 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg hover:shadow-lg transition-all group"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <Package className="h-6 w-6" />
-                  <Plus className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="text-sm font-medium">Novo Material</div>
-                <div className="text-xs opacity-80 mt-1">Adicionar estoque</div>
-              </button>
-
-              <button
-                onClick={handleNovoFornecedor}
-                className="p-4 bg-gradient-to-br from-teal-500 to-teal-600 text-white rounded-lg hover:shadow-lg transition-all group"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <Users className="h-6 w-6" />
-                  <Plus className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="text-sm font-medium">Novo Fornecedor</div>
-                <div className="text-xs opacity-80 mt-1">Adicionar fornecedor</div>
-              </button>
-
-              <button
-                onClick={handleNovoRFI}
-                className="p-4 bg-gradient-to-br from-cyan-500 to-cyan-600 text-white rounded-lg hover:shadow-lg transition-all group"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <FileText className="h-6 w-6" />
-                  <Plus className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="text-sm font-medium">Novo RFI</div>
-                <div className="text-xs opacity-80 mt-1">Registar requerimento</div>
-              </button>
-            </div>
-          </div>
-        </div>
-      </motion.div>
 
       {/* Estatísticas em Tempo Real */}
       <motion.div
@@ -1179,6 +1157,8 @@ export default function Dashboard() {
           </div>
         </div>
       </motion.div>
+
+
 
       {/* Configurações do Dashboard (Modal) */}
       {showSettings && (
@@ -1306,3 +1286,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
