@@ -10,18 +10,21 @@ import {
   Search,
   Filter,
   Calendar,
+  XCircle,
 } from "lucide-react";
 import { checklistsAPI } from "@/lib/supabase-api";
 import toast from "react-hot-toast";
 import ChecklistForm from "@/components/forms/ChecklistForm";
 import RelatorioChecklist from "@/components/RelatorioChecklist";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function Checklists() {
-  const [checklists, setChecklists] = useState<any[]>([]); // Changed type to any[] as Checklist type is removed
+  const [checklists, setChecklists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingChecklist, setEditingChecklist] = useState<any | null>(null); // Changed type to any
+  const [editingChecklist, setEditingChecklist] = useState<any | null>(null);
   const [showRelatorio, setShowRelatorio] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Filtros ativos
   const [filters, setFilters] = useState({
@@ -133,7 +136,6 @@ export default function Checklists() {
   };
 
   const handleEdit = (checklist: any) => {
-    // Changed type to any
     setEditingChecklist(checklist);
     setShowForm(true);
   };
@@ -237,120 +239,140 @@ export default function Checklists() {
         </div>
       </div>
 
-      {/* Filtros Ativos */}
-      <div className="card">
-        <div className="card-header">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Filter className="h-5 w-5 text-gray-500" />
-              <h3 className="card-title">Filtros</h3>
-            </div>
-            <button
-              onClick={clearFilters}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              Limpar filtros
-            </button>
-          </div>
-        </div>
-        <div className="card-content">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Pesquisa */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Pesquisar checklists..."
-                value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                className="input pl-10 w-full"
-              />
-            </div>
-
-            {/* Status */}
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="input"
-            >
-              <option value="">Todos os status</option>
-              {statusOptions.map((status) => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
-
-            {/* Estado */}
-            <select
-              value={filters.estado}
-              onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
-              className="input"
-            >
-              <option value="">Todos os estados</option>
-              {estadoOptions.map((estado) => (
-                <option key={estado} value={estado}>{estado}</option>
-              ))}
-            </select>
-
-            {/* Responsável */}
-            <select
-              value={filters.responsavel}
-              onChange={(e) => setFilters({ ...filters, responsavel: e.target.value })}
-              className="input"
-            >
-              <option value="">Todos os responsáveis</option>
-              {responsaveisUnicos.map((responsavel) => (
-                <option key={responsavel} value={responsavel}>{responsavel}</option>
-              ))}
-            </select>
-
-            {/* Zona */}
-            <select
-              value={filters.zona}
-              onChange={(e) => setFilters({ ...filters, zona: e.target.value })}
-              className="input"
-            >
-              <option value="">Todas as zonas</option>
-              {zonaOptions.map((zona) => (
-                <option key={zona} value={zona}>{zona}</option>
-              ))}
-            </select>
-
-            {/* Tipo */}
-            <select
-              value={filters.tipo}
-              onChange={(e) => setFilters({ ...filters, tipo: e.target.value })}
-              className="input"
-            >
-              <option value="">Todos os tipos</option>
-              {tipoOptions.map((tipo) => (
-                <option key={tipo} value={tipo}>{tipo}</option>
-              ))}
-            </select>
-
-            {/* Data Início */}
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="date"
-                value={filters.dataInicio}
-                onChange={(e) => setFilters({ ...filters, dataInicio: e.target.value })}
-                className="input pl-10 w-full"
-              />
-            </div>
-
-            {/* Data Fim */}
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="date"
-                value={filters.dataFim}
-                onChange={(e) => setFilters({ ...filters, dataFim: e.target.value })}
-                className="input pl-10 w-full"
-              />
-            </div>
-          </div>
-        </div>
+      {/* Botão de Filtros */}
+      <div className="flex items-center space-x-4">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`p-2 rounded-lg shadow-soft hover:shadow-md transition-all ${
+            showFilters
+              ? "bg-primary-100 text-primary-600"
+              : "bg-white text-gray-600"
+          }`}
+          title="Filtros"
+        >
+          <Filter className="h-5 w-5" />
+        </button>
       </div>
+
+      {/* Filtros Ativos */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="card"
+          >
+            <div className="card-header">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Filter className="h-5 w-5 text-gray-500" />
+                  <h3 className="card-title">Filtros</h3>
+                </div>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <div className="card-content">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Pesquisa */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Pesquisar checklists..."
+                    value={filters.search}
+                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                    className="input pl-10 w-full"
+                  />
+                </div>
+
+                {/* Status */}
+                <select
+                  value={filters.status}
+                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                  className="input"
+                >
+                  <option value="">Todos os status</option>
+                  {statusOptions.map((status) => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+
+                {/* Estado */}
+                <select
+                  value={filters.estado}
+                  onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
+                  className="input"
+                >
+                  <option value="">Todos os estados</option>
+                  {estadoOptions.map((estado) => (
+                    <option key={estado} value={estado}>{estado}</option>
+                  ))}
+                </select>
+
+                {/* Responsável */}
+                <select
+                  value={filters.responsavel}
+                  onChange={(e) => setFilters({ ...filters, responsavel: e.target.value })}
+                  className="input"
+                >
+                  <option value="">Todos os responsáveis</option>
+                  {responsaveisUnicos.map((responsavel) => (
+                    <option key={responsavel} value={responsavel}>{responsavel}</option>
+                  ))}
+                </select>
+
+                {/* Zona */}
+                <select
+                  value={filters.zona}
+                  onChange={(e) => setFilters({ ...filters, zona: e.target.value })}
+                  className="input"
+                >
+                  <option value="">Todas as zonas</option>
+                  {zonasUnicas.map((zona) => (
+                    <option key={zona} value={zona}>{zona}</option>
+                  ))}
+                </select>
+
+                {/* Tipo */}
+                <select
+                  value={filters.tipo}
+                  onChange={(e) => setFilters({ ...filters, tipo: e.target.value })}
+                  className="input"
+                >
+                  <option value="">Todos os tipos</option>
+                  {tiposUnicos.map((tipo) => (
+                    <option key={tipo} value={tipo}>{tipo}</option>
+                  ))}
+                </select>
+
+                {/* Data Início */}
+                <input
+                  type="date"
+                  value={filters.dataInicio}
+                  onChange={(e) => setFilters({ ...filters, dataInicio: e.target.value })}
+                  className="input"
+                />
+
+                {/* Data Fim */}
+                <input
+                  type="date"
+                  value={filters.dataFim}
+                  onChange={(e) => setFilters({ ...filters, dataFim: e.target.value })}
+                  className="input"
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card">

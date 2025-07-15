@@ -18,15 +18,17 @@ import {
   Eye,
   Clock,
   FileText,
+  XCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import MaterialForm from "@/components/forms/MaterialForm";
 import MaterialView from "@/components/MaterialView";
-import RelatorioMateriaisPremium from "@/components/RelatorioMateriaisPremium";
+
 import { materiaisAPI } from "@/lib/supabase-api";
 import { sanitizeUUIDField } from "@/utils/uuid";
 import Modal from "@/components/Modal";
-import { useReactToPrint } from "react-to-print";
+
+import { AnimatePresence, motion } from "framer-motion";
 
 interface Filtros {
   search: string;
@@ -45,9 +47,6 @@ export default function Materiais() {
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [viewingMaterial, setViewingMaterial] = useState<Material | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [showRelatorioPremium, setShowRelatorioPremium] = useState(false);
-  const [tipoRelatorio, setTipoRelatorio] = useState<"executivo" | "individual" | "filtrado" | "comparativo">("executivo");
-  const [materialEspecifico, setMaterialEspecifico] = useState<Material | null>(null);
   const [filtros, setFiltros] = useState<Filtros>({
     search: "",
     tipo: "",
@@ -58,30 +57,7 @@ export default function Materiais() {
     dataFim: "",
   });
   const [showPrintModal, setShowPrintModal] = useState(false);
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
-  const [showPremiumFilters, setShowPremiumFilters] = useState(false);
-  const [premiumFilters, setPremiumFilters] = useState({ ...filtros });
-  const [premiumColumns, setPremiumColumns] = useState({
-    codigo: true,
-    nome: true,
-    tipo: true,
-    estado: true,
-    zona: true,
-    data_rececao: true,
-    quantidade: true,
-    unidade: true,
-    lote: false,
-    responsavel: false,
-    fornecedor_id: false,
-  });
-  const premiumTipoRelatorio = useRef<"executivo" | "individual" | "filtrado" | "comparativo">("executivo");
-  const [mostrarCusto, setMostrarCusto] = useState(false);
-  const relatorioRef = useRef<HTMLDivElement>(null);
-  const handleReactToPrint = useReactToPrint({
-    content: () => relatorioRef.current,
-    documentTitle: "Relatório de Materiais",
-    removeAfterPrint: false,
-  });
+
 
   useEffect(() => {
     loadMateriais();
@@ -234,30 +210,104 @@ export default function Materiais() {
     setShowPrintModal(true);
   };
 
-  const handleConfirmPrint = (tipo: "executivo" | "individual" | "filtrado" | "comparativo") => {
+  const handleConfirmPrint = async (tipo: "executivo" | "individual" | "filtrado" | "comparativo") => {
     setShowPrintModal(false);
-    setTipoRelatorio(tipo);
-    setMaterialEspecifico(null);
-    setShowRelatorioPremium(true);
+    
+    try {
+      const { PDFService } = await import("@/services/pdfService");
+      const pdfService = new PDFService();
+      
+      // Determinar quais materiais usar baseado no tipo
+      let materiaisParaRelatorio = materiais;
+      let titulo = "";
+      let subtitulo = "";
+      
+      switch (tipo) {
+        case "executivo":
+          titulo = "Relatório Executivo de Materiais";
+          subtitulo = "Visão geral e estatísticas";
+          break;
+        case "filtrado":
+          materiaisParaRelatorio = materiaisFiltrados;
+          titulo = "Relatório de Materiais Filtrados";
+          subtitulo = `Filtros aplicados: ${Object.entries(filtros).filter(([_, v]) => v).length} critérios`;
+          break;
+        case "comparativo":
+          titulo = "Análise Comparativa de Materiais";
+          subtitulo = "Comparação entre tipos e estados";
+          break;
+      }
+      
+      const options = {
+        titulo,
+        subtitulo,
+        materiais: materiaisParaRelatorio,
+        tipo,
+        filtros: tipo === "filtrado" ? filtros : {},
+        materialEspecifico: null,
+        mostrarCusto: true,
+        colunas: {
+          codigo: true,
+          nome: true,
+          tipo: true,
+          estado: true,
+          zona: true,
+          data_rececao: true,
+          quantidade: true,
+          unidade: true,
+          lote: false,
+          responsavel: true,
+          fornecedor_id: false,
+        },
+      };
+      
+      pdfService.gerarRelatorioMateriais(options);
+      toast.success(`Relatório ${tipo} gerado com sucesso!`);
+      
+    } catch (error) {
+      console.error("Erro ao gerar relatório:", error);
+      toast.error("Erro ao gerar relatório");
+    }
   };
 
-  const handleRelatorioIndividual = (material: Material) => {
-    setTipoRelatorio("individual");
-    setMaterialEspecifico(material);
-    setShowRelatorioPremium(true);
+  const handleRelatorioIndividual = async (material: Material) => {
+    try {
+      const { PDFService } = await import("@/services/pdfService");
+      const pdfService = new PDFService();
+      
+      const options = {
+        titulo: `Ficha Técnica - ${material.codigo}`,
+        subtitulo: `Material: ${material.nome}`,
+        materiais: [material],
+        tipo: "individual" as const,
+        materialEspecifico: material,
+        filtros: {},
+        mostrarCusto: false,
+        colunas: {
+          codigo: true,
+          nome: true,
+          tipo: true,
+          estado: true,
+          zona: true,
+          data_rececao: true,
+          quantidade: true,
+          unidade: true,
+          lote: true,
+          responsavel: true,
+          fornecedor_id: false,
+        },
+      };
+      
+      pdfService.gerarRelatorioMateriais(options);
+      toast.success("Relatório individual gerado com sucesso!");
+      
+    } catch (error) {
+      console.error("Erro ao gerar relatório individual:", error);
+      toast.error("Erro ao gerar relatório individual");
+    }
   };
 
-  const handleRelatorioFiltrado = () => {
-    setTipoRelatorio("filtrado");
-    setMaterialEspecifico(null);
-    setShowRelatorioPremium(true);
-  };
 
-  const handleRelatorioComparativo = () => {
-    setTipoRelatorio("comparativo");
-    setMaterialEspecifico(null);
-    setShowRelatorioPremium(true);
-  };
 
   const generateCSV = (materiais: Material[]) => {
     const headers = [
@@ -429,132 +479,152 @@ export default function Materiais() {
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="card mb-2">
-        <div className="card-header">
-          <h3 className="card-title">Filtros</h3>
-          <button className="btn btn-outline btn-sm" onClick={clearFilters}>
-            Limpar Filtros
-          </button>
-        </div>
-        <div className="card-content">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pesquisar
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+      {/* Botão de Filtros */}
+      <div className="flex items-center space-x-4">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`p-2 rounded-lg shadow-soft hover:shadow-md transition-all ${
+            showFilters
+              ? "bg-primary-100 text-primary-600"
+              : "bg-white text-gray-600"
+          }`}
+          title="Filtros"
+        >
+          <Filter className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Filtros Ativos */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="card"
+          >
+            <div className="card-header">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Filter className="h-5 w-5 text-gray-500" />
+                  <h3 className="card-title">Filtros</h3>
+                </div>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <div className="card-content">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Pesquisa */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Código, nome, lote..."
+                    value={filtros.search}
+                    onChange={(e) =>
+                      setFiltros((prev) => ({
+                        ...prev,
+                        search: e.target.value,
+                      }))
+                    }
+                    className="input pl-10 w-full"
+                  />
+                </div>
+
+                {/* Tipo */}
+                <select
+                  value={filtros.tipo}
+                  onChange={(e) =>
+                    setFiltros((prev) => ({ ...prev, tipo: e.target.value }))
+                  }
+                  className="input"
+                >
+                  <option value="">Todos os tipos</option>
+                  <option value="betao">Betão</option>
+                  <option value="aco">Aço</option>
+                  <option value="agregado">Agregado</option>
+                  <option value="cimento">Cimento</option>
+                  <option value="outro">Outro</option>
+                </select>
+
+                {/* Estado */}
+                <select
+                  value={filtros.estado}
+                  onChange={(e) =>
+                    setFiltros((prev) => ({ ...prev, estado: e.target.value }))
+                  }
+                  className="input"
+                >
+                  <option value="">Todos os estados</option>
+                  <option value="pendente">Pendente</option>
+                  <option value="em_analise">Em Análise</option>
+                  <option value="aprovado">Aprovado</option>
+                  <option value="reprovado">Reprovado</option>
+                  <option value="concluido">Concluído</option>
+                </select>
+
+                {/* Zona */}
+                <select
+                  value={filtros.zona}
+                  onChange={(e) =>
+                    setFiltros((prev) => ({ ...prev, zona: e.target.value }))
+                  }
+                  className="input"
+                >
+                  <option value="">Todas as zonas</option>
+                  <option value="Zona A - Fundações">Zona A - Fundações</option>
+                  <option value="Zona B - Pilares">Zona B - Pilares</option>
+                  <option value="Zona C - Lajes">Zona C - Lajes</option>
+                  <option value="Zona D - Estrutura">Zona D - Estrutura</option>
+                  <option value="Armazém Central">Armazém Central</option>
+                  <option value="Laboratório">Laboratório</option>
+                  <option value="Escritório">Escritório</option>
+                </select>
+
+                {/* Fornecedor */}
+                <select
+                  value={filtros.fornecedor}
+                  onChange={(e) =>
+                    setFiltros((prev) => ({ ...prev, fornecedor: e.target.value }))
+                  }
+                  className="input"
+                >
+                  <option value="">Todos os fornecedores</option>
+                  {/* Aqui seria necessário carregar os fornecedores */}
+                </select>
+
+                {/* Data Início */}
                 <input
-                  type="text"
-                  placeholder="Código, nome, lote..."
-                  value={filtros.search}
+                  type="date"
+                  value={filtros.dataInicio}
                   onChange={(e) =>
                     setFiltros((prev) => ({
                       ...prev,
-                      search: e.target.value,
+                      dataInicio: e.target.value,
                     }))
                   }
-                  className="input pl-10"
+                  className="input"
+                />
+
+                {/* Data Fim */}
+                <input
+                  type="date"
+                  value={filtros.dataFim}
+                  onChange={(e) =>
+                    setFiltros((prev) => ({ ...prev, dataFim: e.target.value }))
+                  }
+                  className="input"
                 />
               </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tipo
-              </label>
-              <select
-                value={filtros.tipo}
-                onChange={(e) =>
-                  setFiltros((prev) => ({ ...prev, tipo: e.target.value }))
-                }
-                className="select"
-              >
-                <option value="">Todos os tipos</option>
-                <option value="betao">Betão</option>
-                <option value="aco">Aço</option>
-                <option value="agregado">Agregado</option>
-                <option value="cimento">Cimento</option>
-                <option value="outro">Outro</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Estado
-              </label>
-              <select
-                value={filtros.estado}
-                onChange={(e) =>
-                  setFiltros((prev) => ({ ...prev, estado: e.target.value }))
-                }
-                className="select"
-              >
-                <option value="">Todos os estados</option>
-                <option value="pendente">Pendente</option>
-                <option value="em_analise">Em Análise</option>
-                <option value="aprovado">Aprovado</option>
-                <option value="reprovado">Reprovado</option>
-                <option value="concluido">Concluído</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Zona
-              </label>
-              <select
-                value={filtros.zona}
-                onChange={(e) =>
-                  setFiltros((prev) => ({ ...prev, zona: e.target.value }))
-                }
-                className="select"
-              >
-                <option value="">Todas as zonas</option>
-                <option value="Zona A - Fundações">Zona A - Fundações</option>
-                <option value="Zona B - Pilares">Zona B - Pilares</option>
-                <option value="Zona C - Lajes">Zona C - Lajes</option>
-                <option value="Zona D - Estrutura">Zona D - Estrutura</option>
-                <option value="Armazém Central">Armazém Central</option>
-                <option value="Laboratório">Laboratório</option>
-                <option value="Escritório">Escritório</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Data Início
-              </label>
-              <input
-                type="date"
-                value={filtros.dataInicio}
-                onChange={(e) =>
-                  setFiltros((prev) => ({
-                    ...prev,
-                    dataInicio: e.target.value,
-                  }))
-                }
-                className="input"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Data Fim
-              </label>
-              <input
-                type="date"
-                value={filtros.dataFim}
-                onChange={(e) =>
-                  setFiltros((prev) => ({ ...prev, dataFim: e.target.value }))
-                }
-                className="input"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Botões de ação abaixo dos filtros */}
       <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -562,9 +632,9 @@ export default function Materiais() {
           <Download className="h-4 w-4 mr-2" />
           Exportar
         </button>
-        <button className="btn btn-accent btn-md" onClick={() => setShowPremiumModal(true)}>
+        <button className="btn btn-accent btn-md" onClick={() => setShowPrintModal(true)}>
           <FileText className="h-4 w-4 mr-2" />
-          Imprimir Relatório
+          Relatórios PDF
         </button>
         <button className="btn btn-primary btn-md ml-auto" onClick={handleCreate}>
           <Plus className="h-4 w-4 mr-2" />
@@ -746,7 +816,7 @@ export default function Materiais() {
                       <button
                         className="p-2 text-gray-400 hover:text-purple-600 transition-colors"
                         onClick={() => handleRelatorioIndividual(material)}
-                        title="Relatório Individual"
+                        title="Relatório Individual PDF"
                       >
                         <FileText className="h-4 w-4" />
                       </button>
@@ -819,180 +889,69 @@ export default function Materiais() {
         />
       )}
 
-      {/* Modal do Relatório de Materiais (visualização e impressão) */}
-      {showRelatorioPremium && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-xl font-bold text-gray-900">
-                Relatório de Materiais
-              </h2>
-              <button
-                onClick={() => setShowRelatorioPremium(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            <div className="p-6">
-              <div ref={relatorioRef}>
-                <RelatorioMateriaisPremium
-                  materiais={materialEspecifico ? [materialEspecifico] : materiais.filter((material) => {
-                    // Aplicar filtros dinâmicos premium
-                    const matchSearch = !premiumFilters.search ||
-                      material.codigo.toLowerCase().includes(premiumFilters.search.toLowerCase()) ||
-                      material.nome.toLowerCase().includes(premiumFilters.search.toLowerCase()) ||
-                      material.lote.toLowerCase().includes(premiumFilters.search.toLowerCase());
-                    const matchTipo = !premiumFilters.tipo || material.tipo === premiumFilters.tipo;
-                    const matchEstado = !premiumFilters.estado || material.estado === premiumFilters.estado;
-                    const matchZona = !premiumFilters.zona || material.zona === premiumFilters.zona;
-                    const matchFornecedor = !premiumFilters.fornecedor || material.fornecedor_id === premiumFilters.fornecedor;
-                    const matchData = !premiumFilters.dataInicio || !premiumFilters.dataFim ||
-                      (material.data_rececao >= premiumFilters.dataInicio && material.data_rececao <= premiumFilters.dataFim);
-                    return matchSearch && matchTipo && matchEstado && matchZona && matchFornecedor && matchData;
-                  })}
-                  filtros={premiumFilters}
-                  tipoRelatorio={tipoRelatorio}
-                  materialEspecifico={materialEspecifico}
-                  colunas={premiumColumns}
-                  mostrarCusto={mostrarCusto}
-                />
-              </div>
-              <div className="flex justify-end mt-6 print:hidden">
-                <button className="btn btn-outline" onClick={handleReactToPrint}>
-                  <Printer className="h-4 w-4 mr-2" />
-                  Imprimir
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Modal de Impressão Avançada */}
+
+      {/* Modal de Relatórios PDF */}
       <Modal
         isOpen={showPrintModal}
         onClose={() => setShowPrintModal(false)}
-        title="Escolha o tipo de relatório para impressão"
-      >
-        <div className="p-2">
-          <div className="space-y-3">
-            <button className="btn btn-outline w-full" onClick={() => handleConfirmPrint("executivo")}>Relatório Executivo</button>
-            <button className="btn btn-outline w-full" onClick={() => handleConfirmPrint("filtrado")}>Relatório Filtrado</button>
-            <button className="btn btn-outline w-full" onClick={() => handleConfirmPrint("comparativo")}>Análise Comparativa</button>
-          </div>
-          <button className="btn btn-link mt-4 w-full" onClick={() => setShowPrintModal(false)}>Cancelar</button>
-        </div>
-      </Modal>
-
-      {/* Modal de Relatório de Materiais */}
-      <Modal
-        isOpen={showPremiumModal}
-        onClose={() => setShowPremiumModal(false)}
-        title="Escolha o tipo de Relatório de Materiais"
-      >
-        <div className="p-2 space-y-4">
-          <div className="flex flex-col gap-4">
-            <button className="btn btn-outline flex items-center gap-3 w-full justify-start" onClick={() => { premiumTipoRelatorio.current = 'executivo'; setShowPremiumModal(false); setShowPremiumFilters(true); }}>
-              <FileText className="h-5 w-5 text-blue-600" />
-              <div className="text-left">
-                <div className="font-bold">Relatório Executivo</div>
-                <div className="text-xs text-gray-500">Resumo geral dos materiais, estatísticas e análise executiva.</div>
-              </div>
-            </button>
-            <button className="btn btn-outline flex items-center gap-3 w-full justify-start" onClick={() => { premiumTipoRelatorio.current = 'filtrado'; setShowPremiumModal(false); setShowPremiumFilters(true); }}>
-              <FileText className="h-5 w-5 text-green-600" />
-              <div className="text-left">
-                <div className="font-bold">Relatório Filtrado</div>
-                <div className="text-xs text-gray-500">Apenas os materiais que correspondem aos filtros aplicados.</div>
-              </div>
-            </button>
-            <button className="btn btn-outline flex items-center gap-3 w-full justify-start" onClick={() => { premiumTipoRelatorio.current = 'comparativo'; setShowPremiumModal(false); setShowPremiumFilters(true); }}>
-              <FileText className="h-5 w-5 text-purple-600" />
-              <div className="text-left">
-                <div className="font-bold">Análise Comparativa</div>
-                <div className="text-xs text-gray-500">Comparação entre diferentes tipos, estados ou fornecedores.</div>
-              </div>
-            </button>
-          </div>
-          <button className="btn btn-link mt-2 w-full" onClick={() => setShowPremiumModal(false)}>Cancelar</button>
-        </div>
-      </Modal>
-
-      {/* Modal de Filtros Dinâmicos para Relatório de Materiais */}
-      <Modal
-        isOpen={showPremiumFilters}
-        onClose={() => setShowPremiumFilters(false)}
-        title="Filtros e Campos do Relatório de Materiais"
+        title="Gerar Relatório PDF de Materiais"
         size="lg"
       >
-        <div className="p-2 space-y-4">
+        <div className="p-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Filtros dinâmicos */}
-            <div>
-              <h4 className="font-bold mb-2">Filtros</h4>
-              <div className="space-y-2">
-                <input type="text" className="input w-full" placeholder="Pesquisar código, nome, lote..." value={premiumFilters.search || ''} onChange={e => setPremiumFilters(f => ({ ...f, search: e.target.value }))} />
-                <select className="select w-full" value={premiumFilters.tipo || ''} onChange={e => setPremiumFilters(f => ({ ...f, tipo: e.target.value }))}>
-                  <option value="">Todos os tipos</option>
-                  <option value="betao">Betão</option>
-                  <option value="aco">Aço</option>
-                  <option value="agregado">Agregado</option>
-                  <option value="cimento">Cimento</option>
-                  <option value="outro">Outro</option>
-                </select>
-                <select className="select w-full" value={premiumFilters.estado || ''} onChange={e => setPremiumFilters(f => ({ ...f, estado: e.target.value }))}>
-                  <option value="">Todos os estados</option>
-                  <option value="pendente">Pendente</option>
-                  <option value="em_analise">Em Análise</option>
-                  <option value="aprovado">Aprovado</option>
-                  <option value="reprovado">Reprovado</option>
-                  <option value="concluido">Concluído</option>
-                </select>
-                <select className="select w-full" value={premiumFilters.zona || ''} onChange={e => setPremiumFilters(f => ({ ...f, zona: e.target.value }))}>
-                  <option value="">Todas as zonas</option>
-                  <option value="Zona A - Fundações">Zona A - Fundações</option>
-                  <option value="Zona B - Pilares">Zona B - Pilares</option>
-                  <option value="Zona C - Lajes">Zona C - Lajes</option>
-                  <option value="Zona D - Estrutura">Zona D - Estrutura</option>
-                  <option value="Armazém Central">Armazém Central</option>
-                  <option value="Laboratório">Laboratório</option>
-                  <option value="Escritório">Escritório</option>
-                </select>
-                <input type="date" className="input w-full" value={premiumFilters.dataInicio || ''} onChange={e => setPremiumFilters(f => ({ ...f, dataInicio: e.target.value }))} />
-                <input type="date" className="input w-full" value={premiumFilters.dataFim || ''} onChange={e => setPremiumFilters(f => ({ ...f, dataFim: e.target.value }))} />
+            <button 
+              className="btn btn-outline flex items-center gap-3 w-full justify-start p-4 h-auto" 
+              onClick={() => handleConfirmPrint("executivo")}
+            >
+              <FileText className="h-6 w-6 text-blue-600" />
+              <div className="text-left">
+                <div className="font-bold text-lg">Relatório Executivo</div>
+                <div className="text-sm text-gray-600">Resumo geral com estatísticas e KPIs principais</div>
               </div>
-            </div>
-            {/* Seleção de colunas/campos */}
-            <div>
-              <h4 className="font-bold mb-2">Campos a incluir</h4>
-              <div className="grid grid-cols-2 gap-2">
-                {Object.entries(premiumColumns).map(([col, checked]) => (
-                  <label key={col} className="flex items-center gap-2">
-                    <input type="checkbox" checked={checked} onChange={e => setPremiumColumns(cols => ({ ...cols, [col]: e.target.checked }))} />
-                    <span className="capitalize">{col.replace('_', ' ')}</span>
-                  </label>
-                ))}
+            </button>
+            
+            <button 
+              className="btn btn-outline flex items-center gap-3 w-full justify-start p-4 h-auto" 
+              onClick={() => handleConfirmPrint("filtrado")}
+            >
+              <FileText className="h-6 w-6 text-green-600" />
+              <div className="text-left">
+                <div className="font-bold text-lg">Relatório Filtrado</div>
+                <div className="text-sm text-gray-600">Apenas materiais que correspondem aos filtros atuais</div>
               </div>
-              <div className="mt-4">
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={mostrarCusto} onChange={e => setMostrarCusto(e.target.checked)} />
-                  <span>Incluir valor estimado/custo no relatório</span>
-                </label>
+            </button>
+            
+            <button 
+              className="btn btn-outline flex items-center gap-3 w-full justify-start p-4 h-auto" 
+              onClick={() => handleConfirmPrint("comparativo")}
+            >
+              <FileText className="h-6 w-6 text-purple-600" />
+              <div className="text-left">
+                <div className="font-bold text-lg">Análise Comparativa</div>
+                <div className="text-sm text-gray-600">Comparação entre tipos, estados e fornecedores</div>
               </div>
-            </div>
+            </button>
           </div>
-          <div className="flex justify-end gap-2 mt-4">
-            <button className="btn btn-outline" onClick={() => setShowPremiumFilters(false)}>Cancelar</button>
-            <button className="btn btn-accent" onClick={() => {
-              setShowPremiumFilters(false);
-              setTipoRelatorio(premiumTipoRelatorio.current);
-              setMaterialEspecifico(null);
-              setShowRelatorioPremium(true);
-            }}>Gerar Relatório</button>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-800">
+              <strong>Dica:</strong> Os relatórios incluem automaticamente o logotipo da empresa, 
+              estatísticas atualizadas e formatação profissional para impressão.
+              <br />
+              <strong>Nota:</strong> Para relatórios individuais, use o botão de arquivo em cada material.
+            </p>
+          </div>
+          
+          <div className="flex justify-end gap-2">
+            <button className="btn btn-outline" onClick={() => setShowPrintModal(false)}>
+              Cancelar
+            </button>
           </div>
         </div>
       </Modal>
+
+
     </div>
   );
 }

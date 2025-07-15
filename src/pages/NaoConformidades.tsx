@@ -3,6 +3,8 @@ import { NaoConformidade, naoConformidadesAPI } from "@/lib/supabase-api";
 import NaoConformidadeForm from "@/components/forms/NaoConformidadeForm";
 import toast from "react-hot-toast";
 import { sanitizeUUIDField } from "@/utils/uuid";
+import { Plus, Search, Filter, FileText, XCircle } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function NaoConformidades() {
   const [naoConformidades, setNaoConformidades] = useState<any[]>([]);
@@ -12,6 +14,13 @@ export default function NaoConformidades() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTipo, setFilterTipo] = useState("");
   const [filterSeveridade, setFilterSeveridade] = useState("");
+  const [filterCategoria, setFilterCategoria] = useState("");
+  const [filterResponsavel, setFilterResponsavel] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterDataDeteccao, setFilterDataDeteccao] = useState("");
+  const [filterDataResolucao, setFilterDataResolucao] = useState("");
+  const [filterAreaAfetada, setFilterAreaAfetada] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     loadNaoConformidades();
@@ -151,11 +160,51 @@ export default function NaoConformidades() {
       nc.area_afetada.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchTipo = !filterTipo || nc.tipo === filterTipo;
-    const matchSeveridade =
-      !filterSeveridade || nc.severidade === filterSeveridade;
+    const matchSeveridade = !filterSeveridade || nc.severidade === filterSeveridade;
+    const matchCategoria = !filterCategoria || nc.categoria === filterCategoria;
+    const matchResponsavel = !filterResponsavel || 
+      nc.responsavel_deteccao?.toLowerCase().includes(filterResponsavel.toLowerCase()) ||
+      nc.responsavel_resolucao?.toLowerCase().includes(filterResponsavel.toLowerCase());
+    const matchAreaAfetada = !filterAreaAfetada || nc.area_afetada?.toLowerCase().includes(filterAreaAfetada.toLowerCase());
+    const matchDataDeteccao = !filterDataDeteccao || nc.data_deteccao?.includes(filterDataDeteccao);
+    const matchDataResolucao = !filterDataResolucao || nc.data_resolucao?.includes(filterDataResolucao);
 
-    return matchSearch && matchTipo && matchSeveridade;
+    // Filtro por status
+    let matchStatus = true;
+    if (filterStatus) {
+      if (filterStatus === "resolvida") {
+        matchStatus = !!nc.data_resolucao;
+      } else if (filterStatus === "pendente") {
+        matchStatus = !nc.data_resolucao;
+      } else if (filterStatus === "atrasada") {
+        matchStatus = !nc.data_resolucao && nc.data_limite_resolucao && new Date(nc.data_limite_resolucao) < new Date();
+      }
+    }
+
+    return matchSearch && matchTipo && matchSeveridade && matchCategoria && 
+           matchResponsavel && matchAreaAfetada && matchDataDeteccao && matchDataResolucao && matchStatus;
   });
+
+  // Obter valores únicos para os filtros
+  const tiposUnicos = [...new Set(naoConformidades.map(nc => nc.tipo).filter(Boolean))];
+  const categoriasUnicas = [...new Set(naoConformidades.map(nc => nc.categoria).filter(Boolean))];
+  const responsaveisUnicos = [...new Set([
+    ...naoConformidades.map(nc => nc.responsavel_deteccao).filter(Boolean),
+    ...naoConformidades.map(nc => nc.responsavel_resolucao).filter(Boolean)
+  ])];
+  const areasUnicas = [...new Set(naoConformidades.map(nc => nc.area_afetada).filter(Boolean))];
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterTipo("");
+    setFilterSeveridade("");
+    setFilterCategoria("");
+    setFilterResponsavel("");
+    setFilterStatus("");
+    setFilterDataDeteccao("");
+    setFilterDataResolucao("");
+    setFilterAreaAfetada("");
+  };
 
   const getStatusColor = (nc: any) => {
     if (nc.data_resolucao) return "bg-green-100 text-green-800";
@@ -196,23 +245,44 @@ export default function NaoConformidades() {
               Gestão integrada de NCs, auditorias e medidas corretivas
             </p>
           </div>
-          <div className="flex gap-2">
-            <button onClick={handleCreateNC} className="btn btn-primary">
-              + Nova NC
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={handleCreateNC}
+              className="btn btn-primary btn-md"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nova NC
             </button>
             <button
-              onClick={() => handleCreateAuditoria()}
-              className="btn btn-secondary"
+              onClick={handleCreateAuditoria}
+              className="btn btn-secondary btn-md"
             >
-              + Auditoria
+              <FileText className="h-4 w-4 mr-2" />
+              Auditoria
             </button>
             <button
-              onClick={() => handleExportar()}
-              className="btn btn-outline"
+              onClick={handleExportar}
+              className="btn btn-outline btn-md"
             >
+              <FileText className="h-4 w-4 mr-2" />
               Exportar
             </button>
           </div>
+        </div>
+
+        {/* Botão de Filtros */}
+        <div className="flex items-center space-x-4 mb-4">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`p-2 rounded-lg shadow-soft hover:shadow-md transition-all ${
+              showFilters
+                ? "bg-primary-100 text-primary-600"
+                : "bg-white text-gray-600"
+            }`}
+            title="Filtros"
+          >
+            <Filter className="h-5 w-5" />
+          </button>
         </div>
 
         {/* KPIs */}
@@ -243,42 +313,138 @@ export default function NaoConformidades() {
           </div>
         </div>
 
-        {/* FILTROS */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6 flex flex-wrap gap-4">
-          <input
-            className="input"
-            placeholder="Pesquisar..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <select
-            className="input"
-            value={filterTipo}
-            onChange={(e) => setFilterTipo(e.target.value)}
-          >
-            <option value="">Tipo</option>
-            <option value="material">Material</option>
-            <option value="execucao">Execução</option>
-            <option value="documentacao">Documentação</option>
-            <option value="seguranca">Segurança</option>
-            <option value="ambiente">Ambiente</option>
-            <option value="qualidade">Qualidade</option>
-            <option value="prazo">Prazo</option>
-            <option value="custo">Custo</option>
-            <option value="outro">Outro</option>
-          </select>
-          <select
-            className="input"
-            value={filterSeveridade}
-            onChange={(e) => setFilterSeveridade(e.target.value)}
-          >
-            <option value="">Severidade</option>
-            <option value="baixa">Baixa</option>
-            <option value="media">Média</option>
-            <option value="alta">Alta</option>
-            <option value="critica">Crítica</option>
-          </select>
-        </div>
+        {/* Filtros Ativos */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="card"
+            >
+              <div className="card-header">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Filter className="h-5 w-5 text-gray-500" />
+                    <h3 className="card-title">Filtros</h3>
+                  </div>
+                  <button
+                    onClick={() => setShowFilters(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircle className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="card-content">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Pesquisa */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Pesquisar não conformidades..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="input pl-10 w-full"
+                    />
+                  </div>
+
+                  {/* Tipo */}
+                  <select
+                    value={filterTipo}
+                    onChange={(e) => setFilterTipo(e.target.value)}
+                    className="input"
+                  >
+                    <option value="">Todos os tipos</option>
+                    {tiposUnicos.map((tipo) => (
+                      <option key={tipo} value={tipo}>{tipo}</option>
+                    ))}
+                  </select>
+
+                  {/* Severidade */}
+                  <select
+                    value={filterSeveridade}
+                    onChange={(e) => setFilterSeveridade(e.target.value)}
+                    className="input"
+                  >
+                    <option value="">Todas as severidades</option>
+                    <option value="baixa">Baixa</option>
+                    <option value="media">Média</option>
+                    <option value="alta">Alta</option>
+                    <option value="critica">Crítica</option>
+                  </select>
+
+                  {/* Categoria */}
+                  <select
+                    value={filterCategoria}
+                    onChange={(e) => setFilterCategoria(e.target.value)}
+                    className="input"
+                  >
+                    <option value="">Todas as categorias</option>
+                    {categoriasUnicas.map((categoria) => (
+                      <option key={categoria} value={categoria}>{categoria}</option>
+                    ))}
+                  </select>
+
+                  {/* Status */}
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="input"
+                  >
+                    <option value="">Todos os status</option>
+                    <option value="pendente">Pendente</option>
+                    <option value="resolvida">Resolvida</option>
+                    <option value="atrasada">Atrasada</option>
+                  </select>
+
+                  {/* Responsável */}
+                  <select
+                    value={filterResponsavel}
+                    onChange={(e) => setFilterResponsavel(e.target.value)}
+                    className="input"
+                  >
+                    <option value="">Todos os responsáveis</option>
+                    {responsaveisUnicos.map((responsavel) => (
+                      <option key={responsavel} value={responsavel}>{responsavel}</option>
+                    ))}
+                  </select>
+
+                  {/* Área Afetada */}
+                  <select
+                    value={filterAreaAfetada}
+                    onChange={(e) => setFilterAreaAfetada(e.target.value)}
+                    className="input"
+                  >
+                    <option value="">Todas as áreas</option>
+                    {areasUnicas.map((area) => (
+                      <option key={area} value={area}>{area}</option>
+                    ))}
+                  </select>
+
+                  {/* Data Detecção */}
+                  <input
+                    type="date"
+                    value={filterDataDeteccao}
+                    onChange={(e) => setFilterDataDeteccao(e.target.value)}
+                    className="input"
+                    placeholder="Data de detecção"
+                  />
+
+                  {/* Data Resolução */}
+                  <input
+                    type="date"
+                    value={filterDataResolucao}
+                    onChange={(e) => setFilterDataResolucao(e.target.value)}
+                    className="input"
+                    placeholder="Data de resolução"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* LISTA DE NCs */}
         <div className="bg-white rounded-lg shadow">

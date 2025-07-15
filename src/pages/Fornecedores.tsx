@@ -14,11 +14,14 @@ import {
   Award,
   Hash,
   User,
+  Filter,
+  XCircle,
 } from "lucide-react";
 import { fornecedoresAPI } from "@/lib/supabase-api";
 import { Fornecedor } from "@/types";
 import toast from "react-hot-toast";
 import FornecedorForm from "@/components/forms/FornecedorForm";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function Fornecedores() {
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
@@ -34,6 +37,7 @@ export default function Fornecedores() {
   );
   const [selectedFornecedor, setSelectedFornecedor] =
     useState<Fornecedor | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -197,6 +201,95 @@ export default function Fornecedores() {
         </div>
       </div>
 
+      {/* Botão de Filtros */}
+      <div className="flex items-center space-x-4">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`p-2 rounded-lg shadow-soft hover:shadow-md transition-all ${
+            showFilters
+              ? "bg-primary-100 text-primary-600"
+              : "bg-white text-gray-600"
+          }`}
+          title="Filtros"
+        >
+          <Filter className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Filtros Ativos */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="card"
+          >
+            <div className="card-header">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Filter className="h-5 w-5 text-gray-500" />
+                  <h3 className="card-title">Filtros</h3>
+                </div>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <div className="card-content">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Pesquisa */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Pesquisar fornecedores..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="input pl-10 w-full"
+                  />
+                </div>
+
+                {/* Filtro por Estado */}
+                <select
+                  value={estadoFilter}
+                  onChange={(e) => setEstadoFilter(e.target.value)}
+                  className="input"
+                >
+                  <option value="">Todos os Estados</option>
+                  <option value="ativo">Ativo</option>
+                  <option value="inativo">Inativo</option>
+                </select>
+
+                {/* Ordenação */}
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="input"
+                >
+                  <option value="nome">Nome</option>
+                  <option value="nif">NIF</option>
+                  <option value="estado">Estado</option>
+                  <option value="data_registo">Data Registo</option>
+                </select>
+
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+                  className="input"
+                >
+                  <option value="asc">A-Z</option>
+                  <option value="desc">Z-A</option>
+                </select>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="card">
@@ -256,65 +349,6 @@ export default function Fornecedores() {
               <div className="p-2 bg-purple-100 rounded-lg">
                 <Award className="h-6 w-6 text-purple-600" />
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filtros */}
-      <div className="card">
-        <div className="card-content">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Pesquisa */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Pesquisar fornecedores..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="input pl-10 w-full"
-                />
-              </div>
-            </div>
-
-            {/* Filtro por Estado */}
-            <div className="w-full lg:w-48">
-              <select
-                value={estadoFilter}
-                onChange={(e) => setEstadoFilter(e.target.value)}
-                className="select w-full"
-              >
-                <option value="">Todos os Estados</option>
-                <option value="ativo">Ativo</option>
-                <option value="inativo">Inativo</option>
-              </select>
-            </div>
-
-            {/* Ordenação */}
-            <div className="w-full lg:w-48">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="select w-full"
-              >
-                <option value="nome">Nome</option>
-                <option value="nif">NIF</option>
-                <option value="estado">Estado</option>
-                <option value="data_registo">Data Registo</option>
-              </select>
-            </div>
-
-            <div className="w-full lg:w-32">
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-                className="select w-full"
-              >
-                <option value="asc">A-Z</option>
-                <option value="desc">Z-A</option>
-              </select>
             </div>
           </div>
         </div>

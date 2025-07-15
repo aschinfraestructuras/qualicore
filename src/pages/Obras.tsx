@@ -10,10 +10,12 @@ import {
   TrendingUp,
   Filter,
   Calendar,
+  XCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ObraForm from "@/components/forms/ObraForm";
 import { obrasAPI } from "@/lib/supabase-api";
+import { AnimatePresence, motion } from "framer-motion";
 
 // Dados mock iniciais para demonstração
 const mockObras: any[] = [
@@ -114,8 +116,10 @@ const mockObras: any[] = [
 
 export default function Obras() {
   const [obras, setObras] = useState<any[]>([]);
-  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
   const [editingObra, setEditingObra] = useState<any | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Filtros ativos
   const [filters, setFilters] = useState({
@@ -145,12 +149,12 @@ export default function Obras() {
 
   const handleCreate = () => {
     setEditingObra(null);
-    setShowForm(true);
+    setShowModal(true);
   };
 
   const handleEdit = (obra: any) => {
     setEditingObra(obra);
-    setShowForm(true);
+    setShowModal(true);
   };
 
   const handleFormSubmit = async (data: any) => {
@@ -231,7 +235,7 @@ export default function Obras() {
           toast.error("Erro ao criar obra");
         }
       }
-      setShowForm(false);
+      setShowModal(false);
     } catch (error) {
       console.error("Erro ao salvar obra:", error);
       if (error instanceof Error) {
@@ -353,120 +357,126 @@ export default function Obras() {
         </button>
       </div>
 
-      {/* Filtros Ativos */}
-      <div className="card">
-        <div className="card-header">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Filter className="h-5 w-5 text-gray-500" />
-              <h3 className="card-title">Filtros</h3>
-            </div>
-            <button
-              onClick={clearFilters}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              Limpar filtros
-            </button>
-          </div>
-        </div>
-        <div className="card-content">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Pesquisa */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Pesquisar obras..."
-                value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                className="input pl-10 w-full"
-              />
-            </div>
-
-            {/* Status */}
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="input"
-            >
-              <option value="">Todos os status</option>
-              {statusUnicos.map((status) => (
-                <option key={status} value={status}>{getStatusText(status)}</option>
-              ))}
-            </select>
-
-            {/* Tipo de Obra */}
-            <select
-              value={filters.tipo_obra}
-              onChange={(e) => setFilters({ ...filters, tipo_obra: e.target.value })}
-              className="input"
-            >
-              <option value="">Todos os tipos</option>
-              {tiposUnicos.map((tipo) => (
-                <option key={tipo} value={tipo}>{tipo}</option>
-              ))}
-            </select>
-
-            {/* Categoria */}
-            <select
-              value={filters.categoria}
-              onChange={(e) => setFilters({ ...filters, categoria: e.target.value })}
-              className="input"
-            >
-              <option value="">Todas as categorias</option>
-              {categoriasUnicas.map((categoria) => (
-                <option key={categoria} value={categoria}>{categoria}</option>
-              ))}
-            </select>
-
-            {/* Cliente */}
-            <select
-              value={filters.cliente}
-              onChange={(e) => setFilters({ ...filters, cliente: e.target.value })}
-              className="input"
-            >
-              <option value="">Todos os clientes</option>
-              {clientesUnicos.map((cliente) => (
-                <option key={cliente} value={cliente}>{cliente}</option>
-              ))}
-            </select>
-
-            {/* Responsável Técnico */}
-            <select
-              value={filters.responsavel_tecnico}
-              onChange={(e) => setFilters({ ...filters, responsavel_tecnico: e.target.value })}
-              className="input"
-            >
-              <option value="">Todos os responsáveis</option>
-              {responsaveisUnicos.map((responsavel) => (
-                <option key={responsavel} value={responsavel}>{responsavel}</option>
-              ))}
-            </select>
-
-            {/* Data Início */}
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="date"
-                value={filters.dataInicio}
-                onChange={(e) => setFilters({ ...filters, dataInicio: e.target.value })}
-                className="input pl-10 w-full"
-              />
-            </div>
-
-            {/* Data Fim */}
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="date"
-                value={filters.dataFim}
-                onChange={(e) => setFilters({ ...filters, dataFim: e.target.value })}
-                className="input pl-10 w-full"
-              />
-            </div>
-          </div>
-        </div>
+      {/* Botão de Filtros */}
+      <div className="flex items-center space-x-4">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`p-2 rounded-lg shadow-soft hover:shadow-md transition-all ${
+            showFilters
+              ? "bg-primary-100 text-primary-600"
+              : "bg-white text-gray-600"
+          }`}
+          title="Filtros"
+        >
+          <Filter className="h-5 w-5" />
+        </button>
       </div>
+
+      {/* Filtros Ativos */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="card"
+          >
+            <div className="card-header">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Filter className="h-5 w-5 text-gray-500" />
+                  <h3 className="card-title">Filtros</h3>
+                </div>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <div className="card-content">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Pesquisa */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Pesquisar obras..."
+                    value={filters.search}
+                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                    className="input pl-10 w-full"
+                  />
+                </div>
+
+                {/* Status */}
+                <select
+                  value={filters.status}
+                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                  className="input"
+                >
+                  <option value="">Todos os status</option>
+                  {statusUnicos.map((status) => (
+                    <option key={status} value={status}>{getStatusText(status)}</option>
+                  ))}
+                </select>
+
+                {/* Tipo de Obra */}
+                <select
+                  value={filters.tipo_obra}
+                  onChange={(e) => setFilters({ ...filters, tipo_obra: e.target.value })}
+                  className="input"
+                >
+                  <option value="">Todos os tipos</option>
+                  {tiposUnicos.map((tipo) => (
+                    <option key={tipo} value={tipo}>{tipo}</option>
+                  ))}
+                </select>
+
+                {/* Categoria */}
+                <select
+                  value={filters.categoria}
+                  onChange={(e) => setFilters({ ...filters, categoria: e.target.value })}
+                  className="input"
+                >
+                  <option value="">Todas as categorias</option>
+                  {categoriasUnicas.map((categoria) => (
+                    <option key={categoria} value={categoria}>{categoria}</option>
+                  ))}
+                </select>
+
+                {/* Cliente */}
+                <select
+                  value={filters.cliente}
+                  onChange={(e) => setFilters({ ...filters, cliente: e.target.value })}
+                  className="input"
+                >
+                  <option value="">Todos os clientes</option>
+                  {clientesUnicos.map((cliente) => (
+                    <option key={cliente} value={cliente}>{cliente}</option>
+                  ))}
+                </select>
+
+                {/* Data Início */}
+                <input
+                  type="date"
+                  value={filters.dataInicio}
+                  onChange={(e) => setFilters({ ...filters, dataInicio: e.target.value })}
+                  className="input"
+                />
+
+                {/* Data Fim */}
+                <input
+                  type="date"
+                  value={filters.dataFim}
+                  onChange={(e) => setFilters({ ...filters, dataFim: e.target.value })}
+                  className="input"
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
@@ -672,7 +682,7 @@ export default function Obras() {
       </div>
 
       {/* Modal do Formulário */}
-      {showForm && (
+      {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b">
@@ -681,7 +691,7 @@ export default function Obras() {
               </h2>
               <button
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                onClick={() => setShowForm(false)}
+                onClick={() => setShowModal(false)}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -690,7 +700,7 @@ export default function Obras() {
               <ObraForm
                 initialData={editingObra || undefined}
                 onSubmit={handleFormSubmit}
-                onCancel={() => setShowForm(false)}
+                onCancel={() => setShowModal(false)}
               />
             </div>
           </div>

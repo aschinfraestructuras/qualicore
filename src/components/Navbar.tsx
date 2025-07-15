@@ -176,9 +176,14 @@ export default function Navbar() {
           <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-white/20 to-white/10 flex items-center justify-center shadow-glow border border-white/20">
             <Shield className="h-6 w-6 text-white" />
           </div>
-          <span className="text-xl font-bold text-white font-display tracking-wide group-hover:text-blue-100 transition">
-            Qualicore
-          </span>
+          <div className="flex flex-col">
+            <span className="text-xl font-bold text-white font-display tracking-wide group-hover:text-blue-100 transition">
+              Qualicore
+            </span>
+            <span className="text-xs text-white/70 font-medium tracking-wide">
+              by José Antunes
+            </span>
+          </div>
         </Link>
 
         {/* Mobile menu button */}

@@ -15,6 +15,8 @@ import {
   File,
   FileCheck,
   ArrowUpDown,
+  Filter,
+  XCircle,
 } from "lucide-react";
 
 import { documentosAPI } from "@/lib/supabase-api";
@@ -258,6 +260,10 @@ export default function Documentos() {
   const [filterEstado, setFilterEstado] = useState("");
   const [filterTipo, setFilterTipo] = useState("");
   const [filterZona, setFilterZona] = useState("");
+  const [filterResponsavel, setFilterResponsavel] = useState("");
+  const [filterDataCriacao, setFilterDataCriacao] = useState("");
+  const [filterDataValidade, setFilterDataValidade] = useState("");
+  const [filterVersao, setFilterVersao] = useState("");
   const [sortBy, setSortBy] = useState("data_criacao");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
@@ -269,6 +275,7 @@ export default function Documentos() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [editingDocument, setEditingDocument] = useState<any | null>(null); // Changed to any
   const [viewingDocument, setViewingDocument] = useState<any | null>(null); // Changed to any
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     loadDocumentos();
@@ -296,8 +303,13 @@ export default function Documentos() {
     const matchesEstado = !filterEstado || doc.estado === filterEstado;
     const matchesTipo = !filterTipo || doc.tipo === filterTipo;
     const matchesZona = !filterZona || doc.zona.includes(filterZona);
+    const matchesResponsavel = !filterResponsavel || doc.responsavel.toLowerCase().includes(filterResponsavel.toLowerCase());
+    const matchesDataCriacao = !filterDataCriacao || doc.created?.includes(filterDataCriacao);
+    const matchesDataValidade = !filterDataValidade || doc.data_validade?.includes(filterDataValidade);
+    const matchesVersao = !filterVersao || doc.versao?.includes(filterVersao);
 
-    return matchesSearch && matchesEstado && matchesTipo && matchesZona;
+    return matchesSearch && matchesEstado && matchesTipo && matchesZona && 
+           matchesResponsavel && matchesDataCriacao && matchesDataValidade && matchesVersao;
   });
 
   const sortedDocumentos = [...filteredDocumentos].sort((a, b) => {
@@ -310,6 +322,21 @@ export default function Documentos() {
       return aValue < bValue ? 1 : -1;
     }
   });
+
+  // Obter valores únicos para os filtros
+  const responsaveisUnicos = [...new Set(documentos.map(d => d.responsavel).filter(Boolean))];
+  const versoesUnicas = [...new Set(documentos.map(d => d.versao).filter(Boolean))];
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterEstado("");
+    setFilterTipo("");
+    setFilterZona("");
+    setFilterResponsavel("");
+    setFilterDataCriacao("");
+    setFilterDataValidade("");
+    setFilterVersao("");
+  };
 
   const getEstadoInfo = (estado: string) => {
     return statusOptions.find((s) => s.value === estado) || statusOptions[0];
@@ -609,6 +636,21 @@ export default function Documentos() {
         </div>
       </motion.div>
 
+      {/* Botão de Filtros */}
+      <div className="flex items-center space-x-4">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`p-2 rounded-lg shadow-soft hover:shadow-md transition-all ${
+            showFilters
+              ? "bg-primary-100 text-primary-600"
+              : "bg-white text-gray-600"
+          }`}
+          title="Filtros"
+        >
+          <Filter className="h-5 w-5" />
+        </button>
+      </div>
+
       {/* Stats Cards */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -662,73 +704,137 @@ export default function Documentos() {
         })}
       </motion.div>
 
-      {/* Filters and Search */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="card"
-      >
-        <div className="card-content">
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Pesquisar documentos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="input pl-10"
-              />
+      {/* Filtros Ativos */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="card"
+          >
+            <div className="card-header">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Filter className="h-5 w-5 text-gray-500" />
+                  <h3 className="card-title">Filtros</h3>
+                </div>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="h-5 w-5" />
+                </button>
+              </div>
             </div>
+            <div className="card-content">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Pesquisar documentos..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="input pl-10"
+                  />
+                </div>
 
-            {/* Tipo Filter */}
-            <select
-              value={filterTipo}
-              onChange={(e) => setFilterTipo(e.target.value)}
-              className="select"
-            >
-              <option value="">Todos os tipos</option>
-              {documentTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
+                {/* Tipo Filter */}
+                <select
+                  value={filterTipo}
+                  onChange={(e) => setFilterTipo(e.target.value)}
+                  className="select"
+                >
+                  <option value="">Todos os tipos</option>
+                  {documentTypes.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
 
-            {/* Estado Filter */}
-            <select
-              value={filterEstado}
-              onChange={(e) => setFilterEstado(e.target.value)}
-              className="select"
-            >
-              <option value="">Todos os estados</option>
-              {statusOptions.map((status) => (
-                <option key={status.value} value={status.value}>
-                  {status.label}
-                </option>
-              ))}
-            </select>
+                {/* Estado Filter */}
+                <select
+                  value={filterEstado}
+                  onChange={(e) => setFilterEstado(e.target.value)}
+                  className="select"
+                >
+                  <option value="">Todos os estados</option>
+                  {statusOptions.map((status) => (
+                    <option key={status.value} value={status.value}>
+                      {status.label}
+                    </option>
+                  ))}
+                </select>
 
-            {/* Zona Filter */}
-            <select
-              value={filterZona}
-              onChange={(e) => setFilterZona(e.target.value)}
-              className="select"
-            >
-              <option value="">Todas as zonas</option>
-              {Array.from(new Set(documentos.map((d) => d.zona))).map(
-                (zona) => (
-                  <option key={zona} value={zona}>
-                    {zona}
-                  </option>
-                ),
-              )}
-            </select>
-          </div>
-        </div>
-      </motion.div>
+                {/* Zona Filter */}
+                <select
+                  value={filterZona}
+                  onChange={(e) => setFilterZona(e.target.value)}
+                  className="select"
+                >
+                  <option value="">Todas as zonas</option>
+                  {Array.from(new Set(documentos.map((d) => d.zona))).map(
+                    (zona) => (
+                      <option key={zona} value={zona}>
+                        {zona}
+                      </option>
+                    ),
+                  )}
+                </select>
+
+                {/* Responsável Filter */}
+                <select
+                  value={filterResponsavel}
+                  onChange={(e) => setFilterResponsavel(e.target.value)}
+                  className="select"
+                >
+                  <option value="">Todos os responsáveis</option>
+                  {responsaveisUnicos.map((responsavel) => (
+                    <option key={responsavel} value={responsavel}>
+                      {responsavel}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Versão Filter */}
+                <select
+                  value={filterVersao}
+                  onChange={(e) => setFilterVersao(e.target.value)}
+                  className="select"
+                >
+                  <option value="">Todas as versões</option>
+                  {versoesUnicas.map((versao) => (
+                    <option key={versao} value={versao}>
+                      {versao}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Data Criação */}
+                <input
+                  type="date"
+                  value={filterDataCriacao}
+                  onChange={(e) => setFilterDataCriacao(e.target.value)}
+                  className="input"
+                  placeholder="Data de criação"
+                />
+
+                {/* Data Validade */}
+                <input
+                  type="date"
+                  value={filterDataValidade}
+                  onChange={(e) => setFilterDataValidade(e.target.value)}
+                  className="input"
+                  placeholder="Data de validade"
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Actions Bar */}
       <motion.div

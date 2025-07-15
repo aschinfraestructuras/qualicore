@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Material } from "@/types";
 import { Download, Printer, FileText, Filter, Calendar, Package, CheckCircle, AlertTriangle, XCircle, Clock } from "lucide-react";
 import toast from "react-hot-toast";
+import { PDFService } from "@/services/pdfService";
 
 interface RelatorioMateriaisPremiumProps {
   materiais: Material[];
@@ -78,13 +79,21 @@ export default function RelatorioMateriaisPremium({
   const generatePDF = async () => {
     setLoading(true);
     try {
-      // Implementação temporária - mostrar preview
-      toast.success("Relatório PDF será implementado em breve!");
+      const pdfService = new PDFService();
       
-      // TODO: Implementar geração de PDF com jsPDF
-      console.log("Gerando PDF para:", tipoRelatorio);
-      console.log("Materiais:", materiais.length);
-      console.log("Estatísticas:", stats);
+      const options = {
+        titulo: getTituloRelatorio(),
+        subtitulo: `Gerado em ${new Date().toLocaleDateString('pt-PT')}`,
+        materiais: materiais,
+        tipo: tipoRelatorio,
+        filtros: filtros,
+        materialEspecifico: materialEspecifico,
+        mostrarCusto: mostrarCusto,
+        colunas: colunas,
+      };
+      
+      pdfService.gerarRelatorioMateriais(options);
+      toast.success("Relatório PDF gerado com sucesso!");
       
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
