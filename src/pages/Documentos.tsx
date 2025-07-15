@@ -24,6 +24,9 @@ import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import Modal from "@/components/Modal";
 import DocumentoForm from "@/components/forms/DocumentoForm";
+import RelatorioDocumentosPremium from "@/components/RelatorioDocumentosPremium";
+import { pdfService } from "@/services/pdfService";
+import type { Documento } from "@/types";
 
 // Dados mockados mais realistas
 const mockDocumentos = [
@@ -276,6 +279,7 @@ export default function Documentos() {
   const [editingDocument, setEditingDocument] = useState<any | null>(null); // Changed to any
   const [viewingDocument, setViewingDocument] = useState<any | null>(null); // Changed to any
   const [showFilters, setShowFilters] = useState(false);
+  const [showRelatorioPremiumModal, setShowRelatorioPremiumModal] = useState(false);
 
   useEffect(() => {
     loadDocumentos();
@@ -566,6 +570,61 @@ export default function Documentos() {
     }
   };
 
+  const handleGenerateRelatorioIndividual = async (document: any) => {
+    try {
+      // Converter para o tipo Documento esperado pelo PDFService
+      const documentoData: Documento = {
+        id: document.id,
+        codigo: document.codigo,
+        tipo: document.tipo,
+        versao: document.versao,
+        data_validade: document.data_validade,
+        data_aprovacao: document.data_aprovacao,
+        data_revisao: document.data_revisao,
+        aprovador: document.aprovador,
+        revisor: document.revisor,
+        categoria: document.categoria,
+        categoria_outro: document.categoria_outro,
+        rfi: document.rfi,
+        procedimento: document.procedimento,
+        plano_ensaio: document.plano_ensaio,
+        plano_qualidade: document.plano_qualidade,
+        relacionado_obra_id: document.relacionado_obra_id,
+        relacionado_obra_outro: document.relacionado_obra_outro,
+        relacionado_zona_id: document.relacionado_zona_id,
+        relacionado_zona_outro: document.relacionado_zona_outro,
+        relacionado_ensaio_id: document.relacionado_ensaio_id,
+        relacionado_ensaio_outro: document.relacionado_ensaio_outro,
+        relacionado_material_id: document.relacionado_material_id,
+        relacionado_material_outro: document.relacionado_material_outro,
+        relacionado_fornecedor_id: document.relacionado_fornecedor_id,
+        relacionado_fornecedor_outro: document.relacionado_fornecedor_outro,
+        relacionado_checklist_id: document.relacionado_checklist_id,
+        relacionado_checklist_outro: document.relacionado_checklist_outro,
+        timeline: document.timeline || [],
+        anexos_principal: document.anexos_principal || [],
+        anexos_apendices: document.anexos_apendices || [],
+        anexos_revisoes: document.anexos_revisoes || [],
+        observacoes: document.observacoes,
+        palavras_chave: document.palavras_chave || [],
+        classificacao_confidencialidade: document.classificacao_confidencialidade,
+        distribuicao: document.distribuicao || [],
+        data_criacao: document.created || document.data_criacao,
+        data_atualizacao: document.updated || document.data_atualizacao,
+        responsavel: document.responsavel,
+        zona: document.zona,
+        estado: document.estado,
+        anexos: document.anexos || []
+      };
+      
+      await pdfService.generateDocumentosIndividualReport([documentoData]);
+      toast.success("Relatório individual gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar relatório individual:", error);
+      toast.error("Erro ao gerar relatório individual");
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -638,6 +697,13 @@ export default function Documentos() {
 
       {/* Botão de Filtros */}
       <div className="flex items-center space-x-4">
+        <button
+          onClick={() => setShowRelatorioPremiumModal(true)}
+          className="btn btn-secondary btn-md"
+        >
+          <FileText className="h-4 w-4 mr-2" />
+          Relatórios
+        </button>
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`p-2 rounded-lg shadow-soft hover:shadow-md transition-all ${
@@ -1109,6 +1175,13 @@ export default function Documentos() {
                                 <Printer className="h-4 w-4 text-gray-600" />
                               </button>
                               <button
+                                onClick={() => handleGenerateRelatorioIndividual(doc)}
+                                className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                                title="Gerar Relatório Individual"
+                              >
+                                <FileText className="h-4 w-4 text-gray-600" />
+                              </button>
+                              <button
                                 onClick={() => handleDelete(doc.id)}
                                 className="p-1 rounded-lg hover:bg-red-100 transition-colors"
                                 title="Eliminar"
@@ -1283,6 +1356,56 @@ export default function Documentos() {
           </div>
         )}
       </Modal>
+
+             {/* Relatório Premium Modal */}
+       {showRelatorioPremiumModal && (
+         <RelatorioDocumentosPremium
+           documentos={filteredDocumentos.map((doc) => ({
+             id: doc.id,
+             codigo: doc.codigo,
+             tipo: doc.tipo,
+             versao: doc.versao,
+             data_validade: doc.data_validade,
+             data_aprovacao: doc.data_aprovacao,
+             data_revisao: doc.data_revisao,
+             aprovador: doc.aprovador,
+             revisor: doc.revisor,
+             categoria: doc.categoria,
+             categoria_outro: doc.categoria_outro,
+             rfi: doc.rfi,
+             procedimento: doc.procedimento,
+             plano_ensaio: doc.plano_ensaio,
+             plano_qualidade: doc.plano_qualidade,
+             relacionado_obra_id: doc.relacionado_obra_id,
+             relacionado_obra_outro: doc.relacionado_obra_outro,
+             relacionado_zona_id: doc.relacionado_zona_id,
+             relacionado_zona_outro: doc.relacionado_zona_outro,
+             relacionado_ensaio_id: doc.relacionado_ensaio_id,
+             relacionado_ensaio_outro: doc.relacionado_ensaio_outro,
+             relacionado_material_id: doc.relacionado_material_id,
+             relacionado_material_outro: doc.relacionado_material_outro,
+             relacionado_fornecedor_id: doc.relacionado_fornecedor_id,
+             relacionado_fornecedor_outro: doc.relacionado_fornecedor_outro,
+             relacionado_checklist_id: doc.relacionado_checklist_id,
+             relacionado_checklist_outro: doc.relacionado_checklist_outro,
+             timeline: doc.timeline || [],
+             anexos_principal: doc.anexos_principal || [],
+             anexos_apendices: doc.anexos_apendices || [],
+             anexos_revisoes: doc.anexos_revisoes || [],
+             observacoes: doc.observacoes,
+             palavras_chave: doc.palavras_chave || [],
+             classificacao_confidencialidade: doc.classificacao_confidencialidade,
+             distribuicao: doc.distribuicao || [],
+             data_criacao: doc.created || doc.data_criacao,
+             data_atualizacao: doc.updated || doc.data_atualizacao,
+             responsavel: doc.responsavel,
+             zona: doc.zona,
+             estado: doc.estado,
+             anexos: doc.anexos || []
+           }))}
+           onClose={() => setShowRelatorioPremiumModal(false)}
+         />
+       )}
     </div>
   );
 }

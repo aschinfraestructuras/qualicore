@@ -11,12 +11,18 @@ import {
   AlertTriangle,
   Calendar,
   XCircle,
+  BarChart3,
+  Download,
 } from "lucide-react";
 import RFIForm from "../components/forms/RFIForm";
-import { RFI, rfisAPI } from "@/lib/supabase-api";
+import RelatorioRFIsPremium from "../components/RelatorioRFIsPremium";
+import { rfisAPI } from "@/lib/supabase-api";
+import type { RFI } from "@/lib/supabase-api";
+import type { RFI as RFIType } from "@/types";
 import Modal from "../components/Modal";
 import toast from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
+import { pdfService } from "@/services/pdfService";
 
 export default function RFIs() {
   const [rfis, setRFIs] = useState<RFI[]>([]);
@@ -24,6 +30,7 @@ export default function RFIs() {
   const [showForm, setShowForm] = useState(false);
   const [editingRFI, setEditingRFI] = useState<RFI | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showRelatorios, setShowRelatorios] = useState(false);
 
   // Filtros ativos
   const [filters, setFilters] = useState({
@@ -137,6 +144,16 @@ export default function RFIs() {
     }
   };
 
+  const handleIndividualReport = async (rfi: RFI) => {
+    try {
+      await pdfService.generateRFIsIndividualReport([rfi as unknown as RFIType]);
+      toast.success("Relatório individual gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar relatório individual:", error);
+      toast.error("Erro ao gerar relatório individual");
+    }
+  };
+
   const clearFilters = () => {
     setFilters({
       search: "",
@@ -170,6 +187,12 @@ export default function RFIs() {
           </p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowRelatorios(true)}
+            className="btn btn-outline flex items-center gap-2"
+          >
+            <BarChart3 className="h-5 w-5" /> Relatórios
+          </button>
           <button
             onClick={handleCreate}
             className="btn btn-primary flex items-center gap-2"
@@ -355,6 +378,13 @@ export default function RFIs() {
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button
+                    onClick={() => handleIndividualReport(rfi)}
+                    className="btn btn-xs btn-outline mr-2"
+                    title="Relatório Individual"
+                  >
+                    <Download className="h-3 w-3" />
+                  </button>
+                  <button
                     onClick={() => handleEdit(rfi)}
                     className="btn btn-xs btn-outline mr-2"
                   >
@@ -384,6 +414,14 @@ export default function RFIs() {
           onCancel={() => setShowForm(false)}
         />
       </Modal>
+
+      {/* Modal de Relatórios */}
+      {showRelatorios && (
+        <RelatorioRFIsPremium
+          rfis={rfis as unknown as RFIType[]}
+          onClose={() => setShowRelatorios(false)}
+        />
+      )}
     </div>
   );
 }

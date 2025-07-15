@@ -11,19 +11,22 @@ import {
   Filter,
   Calendar,
   XCircle,
+  Download,
 } from "lucide-react";
 import { checklistsAPI } from "@/lib/supabase-api";
 import toast from "react-hot-toast";
 import ChecklistForm from "@/components/forms/ChecklistForm";
-import RelatorioChecklist from "@/components/RelatorioChecklist";
+import RelatorioChecklistsPremium from "@/components/RelatorioChecklistsPremium";
 import { AnimatePresence, motion } from "framer-motion";
+import { pdfService } from "@/services/pdfService";
+import type { Checklist } from "@/types";
 
 export default function Checklists() {
   const [checklists, setChecklists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingChecklist, setEditingChecklist] = useState<any | null>(null);
-  const [showRelatorio, setShowRelatorio] = useState(false);
+  const [showRelatorios, setShowRelatorios] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
   // Filtros ativos
@@ -140,6 +143,32 @@ export default function Checklists() {
     setShowForm(true);
   };
 
+  const handleIndividualReport = async (checklist: any) => {
+    try {
+      // Converter para o tipo Checklist esperado pelo PDFService
+      const checklistData: Checklist = {
+        id: checklist.id,
+        codigo: checklist.codigo,
+        titulo: checklist.tipo || checklist.codigo,
+        obra: checklist.codigo,
+        status: checklist.estado || 'pendente',
+        responsavel: checklist.responsavel || checklist.inspetor || 'N/A',
+        zona: checklist.zona || 'N/A',
+        estado: checklist.estado || 'pendente',
+        data_criacao: checklist.data_inspecao || new Date().toISOString(),
+        data_atualizacao: checklist.data_inspecao || new Date().toISOString(),
+        pontos: [],
+        observacoes: checklist.observacoes || ''
+      };
+      
+      await pdfService.generateChecklistsIndividualReport([checklistData]);
+      toast.success("Relatório individual gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar relatório individual:", error);
+      toast.error("Erro ao gerar relatório individual");
+    }
+  };
+
   const handleFormSubmit = async (data: any) => {
     try {
       console.log("Dados recebidos do formulário de checklist:", data);
@@ -227,10 +256,10 @@ export default function Checklists() {
         <div className="flex gap-3">
           <button
             className="btn btn-secondary btn-md"
-            onClick={() => setShowRelatorio(true)}
+            onClick={() => setShowRelatorios(true)}
           >
             <FileText className="h-4 w-4 mr-2" />
-            Relatório
+            Relatórios
           </button>
           <button className="btn btn-primary btn-md" onClick={handleCreate}>
             <Plus className="h-4 w-4 mr-2" />
@@ -372,8 +401,6 @@ export default function Checklists() {
         )}
       </AnimatePresence>
 
-
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card">
           <div className="card-content">
@@ -481,6 +508,13 @@ export default function Checklists() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
+                        onClick={() => handleIndividualReport(checklist)}
+                        className="btn btn-xs btn-outline"
+                        title="Relatório Individual"
+                      >
+                        <Download className="h-3 w-3" />
+                      </button>
+                      <button
                         className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                         onClick={() => handleEdit(checklist)}
                       >
@@ -538,24 +572,24 @@ export default function Checklists() {
         </div>
       )}
 
-      {/* Modal de Relatório */}
-      {showRelatorio && (
-        <RelatorioChecklist
+      {/* Modal de Relatórios Premium */}
+      {showRelatorios && (
+        <RelatorioChecklistsPremium
           checklists={filteredChecklists.map((c) => ({
             id: c.id,
             codigo: c.codigo,
-            titulo: c.tipo,
+            titulo: c.tipo || c.codigo,
             obra: c.codigo,
-            status: c.estado as any,
-            responsavel: c.responsavel,
-            zona: c.zona,
-            estado: c.estado as any,
-            data_criacao: c.data_inspecao,
-            data_atualizacao: c.data_inspecao,
+            status: c.estado || 'pendente',
+            responsavel: c.responsavel || c.inspetor || 'N/A',
+            zona: c.zona || 'N/A',
+            estado: c.estado || 'pendente',
+            data_criacao: c.data_inspecao || new Date().toISOString(),
+            data_atualizacao: c.data_inspecao || new Date().toISOString(),
             pontos: [],
-            observacoes: c.observacoes,
+            observacoes: c.observacoes || ''
           }))}
-          onClose={() => setShowRelatorio(false)}
+          onClose={() => setShowRelatorios(false)}
         />
       )}
     </div>

@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { MetricasReais } from './metricsService';
-import { Material, Obra, Ensaio } from '@/types';
+import { Material, Obra, Ensaio, RFI, Checklist, Documento } from '@/types';
 
 interface RelatorioPDFOptions {
   titulo: string;
@@ -35,6 +35,30 @@ interface RelatorioEnsaiosOptions {
   titulo: string;
   subtitulo?: string;
   ensaios: Ensaio[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
+interface RelatorioRFIsOptions {
+  titulo: string;
+  subtitulo?: string;
+  rfis: RFI[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
+interface RelatorioChecklistsOptions {
+  titulo: string;
+  subtitulo?: string;
+  checklists: Checklist[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
+interface RelatorioDocumentosOptions {
+  titulo: string;
+  subtitulo?: string;
+  documentos: Documento[];
   tipo: "executivo" | "filtrado" | "comparativo" | "individual";
   filtros?: any;
 }
@@ -1085,13 +1109,13 @@ export class PDFService {
     
     // Título da seção com fundo colorido
     this.doc.setFillColor(59, 130, 246); // Azul
-    this.doc.rect(15, startY - 5, 180, 12, 'F');
+    this.doc.rect(15, startY - 5, 180, 10, 'F');
     this.doc.setFontSize(14);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(255, 255, 255);
-    this.doc.text('Ficha Técnica da Obra', 20, startY + 3);
+    this.doc.text('Ficha Técnica da Obra', 20, startY + 2);
     
-    // Status card colorido
+    // KPIs alinhados: Status, Valor Contrato, Valor Executado, Progresso
     const statusColors = {
       'em_execucao': [34, 197, 94], // Verde
       'concluida': [16, 185, 129], // Verde escuro
@@ -1101,20 +1125,19 @@ export class PDFService {
     };
     
     const statusColor = statusColors[obra.status] || [107, 114, 128];
-    this.addStatusCard(150, startY - 5, this.getStatusTextObra(obra.status), statusColor);
+    const statusText = this.getStatusTextObra(obra.status);
     
-    // KPIs da obra
-    const kpiY = startY + 15;
-    this.addKPICard(20, kpiY, 'Valor Contrato', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_contrato), [59, 130, 246]); // Azul
-    this.addKPICard(65, kpiY, 'Valor Executado', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_executado), [34, 197, 94]); // Verde
-    this.addKPICard(110, kpiY, 'Progresso', `${obra.percentual_execucao}%`, [251, 146, 60]); // Laranja
+    // KPIs: 4 cards, espaçados
+    const kpiY = startY + 12;
+    this.addKPICard(20, kpiY, 'Status', statusText, statusColor);
+    this.addKPICard(65, kpiY, 'Valor Contrato', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_contrato), [59, 130, 246]);
+    this.addKPICard(110, kpiY, 'Valor Executado', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_executado), [34, 197, 94]);
+    this.addKPICard(155, kpiY, 'Progresso', `${obra.percentual_execucao}%`, [251, 146, 60]);
     
-    // Informações básicas com seção colorida
-    const infoY = kpiY + 35;
+    // Informações básicas - sem bordas, apenas fundo colorido
+    const infoY = kpiY + 30;
     this.doc.setFillColor(249, 250, 251); // Cinza claro
-    this.doc.rect(15, infoY - 5, 180, 50, 'F');
-    this.doc.setDrawColor(229, 231, 235);
-    this.doc.rect(15, infoY - 5, 180, 50);
+    this.doc.rect(15, infoY - 5, 180, 40, 'F');
     
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
@@ -1134,18 +1157,16 @@ export class PDFService {
       `Categoria: ${obra.categoria.charAt(0).toUpperCase() + obra.categoria.slice(1)}`
     ];
     
-    let currentY = infoY + 15;
+    let currentY = infoY + 12;
     infoBasicas.forEach(item => {
       this.doc.text(item, 25, currentY);
-      currentY += 6;
+      currentY += 5;
     });
     
-    // Datas e valores com seção colorida
-    const datasY = infoY + 55;
+    // Datas e valores - sem bordas, apenas fundo colorido
+    const datasY = infoY + 42;
     this.doc.setFillColor(254, 242, 242); // Vermelho claro
-    this.doc.rect(15, datasY - 5, 180, 45, 'F');
-    this.doc.setDrawColor(229, 231, 235);
-    this.doc.rect(15, datasY - 5, 180, 45);
+    this.doc.rect(15, datasY - 5, 180, 35, 'F');
     
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
@@ -1163,18 +1184,16 @@ export class PDFService {
       `Percentual de Execução: ${obra.percentual_execucao}%`
     ].filter(Boolean);
     
-    currentY = datasY + 15;
+    currentY = datasY + 12;
     datasValores.forEach(item => {
       this.doc.text(item, 25, currentY);
-      currentY += 6;
+      currentY += 5;
     });
     
-    // Equipa técnica com seção colorida
-    const equipaY = datasY + 50;
+    // Equipa técnica - sem bordas, apenas fundo colorido
+    const equipaY = datasY + 37;
     this.doc.setFillColor(240, 249, 255); // Azul claro
-    this.doc.rect(15, equipaY - 5, 180, 40, 'F');
-    this.doc.setDrawColor(229, 231, 235);
-    this.doc.rect(15, equipaY - 5, 180, 40);
+    this.doc.rect(15, equipaY - 5, 180, 32, 'F');
     
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
@@ -1193,19 +1212,17 @@ export class PDFService {
       `Arquiteto: ${obra.arquiteto}`
     ];
     
-    currentY = equipaY + 15;
+    currentY = equipaY + 12;
     equipaTecnica.forEach(item => {
       this.doc.text(item, 25, currentY);
-      currentY += 6;
+      currentY += 5;
     });
     
-    // Observações com seção colorida
+    // Observações - sem bordas, apenas fundo colorido
     if (obra.observacoes) {
-      const obsY = equipaY + 45;
+      const obsY = equipaY + 37;
       this.doc.setFillColor(254, 251, 235); // Amarelo claro
-      this.doc.rect(15, obsY - 5, 180, 30, 'F');
-      this.doc.setDrawColor(229, 231, 235);
-      this.doc.rect(15, obsY - 5, 180, 30);
+      this.doc.rect(15, obsY - 5, 180, 25, 'F');
       
       this.doc.setFontSize(12);
       this.doc.setFont('helvetica', 'bold');
@@ -1220,7 +1237,7 @@ export class PDFService {
       const maxWidth = 160;
       const words = obra.observacoes.split(' ');
       let line = '';
-      currentY = obsY + 15;
+      currentY = obsY + 12;
       
       words.forEach(word => {
         const testLine = line + word + ' ';
@@ -1229,7 +1246,7 @@ export class PDFService {
         if (testWidth > maxWidth && line !== '') {
           this.doc.text(line, 25, currentY);
           line = word + ' ';
-          currentY += 6;
+          currentY += 5;
         } else {
           line = testLine;
         }
@@ -1237,13 +1254,33 @@ export class PDFService {
       
       if (line) {
         this.doc.text(line, 25, currentY);
-        currentY += 6;
+        currentY += 5;
       }
       
-      return currentY + 15;
+      // Verificar se há espaço suficiente para o rodapé
+      const pageHeight = this.doc.internal.pageSize.height;
+      const footerHeight = 30;
+      const minSpace = 15;
+      
+      if (currentY + footerHeight + minSpace > pageHeight) {
+        this.doc.addPage();
+        return 30;
+      }
+      
+      return currentY + 10;
     }
     
-    return equipaY + 50;
+    // Verificar se há espaço suficiente para o rodapé
+    const pageHeight = this.doc.internal.pageSize.height;
+    const footerHeight = 30;
+    const minSpace = 15;
+    
+    if (equipaY + 32 + footerHeight + minSpace > pageHeight) {
+      this.doc.addPage();
+      return 30;
+    }
+    
+    return equipaY + 32;
   }
 
   private calcularEstatisticasObras(obras: Obra[]) {
@@ -1724,12 +1761,10 @@ export class PDFService {
     this.addKPICard(110, kpiY, 'Valor Esperado', `${ensaio.valor_esperado} ${ensaio.unidade}`, [34, 197, 94]); // Verde
     this.addKPICard(155, kpiY, 'Conformidade', ensaio.conforme ? 'Conforme' : 'Não Conforme', ensaio.conforme ? [16, 185, 129] : [239, 68, 68]); // Verde/Vermelho
     
-    // Informações básicas com seção colorida
+    // Informações básicas - sem bordas, apenas fundo colorido
     const infoY = kpiY + 35;
     this.doc.setFillColor(249, 250, 251); // Cinza claro
     this.doc.rect(15, infoY - 5, 180, 45, 'F');
-    this.doc.setDrawColor(229, 231, 235);
-    this.doc.rect(15, infoY - 5, 180, 45);
     
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
@@ -1754,12 +1789,10 @@ export class PDFService {
       currentY += 6;
     });
     
-    // Resultados com seção colorida
+    // Resultados - sem bordas, apenas fundo colorido
     const resultadosY = infoY + 55;
     this.doc.setFillColor(254, 242, 242); // Vermelho claro
     this.doc.rect(15, resultadosY - 5, 180, 45, 'F');
-    this.doc.setDrawColor(229, 231, 235);
-    this.doc.rect(15, resultadosY - 5, 180, 45);
     
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
@@ -1784,13 +1817,11 @@ export class PDFService {
       currentY += 6;
     });
     
-    // Observações com seção colorida
+    // Observações - sem bordas, apenas fundo colorido
     if (ensaio.observacoes) {
       const obsY = resultadosY + 50;
       this.doc.setFillColor(254, 251, 235); // Amarelo claro
       this.doc.rect(15, obsY - 5, 180, 30, 'F');
-      this.doc.setDrawColor(229, 231, 235);
-      this.doc.rect(15, obsY - 5, 180, 30);
       
       this.doc.setFontSize(12);
       this.doc.setFont('helvetica', 'bold');
@@ -1825,7 +1856,29 @@ export class PDFService {
         currentY += 6;
       }
       
+      // Verificar se há espaço suficiente para o rodapé
+      const pageHeight = this.doc.internal.pageSize.height;
+      const footerHeight = 30; // Altura estimada do rodapé
+      const minSpace = 20; // Espaço mínimo entre conteúdo e rodapé
+      
+      if (currentY + footerHeight + minSpace > pageHeight) {
+        // Adicionar nova página se necessário
+        this.doc.addPage();
+        return 30; // Retornar posição inicial da nova página
+      }
+      
       return currentY + 15;
+    }
+    
+    // Verificar se há espaço suficiente para o rodapé
+    const pageHeight = this.doc.internal.pageSize.height;
+    const footerHeight = 30; // Altura estimada do rodapé
+    const minSpace = 20; // Espaço mínimo entre conteúdo e rodapé
+    
+    if (resultadosY + 50 + footerHeight + minSpace > pageHeight) {
+      // Adicionar nova página se necessário
+      this.doc.addPage();
+      return 30; // Retornar posição inicial da nova página
     }
     
     return resultadosY + 50;
@@ -2171,6 +2224,1755 @@ export class PDFService {
       case 'reprovado': return 'Reprovado';
       case 'concluido': return 'Concluído';
       default: return estado;
+    }
+  }
+
+  private getStatusTextRFI(status: string): string {
+    switch (status) {
+      case 'pendente': return 'Pendente';
+      case 'em_analise': return 'Em Análise';
+      case 'respondido': return 'Respondido';
+      case 'fechado': return 'Fechado';
+      default: return status;
+    }
+  }
+
+  // Métodos para Relatórios de RFIs
+  public async generateRFIsExecutiveReport(rfis: RFI[]): Promise<void> {
+    console.log('PDFService: Iniciando relatório executivo de RFIs com', rfis.length, 'RFIs');
+    
+    try {
+      const options: RelatorioRFIsOptions = {
+        titulo: 'Relatório Executivo de RFIs',
+        subtitulo: 'Visão Geral e Indicadores de Conformidade',
+        rfis,
+        tipo: 'executivo'
+      };
+      
+      console.log('PDFService: Gerando relatório...');
+      this.gerarRelatorioExecutivoRFIs(options);
+      
+      console.log('PDFService: Fazendo download...');
+      this.download(`relatorio-rfis-executivo-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      console.log('PDFService: Relatório executivo concluído!');
+    } catch (error) {
+      console.error('PDFService: Erro no relatório executivo:', error);
+      throw error;
+    }
+  }
+
+  public async generateRFIsFilteredReport(rfis: RFI[], filtros: any): Promise<void> {
+    const options: RelatorioRFIsOptions = {
+      titulo: 'Relatório Filtrado de RFIs',
+      subtitulo: 'Análise Detalhada com Filtros Aplicados',
+      rfis,
+      tipo: 'filtrado',
+      filtros
+    };
+    this.gerarRelatorioFiltradoRFIs(options);
+    this.download(`relatorio-rfis-filtrado-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateRFIsComparativeReport(rfis: RFI[]): Promise<void> {
+    const options: RelatorioRFIsOptions = {
+      titulo: 'Relatório Comparativo de RFIs',
+      subtitulo: 'Análise Comparativa e Benchmarks',
+      rfis,
+      tipo: 'comparativo'
+    };
+    this.gerarRelatorioComparativoRFIs(options);
+    this.download(`relatorio-rfis-comparativo-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateRFIsIndividualReport(rfis: RFI[]): Promise<void> {
+    if (rfis.length !== 1) {
+      throw new Error('Relatório individual deve conter apenas um RFI');
+    }
+    
+    const rfi = rfis[0];
+    const options: RelatorioRFIsOptions = {
+      titulo: `Relatório Individual - ${rfi.tipo}`,
+      subtitulo: `Código: ${rfi.codigo} | Cliente: ${rfi.cliente}`,
+      rfis,
+      tipo: 'individual'
+    };
+    this.gerarRelatorioIndividualRFI(options);
+    this.download(`relatorio-rfis-individual-${rfi.codigo}-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  private gerarRelatorioExecutivoRFIs(options: RelatorioRFIsOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addEstatisticasRFIs(options.rfis, startY);
+    currentY = this.addRelatorioExecutivoRFIs(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioFiltradoRFIs(options: RelatorioRFIsOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addFiltrosRFIs(options.filtros, startY);
+    currentY = this.addRelatorioFiltradoRFIs(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioComparativoRFIs(options: RelatorioRFIsOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioComparativoRFIs(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioIndividualRFI(options: RelatorioRFIsOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioIndividualRFI(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private addRelatorioIndividualRFI(options: RelatorioRFIsOptions, startY: number): number {
+    const rfi = options.rfis[0];
+    
+    // Título da seção com fundo colorido
+    this.doc.setFillColor(59, 130, 246); // Azul
+    this.doc.rect(15, startY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica do RFI', 20, startY + 2);
+    
+    // KPIs alinhados: Status, Prioridade, Impacto Custo, Impacto Prazo
+    const statusColors = {
+      'pendente': [245, 158, 11], // Amarelo
+      'em_analise': [99, 102, 241], // Índigo
+      'respondido': [34, 197, 94], // Verde
+      'fechado': [168, 85, 247] // Roxo
+    };
+    const statusColor = statusColors[rfi.status] || [107, 114, 128];
+    const statusText = this.getStatusTextRFI(rfi.status);
+
+    // KPIs: 4 cards, espaçados
+    const kpiY = startY + 12;
+    this.addKPICard(20, kpiY, 'Status', statusText, statusColor);
+    this.addKPICard(65, kpiY, 'Prioridade', rfi.prioridade.charAt(0).toUpperCase() + rfi.prioridade.slice(1), [59, 130, 246]); // Azul
+    this.addKPICard(110, kpiY, 'Impacto Custo', rfi.impacto_custo ? `€${rfi.impacto_custo}` : 'N/A', [34, 197, 94]); // Verde
+    this.addKPICard(155, kpiY, 'Impacto Prazo', rfi.impacto_prazo ? `${rfi.impacto_prazo} dias` : 'N/A', [251, 146, 60]); // Laranja
+    
+    // Informações básicas - sem bordas, apenas fundo colorido
+    const infoY = kpiY + 30;
+    this.doc.setFillColor(249, 250, 251); // Cinza claro
+    this.doc.rect(15, infoY - 5, 180, 40, 'F');
+    
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Informações Básicas', 20, infoY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const infoBasicas = [
+      `Código: ${rfi.codigo}`,
+      `Número: ${rfi.numero}`,
+      `Título: ${rfi.titulo}`,
+      `Solicitante: ${rfi.solicitante}`,
+      `Destinatário: ${rfi.destinatario}`
+    ];
+    
+    let currentY = infoY + 12;
+    infoBasicas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 5;
+    });
+    
+    // Datas e detalhes - sem bordas, apenas fundo colorido
+    const datasY = infoY + 42;
+    this.doc.setFillColor(254, 242, 242); // Vermelho claro
+    this.doc.rect(15, datasY - 5, 180, 35, 'F');
+    
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Datas e Detalhes', 20, datasY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const datasDetalhes = [
+      `Data de Solicitação: ${new Date(rfi.data_solicitacao).toLocaleDateString('pt-PT')}`,
+      rfi.data_resposta ? `Data de Resposta: ${new Date(rfi.data_resposta).toLocaleDateString('pt-PT')}` : null,
+      `Prioridade: ${rfi.prioridade.charAt(0).toUpperCase() + rfi.prioridade.slice(1)}`,
+      rfi.impacto_custo ? `Impacto no Custo: €${rfi.impacto_custo}` : null,
+      rfi.impacto_prazo ? `Impacto no Prazo: ${rfi.impacto_prazo} dias` : null
+    ].filter(Boolean);
+    
+    currentY = datasY + 12;
+    datasDetalhes.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 5;
+    });
+    
+    // Descrição - sem bordas, apenas fundo colorido
+    const descricaoY = datasY + 37;
+    this.doc.setFillColor(240, 249, 255); // Azul claro
+    this.doc.rect(15, descricaoY - 5, 180, 32, 'F');
+    
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Descrição', 20, descricaoY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    // Quebrar descrição em linhas
+    const maxWidth = 160;
+    const words = rfi.descricao.split(' ');
+    let line = '';
+    currentY = descricaoY + 12;
+    
+    words.forEach(word => {
+      const testLine = line + word + ' ';
+      const testWidth = this.doc.getTextWidth(testLine);
+      
+      if (testWidth > maxWidth && line !== '') {
+        this.doc.text(line, 25, currentY);
+        line = word + ' ';
+        currentY += 5;
+      } else {
+        line = testLine;
+      }
+    });
+    
+    if (line) {
+      this.doc.text(line, 25, currentY);
+      currentY += 5;
+    }
+    
+    // Resposta (se existir)
+    if (rfi.resposta) {
+      const respostaY = descricaoY + 37;
+      this.doc.setFillColor(254, 251, 235); // Amarelo claro
+      this.doc.rect(15, respostaY - 5, 180, 25, 'F');
+      
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Resposta', 20, respostaY);
+      
+      this.doc.setFontSize(10);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(75, 85, 99);
+      
+      // Quebrar resposta em linhas
+      const wordsResposta = rfi.resposta.split(' ');
+      let lineResposta = '';
+      currentY = respostaY + 12;
+      
+      wordsResposta.forEach(word => {
+        const testLine = lineResposta + word + ' ';
+        const testWidth = this.doc.getTextWidth(testLine);
+        
+        if (testWidth > maxWidth && lineResposta !== '') {
+          this.doc.text(lineResposta, 25, currentY);
+          lineResposta = word + ' ';
+          currentY += 5;
+        } else {
+          lineResposta = testLine;
+        }
+      });
+      
+      if (lineResposta) {
+        this.doc.text(lineResposta, 25, currentY);
+        currentY += 5;
+      }
+      
+      // Verificar se há espaço suficiente para o rodapé
+      const pageHeight = this.doc.internal.pageSize.height;
+      const footerHeight = 30;
+      const minSpace = 15;
+      
+      if (currentY + footerHeight + minSpace > pageHeight) {
+        this.doc.addPage();
+        return 30;
+      }
+      
+      return currentY + 10;
+    }
+    
+    // Verificar se há espaço suficiente para o rodapé
+    const pageHeight = this.doc.internal.pageSize.height;
+    const footerHeight = 30;
+    const minSpace = 15;
+    
+    if (descricaoY + 32 + footerHeight + minSpace > pageHeight) {
+      this.doc.addPage();
+      return 30;
+    }
+    
+    return descricaoY + 32;
+  }
+
+  private calcularEstatisticasRFIs(rfis: RFI[]) {
+    const stats = {
+      total: rfis.length,
+      pendentes: rfis.filter(r => r.status === 'pendente').length,
+      em_analise: rfis.filter(r => r.status === 'em_analise').length,
+      respondidos: rfis.filter(r => r.status === 'respondido').length,
+      fechados: rfis.filter(r => r.status === 'fechado').length,
+      alta_prioridade: rfis.filter(r => r.prioridade === 'alta').length,
+      media_prioridade: rfis.filter(r => r.prioridade === 'media').length,
+      baixa_prioridade: rfis.filter(r => r.prioridade === 'baixa').length,
+      urgente_prioridade: rfis.filter(r => r.prioridade === 'urgente').length,
+      percentual_respondidos: rfis.length > 0 ? (rfis.filter(r => r.status === 'respondido').length / rfis.length) * 100 : 0,
+      solicitantes_unicos: new Set(rfis.map(r => r.solicitante)).size,
+      por_prioridade: rfis.reduce((acc, r) => {
+        acc[r.prioridade] = (acc[r.prioridade] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+      por_status: rfis.reduce((acc, r) => {
+        acc[r.status] = (acc[r.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    };
+    
+    return stats;
+  }
+
+  private addEstatisticasRFIs(rfis: RFI[], startY: number): number {
+    const stats = this.calcularEstatisticasRFIs(rfis);
+    
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Indicadores de RFIs', 20, startY);
+    
+    // Cards de KPI - Primeira linha (4 cards)
+    this.addKPICard(20, startY + 10, 'Total RFIs', stats.total.toString(), [59, 130, 246]); // Azul
+    this.addKPICard(65, startY + 10, 'Pendentes', stats.pendentes.toString(), [245, 158, 11]); // Amarelo
+    this.addKPICard(110, startY + 10, 'Em Análise', stats.em_analise.toString(), [99, 102, 241]); // Índigo
+    this.addKPICard(155, startY + 10, 'Respondidos', stats.respondidos.toString(), [34, 197, 94]); // Verde
+    
+    // Segunda linha (4 cards)
+    this.addKPICard(20, startY + 35, 'Taxa Resposta', `${stats.percentual_respondidos.toFixed(1)}%`, [168, 85, 247]); // Roxo
+    this.addKPICard(65, startY + 35, 'Alta Prioridade', stats.alta_prioridade.toString(), [239, 68, 68]); // Vermelho
+    this.addKPICard(110, startY + 35, 'Urgente', stats.urgente_prioridade.toString(), [220, 38, 127]); // Rosa
+    this.addKPICard(155, startY + 35, 'Solicitantes', stats.solicitantes_unicos.toString(), [251, 146, 60]); // Laranja
+    
+    return startY + 65;
+  }
+
+  private addRelatorioExecutivoRFIs(options: RelatorioRFIsOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Resumo Executivo', 20, startY);
+    
+    // Resumo executivo
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const stats = this.calcularEstatisticasRFIs(options.rfis);
+    
+    const resumo = [
+      `• Total de RFIs em gestão: ${stats.total}`,
+      `• RFIs em análise: ${stats.em_analise} (${((stats.em_analise / stats.total) * 100).toFixed(1)}%)`,
+      `• RFIs pendentes: ${stats.pendentes} (${((stats.pendentes / stats.total) * 100).toFixed(1)}%)`,
+      `• RFIs respondidos: ${stats.respondidos} (${((stats.respondidos / stats.total) * 100).toFixed(1)}%)`,
+      `• RFIs fechados: ${stats.fechados} (${((stats.fechados / stats.total) * 100).toFixed(1)}%)`,
+      `• Solicitantes únicos: ${stats.solicitantes_unicos}`,
+      `• Taxa de resposta geral: ${stats.percentual_respondidos.toFixed(1)}%`
+    ];
+    
+    let currentY = startY + 15;
+    resumo.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    currentY += 10;
+    
+    // Tabela de RFIs principais
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Principais RFIs', 20, currentY);
+    
+    const rfisPrincipais = options.rfis
+      .sort((a, b) => new Date(b.data_solicitacao).getTime() - new Date(a.data_solicitacao).getTime())
+      .slice(0, 10);
+    
+    const tableData = rfisPrincipais.map(rfi => [
+      rfi.codigo,
+      rfi.titulo.substring(0, 20) + (rfi.titulo.length > 20 ? '...' : ''),
+      rfi.solicitante.substring(0, 15) + (rfi.solicitante.length > 15 ? '...' : ''),
+      rfi.prioridade.charAt(0).toUpperCase() + rfi.prioridade.slice(1),
+      this.getStatusTextRFI(rfi.status),
+      new Date(rfi.data_solicitacao).toLocaleDateString('pt-PT')
+    ]);
+    
+    autoTable(this.doc, {
+      startY: currentY + 8,
+      head: [['Código', 'Título', 'Solicitante', 'Prioridade', 'Status', 'Data']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255,
+        fontSize: 8,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 7,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addFiltrosRFIs(filtros: any, startY: number): number {
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Filtros Aplicados', 20, startY);
+    
+    if (filtros) {
+      let filterY = startY + 15;
+      let filterCount = 0;
+      Object.entries(filtros).forEach(([key, value]) => {
+        if (value) {
+          const label = this.getFilterLabelRFI(key);
+          this.doc.setFontSize(9);
+          this.doc.setFont('helvetica', 'normal');
+          this.doc.setTextColor(107, 114, 128);
+          this.doc.text(`${label}: ${value}`, 25, filterY);
+          filterY += 5;
+          filterCount++;
+        }
+      });
+      
+      if (filterCount === 0) {
+        this.doc.setFontSize(9);
+        this.doc.setFont('helvetica', 'italic');
+        this.doc.setTextColor(156, 163, 175);
+        this.doc.text('Nenhum filtro aplicado', 25, filterY);
+        filterY += 5;
+      }
+      
+      return filterY + 10;
+    }
+    
+    return startY + 20;
+  }
+
+  private addRelatorioFiltradoRFIs(options: RelatorioRFIsOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('RFIs Filtrados', 20, startY);
+    
+    // Tabela de RFIs
+    const tableData = options.rfis.map(rfi => [
+      rfi.codigo,
+      rfi.titulo.substring(0, 25) + (rfi.titulo.length > 25 ? '...' : ''),
+      rfi.solicitante.substring(0, 20) + (rfi.solicitante.length > 20 ? '...' : ''),
+      new Date(rfi.data_solicitacao).toLocaleDateString('pt-PT'),
+      rfi.prioridade.charAt(0).toUpperCase() + rfi.prioridade.slice(1),
+      this.getStatusTextRFI(rfi.status),
+      rfi.destinatario
+    ]);
+    
+    autoTable(this.doc, {
+      startY: startY + 8,
+      head: [['Código', 'Título', 'Solicitante', 'Data', 'Prioridade', 'Status', 'Destinatário']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [34, 197, 94],
+        textColor: 255,
+        fontSize: 7,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 6,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addRelatorioComparativoRFIs(options: RelatorioRFIsOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, startY);
+    
+    const stats = this.calcularEstatisticasRFIs(options.rfis);
+    
+    // Comparação por prioridade
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Distribuição por Prioridade', 20, startY + 15);
+    
+    const tableDataPrioridade = Object.entries(stats.por_prioridade).map(([prioridade, quantidade]) => [
+      prioridade.charAt(0).toUpperCase() + prioridade.slice(1),
+      quantidade.toString(),
+      `${((quantidade / stats.total) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: startY + 20,
+      head: [['Prioridade', 'Quantidade', 'Percentual']],
+      body: tableDataPrioridade,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [251, 146, 60],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 8,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    let currentY = (this.doc as any).lastAutoTable.finalY + 15;
+    
+    // Comparação por status
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Distribuição por Status', 20, currentY);
+    
+    const analisePorStatus = {
+      'Em Análise': stats.em_analise,
+      'Pendentes': stats.pendentes,
+      'Respondidos': stats.respondidos,
+      'Fechados': stats.fechados
+    };
+    
+    const tableDataStatus = Object.entries(analisePorStatus).map(([status, quantidade]) => [
+      status,
+      quantidade.toString(),
+      `${((quantidade / stats.total) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: currentY + 20,
+      head: [['Status', 'Quantidade', 'Percentual']],
+      body: tableDataStatus,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [99, 102, 241],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 8,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private getFilterLabelRFI(key: string): string {
+    const labels: Record<string, string> = {
+      tipo: 'Tipo de RFI',
+      estado: 'Estado',
+      categoria: 'Categoria',
+      dataInicio: 'Data de Início',
+      dataFim: 'Data de Fim'
+    };
+    return labels[key] || key;
+  }
+
+  private getEstadoTextRFI(estado: string): string {
+    switch (estado) {
+      case 'aprovado': return 'Aprovado';
+      case 'pendente': return 'Pendente';
+      case 'em_analise': return 'Em Análise';
+      case 'reprovado': return 'Reprovado';
+      case 'concluido': return 'Concluído';
+      default: return estado;
+    }
+  }
+
+  // Métodos para Relatórios de Checklists
+  public async generateChecklistsExecutiveReport(checklists: Checklist[]): Promise<void> {
+    console.log('PDFService: Iniciando relatório executivo de checklists com', checklists.length, 'checklists');
+    
+    try {
+      const options: RelatorioChecklistsOptions = {
+        titulo: 'Relatório Executivo de Checklists',
+        subtitulo: 'Visão Geral e Indicadores de Conformidade',
+        checklists,
+        tipo: 'executivo'
+      };
+      
+      console.log('PDFService: Gerando relatório...');
+      this.gerarRelatorioExecutivoChecklists(options);
+      
+      console.log('PDFService: Fazendo download...');
+      this.download(`relatorio-checklists-executivo-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      console.log('PDFService: Relatório executivo concluído!');
+    } catch (error) {
+      console.error('PDFService: Erro no relatório executivo:', error);
+      throw error;
+    }
+  }
+
+  public async generateChecklistsFilteredReport(checklists: Checklist[], filtros: any): Promise<void> {
+    const options: RelatorioChecklistsOptions = {
+      titulo: 'Relatório Filtrado de Checklists',
+      subtitulo: 'Análise Detalhada com Filtros Aplicados',
+      checklists,
+      tipo: 'filtrado',
+      filtros
+    };
+    this.gerarRelatorioFiltradoChecklists(options);
+    this.download(`relatorio-checklists-filtrado-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateChecklistsComparativeReport(checklists: Checklist[]): Promise<void> {
+    const options: RelatorioChecklistsOptions = {
+      titulo: 'Relatório Comparativo de Checklists',
+      subtitulo: 'Análise Comparativa e Benchmarks',
+      checklists,
+      tipo: 'comparativo'
+    };
+    this.gerarRelatorioComparativoChecklists(options);
+    this.download(`relatorio-checklists-comparativo-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateChecklistsIndividualReport(checklists: Checklist[]): Promise<void> {
+    if (checklists.length !== 1) {
+      throw new Error('Relatório individual deve conter apenas uma checklist');
+    }
+    
+    const checklist = checklists[0];
+         const options: RelatorioChecklistsOptions = {
+       titulo: `Relatório Individual - ${checklist.titulo}`,
+       subtitulo: `Código: ${checklist.codigo} | Obra: ${checklist.obra}`,
+       checklists,
+       tipo: 'individual'
+     };
+    this.gerarRelatorioIndividualChecklist(options);
+    this.download(`relatorio-checklists-individual-${checklist.codigo}-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  private gerarRelatorioExecutivoChecklists(options: RelatorioChecklistsOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addEstatisticasChecklists(options.checklists, startY);
+    currentY = this.addRelatorioExecutivoChecklists(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioFiltradoChecklists(options: RelatorioChecklistsOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addFiltrosChecklists(options.filtros, startY);
+    currentY = this.addRelatorioFiltradoChecklists(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioComparativoChecklists(options: RelatorioChecklistsOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioComparativoChecklists(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioIndividualChecklist(options: RelatorioChecklistsOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioIndividualChecklist(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private addRelatorioIndividualChecklist(options: RelatorioChecklistsOptions, startY: number): number {
+    const checklist = options.checklists[0];
+    
+    // Título da seção com fundo colorido
+    this.doc.setFillColor(59, 130, 246); // Azul
+    this.doc.rect(15, startY - 5, 180, 12, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica da Checklist', 20, startY + 3);
+    
+    // KPIs alinhados: Status, Conformidade, Data de Criação, Data de Modificação
+    const statusColors = {
+      'aprovado': [34, 197, 94], // Verde
+      'pendente': [245, 158, 11], // Amarelo
+      'em_analise': [99, 102, 241], // Índigo
+      'reprovado': [239, 68, 68], // Vermelho
+      'concluido': [168, 85, 247] // Roxo
+    };
+    const statusColor = statusColors[checklist.status] || [107, 114, 128];
+    const statusText = this.getStatusTextChecklist(checklist.status);
+
+    // KPIs: 4 cards, espaçados
+    const kpiY = startY + 15;
+         this.addKPICard(20, kpiY, 'Status', statusText, statusColor);
+     this.addKPICard(65, kpiY, 'Estado', checklist.estado.charAt(0).toUpperCase() + checklist.estado.slice(1), [16, 185, 129]); // Verde
+     this.addKPICard(110, kpiY, 'Data de Criação', new Date(checklist.data_criacao).toLocaleDateString('pt-PT'), [34, 197, 94]); // Verde
+     this.addKPICard(155, kpiY, 'Data de Atualização', new Date(checklist.data_atualizacao).toLocaleDateString('pt-PT'), [251, 146, 60]); // Laranja
+    
+    // Informações básicas - sem bordas, apenas fundo colorido
+    const infoY = kpiY + 35;
+    this.doc.setFillColor(249, 250, 251); // Cinza claro
+    this.doc.rect(15, infoY - 5, 180, 45, 'F');
+    
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Informações Básicas', 20, infoY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+         const infoBasicas = [
+       `Código: ${checklist.codigo}`,
+       `Título: ${checklist.titulo}`,
+       `Obra: ${checklist.obra}`,
+       `Status: ${checklist.status.charAt(0).toUpperCase() + checklist.status.slice(1)}`,
+       `Responsável: ${checklist.responsavel}`
+     ];
+    
+    let currentY = infoY + 15;
+    infoBasicas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    // Detalhes - sem bordas, apenas fundo colorido
+    const detalhesY = infoY + 55;
+    this.doc.setFillColor(254, 242, 242); // Vermelho claro
+    this.doc.rect(15, detalhesY - 5, 180, 45, 'F');
+    
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Detalhes da Checklist', 20, detalhesY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+         const detalhes = [
+       `Status: ${checklist.status.charAt(0).toUpperCase() + checklist.status.slice(1)}`,
+       `Data de Criação: ${new Date(checklist.data_criacao).toLocaleDateString('pt-PT')}`,
+       `Data de Atualização: ${new Date(checklist.data_atualizacao).toLocaleDateString('pt-PT')}`,
+       `Estado: ${checklist.estado.charAt(0).toUpperCase() + checklist.estado.slice(1)}`,
+       `Responsável: ${checklist.responsavel}`
+     ];
+    
+    currentY = detalhesY + 15;
+    detalhes.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    // Itens - sem bordas, apenas fundo colorido
+    const itensY = detalhesY + 55;
+    this.doc.setFillColor(240, 249, 255); // Azul claro
+    this.doc.rect(15, itensY - 5, 180, 45, 'F');
+    
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Itens da Checklist', 20, itensY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+         checklist.pontos.forEach((ponto, index) => {
+       this.doc.text(`${index + 1}. ${ponto.descricao}`, 25, currentY);
+       currentY += 6;
+     });
+    
+    // Observações - sem bordas, apenas fundo colorido
+    if (checklist.observacoes) {
+      const obsY = itensY + 45;
+      this.doc.setFillColor(254, 251, 235); // Amarelo claro
+      this.doc.rect(15, obsY - 5, 180, 30, 'F');
+      
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Observações', 20, obsY);
+      
+      this.doc.setFontSize(10);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(75, 85, 99);
+      
+      // Quebrar observações em linhas
+      const maxWidth = 160;
+      const words = checklist.observacoes.split(' ');
+      let line = '';
+      currentY = obsY + 15;
+      
+      words.forEach(word => {
+        const testLine = line + word + ' ';
+        const testWidth = this.doc.getTextWidth(testLine);
+        
+        if (testWidth > maxWidth && line !== '') {
+          this.doc.text(line, 25, currentY);
+          line = word + ' ';
+          currentY += 5;
+        } else {
+          line = testLine;
+        }
+      });
+      
+      if (line) {
+        this.doc.text(line, 25, currentY);
+        currentY += 5;
+      }
+      
+      // Verificar se há espaço suficiente para o rodapé
+      const pageHeight = this.doc.internal.pageSize.height;
+      const footerHeight = 30;
+      const minSpace = 15;
+      
+      if (currentY + footerHeight + minSpace > pageHeight) {
+        this.doc.addPage();
+        return 30;
+      }
+      
+      return currentY + 10;
+    }
+    
+    // Verificar se há espaço suficiente para o rodapé
+    const pageHeight = this.doc.internal.pageSize.height;
+    const footerHeight = 30;
+    const minSpace = 15;
+    
+    if (itensY + 45 + footerHeight + minSpace > pageHeight) {
+      this.doc.addPage();
+      return 30;
+    }
+    
+    return itensY + 45;
+  }
+
+     private calcularEstatisticasChecklists(checklists: Checklist[]) {
+     const stats = {
+       total: checklists.length,
+       aprovados: checklists.filter(c => c.status === 'aprovado').length,
+       em_andamento: checklists.filter(c => c.status === 'em_andamento').length,
+       concluidos: checklists.filter(c => c.status === 'concluido').length,
+       reprovados: checklists.filter(c => c.status === 'reprovado').length,
+       percentual_aprovacao: checklists.length > 0 ? (checklists.filter(c => c.status === 'aprovado').length / checklists.length) * 100 : 0,
+       obras_unicas: new Set(checklists.map(c => c.obra)).size,
+       por_obra: checklists.reduce((acc, c) => {
+         acc[c.obra] = (acc[c.obra] || 0) + 1;
+         return acc;
+       }, {} as Record<string, number>),
+       por_status: checklists.reduce((acc, c) => {
+         acc[c.status] = (acc[c.status] || 0) + 1;
+         return acc;
+       }, {} as Record<string, number>)
+     };
+     
+     return stats;
+   }
+
+  private addEstatisticasChecklists(checklists: Checklist[], startY: number): number {
+    const stats = this.calcularEstatisticasChecklists(checklists);
+    
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Indicadores de Checklists', 20, startY);
+    
+    // Cards de KPI - Primeira linha (4 cards)
+    this.addKPICard(20, startY + 10, 'Total Checklists', stats.total.toString(), [59, 130, 246]); // Azul
+    this.addKPICard(65, startY + 10, 'Aprovados', stats.aprovados.toString(), [34, 197, 94]); // Verde
+    this.addKPICard(110, startY + 10, 'Em Andamento', stats.em_andamento.toString(), [245, 158, 11]); // Amarelo
+    this.addKPICard(155, startY + 10, 'Concluídos', stats.concluidos.toString(), [16, 185, 129]); // Verde escuro
+    
+    // Segunda linha (4 cards)
+    this.addKPICard(20, startY + 35, 'Taxa Aprovação', `${stats.percentual_aprovacao.toFixed(1)}%`, [168, 85, 247]); // Roxo
+    this.addKPICard(65, startY + 35, 'Reprovados', stats.reprovados.toString(), [239, 68, 68]); // Vermelho
+    this.addKPICard(110, startY + 35, 'Obras Únicas', stats.obras_unicas.toString(), [99, 102, 241]); // Índigo
+    this.addKPICard(155, startY + 35, 'Status', '4 Tipos', [251, 146, 60]); // Laranja
+    
+    return startY + 65;
+  }
+
+  private addRelatorioExecutivoChecklists(options: RelatorioChecklistsOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Resumo Executivo', 20, startY);
+    
+    // Resumo executivo
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const stats = this.calcularEstatisticasChecklists(options.checklists);
+    
+    const resumo = [
+      `• Total de checklists realizadas: ${stats.total}`,
+      `• Checklists aprovadas: ${stats.aprovados} (${stats.percentual_aprovacao.toFixed(1)}%)`,
+      `• Checklists em andamento: ${stats.em_andamento}`,
+      `• Checklists concluídas: ${stats.concluidos}`,
+      `• Checklists reprovadas: ${stats.reprovados}`,
+      `• Obras únicas: ${stats.obras_unicas}`
+    ];
+    
+    let currentY = startY + 15;
+    resumo.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    currentY += 10;
+    
+    // Tabela de checklists principais
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Principais Checklists', 20, currentY);
+    
+    const checklistsPrincipais = options.checklists
+      .sort((a, b) => new Date(b.data_criacao).getTime() - new Date(a.data_criacao).getTime())
+      .slice(0, 10);
+    
+    const tableData = checklistsPrincipais.map(checklist => [
+      checklist.codigo,
+      checklist.titulo.substring(0, 20) + (checklist.titulo.length > 20 ? '...' : ''),
+      checklist.obra.substring(0, 15) + (checklist.obra.length > 15 ? '...' : ''),
+      checklist.status.charAt(0).toUpperCase() + checklist.status.slice(1),
+      this.getStatusTextChecklist(checklist.status),
+      new Date(checklist.data_criacao).toLocaleDateString('pt-PT')
+    ]);
+    
+    autoTable(this.doc, {
+      startY: currentY + 8,
+      head: [['Código', 'Título', 'Obra', 'Status', 'Status Texto', 'Data']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255,
+        fontSize: 8,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 7,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addFiltrosChecklists(filtros: any, startY: number): number {
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Filtros Aplicados', 20, startY);
+    
+    if (filtros) {
+      let filterY = startY + 15;
+      let filterCount = 0;
+      Object.entries(filtros).forEach(([key, value]) => {
+        if (value) {
+          const label = this.getFilterLabelChecklist(key);
+          this.doc.setFontSize(9);
+          this.doc.setFont('helvetica', 'normal');
+          this.doc.setTextColor(107, 114, 128);
+          this.doc.text(`${label}: ${value}`, 25, filterY);
+          filterY += 5;
+          filterCount++;
+        }
+      });
+      
+      if (filterCount === 0) {
+        this.doc.setFontSize(9);
+        this.doc.setFont('helvetica', 'italic');
+        this.doc.setTextColor(156, 163, 175);
+        this.doc.text('Nenhum filtro aplicado', 25, filterY);
+        filterY += 5;
+      }
+      
+      return filterY + 10;
+    }
+    
+    return startY + 20;
+  }
+
+  private addRelatorioFiltradoChecklists(options: RelatorioChecklistsOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Checklists Filtradas', 20, startY);
+    
+    // Tabela de checklists
+    const tableData = options.checklists.map(checklist => [
+      checklist.codigo,
+      checklist.titulo.substring(0, 25) + (checklist.titulo.length > 25 ? '...' : ''),
+      checklist.obra.substring(0, 20) + (checklist.obra.length > 20 ? '...' : ''),
+      new Date(checklist.data_criacao).toLocaleDateString('pt-PT'),
+      checklist.status.charAt(0).toUpperCase() + checklist.status.slice(1),
+      checklist.responsavel
+    ]);
+    
+    autoTable(this.doc, {
+      startY: startY + 8,
+      head: [['Código', 'Título', 'Obra', 'Data', 'Status', 'Responsável']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [34, 197, 94],
+        textColor: 255,
+        fontSize: 7,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 6,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addRelatorioComparativoChecklists(options: RelatorioChecklistsOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, startY);
+    
+    const stats = this.calcularEstatisticasChecklists(options.checklists);
+    
+    // Comparação por obra
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Distribuição por Obra', 20, startY + 15);
+    
+    const tableDataObra = Object.entries(stats.por_obra).map(([obra, quantidade]) => [
+      obra,
+      quantidade.toString(),
+      `${((quantidade as number / stats.total) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: startY + 20,
+      head: [['Obra', 'Quantidade', 'Percentual']],
+      body: tableDataObra,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [251, 146, 60],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 8,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    let currentY = (this.doc as any).lastAutoTable.finalY + 15;
+    
+    // Comparação por status
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Distribuição por Status', 20, currentY);
+    
+    const analisePorStatus = {
+      'Aprovado': stats.aprovados,
+      'Em Andamento': stats.em_andamento,
+      'Concluído': stats.concluidos,
+      'Reprovado': stats.reprovados
+    };
+    
+    const tableDataStatus = Object.entries(analisePorStatus).map(([status, quantidade]) => [
+      status,
+      quantidade.toString(),
+      `${((quantidade as number / stats.total) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: currentY + 20,
+      head: [['Status', 'Quantidade', 'Percentual']],
+      body: tableDataStatus,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [99, 102, 241],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 8,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private getFilterLabelChecklist(key: string): string {
+    const labels: Record<string, string> = {
+      titulo: 'Título',
+      obra: 'Obra',
+      status: 'Status',
+      estado: 'Estado',
+      responsavel: 'Responsável',
+      zona: 'Zona',
+      dataInicio: 'Data de Início',
+      dataFim: 'Data de Fim'
+    };
+    return labels[key] || key;
+  }
+
+  private getStatusTextChecklist(status: string): string {
+    switch (status) {
+      case 'aprovado': return 'Aprovado';
+      case 'pendente': return 'Pendente';
+      case 'em_analise': return 'Em Análise';
+      case 'reprovado': return 'Reprovado';
+      case 'concluido': return 'Concluído';
+      default: return status;
+    }
+  }
+
+  // Métodos para Relatórios de Documentos
+  public async generateDocumentosExecutiveReport(documentos: Documento[]): Promise<void> {
+    console.log('PDFService: Iniciando relatório executivo de documentos com', documentos.length, 'documentos');
+    
+    try {
+      const options: RelatorioDocumentosOptions = {
+        titulo: 'Relatório Executivo de Documentos',
+        subtitulo: 'Visão Geral e Indicadores de Conformidade',
+        documentos,
+        tipo: 'executivo'
+      };
+      
+      console.log('PDFService: Gerando relatório...');
+      this.gerarRelatorioExecutivoDocumentos(options);
+      
+      console.log('PDFService: Fazendo download...');
+      this.download(`relatorio-documentos-executivo-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      console.log('PDFService: Relatório executivo concluído!');
+    } catch (error) {
+      console.error('PDFService: Erro no relatório executivo:', error);
+      throw error;
+    }
+  }
+
+  public async generateDocumentosFilteredReport(documentos: Documento[], filtros: any): Promise<void> {
+    const options: RelatorioDocumentosOptions = {
+      titulo: 'Relatório Filtrado de Documentos',
+      subtitulo: 'Análise Detalhada com Filtros Aplicados',
+      documentos,
+      tipo: 'filtrado',
+      filtros
+    };
+    this.gerarRelatorioFiltradoDocumentos(options);
+    this.download(`relatorio-documentos-filtrado-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateDocumentosComparativeReport(documentos: Documento[]): Promise<void> {
+    const options: RelatorioDocumentosOptions = {
+      titulo: 'Relatório Comparativo de Documentos',
+      subtitulo: 'Análise Comparativa e Benchmarks',
+      documentos,
+      tipo: 'comparativo'
+    };
+    this.gerarRelatorioComparativoDocumentos(options);
+    this.download(`relatorio-documentos-comparativo-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateDocumentosIndividualReport(documentos: Documento[]): Promise<void> {
+    if (documentos.length !== 1) {
+      throw new Error('Relatório individual deve conter apenas um documento');
+    }
+    
+    const documento = documentos[0];
+         const options: RelatorioDocumentosOptions = {
+       titulo: `Relatório Individual - ${documento.codigo}`,
+       subtitulo: `Código: ${documento.codigo} | Tipo: ${documento.tipo}`,
+       documentos,
+       tipo: 'individual'
+     };
+    this.gerarRelatorioIndividualDocumento(options);
+    this.download(`relatorio-documentos-individual-${documento.codigo}-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  private gerarRelatorioExecutivoDocumentos(options: RelatorioDocumentosOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addEstatisticasDocumentos(options.documentos, startY);
+    currentY = this.addRelatorioExecutivoDocumentos(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioFiltradoDocumentos(options: RelatorioDocumentosOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addFiltrosDocumentos(options.filtros, startY);
+    currentY = this.addRelatorioFiltradoDocumentos(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioComparativoDocumentos(options: RelatorioDocumentosOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioComparativoDocumentos(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioIndividualDocumento(options: RelatorioDocumentosOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioIndividualDocumento(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private addRelatorioIndividualDocumento(options: RelatorioDocumentosOptions, startY: number): number {
+    const documento = options.documentos[0];
+    
+    // Título da seção com fundo colorido
+    this.doc.setFillColor(59, 130, 246); // Azul
+    this.doc.rect(15, startY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica do Documento', 20, startY + 2);
+    
+         // KPIs alinhados: Estado, Versão, Data de Criação, Data de Atualização
+     const estadoColors = {
+       'aprovado': [34, 197, 94], // Verde
+       'pendente': [245, 158, 11], // Amarelo
+       'em_analise': [99, 102, 241], // Índigo
+       'reprovado': [239, 68, 68], // Vermelho
+       'concluido': [168, 85, 247] // Roxo
+     };
+     const estadoColor = estadoColors[documento.estado] || [107, 114, 128];
+     const estadoText = this.getStatusTextDocumento(documento.estado);
+
+     // KPIs: 4 cards, espaçados
+     const kpiY = startY + 15;
+     this.addKPICard(20, kpiY, 'Estado', estadoText, estadoColor);
+     this.addKPICard(65, kpiY, 'Versão', documento.versao, [16, 185, 129]); // Verde
+     this.addKPICard(110, kpiY, 'Data de Criação', new Date(documento.data_criacao).toLocaleDateString('pt-PT'), [34, 197, 94]); // Verde
+     this.addKPICard(155, kpiY, 'Data de Atualização', new Date(documento.data_atualizacao).toLocaleDateString('pt-PT'), [251, 146, 60]); // Laranja
+    
+    // Informações básicas - sem bordas, apenas fundo colorido
+    const infoY = kpiY + 35;
+    this.doc.setFillColor(249, 250, 251); // Cinza claro
+    this.doc.rect(15, infoY - 5, 180, 45, 'F');
+    
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Informações Básicas', 20, infoY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+         const infoBasicas = [
+       `Código: ${documento.codigo}`,
+       `Tipo: ${documento.tipo}`,
+       `Versão: ${documento.versao}`,
+       `Estado: ${documento.estado.charAt(0).toUpperCase() + documento.estado.slice(1)}`,
+       `Responsável: ${documento.responsavel}`
+     ];
+    
+    let currentY = infoY + 15;
+    infoBasicas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    // Detalhes - sem bordas, apenas fundo colorido
+    const detalhesY = infoY + 55;
+    this.doc.setFillColor(254, 242, 242); // Vermelho claro
+    this.doc.rect(15, detalhesY - 5, 180, 45, 'F');
+    
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Detalhes do Documento', 20, detalhesY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+         const detalhes = [
+       `Estado: ${documento.estado.charAt(0).toUpperCase() + documento.estado.slice(1)}`,
+       `Data de Criação: ${new Date(documento.data_criacao).toLocaleDateString('pt-PT')}`,
+       `Data de Atualização: ${new Date(documento.data_atualizacao).toLocaleDateString('pt-PT')}`,
+       `Versão: ${documento.versao}`,
+       `Responsável: ${documento.responsavel}`
+     ];
+    
+    currentY = detalhesY + 15;
+    detalhes.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    // Observações - sem bordas, apenas fundo colorido
+    if (documento.observacoes) {
+      const obsY = detalhesY + 50;
+      this.doc.setFillColor(254, 251, 235); // Amarelo claro
+      this.doc.rect(15, obsY - 5, 180, 30, 'F');
+      
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Observações', 20, obsY);
+      
+      this.doc.setFontSize(10);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(75, 85, 99);
+      
+      // Quebrar observações em linhas
+      const maxWidth = 160;
+      const words = documento.observacoes.split(' ');
+      let line = '';
+      currentY = obsY + 15;
+      
+      words.forEach(word => {
+        const testLine = line + word + ' ';
+        const testWidth = this.doc.getTextWidth(testLine);
+        
+        if (testWidth > maxWidth && line !== '') {
+          this.doc.text(line, 25, currentY);
+          line = word + ' ';
+          currentY += 5;
+        } else {
+          line = testLine;
+        }
+      });
+      
+      if (line) {
+        this.doc.text(line, 25, currentY);
+        currentY += 5;
+      }
+      
+      // Verificar se há espaço suficiente para o rodapé
+      const pageHeight = this.doc.internal.pageSize.height;
+      const footerHeight = 30;
+      const minSpace = 15;
+      
+      if (currentY + footerHeight + minSpace > pageHeight) {
+        this.doc.addPage();
+        return 30;
+      }
+      
+      return currentY + 10;
+    }
+    
+    // Verificar se há espaço suficiente para o rodapé
+    const pageHeight = this.doc.internal.pageSize.height;
+    const footerHeight = 30;
+    const minSpace = 15;
+    
+    if (detalhesY + 50 + footerHeight + minSpace > pageHeight) {
+      this.doc.addPage();
+      return 30;
+    }
+    
+    return detalhesY + 50;
+  }
+
+  private calcularEstatisticasDocumentos(documentos: Documento[]) {
+    const stats = {
+      total: documentos.length,
+      aprovados: documentos.filter(d => d.estado === 'aprovado').length,
+      pendentes: documentos.filter(d => d.estado === 'pendente').length,
+      em_analise: documentos.filter(d => d.estado === 'em_analise').length,
+      reprovados: documentos.filter(d => d.estado === 'reprovado').length,
+      concluidos: documentos.filter(d => d.estado === 'concluido').length,
+      percentual_aprovacao: documentos.length > 0 ? (documentos.filter(d => d.estado === 'aprovado').length / documentos.length) * 100 : 0,
+      tipos_unicos: new Set(documentos.map(d => d.tipo)).size,
+      por_tipo: documentos.reduce((acc, d) => {
+        acc[d.tipo] = (acc[d.tipo] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+      por_estado: documentos.reduce((acc, d) => {
+        acc[d.estado] = (acc[d.estado] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    };
+    
+    return stats;
+  }
+
+  private addEstatisticasDocumentos(documentos: Documento[], startY: number): number {
+    const stats = this.calcularEstatisticasDocumentos(documentos);
+    
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Indicadores de Documentos', 20, startY);
+    
+    // Cards de KPI - Primeira linha (4 cards)
+    this.addKPICard(20, startY + 10, 'Total Documentos', stats.total.toString(), [59, 130, 246]); // Azul
+    this.addKPICard(65, startY + 10, 'Aprovados', stats.aprovados.toString(), [34, 197, 94]); // Verde
+    this.addKPICard(110, startY + 10, 'Pendentes', stats.pendentes.toString(), [251, 146, 60]); // Laranja
+    this.addKPICard(155, startY + 10, 'Em Análise', stats.em_analise.toString(), [99, 102, 241]); // Roxo
+    
+    // Segunda linha (4 cards)
+    this.addKPICard(20, startY + 35, 'Taxa Aprovação', `${stats.percentual_aprovacao.toFixed(1)}%`, [168, 85, 247]); // Roxo
+    this.addKPICard(65, startY + 35, 'Reprovados', stats.reprovados.toString(), [239, 68, 68]); // Vermelho
+    this.addKPICard(110, startY + 35, 'Tipos Únicos', stats.tipos_unicos.toString(), [99, 102, 241]); // Índigo
+    this.addKPICard(155, startY + 35, 'Status', '4 Tipos', [251, 146, 60]); // Laranja
+    
+    return startY + 65;
+  }
+
+  private addRelatorioExecutivoDocumentos(options: RelatorioDocumentosOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Resumo Executivo', 20, startY);
+    
+    // Resumo executivo
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const stats = this.calcularEstatisticasDocumentos(options.documentos);
+    
+    const resumo = [
+      `• Total de documentos realizados: ${stats.total}`,
+      `• Documentos aprovados: ${stats.aprovados} (${stats.percentual_aprovacao.toFixed(1)}%)`,
+      `• Documentos pendentes: ${stats.pendentes}`,
+      `• Documentos em análise: ${stats.em_analise}`,
+      `• Documentos reprovados: ${stats.reprovados}`,
+      `• Tipos únicos: ${stats.tipos_unicos}`
+    ];
+    
+    let currentY = startY + 15;
+    resumo.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    currentY += 10;
+    
+    // Tabela de documentos principais
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Principais Documentos', 20, currentY);
+    
+    const documentosPrincipais = options.documentos
+      .sort((a, b) => new Date(b.data_criacao).getTime() - new Date(a.data_criacao).getTime())
+      .slice(0, 10);
+    
+         const tableData = documentosPrincipais.map(documento => [
+       documento.codigo,
+       documento.codigo.substring(0, 20) + (documento.codigo.length > 20 ? '...' : ''),
+       documento.tipo.substring(0, 15) + (documento.tipo.length > 15 ? '...' : ''),
+       documento.estado.charAt(0).toUpperCase() + documento.estado.slice(1),
+       this.getStatusTextDocumento(documento.estado),
+       new Date(documento.data_criacao).toLocaleDateString('pt-PT')
+     ]);
+    
+    autoTable(this.doc, {
+      startY: currentY + 8,
+      head: [['Código', 'Título', 'Tipo', 'Status', 'Status Texto', 'Data']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255,
+        fontSize: 8,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 7,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addFiltrosDocumentos(filtros: any, startY: number): number {
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Filtros Aplicados', 20, startY);
+    
+    if (filtros) {
+      let filterY = startY + 15;
+      let filterCount = 0;
+      Object.entries(filtros).forEach(([key, value]) => {
+        if (value) {
+          const label = this.getFilterLabelDocumento(key);
+          this.doc.setFontSize(9);
+          this.doc.setFont('helvetica', 'normal');
+          this.doc.setTextColor(107, 114, 128);
+          this.doc.text(`${label}: ${value}`, 25, filterY);
+          filterY += 5;
+          filterCount++;
+        }
+      });
+      
+      if (filterCount === 0) {
+        this.doc.setFontSize(9);
+        this.doc.setFont('helvetica', 'italic');
+        this.doc.setTextColor(156, 163, 175);
+        this.doc.text('Nenhum filtro aplicado', 25, filterY);
+        filterY += 5;
+      }
+      
+      return filterY + 10;
+    }
+    
+    return startY + 20;
+  }
+
+  private addRelatorioFiltradoDocumentos(options: RelatorioDocumentosOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Documentos Filtrados', 20, startY);
+    
+    // Tabela de documentos
+         const tableData = options.documentos.map(documento => [
+       documento.codigo,
+       documento.codigo.substring(0, 25) + (documento.codigo.length > 25 ? '...' : ''),
+       documento.tipo.substring(0, 20) + (documento.tipo.length > 20 ? '...' : ''),
+       new Date(documento.data_criacao).toLocaleDateString('pt-PT'),
+       documento.estado.charAt(0).toUpperCase() + documento.estado.slice(1),
+       documento.responsavel
+     ]);
+    
+    autoTable(this.doc, {
+      startY: startY + 8,
+      head: [['Código', 'Título', 'Tipo', 'Data', 'Status', 'Responsável']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [34, 197, 94],
+        textColor: 255,
+        fontSize: 7,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 6,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addRelatorioComparativoDocumentos(options: RelatorioDocumentosOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, startY);
+    
+    const stats = this.calcularEstatisticasDocumentos(options.documentos);
+    
+    // Comparação por tipo
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Distribuição por Tipo', 20, startY + 15);
+    
+    const tableDataTipo = Object.entries(stats.por_tipo).map(([tipo, quantidade]) => [
+      tipo.substring(0, 20) + (tipo.length > 20 ? '...' : ''),
+      quantidade.toString(),
+      `${((quantidade / stats.total) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: startY + 20,
+      head: [['Tipo', 'Quantidade', 'Percentual']],
+      body: tableDataTipo,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [251, 146, 60],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 8,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    let currentY = (this.doc as any).lastAutoTable.finalY + 15;
+    
+    // Comparação por status
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Distribuição por Status', 20, currentY);
+    
+    const analisePorStatus = {
+      'Aprovado': stats.aprovados,
+      'Pendentes': stats.pendentes,
+      'Em Análise': stats.em_analise,
+      'Reprovados': stats.reprovados
+    };
+    
+    const tableDataStatus = Object.entries(analisePorStatus).map(([status, quantidade]) => [
+      status,
+      quantidade.toString(),
+      `${((quantidade as number / stats.total) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: currentY + 20,
+      head: [['Status', 'Quantidade', 'Percentual']],
+      body: tableDataStatus,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [99, 102, 241],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 8,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private getFilterLabelDocumento(key: string): string {
+    const labels: Record<string, string> = {
+      titulo: 'Título',
+      tipo: 'Tipo',
+      status: 'Status',
+      estado: 'Estado',
+      responsavel: 'Responsável',
+      zona: 'Zona',
+      dataInicio: 'Data de Início',
+      dataFim: 'Data de Fim'
+    };
+    return labels[key] || key;
+  }
+
+  private getStatusTextDocumento(status: string): string {
+    switch (status) {
+      case 'aprovado': return 'Aprovado';
+      case 'pendente': return 'Pendente';
+      case 'em_analise': return 'Em Análise';
+      case 'reprovado': return 'Reprovado';
+      case 'concluido': return 'Concluído';
+      default: return status;
     }
   }
 }
