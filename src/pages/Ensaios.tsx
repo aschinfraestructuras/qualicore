@@ -24,7 +24,9 @@ import { toast } from "react-hot-toast";
 import EnsaioForm from "@/components/forms/EnsaioForm";
 import Modal from "@/components/Modal";
 import { RelatorioEnsaios } from "@/components/RelatorioExport";
+import RelatorioEnsaiosPremium from "@/components/RelatorioEnsaiosPremium";
 import { AnimatePresence, motion } from "framer-motion";
+import { pdfService } from "@/services/pdfService";
 
 export default function Ensaios() {
   const [ensaios, setEnsaios] = useState<any[]>([]); // Changed type to any[] as Ensaio type is removed
@@ -244,6 +246,15 @@ export default function Ensaios() {
     }
   };
 
+  const handleGenerateIndividualReport = async (ensaio: any) => {
+    try {
+      await pdfService.generateEnsaiosIndividualReport([ensaio]);
+    } catch (error) {
+      console.error('Erro ao gerar relatório individual:', error);
+      toast.error('Erro ao gerar relatório individual');
+    }
+  };
+
   const clearFilters = () => {
     setFilters({
       search: "",
@@ -295,6 +306,41 @@ export default function Ensaios() {
             Novo Ensaio
           </button>
         </div>
+      </div>
+
+      {/* Botões de ação */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <button
+          onClick={handleCreate}
+          className="btn btn-primary flex items-center space-x-2"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Novo Ensaio</span>
+        </button>
+
+        <button
+          onClick={() => setShowRelatorioPremium(true)}
+          className="btn btn-secondary flex items-center space-x-2"
+        >
+          <FileText className="h-4 w-4" />
+          <span>Relatórios PDF</span>
+        </button>
+
+        <button
+          onClick={() => setShowRelatorio(true)}
+          className="btn btn-outline flex items-center space-x-2"
+        >
+          <Download className="h-4 w-4" />
+          <span>Exportar Dados</span>
+        </button>
+
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="btn btn-outline flex items-center space-x-2"
+        >
+          <Filter className="h-4 w-4" />
+          <span>Filtros</span>
+        </button>
       </div>
 
       {/* Botão de Filtros */}
@@ -522,14 +568,23 @@ export default function Ensaios() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
-                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                         onClick={() => handleEdit(ensaio)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Editar"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                        onClick={() => handleGenerateIndividualReport(ensaio)}
+                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title="Relatório Individual"
+                      >
+                        <FileText className="h-4 w-4" />
+                      </button>
+                      <button
                         onClick={() => handleDelete(ensaio.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Excluir"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -553,9 +608,8 @@ export default function Ensaios() {
 
       {/* Modal de Relatório Premium */}
       {showRelatorioPremium && (
-        <RelatorioEnsaios
-          ensaios={ensaios}
-          isOpen={showRelatorioPremium}
+        <RelatorioEnsaiosPremium
+          ensaios={filteredEnsaios}
           onClose={() => setShowRelatorioPremium(false)}
         />
       )}

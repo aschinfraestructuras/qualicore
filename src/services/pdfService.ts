@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { MetricasReais } from './metricsService';
-import { Material, Obra } from '@/types';
+import { Material, Obra, Ensaio } from '@/types';
 
 interface RelatorioPDFOptions {
   titulo: string;
@@ -27,6 +27,14 @@ interface RelatorioObrasOptions {
   titulo: string;
   subtitulo?: string;
   obras: Obra[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
+interface RelatorioEnsaiosOptions {
+  titulo: string;
+  subtitulo?: string;
+  ensaios: Ensaio[];
   tipo: "executivo" | "filtrado" | "comparativo" | "individual";
   filtros?: any;
 }
@@ -494,7 +502,7 @@ export class PDFService {
     this.addKPICard(110, startY + 30, 'Concluídos', stats.concluidos.toString(), [107, 114, 128]); // Cinza
     this.addKPICard(155, startY + 30, 'Valor Est.', `€${stats.valorEstimado.toLocaleString('pt-PT')}`, [16, 185, 129]); // Verde água
     
-    return startY + 55;
+    return startY + 65;
   }
 
   private addRelatorioExecutivoMateriais(options: RelatorioMateriaisOptions, startY: number): number {
@@ -1072,6 +1080,172 @@ export class PDFService {
     this.addProfessionalFooter();
   }
 
+  private addRelatorioIndividualObra(options: RelatorioObrasOptions, startY: number): number {
+    const obra = options.obras[0];
+    
+    // Título da seção com fundo colorido
+    this.doc.setFillColor(59, 130, 246); // Azul
+    this.doc.rect(15, startY - 5, 180, 12, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica da Obra', 20, startY + 3);
+    
+    // Status card colorido
+    const statusColors = {
+      'em_execucao': [34, 197, 94], // Verde
+      'concluida': [16, 185, 129], // Verde escuro
+      'paralisada': [245, 158, 11], // Amarelo
+      'cancelada': [239, 68, 68], // Vermelho
+      'planeamento': [168, 85, 247] // Roxo
+    };
+    
+    const statusColor = statusColors[obra.status] || [107, 114, 128];
+    this.addStatusCard(150, startY - 5, this.getStatusTextObra(obra.status), statusColor);
+    
+    // KPIs da obra
+    const kpiY = startY + 15;
+    this.addKPICard(20, kpiY, 'Valor Contrato', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_contrato), [59, 130, 246]); // Azul
+    this.addKPICard(65, kpiY, 'Valor Executado', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_executado), [34, 197, 94]); // Verde
+    this.addKPICard(110, kpiY, 'Progresso', `${obra.percentual_execucao}%`, [251, 146, 60]); // Laranja
+    
+    // Informações básicas com seção colorida
+    const infoY = kpiY + 35;
+    this.doc.setFillColor(249, 250, 251); // Cinza claro
+    this.doc.rect(15, infoY - 5, 180, 50, 'F');
+    this.doc.setDrawColor(229, 231, 235);
+    this.doc.rect(15, infoY - 5, 180, 50);
+    
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Informações Básicas', 20, infoY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const infoBasicas = [
+      `Código: ${obra.codigo}`,
+      `Nome: ${obra.nome}`,
+      `Cliente: ${obra.cliente}`,
+      `Localização: ${obra.localizacao}`,
+      `Tipo: ${obra.tipo_obra.charAt(0).toUpperCase() + obra.tipo_obra.slice(1)}`,
+      `Categoria: ${obra.categoria.charAt(0).toUpperCase() + obra.categoria.slice(1)}`
+    ];
+    
+    let currentY = infoY + 15;
+    infoBasicas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    // Datas e valores com seção colorida
+    const datasY = infoY + 55;
+    this.doc.setFillColor(254, 242, 242); // Vermelho claro
+    this.doc.rect(15, datasY - 5, 180, 45, 'F');
+    this.doc.setDrawColor(229, 231, 235);
+    this.doc.rect(15, datasY - 5, 180, 45);
+    
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Datas e Valores', 20, datasY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const datasValores = [
+      `Data de Início: ${new Date(obra.data_inicio).toLocaleDateString('pt-PT')}`,
+      `Data Fim Prevista: ${new Date(obra.data_fim_prevista).toLocaleDateString('pt-PT')}`,
+      obra.data_fim_real ? `Data Fim Real: ${new Date(obra.data_fim_real).toLocaleDateString('pt-PT')}` : null,
+      `Percentual de Execução: ${obra.percentual_execucao}%`
+    ].filter(Boolean);
+    
+    currentY = datasY + 15;
+    datasValores.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    // Equipa técnica com seção colorida
+    const equipaY = datasY + 50;
+    this.doc.setFillColor(240, 249, 255); // Azul claro
+    this.doc.rect(15, equipaY - 5, 180, 40, 'F');
+    this.doc.setDrawColor(229, 231, 235);
+    this.doc.rect(15, equipaY - 5, 180, 40);
+    
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Equipa Técnica', 20, equipaY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const equipaTecnica = [
+      `Responsável Técnico: ${obra.responsavel_tecnico}`,
+      `Coordenador de Obra: ${obra.coordenador_obra}`,
+      `Fiscal de Obra: ${obra.fiscal_obra}`,
+      `Engenheiro Responsável: ${obra.engenheiro_responsavel}`,
+      `Arquiteto: ${obra.arquiteto}`
+    ];
+    
+    currentY = equipaY + 15;
+    equipaTecnica.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    // Observações com seção colorida
+    if (obra.observacoes) {
+      const obsY = equipaY + 45;
+      this.doc.setFillColor(254, 251, 235); // Amarelo claro
+      this.doc.rect(15, obsY - 5, 180, 30, 'F');
+      this.doc.setDrawColor(229, 231, 235);
+      this.doc.rect(15, obsY - 5, 180, 30);
+      
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Observações', 20, obsY);
+      
+      this.doc.setFontSize(10);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(75, 85, 99);
+      
+      // Quebrar texto em linhas
+      const maxWidth = 160;
+      const words = obra.observacoes.split(' ');
+      let line = '';
+      currentY = obsY + 15;
+      
+      words.forEach(word => {
+        const testLine = line + word + ' ';
+        const testWidth = this.doc.getTextWidth(testLine);
+        
+        if (testWidth > maxWidth && line !== '') {
+          this.doc.text(line, 25, currentY);
+          line = word + ' ';
+          currentY += 6;
+        } else {
+          line = testLine;
+        }
+      });
+      
+      if (line) {
+        this.doc.text(line, 25, currentY);
+        currentY += 6;
+      }
+      
+      return currentY + 15;
+    }
+    
+    return equipaY + 50;
+  }
+
   private calcularEstatisticasObras(obras: Obra[]) {
     const stats = {
       total: obras.length,
@@ -1415,8 +1589,114 @@ export class PDFService {
     }
   }
 
-  private addRelatorioIndividualObra(options: RelatorioObrasOptions, startY: number): number {
-    const obra = options.obras[0];
+  // Métodos para Relatórios de Ensaios
+  public async generateEnsaiosExecutiveReport(ensaios: Ensaio[]): Promise<void> {
+    console.log('PDFService: Iniciando relatório executivo de ensaios com', ensaios.length, 'ensaios');
+    
+    try {
+      const options: RelatorioEnsaiosOptions = {
+        titulo: 'Relatório Executivo de Ensaios',
+        subtitulo: 'Visão Geral e Indicadores de Conformidade',
+        ensaios,
+        tipo: 'executivo'
+      };
+      
+      console.log('PDFService: Gerando relatório...');
+      this.gerarRelatorioExecutivoEnsaios(options);
+      
+      console.log('PDFService: Fazendo download...');
+      this.download(`relatorio-ensaios-executivo-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      console.log('PDFService: Relatório executivo concluído!');
+    } catch (error) {
+      console.error('PDFService: Erro no relatório executivo:', error);
+      throw error;
+    }
+  }
+
+  public async generateEnsaiosFilteredReport(ensaios: Ensaio[], filtros: any): Promise<void> {
+    const options: RelatorioEnsaiosOptions = {
+      titulo: 'Relatório Filtrado de Ensaios',
+      subtitulo: 'Análise Detalhada com Filtros Aplicados',
+      ensaios,
+      tipo: 'filtrado',
+      filtros
+    };
+    this.gerarRelatorioFiltradoEnsaios(options);
+    this.download(`relatorio-ensaios-filtrado-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateEnsaiosComparativeReport(ensaios: Ensaio[]): Promise<void> {
+    const options: RelatorioEnsaiosOptions = {
+      titulo: 'Relatório Comparativo de Ensaios',
+      subtitulo: 'Análise Comparativa e Benchmarks',
+      ensaios,
+      tipo: 'comparativo'
+    };
+    this.gerarRelatorioComparativoEnsaios(options);
+    this.download(`relatorio-ensaios-comparativo-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateEnsaiosIndividualReport(ensaios: Ensaio[]): Promise<void> {
+    if (ensaios.length !== 1) {
+      throw new Error('Relatório individual deve conter apenas um ensaio');
+    }
+    
+    const ensaio = ensaios[0];
+    const options: RelatorioEnsaiosOptions = {
+      titulo: `Relatório Individual - ${ensaio.tipo}`,
+      subtitulo: `Código: ${ensaio.codigo} | Laboratório: ${ensaio.laboratorio}`,
+      ensaios,
+      tipo: 'individual'
+    };
+    this.gerarRelatorioIndividualEnsaio(options);
+    this.download(`relatorio-ensaios-individual-${ensaio.codigo}-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  private gerarRelatorioExecutivoEnsaios(options: RelatorioEnsaiosOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addEstatisticasEnsaios(options.ensaios, startY);
+    currentY = this.addRelatorioExecutivoEnsaios(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioFiltradoEnsaios(options: RelatorioEnsaiosOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addFiltrosEnsaios(options.filtros, startY);
+    currentY = this.addRelatorioFiltradoEnsaios(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioComparativoEnsaios(options: RelatorioEnsaiosOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioComparativoEnsaios(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioIndividualEnsaio(options: RelatorioEnsaiosOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioIndividualEnsaio(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private addRelatorioIndividualEnsaio(options: RelatorioEnsaiosOptions, startY: number): number {
+    const ensaio = options.ensaios[0];
     
     // Título da seção com fundo colorido
     this.doc.setFillColor(59, 130, 246); // Azul
@@ -1424,32 +1704,32 @@ export class PDFService {
     this.doc.setFontSize(14);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(255, 255, 255);
-    this.doc.text('Ficha Técnica da Obra', 20, startY + 3);
+    this.doc.text('Ficha Técnica do Ensaio', 20, startY + 3);
     
-    // Status card colorido
+    // KPIs alinhados: Status, Valor Obtido, Valor Esperado, Conformidade
     const statusColors = {
-      'em_execucao': [34, 197, 94], // Verde
-      'concluida': [16, 185, 129], // Verde escuro
-      'paralisada': [245, 158, 11], // Amarelo
-      'cancelada': [239, 68, 68], // Vermelho
-      'planeamento': [168, 85, 247] // Roxo
+      'aprovado': [34, 197, 94], // Verde
+      'pendente': [245, 158, 11], // Amarelo
+      'em_analise': [99, 102, 241], // Índigo
+      'reprovado': [239, 68, 68], // Vermelho
+      'concluido': [168, 85, 247] // Roxo
     };
-    
-    const statusColor = statusColors[obra.status] || [107, 114, 128];
-    this.addStatusCard(150, startY - 5, this.getStatusTextObra(obra.status), statusColor);
-    
-    // KPIs da obra
+    const statusColor = statusColors[ensaio.estado] || [107, 114, 128];
+    const estadoText = this.getEstadoTextEnsaio(ensaio.estado);
+
+    // KPIs: 4 cards, espaçados
     const kpiY = startY + 15;
-    this.addKPICard(20, kpiY, 'Valor Contrato', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_contrato), [59, 130, 246]); // Azul
-    this.addKPICard(65, kpiY, 'Valor Executado', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_executado), [34, 197, 94]); // Verde
-    this.addKPICard(110, kpiY, 'Progresso', `${obra.percentual_execucao}%`, [251, 146, 60]); // Laranja
+    this.addKPICard(20, kpiY, 'Status', estadoText, statusColor);
+    this.addKPICard(65, kpiY, 'Valor Obtido', `${ensaio.valor_obtido} ${ensaio.unidade}`, [59, 130, 246]); // Azul
+    this.addKPICard(110, kpiY, 'Valor Esperado', `${ensaio.valor_esperado} ${ensaio.unidade}`, [34, 197, 94]); // Verde
+    this.addKPICard(155, kpiY, 'Conformidade', ensaio.conforme ? 'Conforme' : 'Não Conforme', ensaio.conforme ? [16, 185, 129] : [239, 68, 68]); // Verde/Vermelho
     
     // Informações básicas com seção colorida
     const infoY = kpiY + 35;
     this.doc.setFillColor(249, 250, 251); // Cinza claro
-    this.doc.rect(15, infoY - 5, 180, 50, 'F');
+    this.doc.rect(15, infoY - 5, 180, 45, 'F');
     this.doc.setDrawColor(229, 231, 235);
-    this.doc.rect(15, infoY - 5, 180, 50);
+    this.doc.rect(15, infoY - 5, 180, 45);
     
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
@@ -1461,12 +1741,11 @@ export class PDFService {
     this.doc.setTextColor(75, 85, 99);
     
     const infoBasicas = [
-      `Código: ${obra.codigo}`,
-      `Nome: ${obra.nome}`,
-      `Cliente: ${obra.cliente}`,
-      `Localização: ${obra.localizacao}`,
-      `Tipo: ${obra.tipo_obra.charAt(0).toUpperCase() + obra.tipo_obra.slice(1)}`,
-      `Categoria: ${obra.categoria.charAt(0).toUpperCase() + obra.categoria.slice(1)}`
+      `Código: ${ensaio.codigo}`,
+      `Tipo: ${ensaio.tipo}`,
+      `Laboratório: ${ensaio.laboratorio}`,
+      `Responsável: ${ensaio.responsavel}`,
+      `Zona: ${ensaio.zona}`
     ];
     
     let currentY = infoY + 15;
@@ -1475,68 +1754,39 @@ export class PDFService {
       currentY += 6;
     });
     
-    // Datas e valores com seção colorida
-    const datasY = infoY + 55;
+    // Resultados com seção colorida
+    const resultadosY = infoY + 55;
     this.doc.setFillColor(254, 242, 242); // Vermelho claro
-    this.doc.rect(15, datasY - 5, 180, 45, 'F');
+    this.doc.rect(15, resultadosY - 5, 180, 45, 'F');
     this.doc.setDrawColor(229, 231, 235);
-    this.doc.rect(15, datasY - 5, 180, 45);
+    this.doc.rect(15, resultadosY - 5, 180, 45);
     
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(31, 41, 55);
-    this.doc.text('Datas e Valores', 20, datasY);
+    this.doc.text('Resultados do Ensaio', 20, resultadosY);
     
     this.doc.setFontSize(10);
     this.doc.setFont('helvetica', 'normal');
     this.doc.setTextColor(75, 85, 99);
     
-    const datasValores = [
-      `Data de Início: ${new Date(obra.data_inicio).toLocaleDateString('pt-PT')}`,
-      `Data Fim Prevista: ${new Date(obra.data_fim_prevista).toLocaleDateString('pt-PT')}`,
-      obra.data_fim_real ? `Data Fim Real: ${new Date(obra.data_fim_real).toLocaleDateString('pt-PT')}` : null,
-      `Percentual de Execução: ${obra.percentual_execucao}%`
-    ].filter(Boolean);
-    
-    currentY = datasY + 15;
-    datasValores.forEach(item => {
-      this.doc.text(item, 25, currentY);
-      currentY += 6;
-    });
-    
-    // Equipa técnica com seção colorida
-    const equipaY = datasY + 50;
-    this.doc.setFillColor(240, 249, 255); // Azul claro
-    this.doc.rect(15, equipaY - 5, 180, 40, 'F');
-    this.doc.setDrawColor(229, 231, 235);
-    this.doc.rect(15, equipaY - 5, 180, 40);
-    
-    this.doc.setFontSize(12);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(31, 41, 55);
-    this.doc.text('Equipa Técnica', 20, equipaY);
-    
-    this.doc.setFontSize(10);
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setTextColor(75, 85, 99);
-    
-    const equipaTecnica = [
-      `Responsável Técnico: ${obra.responsavel_tecnico}`,
-      `Coordenador de Obra: ${obra.coordenador_obra}`,
-      `Fiscal de Obra: ${obra.fiscal_obra}`,
-      `Engenheiro Responsável: ${obra.engenheiro_responsavel}`,
-      `Arquiteto: ${obra.arquiteto}`
+    const resultados = [
+      `Data do Ensaio: ${new Date(ensaio.data_ensaio).toLocaleDateString('pt-PT')}`,
+      `Valor Obtido: ${ensaio.valor_obtido} ${ensaio.unidade}`,
+      `Valor Esperado: ${ensaio.valor_esperado} ${ensaio.unidade}`,
+      `Resultado: ${ensaio.resultado}`,
+      `Conformidade: ${ensaio.conforme ? 'Conforme' : 'Não Conforme'}`
     ];
     
-    currentY = equipaY + 15;
-    equipaTecnica.forEach(item => {
+    currentY = resultadosY + 15;
+    resultados.forEach(item => {
       this.doc.text(item, 25, currentY);
       currentY += 6;
     });
     
     // Observações com seção colorida
-    if (obra.observacoes) {
-      const obsY = equipaY + 45;
+    if (ensaio.observacoes) {
+      const obsY = resultadosY + 50;
       this.doc.setFillColor(254, 251, 235); // Amarelo claro
       this.doc.rect(15, obsY - 5, 180, 30, 'F');
       this.doc.setDrawColor(229, 231, 235);
@@ -1553,7 +1803,7 @@ export class PDFService {
       
       // Quebrar texto em linhas
       const maxWidth = 160;
-      const words = obra.observacoes.split(' ');
+      const words = ensaio.observacoes.split(' ');
       let line = '';
       currentY = obsY + 15;
       
@@ -1578,7 +1828,350 @@ export class PDFService {
       return currentY + 15;
     }
     
-    return equipaY + 50;
+    return resultadosY + 50;
+  }
+
+  private calcularEstatisticasEnsaios(ensaios: Ensaio[]) {
+    const stats = {
+      total: ensaios.length,
+      conformes: ensaios.filter(e => e.conforme).length,
+      nao_conformes: ensaios.filter(e => !e.conforme).length,
+      aprovados: ensaios.filter(e => e.estado === 'aprovado').length,
+      pendentes: ensaios.filter(e => e.estado === 'pendente').length,
+      em_analise: ensaios.filter(e => e.estado === 'em_analise').length,
+      reprovados: ensaios.filter(e => e.estado === 'reprovado').length,
+      concluidos: ensaios.filter(e => e.estado === 'concluido').length,
+      percentual_conformidade: ensaios.length > 0 ? (ensaios.filter(e => e.conforme).length / ensaios.length) * 100 : 0,
+      laboratorios_unicos: new Set(ensaios.map(e => e.laboratorio)).size,
+      por_tipo: ensaios.reduce((acc, e) => {
+        acc[e.tipo] = (acc[e.tipo] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+      por_laboratorio: ensaios.reduce((acc, e) => {
+        acc[e.laboratorio] = (acc[e.laboratorio] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    };
+    
+    return stats;
+  }
+
+  private addEstatisticasEnsaios(ensaios: Ensaio[], startY: number): number {
+    const stats = this.calcularEstatisticasEnsaios(ensaios);
+    
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Indicadores de Conformidade', 20, startY);
+    
+    // Cards de KPI - Primeira linha (4 cards)
+    this.addKPICard(20, startY + 10, 'Total Ensaios', stats.total.toString(), [59, 130, 246]); // Azul
+    this.addKPICard(65, startY + 10, 'Conformes', stats.conformes.toString(), [34, 197, 94]); // Verde
+    this.addKPICard(110, startY + 10, 'Não Conformes', stats.nao_conformes.toString(), [239, 68, 68]); // Vermelho
+    this.addKPICard(155, startY + 10, 'Aprovados', stats.aprovados.toString(), [16, 185, 129]); // Verde escuro
+    
+    // Segunda linha (4 cards)
+    this.addKPICard(20, startY + 35, 'Taxa Conformidade', `${stats.percentual_conformidade.toFixed(1)}%`, [168, 85, 247]); // Roxo
+    this.addKPICard(65, startY + 35, 'Pendentes', stats.pendentes.toString(), [245, 158, 11]); // Amarelo
+    this.addKPICard(110, startY + 35, 'Em Análise', stats.em_analise.toString(), [99, 102, 241]); // Índigo
+    this.addKPICard(155, startY + 35, 'Laboratórios', stats.laboratorios_unicos.toString(), [251, 146, 60]); // Laranja
+    
+    return startY + 65;
+  }
+
+  private addRelatorioExecutivoEnsaios(options: RelatorioEnsaiosOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Resumo Executivo', 20, startY);
+    
+    // Resumo executivo
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const stats = this.calcularEstatisticasEnsaios(options.ensaios);
+    
+    const resumo = [
+      `• Total de ensaios realizados: ${stats.total}`,
+      `• Ensaios conformes: ${stats.conformes} (${stats.percentual_conformidade.toFixed(1)}%)`,
+      `• Ensaios não conformes: ${stats.nao_conformes} (${((stats.nao_conformes / stats.total) * 100).toFixed(1)}%)`,
+      `• Ensaios aprovados: ${stats.aprovados} (${((stats.aprovados / stats.total) * 100).toFixed(1)}%)`,
+      `• Ensaios pendentes: ${stats.pendentes} (${((stats.pendentes / stats.total) * 100).toFixed(1)}%)`,
+      `• Laboratórios utilizados: ${stats.laboratorios_unicos}`,
+      `• Taxa de conformidade geral: ${stats.percentual_conformidade.toFixed(1)}%`
+    ];
+    
+    let currentY = startY + 15;
+    resumo.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    currentY += 10;
+    
+    // Tabela de ensaios principais
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Principais Ensaios', 20, currentY);
+    
+    const ensaiosPrincipais = options.ensaios
+      .sort((a, b) => new Date(b.data_ensaio).getTime() - new Date(a.data_ensaio).getTime())
+      .slice(0, 10);
+    
+    const tableData = ensaiosPrincipais.map(ensaio => [
+      ensaio.codigo,
+      ensaio.tipo.substring(0, 20) + (ensaio.tipo.length > 20 ? '...' : ''),
+      ensaio.laboratorio.substring(0, 15) + (ensaio.laboratorio.length > 15 ? '...' : ''),
+      `${ensaio.valor_obtido} ${ensaio.unidade}`,
+      ensaio.conforme ? 'Conforme' : 'Não Conforme',
+      this.getEstadoTextEnsaio(ensaio.estado)
+    ]);
+    
+    autoTable(this.doc, {
+      startY: currentY + 8,
+      head: [['Código', 'Tipo', 'Laboratório', 'Resultado', 'Conformidade', 'Estado']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255,
+        fontSize: 8,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 7,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addFiltrosEnsaios(filtros: any, startY: number): number {
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Filtros Aplicados', 20, startY);
+    
+    if (filtros) {
+      let filterY = startY + 15;
+      let filterCount = 0;
+      Object.entries(filtros).forEach(([key, value]) => {
+        if (value) {
+          const label = this.getFilterLabelEnsaio(key);
+          this.doc.setFontSize(9);
+          this.doc.setFont('helvetica', 'normal');
+          this.doc.setTextColor(107, 114, 128);
+          this.doc.text(`${label}: ${value}`, 25, filterY);
+          filterY += 5;
+          filterCount++;
+        }
+      });
+      
+      if (filterCount === 0) {
+        this.doc.setFontSize(9);
+        this.doc.setFont('helvetica', 'italic');
+        this.doc.setTextColor(156, 163, 175);
+        this.doc.text('Nenhum filtro aplicado', 25, filterY);
+        filterY += 5;
+      }
+      
+      return filterY + 10;
+    }
+    
+    return startY + 20;
+  }
+
+  private addRelatorioFiltradoEnsaios(options: RelatorioEnsaiosOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Ensaios Filtrados', 20, startY);
+    
+    // Tabela de ensaios
+    const tableData = options.ensaios.map(ensaio => [
+      ensaio.codigo,
+      ensaio.tipo.substring(0, 25) + (ensaio.tipo.length > 25 ? '...' : ''),
+      ensaio.laboratorio.substring(0, 20) + (ensaio.laboratorio.length > 20 ? '...' : ''),
+      new Date(ensaio.data_ensaio).toLocaleDateString('pt-PT'),
+      `${ensaio.valor_obtido} ${ensaio.unidade}`,
+      ensaio.conforme ? 'Conforme' : 'Não Conforme',
+      this.getEstadoTextEnsaio(ensaio.estado),
+      ensaio.responsavel
+    ]);
+    
+    autoTable(this.doc, {
+      startY: startY + 8,
+      head: [['Código', 'Nome', 'Cliente', 'Localização', 'Início', 'Valor', 'Progresso', 'Status', 'Responsável']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [34, 197, 94],
+        textColor: 255,
+        fontSize: 7,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 6,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addRelatorioComparativoEnsaios(options: RelatorioEnsaiosOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, startY);
+    
+    const stats = this.calcularEstatisticasEnsaios(options.ensaios);
+    
+    // Comparação por estado
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Distribuição por Estado', 20, startY + 15);
+    
+    const analisePorEstado = {
+      'Aprovados': stats.aprovados,
+      'Pendentes': stats.pendentes,
+      'Em Análise': stats.em_analise,
+      'Reprovados': stats.reprovados,
+      'Concluídos': stats.concluidos
+    };
+    
+    const tableDataEstado = Object.entries(analisePorEstado).map(([estado, quantidade]) => [
+      estado,
+      quantidade.toString(),
+      `${((quantidade / stats.total) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: startY + 20,
+      head: [['Estado', 'Quantidade', 'Percentual']],
+      body: tableDataEstado,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [99, 102, 241],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 8,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    let currentY = (this.doc as any).lastAutoTable.finalY + 15;
+    
+    // Comparação por tipo de ensaio
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Distribuição por Tipo de Ensaio', 20, currentY);
+    
+    const tableDataTipo = Object.entries(stats.por_tipo).map(([tipo, quantidade]) => [
+      tipo.substring(0, 20) + (tipo.length > 20 ? '...' : ''),
+      quantidade.toString(),
+      `${((quantidade / stats.total) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: currentY + 8,
+      head: [['Tipo', 'Quantidade', 'Percentual']],
+      body: tableDataTipo,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [16, 185, 129],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 8,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    currentY = (this.doc as any).lastAutoTable.finalY + 15;
+    
+    // Comparação por laboratório
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Distribuição por Laboratório', 20, currentY);
+    
+    const tableDataLaboratorio = Object.entries(stats.por_laboratorio).map(([laboratorio, quantidade]) => [
+      laboratorio.substring(0, 20) + (laboratorio.length > 20 ? '...' : ''),
+      quantidade.toString(),
+      `${((quantidade / stats.total) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: currentY + 8,
+      head: [['Laboratório', 'Quantidade', 'Percentual']],
+      body: tableDataLaboratorio,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [251, 146, 60],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 8,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private getFilterLabelEnsaio(key: string): string {
+    const labels: Record<string, string> = {
+      tipo: 'Tipo de Ensaio',
+      estado: 'Estado',
+      laboratorio: 'Laboratório',
+      conforme: 'Conformidade',
+      dataInicio: 'Data de Início',
+      dataFim: 'Data de Fim'
+    };
+    return labels[key] || key;
+  }
+
+  private getEstadoTextEnsaio(estado: string): string {
+    switch (estado) {
+      case 'aprovado': return 'Aprovado';
+      case 'pendente': return 'Pendente';
+      case 'em_analise': return 'Em Análise';
+      case 'reprovado': return 'Reprovado';
+      case 'concluido': return 'Concluído';
+      default: return estado;
+    }
   }
 }
 
