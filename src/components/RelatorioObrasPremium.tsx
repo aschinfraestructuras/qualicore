@@ -22,34 +22,23 @@ export default function RelatorioObrasPremium({ obras, onClose }: RelatorioObras
   const handleGenerateReport = async (reportType: string) => {
     setLoading(true);
     try {
-      console.log('Iniciando geração de relatório:', reportType);
-      console.log('Obras disponíveis:', obras.length);
-      
       const filteredObras = applyFilters(obras);
-      console.log('Obras filtradas:', filteredObras.length);
       
       switch (reportType) {
         case 'executivo':
-          console.log('Gerando relatório executivo...');
           await pdfService.generateObrasExecutiveReport(filteredObras);
-          console.log('Relatório executivo gerado com sucesso!');
           break;
         case 'filtrado':
-          console.log('Gerando relatório filtrado...');
           await pdfService.generateObrasFilteredReport(filteredObras, filters);
-          console.log('Relatório filtrado gerado com sucesso!');
           break;
         case 'comparativo':
-          console.log('Gerando relatório comparativo...');
           await pdfService.generateObrasComparativeReport(filteredObras);
-          console.log('Relatório comparativo gerado com sucesso!');
           break;
         default:
           throw new Error('Tipo de relatório não reconhecido');
       }
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);
-      alert(`Erro ao gerar relatório: ${error}`);
     } finally {
       setLoading(false);
     }

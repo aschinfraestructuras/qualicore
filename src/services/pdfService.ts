@@ -971,13 +971,6 @@ export class PDFService {
     console.log('PDFService: Iniciando relatório executivo com', obras.length, 'obras');
     
     try {
-      // Teste simples primeiro
-      console.log('PDFService: Testando jsPDF...');
-      const testDoc = new jsPDF();
-      testDoc.text('Teste jsPDF', 20, 20);
-      testDoc.save('teste-jspdf.pdf');
-      console.log('PDFService: Teste jsPDF OK');
-      
       const options: RelatorioObrasOptions = {
         titulo: 'Relatório Executivo de Obras',
         subtitulo: 'Visão Geral e Indicadores de Performance',
@@ -1112,17 +1105,17 @@ export class PDFService {
     this.doc.setTextColor(31, 41, 55);
     this.doc.text('Indicadores de Performance', 20, startY);
     
-    // Cards de KPI
+    // Cards de KPI - Primeira linha (4 cards)
     this.addKPICard(20, startY + 10, 'Total Obras', stats.total.toString(), [59, 130, 246]); // Azul
-    this.addKPICard(70, startY + 10, 'Em Execução', stats.em_execucao.toString(), [34, 197, 94]); // Verde
-    this.addKPICard(120, startY + 10, 'Concluídas', stats.concluidas.toString(), [16, 185, 129]); // Verde escuro
-    this.addKPICard(170, startY + 10, 'Valor Total', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(stats.valor_total), [168, 85, 247]); // Roxo
+    this.addKPICard(65, startY + 10, 'Em Execução', stats.em_execucao.toString(), [34, 197, 94]); // Verde
+    this.addKPICard(110, startY + 10, 'Concluídas', stats.concluidas.toString(), [16, 185, 129]); // Verde escuro
+    this.addKPICard(155, startY + 10, 'Paralisadas', stats.paralisadas.toString(), [245, 158, 11]); // Amarelo
     
-    // Segunda linha de cards
-    this.addKPICard(20, startY + 35, 'Valor Executado', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(stats.valor_executado), [251, 146, 60]); // Laranja
-    this.addKPICard(70, startY + 35, 'Progresso Médio', `${stats.percentual_medio.toFixed(1)}%`, [236, 72, 153]); // Rosa
-    this.addKPICard(120, startY + 35, 'Paralisadas', stats.paralisadas.toString(), [245, 158, 11]); // Amarelo
-    this.addKPICard(170, startY + 35, 'Canceladas', stats.canceladas.toString(), [239, 68, 68]); // Vermelho
+    // Segunda linha (4 cards)
+    this.addKPICard(20, startY + 35, 'Valor Total', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(stats.valor_total), [168, 85, 247]); // Roxo
+    this.addKPICard(65, startY + 35, 'Valor Executado', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(stats.valor_executado), [251, 146, 60]); // Laranja
+    this.addKPICard(110, startY + 35, 'Progresso Médio', `${stats.percentual_medio.toFixed(1)}%`, [236, 72, 153]); // Rosa
+    this.addKPICard(155, startY + 35, 'Canceladas', stats.canceladas.toString(), [239, 68, 68]); // Vermelho
     
     return startY + 65;
   }
@@ -1425,17 +1418,43 @@ export class PDFService {
   private addRelatorioIndividualObra(options: RelatorioObrasOptions, startY: number): number {
     const obra = options.obras[0];
     
-    // Título da seção
+    // Título da seção com fundo colorido
+    this.doc.setFillColor(59, 130, 246); // Azul
+    this.doc.rect(15, startY - 5, 180, 12, 'F');
     this.doc.setFontSize(14);
     this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(31, 41, 55);
-    this.doc.text('Ficha Técnica da Obra', 20, startY);
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica da Obra', 20, startY + 3);
     
-    // Informações básicas
+    // Status card colorido
+    const statusColors = {
+      'em_execucao': [34, 197, 94], // Verde
+      'concluida': [16, 185, 129], // Verde escuro
+      'paralisada': [245, 158, 11], // Amarelo
+      'cancelada': [239, 68, 68], // Vermelho
+      'planeamento': [168, 85, 247] // Roxo
+    };
+    
+    const statusColor = statusColors[obra.status] || [107, 114, 128];
+    this.addStatusCard(150, startY - 5, this.getStatusTextObra(obra.status), statusColor);
+    
+    // KPIs da obra
+    const kpiY = startY + 15;
+    this.addKPICard(20, kpiY, 'Valor Contrato', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_contrato), [59, 130, 246]); // Azul
+    this.addKPICard(65, kpiY, 'Valor Executado', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_executado), [34, 197, 94]); // Verde
+    this.addKPICard(110, kpiY, 'Progresso', `${obra.percentual_execucao}%`, [251, 146, 60]); // Laranja
+    
+    // Informações básicas com seção colorida
+    const infoY = kpiY + 35;
+    this.doc.setFillColor(249, 250, 251); // Cinza claro
+    this.doc.rect(15, infoY - 5, 180, 50, 'F');
+    this.doc.setDrawColor(229, 231, 235);
+    this.doc.rect(15, infoY - 5, 180, 50);
+    
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(75, 85, 99);
-    this.doc.text('Informações Básicas', 20, startY + 20);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Informações Básicas', 20, infoY);
     
     this.doc.setFontSize(10);
     this.doc.setFont('helvetica', 'normal');
@@ -1447,23 +1466,26 @@ export class PDFService {
       `Cliente: ${obra.cliente}`,
       `Localização: ${obra.localizacao}`,
       `Tipo: ${obra.tipo_obra.charAt(0).toUpperCase() + obra.tipo_obra.slice(1)}`,
-      `Categoria: ${obra.categoria.charAt(0).toUpperCase() + obra.categoria.slice(1)}`,
-      `Status: ${this.getStatusTextObra(obra.status)}`
+      `Categoria: ${obra.categoria.charAt(0).toUpperCase() + obra.categoria.slice(1)}`
     ];
     
-    let currentY = startY + 30;
+    let currentY = infoY + 15;
     infoBasicas.forEach(item => {
       this.doc.text(item, 25, currentY);
       currentY += 6;
     });
     
-    currentY += 10;
+    // Datas e valores com seção colorida
+    const datasY = infoY + 55;
+    this.doc.setFillColor(254, 242, 242); // Vermelho claro
+    this.doc.rect(15, datasY - 5, 180, 45, 'F');
+    this.doc.setDrawColor(229, 231, 235);
+    this.doc.rect(15, datasY - 5, 180, 45);
     
-    // Datas e valores
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(75, 85, 99);
-    this.doc.text('Datas e Valores', 20, currentY);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Datas e Valores', 20, datasY);
     
     this.doc.setFontSize(10);
     this.doc.setFont('helvetica', 'normal');
@@ -1473,24 +1495,26 @@ export class PDFService {
       `Data de Início: ${new Date(obra.data_inicio).toLocaleDateString('pt-PT')}`,
       `Data Fim Prevista: ${new Date(obra.data_fim_prevista).toLocaleDateString('pt-PT')}`,
       obra.data_fim_real ? `Data Fim Real: ${new Date(obra.data_fim_real).toLocaleDateString('pt-PT')}` : null,
-      `Valor do Contrato: ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(obra.valor_contrato)}`,
-      `Valor Executado: ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(obra.valor_executado)}`,
       `Percentual de Execução: ${obra.percentual_execucao}%`
     ].filter(Boolean);
     
-    currentY += 15;
+    currentY = datasY + 15;
     datasValores.forEach(item => {
       this.doc.text(item, 25, currentY);
       currentY += 6;
     });
     
-    currentY += 10;
+    // Equipa técnica com seção colorida
+    const equipaY = datasY + 50;
+    this.doc.setFillColor(240, 249, 255); // Azul claro
+    this.doc.rect(15, equipaY - 5, 180, 40, 'F');
+    this.doc.setDrawColor(229, 231, 235);
+    this.doc.rect(15, equipaY - 5, 180, 40);
     
-    // Equipa técnica
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(75, 85, 99);
-    this.doc.text('Equipa Técnica', 20, currentY);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Equipa Técnica', 20, equipaY);
     
     this.doc.setFontSize(10);
     this.doc.setFont('helvetica', 'normal');
@@ -1504,30 +1528,34 @@ export class PDFService {
       `Arquiteto: ${obra.arquiteto}`
     ];
     
-    currentY += 15;
+    currentY = equipaY + 15;
     equipaTecnica.forEach(item => {
       this.doc.text(item, 25, currentY);
       currentY += 6;
     });
     
-    currentY += 10;
-    
-    // Observações
+    // Observações com seção colorida
     if (obra.observacoes) {
+      const obsY = equipaY + 45;
+      this.doc.setFillColor(254, 251, 235); // Amarelo claro
+      this.doc.rect(15, obsY - 5, 180, 30, 'F');
+      this.doc.setDrawColor(229, 231, 235);
+      this.doc.rect(15, obsY - 5, 180, 30);
+      
       this.doc.setFontSize(12);
       this.doc.setFont('helvetica', 'bold');
-      this.doc.setTextColor(75, 85, 99);
-      this.doc.text('Observações', 20, currentY);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Observações', 20, obsY);
       
       this.doc.setFontSize(10);
       this.doc.setFont('helvetica', 'normal');
       this.doc.setTextColor(75, 85, 99);
       
       // Quebrar texto em linhas
-      const maxWidth = 170;
+      const maxWidth = 160;
       const words = obra.observacoes.split(' ');
       let line = '';
-      currentY += 15;
+      currentY = obsY + 15;
       
       words.forEach(word => {
         const testLine = line + word + ' ';
@@ -1546,9 +1574,11 @@ export class PDFService {
         this.doc.text(line, 25, currentY);
         currentY += 6;
       }
+      
+      return currentY + 15;
     }
     
-    return currentY + 15;
+    return equipaY + 50;
   }
 }
 
