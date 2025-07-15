@@ -1,6 +1,13 @@
-import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
+import {
+  Ensaio,
+  Documento,
+  Checklist,
+  Material,
+  Fornecedor,
+  NaoConformidade,
+  Obra,
+} from "@/types";
 // Import de ícones removido
-
 
 // export default function Sidebar() {
 //   const location = useLocation()
@@ -10,7 +17,7 @@ import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Ob
 //     <>
 //       {/* Mobile overlay */}
 //       {sidebarOpen && (
-//         <div 
+//         <div
 //           className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"
 //           onClick={toggleSidebar}
 //         />
@@ -60,8 +67,8 @@ import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Ob
 //                       title={item.description}
 //                     >
 //                       <div className={`p-2 rounded-xl mr-3 transition-all duration-300 ${
-//                         isActive 
-//                           ? 'bg-white/20' 
+//                         isActive
+//                           ? 'bg-white/20'
 //                           : 'bg-slate-700/50 group-hover:bg-slate-600/50'
 //                       }`}>
 //                         <Icon className={`h-5 w-5 ${
@@ -159,4 +166,4 @@ import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Ob
 //       </aside>
 //     </>
 //   )
-// } 
+// }

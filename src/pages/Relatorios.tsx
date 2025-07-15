@@ -1,9 +1,17 @@
-import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
-import { useState, useEffect } from 'react'
-import { 
-  BarChart3, 
-  FileText, 
-  Download, 
+import {
+  Ensaio,
+  Documento,
+  Checklist,
+  Material,
+  Fornecedor,
+  NaoConformidade,
+  Obra,
+} from "@/types";
+import { useState, useEffect } from "react";
+import {
+  BarChart3,
+  FileText,
+  Download,
   Calendar,
   TrendingUp,
   AlertTriangle,
@@ -20,54 +28,63 @@ import {
   Search,
   XCircle,
   ChevronDown,
-  ChevronUp
-} from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { calcularMetricasReais, MetricasReais } from '@/services/metricsService'
-import toast from 'react-hot-toast'
+  ChevronUp,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  calcularMetricasReais,
+  MetricasReais,
+} from "@/services/metricsService";
+import toast from "react-hot-toast";
 
 interface FiltrosRelatorio {
-  periodo: 'semana' | 'mes' | 'trimestre' | 'ano' | 'personalizado';
+  periodo: "semana" | "mes" | "trimestre" | "ano" | "personalizado";
   dataInicio?: string;
   dataFim?: string;
-  modulo: 'todos' | 'ensaios' | 'checklists' | 'materiais' | 'ncs' | 'documentos';
+  modulo:
+    | "todos"
+    | "ensaios"
+    | "checklists"
+    | "materiais"
+    | "ncs"
+    | "documentos";
   zona?: string;
   responsavel?: string;
   status?: string;
 }
 
 export default function Relatorios() {
-  const [metricas, setMetricas] = useState<MetricasReais | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [metricas, setMetricas] = useState<MetricasReais | null>(null);
+  const [loading, setLoading] = useState(true);
   const [filtros, setFiltros] = useState<FiltrosRelatorio>({
-    periodo: 'mes',
-    modulo: 'todos'
-  })
-  const [relatorioAtivo, setRelatorioAtivo] = useState<string | null>(null)
-  const [showFilters, setShowFilters] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
+    periodo: "mes",
+    modulo: "todos",
+  });
+  const [relatorioAtivo, setRelatorioAtivo] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    carregarMetricas()
-  }, [])
+    carregarMetricas();
+  }, []);
 
   const carregarMetricas = async () => {
     try {
-      setLoading(true)
-      const dados = await calcularMetricasReais()
-      setMetricas(dados)
+      setLoading(true);
+      const dados = await calcularMetricasReais();
+      setMetricas(dados);
     } catch (error) {
-      console.error('Erro ao carregar métricas:', error)
-      toast.error('Erro ao carregar dados para relatórios')
+      console.error("Erro ao carregar métricas:", error);
+      toast.error("Erro ao carregar dados para relatórios");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleRefresh = () => {
-    carregarMetricas()
-    toast.success('Dados atualizados')
-  }
+    carregarMetricas();
+    toast.success("Dados atualizados");
+  };
 
   const handleExportRelatorio = (tipo: string) => {
     const data = {
@@ -75,99 +92,106 @@ export default function Relatorios() {
       filtros,
       metricas,
       dataExportacao: new Date().toISOString(),
-      periodo: filtros.periodo
-    }
-    
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `relatorio-${tipo}-${new Date().toISOString().split('T')[0]}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    
-    toast.success(`Relatório ${tipo} exportado com sucesso!`)
-  }
+      periodo: filtros.periodo,
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `relatorio-${tipo}-${new Date().toISOString().split("T")[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast.success(`Relatório ${tipo} exportado com sucesso!`);
+  };
 
   const handleExportPDF = (tipo: string) => {
     // Simular exportação PDF
-    toast.success(`Relatório ${tipo} em PDF será gerado...`)
+    toast.success(`Relatório ${tipo} em PDF será gerado...`);
     setTimeout(() => {
-      toast.success(`Relatório ${tipo} em PDF exportado com sucesso!`)
-    }, 2000)
-  }
+      toast.success(`Relatório ${tipo} em PDF exportado com sucesso!`);
+    }, 2000);
+  };
 
   const handleExportExcel = (tipo: string) => {
     // Simular exportação Excel
-    const csvContent = `Tipo,Valor,Data\n${tipo},${metricas?.geral.conformidade_geral}%,${new Date().toISOString()}`
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `relatorio-${tipo}-${new Date().toISOString().split('T')[0]}.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    
-    toast.success(`Relatório ${tipo} em Excel exportado com sucesso!`)
-  }
+    const csvContent = `Tipo,Valor,Data\n${tipo},${metricas?.geral.conformidade_geral}%,${new Date().toISOString()}`;
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `relatorio-${tipo}-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast.success(`Relatório ${tipo} em Excel exportado com sucesso!`);
+  };
 
   const handlePrintRelatorio = (tipo: string) => {
-    toast.success(`Preparando impressão do relatório ${tipo}...`)
+    toast.success(`Preparando impressão do relatório ${tipo}...`);
     setTimeout(() => {
-      window.print()
-      toast.success(`Relatório ${tipo} enviado para impressão!`)
-    }, 1000)
-  }
+      window.print();
+      toast.success(`Relatório ${tipo} enviado para impressão!`);
+    }, 1000);
+  };
 
   const handleShareRelatorio = (tipo: string) => {
     if (navigator.share) {
-      navigator.share({
-        title: `Relatório ${tipo}`,
-        text: `Relatório de qualidade - ${tipo}`,
-        url: window.location.href
-      }).then(() => {
-        toast.success('Relatório partilhado com sucesso!')
-      }).catch(() => {
-        toast.error('Erro ao partilhar relatório')
-      })
+      navigator
+        .share({
+          title: `Relatório ${tipo}`,
+          text: `Relatório de qualidade - ${tipo}`,
+          url: window.location.href,
+        })
+        .then(() => {
+          toast.success("Relatório partilhado com sucesso!");
+        })
+        .catch(() => {
+          toast.error("Erro ao partilhar relatório");
+        });
     } else {
       // Fallback para copiar link
       navigator.clipboard.writeText(window.location.href).then(() => {
-        toast.success('Link do relatório copiado para a área de transferência!')
-      })
+        toast.success(
+          "Link do relatório copiado para a área de transferência!",
+        );
+      });
     }
-  }
+  };
 
   const handleClearFilters = () => {
     setFiltros({
-      periodo: 'mes',
-      modulo: 'todos'
-    })
-    setSearchTerm('')
-    toast.success('Filtros limpos')
-  }
+      periodo: "mes",
+      modulo: "todos",
+    });
+    setSearchTerm("");
+    toast.success("Filtros limpos");
+  };
 
   const handleApplyFilters = () => {
-    carregarMetricas()
-    setShowFilters(false)
-    toast.success('Filtros aplicados')
-  }
+    carregarMetricas();
+    setShowFilters(false);
+    toast.success("Filtros aplicados");
+  };
 
   const handleViewRelatorio = (tipo: string) => {
-    setRelatorioAtivo(relatorioAtivo === tipo ? null : tipo)
-    toast.success(`Visualizando relatório ${tipo}`)
-  }
+    setRelatorioAtivo(relatorioAtivo === tipo ? null : tipo);
+    toast.success(`Visualizando relatório ${tipo}`);
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
       </div>
-    )
+    );
   }
 
   if (!metricas) {
@@ -178,13 +202,13 @@ export default function Relatorios() {
           Tentar novamente
         </button>
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -198,7 +222,7 @@ export default function Relatorios() {
             Análises detalhadas e relatórios baseados em dados reais
           </p>
         </div>
-        
+
         <div className="flex items-center space-x-4">
           {/* Barra de Pesquisa */}
           <div className="relative hidden md:block">
@@ -215,7 +239,9 @@ export default function Relatorios() {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`p-2 rounded-lg shadow-soft hover:shadow-md transition-all ${
-              showFilters ? 'bg-primary-100 text-primary-600' : 'bg-white text-gray-600'
+              showFilters
+                ? "bg-primary-100 text-primary-600"
+                : "bg-white text-gray-600"
             }`}
             title="Filtros"
           >
@@ -229,12 +255,17 @@ export default function Relatorios() {
           >
             <RefreshCw className="h-5 w-5 text-gray-600" />
           </button>
-          
+
           <div className="flex items-center space-x-2 bg-white rounded-xl p-1 shadow-soft">
             <Calendar className="h-4 w-4 text-gray-500 ml-2" />
-            <select 
+            <select
               value={filtros.periodo}
-              onChange={(e) => setFiltros(prev => ({ ...prev, periodo: e.target.value as any }))}
+              onChange={(e) =>
+                setFiltros((prev) => ({
+                  ...prev,
+                  periodo: e.target.value as any,
+                }))
+              }
               className="px-3 py-2 text-sm border-0 bg-transparent focus:outline-none"
             >
               <option value="semana">Última Semana</option>
@@ -250,16 +281,19 @@ export default function Relatorios() {
       {/* Filtros Avançados */}
       <AnimatePresence>
         {showFilters && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             className="card"
           >
             <div className="card-header">
               <div className="flex items-center justify-between">
                 <h3 className="card-title">Filtros Avançados</h3>
-                <button onClick={() => setShowFilters(false)} className="text-gray-400 hover:text-gray-600">
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
                   <XCircle className="h-5 w-5" />
                 </button>
               </div>
@@ -272,7 +306,9 @@ export default function Relatorios() {
                   </label>
                   <select
                     value={filtros.modulo}
-                    onChange={(e) => setFiltros({...filtros, modulo: e.target.value as any})}
+                    onChange={(e) =>
+                      setFiltros({ ...filtros, modulo: e.target.value as any })
+                    }
                     className="w-full p-2 border border-gray-300 rounded-lg"
                   >
                     <option value="todos">Todos os módulos</option>
@@ -283,40 +319,46 @@ export default function Relatorios() {
                     <option value="documentos">Documentos</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Zona/Projeto
                   </label>
                   <input
                     type="text"
-                    value={filtros.zona || ''}
-                    onChange={(e) => setFiltros({...filtros, zona: e.target.value})}
+                    value={filtros.zona || ""}
+                    onChange={(e) =>
+                      setFiltros({ ...filtros, zona: e.target.value })
+                    }
                     placeholder="Filtrar por zona..."
                     className="w-full p-2 border border-gray-300 rounded-lg"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Responsável
                   </label>
                   <input
                     type="text"
-                    value={filtros.responsavel || ''}
-                    onChange={(e) => setFiltros({...filtros, responsavel: e.target.value})}
+                    value={filtros.responsavel || ""}
+                    onChange={(e) =>
+                      setFiltros({ ...filtros, responsavel: e.target.value })
+                    }
                     placeholder="Filtrar por responsável..."
                     className="w-full p-2 border border-gray-300 rounded-lg"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Status
                   </label>
                   <select
-                    value={filtros.status || ''}
-                    onChange={(e) => setFiltros({...filtros, status: e.target.value})}
+                    value={filtros.status || ""}
+                    onChange={(e) =>
+                      setFiltros({ ...filtros, status: e.target.value })
+                    }
                     className="w-full p-2 border border-gray-300 rounded-lg"
                   >
                     <option value="">Todos os status</option>
@@ -326,8 +368,8 @@ export default function Relatorios() {
                     <option value="cancelado">Cancelado</option>
                   </select>
                 </div>
-                
-                {filtros.periodo === 'personalizado' && (
+
+                {filtros.periodo === "personalizado" && (
                   <>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -335,26 +377,30 @@ export default function Relatorios() {
                       </label>
                       <input
                         type="date"
-                        value={filtros.dataInicio || ''}
-                        onChange={(e) => setFiltros({...filtros, dataInicio: e.target.value})}
+                        value={filtros.dataInicio || ""}
+                        onChange={(e) =>
+                          setFiltros({ ...filtros, dataInicio: e.target.value })
+                        }
                         className="w-full p-2 border border-gray-300 rounded-lg"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Data Fim
                       </label>
                       <input
                         type="date"
-                        value={filtros.dataFim || ''}
-                        onChange={(e) => setFiltros({...filtros, dataFim: e.target.value})}
+                        value={filtros.dataFim || ""}
+                        onChange={(e) =>
+                          setFiltros({ ...filtros, dataFim: e.target.value })
+                        }
                         className="w-full p-2 border border-gray-300 rounded-lg"
                       />
                     </div>
                   </>
                 )}
-                
+
                 <div className="flex items-end space-x-2">
                   <button
                     onClick={handleApplyFilters}
@@ -376,78 +422,112 @@ export default function Relatorios() {
       </AnimatePresence>
 
       {/* KPIs Resumo */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
         className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6"
       >
-        <div className="card card-hover cursor-pointer" onClick={() => handleViewRelatorio('conformidade')}>
+        <div
+          className="card card-hover cursor-pointer"
+          onClick={() => handleViewRelatorio("conformidade")}
+        >
           <div className="card-content">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Conformidade</p>
-                <p className="text-2xl font-bold text-green-600">{metricas.geral.conformidade_geral}%</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Conformidade
+                </p>
+                <p className="text-2xl font-bold text-green-600">
+                  {metricas.geral.conformidade_geral}%
+                </p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
           </div>
         </div>
-        
-        <div className="card card-hover cursor-pointer" onClick={() => handleViewRelatorio('ensaios')}>
+
+        <div
+          className="card card-hover cursor-pointer"
+          onClick={() => handleViewRelatorio("ensaios")}
+        >
           <div className="card-content">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Ensaios</p>
-                <p className="text-2xl font-bold text-emerald-600">{metricas.ensaios.taxa_conformidade}%</p>
+                <p className="text-2xl font-bold text-emerald-600">
+                  {metricas.ensaios.taxa_conformidade}%
+                </p>
               </div>
               <TrendingUp className="h-8 w-8 text-emerald-500" />
             </div>
           </div>
         </div>
-        
-        <div className="card card-hover cursor-pointer" onClick={() => handleViewRelatorio('checklists')}>
+
+        <div
+          className="card card-hover cursor-pointer"
+          onClick={() => handleViewRelatorio("checklists")}
+        >
           <div className="card-content">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Checklists</p>
-                <p className="text-2xl font-bold text-purple-600">{metricas.checklists.conformidade_media}%</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {metricas.checklists.conformidade_media}%
+                </p>
               </div>
               <BarChart3 className="h-8 w-8 text-purple-500" />
             </div>
           </div>
         </div>
-        
-        <div className="card card-hover cursor-pointer" onClick={() => handleViewRelatorio('materiais')}>
+
+        <div
+          className="card card-hover cursor-pointer"
+          onClick={() => handleViewRelatorio("materiais")}
+        >
           <div className="card-content">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Materiais</p>
-                <p className="text-2xl font-bold text-orange-600">{metricas.materiais.taxa_aprovacao}%</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {metricas.materiais.taxa_aprovacao}%
+                </p>
               </div>
               <Package className="h-8 w-8 text-orange-500" />
             </div>
           </div>
         </div>
-        
-        <div className="card card-hover cursor-pointer" onClick={() => handleViewRelatorio('ncs')}>
+
+        <div
+          className="card card-hover cursor-pointer"
+          onClick={() => handleViewRelatorio("ncs")}
+        >
           <div className="card-content">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">NCs Resolvidas</p>
-                <p className="text-2xl font-bold text-red-600">{metricas.naoConformidades.taxa_resolucao}%</p>
+                <p className="text-sm font-medium text-gray-600">
+                  NCs Resolvidas
+                </p>
+                <p className="text-2xl font-bold text-red-600">
+                  {metricas.naoConformidades.taxa_resolucao}%
+                </p>
               </div>
               <AlertTriangle className="h-8 w-8 text-red-500" />
             </div>
           </div>
         </div>
-        
-        <div className="card card-hover cursor-pointer" onClick={() => handleViewRelatorio('geral')}>
+
+        <div
+          className="card card-hover cursor-pointer"
+          onClick={() => handleViewRelatorio("geral")}
+        >
           <div className="card-content">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Reg.</p>
-                <p className="text-2xl font-bold text-blue-600">{metricas.geral.total_registros}</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {metricas.geral.total_registros}
+                </p>
               </div>
               <Activity className="h-8 w-8 text-blue-500" />
             </div>
@@ -458,7 +538,7 @@ export default function Relatorios() {
       {/* Tipos de Relatórios */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {/* Relatório Executivo */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -476,26 +556,36 @@ export default function Relatorios() {
           <div className="card-content">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Conformidade Geral</span>
-                <span className="font-medium text-green-600">{metricas.geral.conformidade_geral}%</span>
+                <span className="text-sm text-gray-600">
+                  Conformidade Geral
+                </span>
+                <span className="font-medium text-green-600">
+                  {metricas.geral.conformidade_geral}%
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Alertas Críticos</span>
-                <span className="font-medium text-red-600">{metricas.geral.alertas_criticos}</span>
+                <span className="font-medium text-red-600">
+                  {metricas.geral.alertas_criticos}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Total de Registos</span>
-                <span className="font-medium text-blue-600">{metricas.geral.total_registros}</span>
+                <span className="font-medium text-blue-600">
+                  {metricas.geral.total_registros}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Tendência</span>
-                <span className="font-medium text-emerald-600 capitalize">{metricas.geral.tendencia_qualidade}</span>
+                <span className="font-medium text-emerald-600 capitalize">
+                  {metricas.geral.tendencia_qualidade}
+                </span>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
               <button
-                onClick={() => handleViewRelatorio('executivo')}
+                onClick={() => handleViewRelatorio("executivo")}
                 className="btn btn-outline btn-sm"
               >
                 <Eye className="h-4 w-4 mr-2" />
@@ -503,28 +593,28 @@ export default function Relatorios() {
               </button>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => handleExportPDF('executivo')}
+                  onClick={() => handleExportPDF("executivo")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Exportar PDF"
                 >
                   <FileText className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleExportExcel('executivo')}
+                  onClick={() => handleExportExcel("executivo")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Exportar Excel"
                 >
                   <Download className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handlePrintRelatorio('executivo')}
+                  onClick={() => handlePrintRelatorio("executivo")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Imprimir"
                 >
                   <Printer className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleShareRelatorio('executivo')}
+                  onClick={() => handleShareRelatorio("executivo")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Partilhar"
                 >
@@ -536,7 +626,7 @@ export default function Relatorios() {
         </motion.div>
 
         {/* Relatório de Ensaios */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
@@ -546,7 +636,9 @@ export default function Relatorios() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="card-title">Relatório de Ensaios</h3>
-                <p className="card-description">Análise detalhada de conformidade</p>
+                <p className="card-description">
+                  Análise detalhada de conformidade
+                </p>
               </div>
               <TrendingUp className="h-8 w-8 text-emerald-500" />
             </div>
@@ -555,25 +647,33 @@ export default function Relatorios() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Taxa Conformidade</span>
-                <span className="font-medium text-emerald-600">{metricas.ensaios.taxa_conformidade}%</span>
+                <span className="font-medium text-emerald-600">
+                  {metricas.ensaios.taxa_conformidade}%
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Total Ensaios</span>
-                <span className="font-medium text-blue-600">{metricas.ensaios.total_ensaios}</span>
+                <span className="font-medium text-blue-600">
+                  {metricas.ensaios.total_ensaios}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Não Conformes</span>
-                <span className="font-medium text-red-600">{metricas.ensaios.ensaios_nao_conformes}</span>
+                <span className="font-medium text-red-600">
+                  {metricas.ensaios.ensaios_nao_conformes}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Por Mês</span>
-                <span className="font-medium text-purple-600">{metricas.ensaios.ensaios_por_mes}</span>
+                <span className="font-medium text-purple-600">
+                  {metricas.ensaios.ensaios_por_mes}
+                </span>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
               <button
-                onClick={() => handleViewRelatorio('ensaios')}
+                onClick={() => handleViewRelatorio("ensaios")}
                 className="btn btn-outline btn-sm"
               >
                 <Eye className="h-4 w-4 mr-2" />
@@ -581,28 +681,28 @@ export default function Relatorios() {
               </button>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => handleExportPDF('ensaios')}
+                  onClick={() => handleExportPDF("ensaios")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Exportar PDF"
                 >
                   <FileText className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleExportExcel('ensaios')}
+                  onClick={() => handleExportExcel("ensaios")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Exportar Excel"
                 >
                   <Download className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handlePrintRelatorio('ensaios')}
+                  onClick={() => handlePrintRelatorio("ensaios")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Imprimir"
                 >
                   <Printer className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleShareRelatorio('ensaios')}
+                  onClick={() => handleShareRelatorio("ensaios")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Partilhar"
                 >
@@ -614,7 +714,7 @@ export default function Relatorios() {
         </motion.div>
 
         {/* Relatório de Checklists */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
@@ -632,26 +732,36 @@ export default function Relatorios() {
           <div className="card-content">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Conformidade Média</span>
-                <span className="font-medium text-purple-600">{metricas.checklists.conformidade_media}%</span>
+                <span className="text-sm text-gray-600">
+                  Conformidade Média
+                </span>
+                <span className="font-medium text-purple-600">
+                  {metricas.checklists.conformidade_media}%
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Total Checklists</span>
-                <span className="font-medium text-blue-600">{metricas.checklists.total_checklists}</span>
+                <span className="font-medium text-blue-600">
+                  {metricas.checklists.total_checklists}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Concluídos</span>
-                <span className="font-medium text-green-600">{metricas.checklists.checklists_concluidos}</span>
+                <span className="font-medium text-green-600">
+                  {metricas.checklists.checklists_concluidos}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Pendentes</span>
-                <span className="font-medium text-yellow-600">{metricas.checklists.checklists_pendentes}</span>
+                <span className="font-medium text-yellow-600">
+                  {metricas.checklists.checklists_pendentes}
+                </span>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
               <button
-                onClick={() => handleViewRelatorio('checklists')}
+                onClick={() => handleViewRelatorio("checklists")}
                 className="btn btn-outline btn-sm"
               >
                 <Eye className="h-4 w-4 mr-2" />
@@ -659,28 +769,28 @@ export default function Relatorios() {
               </button>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => handleExportPDF('checklists')}
+                  onClick={() => handleExportPDF("checklists")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Exportar PDF"
                 >
                   <FileText className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleExportExcel('checklists')}
+                  onClick={() => handleExportExcel("checklists")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Exportar Excel"
                 >
                   <Download className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handlePrintRelatorio('checklists')}
+                  onClick={() => handlePrintRelatorio("checklists")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Imprimir"
                 >
                   <Printer className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleShareRelatorio('checklists')}
+                  onClick={() => handleShareRelatorio("checklists")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Partilhar"
                 >
@@ -692,7 +802,7 @@ export default function Relatorios() {
         </motion.div>
 
         {/* Relatório de Materiais */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.5 }}
@@ -702,7 +812,9 @@ export default function Relatorios() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="card-title">Relatório de Materiais</h3>
-                <p className="card-description">Controlo de stocks e aprovações</p>
+                <p className="card-description">
+                  Controlo de stocks e aprovações
+                </p>
               </div>
               <Package className="h-8 w-8 text-orange-500" />
             </div>
@@ -711,25 +823,33 @@ export default function Relatorios() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Taxa Aprovação</span>
-                <span className="font-medium text-orange-600">{metricas.materiais.taxa_aprovacao}%</span>
+                <span className="font-medium text-orange-600">
+                  {metricas.materiais.taxa_aprovacao}%
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Total Materiais</span>
-                <span className="font-medium text-blue-600">{metricas.materiais.total_materiais}</span>
+                <span className="font-medium text-blue-600">
+                  {metricas.materiais.total_materiais}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Aprovados</span>
-                <span className="font-medium text-green-600">{metricas.materiais.materiais_aprovados}</span>
+                <span className="font-medium text-green-600">
+                  {metricas.materiais.materiais_aprovados}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Pendentes</span>
-                <span className="font-medium text-yellow-600">{metricas.materiais.materiais_pendentes}</span>
+                <span className="font-medium text-yellow-600">
+                  {metricas.materiais.materiais_pendentes}
+                </span>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
               <button
-                onClick={() => handleViewRelatorio('materiais')}
+                onClick={() => handleViewRelatorio("materiais")}
                 className="btn btn-outline btn-sm"
               >
                 <Eye className="h-4 w-4 mr-2" />
@@ -737,28 +857,28 @@ export default function Relatorios() {
               </button>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => handleExportPDF('materiais')}
+                  onClick={() => handleExportPDF("materiais")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Exportar PDF"
                 >
                   <FileText className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleExportExcel('materiais')}
+                  onClick={() => handleExportExcel("materiais")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Exportar Excel"
                 >
                   <Download className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handlePrintRelatorio('materiais')}
+                  onClick={() => handlePrintRelatorio("materiais")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Imprimir"
                 >
                   <Printer className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleShareRelatorio('materiais')}
+                  onClick={() => handleShareRelatorio("materiais")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Partilhar"
                 >
@@ -770,7 +890,7 @@ export default function Relatorios() {
         </motion.div>
 
         {/* Relatório de Não Conformidades */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.6 }}
@@ -780,7 +900,9 @@ export default function Relatorios() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="card-title">Relatório de NCs</h3>
-                <p className="card-description">Gestão de problemas e resoluções</p>
+                <p className="card-description">
+                  Gestão de problemas e resoluções
+                </p>
               </div>
               <AlertTriangle className="h-8 w-8 text-red-500" />
             </div>
@@ -789,25 +911,33 @@ export default function Relatorios() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Taxa Resolução</span>
-                <span className="font-medium text-red-600">{metricas.naoConformidades.taxa_resolucao}%</span>
+                <span className="font-medium text-red-600">
+                  {metricas.naoConformidades.taxa_resolucao}%
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Total NCs</span>
-                <span className="font-medium text-blue-600">{metricas.naoConformidades.total_ncs}</span>
+                <span className="font-medium text-blue-600">
+                  {metricas.naoConformidades.total_ncs}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Resolvidas</span>
-                <span className="font-medium text-green-600">{metricas.naoConformidades.ncs_resolvidas}</span>
+                <span className="font-medium text-green-600">
+                  {metricas.naoConformidades.ncs_resolvidas}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Pendentes</span>
-                <span className="font-medium text-yellow-600">{metricas.naoConformidades.ncs_pendentes}</span>
+                <span className="font-medium text-yellow-600">
+                  {metricas.naoConformidades.ncs_pendentes}
+                </span>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
               <button
-                onClick={() => handleViewRelatorio('ncs')}
+                onClick={() => handleViewRelatorio("ncs")}
                 className="btn btn-outline btn-sm"
               >
                 <Eye className="h-4 w-4 mr-2" />
@@ -815,28 +945,28 @@ export default function Relatorios() {
               </button>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => handleExportPDF('ncs')}
+                  onClick={() => handleExportPDF("ncs")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Exportar PDF"
                 >
                   <FileText className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleExportExcel('ncs')}
+                  onClick={() => handleExportExcel("ncs")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Exportar Excel"
                 >
                   <Download className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handlePrintRelatorio('ncs')}
+                  onClick={() => handlePrintRelatorio("ncs")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Imprimir"
                 >
                   <Printer className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleShareRelatorio('ncs')}
+                  onClick={() => handleShareRelatorio("ncs")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Partilhar"
                 >
@@ -848,7 +978,7 @@ export default function Relatorios() {
         </motion.div>
 
         {/* Relatório de Documentos */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.7 }}
@@ -867,25 +997,33 @@ export default function Relatorios() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Total Documentos</span>
-                <span className="font-medium text-indigo-600">{metricas.documentos.total_documentos}</span>
+                <span className="font-medium text-indigo-600">
+                  {metricas.documentos.total_documentos}
+                </span>
               </div>
-                              <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Aprovados</span>
-                  <span className="font-medium text-green-600">{metricas.documentos.documentos_aprovados}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Vencidos</span>
-                  <span className="font-medium text-red-600">{metricas.documentos.documentos_vencidos}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Pendentes</span>
-                  <span className="font-medium text-yellow-600">{metricas.documentos.documentos_pendentes}</span>
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Aprovados</span>
+                <span className="font-medium text-green-600">
+                  {metricas.documentos.documentos_aprovados}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Vencidos</span>
+                <span className="font-medium text-red-600">
+                  {metricas.documentos.documentos_vencidos}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Pendentes</span>
+                <span className="font-medium text-yellow-600">
+                  {metricas.documentos.documentos_pendentes}
+                </span>
+              </div>
             </div>
-            
+
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
               <button
-                onClick={() => handleViewRelatorio('documentos')}
+                onClick={() => handleViewRelatorio("documentos")}
                 className="btn btn-outline btn-sm"
               >
                 <Eye className="h-4 w-4 mr-2" />
@@ -893,28 +1031,28 @@ export default function Relatorios() {
               </button>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => handleExportPDF('documentos')}
+                  onClick={() => handleExportPDF("documentos")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Exportar PDF"
                 >
                   <FileText className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleExportExcel('documentos')}
+                  onClick={() => handleExportExcel("documentos")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Exportar Excel"
                 >
                   <Download className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handlePrintRelatorio('documentos')}
+                  onClick={() => handlePrintRelatorio("documentos")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Imprimir"
                 >
                   <Printer className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => handleShareRelatorio('documentos')}
+                  onClick={() => handleShareRelatorio("documentos")}
                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                   title="Partilhar"
                 >
@@ -929,7 +1067,7 @@ export default function Relatorios() {
       {/* Relatório Detalhado Ativo */}
       <AnimatePresence>
         {relatorioAtivo && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -937,8 +1075,12 @@ export default function Relatorios() {
           >
             <div className="card-header">
               <div className="flex items-center justify-between">
-                <h3 className="card-title">Relatório Detalhado - {relatorioAtivo.charAt(0).toUpperCase() + relatorioAtivo.slice(1)}</h3>
-                <button 
+                <h3 className="card-title">
+                  Relatório Detalhado -{" "}
+                  {relatorioAtivo.charAt(0).toUpperCase() +
+                    relatorioAtivo.slice(1)}
+                </h3>
+                <button
                   onClick={() => setRelatorioAtivo(null)}
                   className="text-gray-400 hover:text-gray-600"
                 >
@@ -948,36 +1090,44 @@ export default function Relatorios() {
             </div>
             <div className="card-content">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {relatorioAtivo === 'executivo' && (
+                {relatorioAtivo === "executivo" && (
                   <>
                     <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
                       <div className="text-2xl font-bold text-blue-600 mb-1">
                         {metricas.geral.conformidade_geral}%
                       </div>
-                      <div className="text-sm text-blue-700">Conformidade Geral</div>
+                      <div className="text-sm text-blue-700">
+                        Conformidade Geral
+                      </div>
                     </div>
                     <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
                       <div className="text-2xl font-bold text-green-600 mb-1">
                         {metricas.geral.total_registros}
                       </div>
-                      <div className="text-sm text-green-700">Total Registos</div>
+                      <div className="text-sm text-green-700">
+                        Total Registos
+                      </div>
                     </div>
                     <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg">
                       <div className="text-2xl font-bold text-red-600 mb-1">
                         {metricas.geral.alertas_criticos}
                       </div>
-                      <div className="text-sm text-red-700">Alertas Críticos</div>
+                      <div className="text-sm text-red-700">
+                        Alertas Críticos
+                      </div>
                     </div>
                   </>
                 )}
-                
-                {relatorioAtivo === 'ensaios' && (
+
+                {relatorioAtivo === "ensaios" && (
                   <>
                     <div className="text-center p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg">
                       <div className="text-2xl font-bold text-emerald-600 mb-1">
                         {metricas.ensaios.taxa_conformidade}%
                       </div>
-                      <div className="text-sm text-emerald-700">Taxa Conformidade</div>
+                      <div className="text-sm text-emerald-700">
+                        Taxa Conformidade
+                      </div>
                     </div>
                     <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
                       <div className="text-2xl font-bold text-blue-600 mb-1">
@@ -993,14 +1143,16 @@ export default function Relatorios() {
                     </div>
                   </>
                 )}
-                
-                {relatorioAtivo === 'checklists' && (
+
+                {relatorioAtivo === "checklists" && (
                   <>
                     <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
                       <div className="text-2xl font-bold text-purple-600 mb-1">
                         {metricas.checklists.conformidade_media}%
                       </div>
-                      <div className="text-sm text-purple-700">Conformidade Média</div>
+                      <div className="text-sm text-purple-700">
+                        Conformidade Média
+                      </div>
                     </div>
                     <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
                       <div className="text-2xl font-bold text-green-600 mb-1">
@@ -1016,14 +1168,16 @@ export default function Relatorios() {
                     </div>
                   </>
                 )}
-                
-                {relatorioAtivo === 'materiais' && (
+
+                {relatorioAtivo === "materiais" && (
                   <>
                     <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg">
                       <div className="text-2xl font-bold text-orange-600 mb-1">
                         {metricas.materiais.taxa_aprovacao}%
                       </div>
-                      <div className="text-sm text-orange-700">Taxa Aprovação</div>
+                      <div className="text-sm text-orange-700">
+                        Taxa Aprovação
+                      </div>
                     </div>
                     <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
                       <div className="text-2xl font-bold text-green-600 mb-1">
@@ -1039,8 +1193,8 @@ export default function Relatorios() {
                     </div>
                   </>
                 )}
-                
-                {relatorioAtivo === 'ncs' && (
+
+                {relatorioAtivo === "ncs" && (
                   <>
                     <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg">
                       <div className="text-2xl font-bold text-red-600 mb-1">
@@ -1062,21 +1216,23 @@ export default function Relatorios() {
                     </div>
                   </>
                 )}
-                
-                {relatorioAtivo === 'documentos' && (
+
+                {relatorioAtivo === "documentos" && (
                   <>
                     <div className="text-center p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg">
                       <div className="text-2xl font-bold text-indigo-600 mb-1">
                         {metricas.documentos.total_documentos}
                       </div>
-                      <div className="text-sm text-indigo-700">Total Documentos</div>
+                      <div className="text-sm text-indigo-700">
+                        Total Documentos
+                      </div>
                     </div>
-                                         <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
-                       <div className="text-2xl font-bold text-green-600 mb-1">
-                         {metricas.documentos.documentos_aprovados}
-                       </div>
-                       <div className="text-sm text-green-700">Aprovados</div>
-                     </div>
+                    <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600 mb-1">
+                        {metricas.documentos.documentos_aprovados}
+                      </div>
+                      <div className="text-sm text-green-700">Aprovados</div>
+                    </div>
                     <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg">
                       <div className="text-2xl font-bold text-red-600 mb-1">
                         {metricas.documentos.documentos_vencidos}
@@ -1086,11 +1242,11 @@ export default function Relatorios() {
                   </>
                 )}
               </div>
-              
+
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-600">
-                    Relatório gerado em {new Date().toLocaleString('pt-PT')}
+                    Relatório gerado em {new Date().toLocaleString("pt-PT")}
                   </div>
                   <div className="flex space-x-2">
                     <button
@@ -1129,5 +1285,5 @@ export default function Relatorios() {
         )}
       </AnimatePresence>
     </div>
-  )
-} 
+  );
+}

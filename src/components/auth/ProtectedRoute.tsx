@@ -1,33 +1,33 @@
-import { useEffect, useState } from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
-import { Loader2, Shield, AlertTriangle } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { useAuthStore } from '@/lib/auth'
-import { User } from '@/types'
+import { useEffect, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { Loader2, Shield, AlertTriangle } from "lucide-react";
+import { motion } from "framer-motion";
+import { useAuthStore } from "@/lib/auth";
+import { User } from "@/types";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode
-  requiredPermission?: string
-  fallbackPath?: string
+  children: React.ReactNode;
+  requiredPermission?: string;
+  fallbackPath?: string;
 }
 
-export default function ProtectedRoute({ 
-  children, 
+export default function ProtectedRoute({
+  children,
   requiredPermission,
-  fallbackPath = '/login'
+  fallbackPath = "/login",
 }: ProtectedRouteProps) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [hasPermission, setHasPermission] = useState(false)
-  const location = useLocation()
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasPermission, setHasPermission] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const currentUser = useAuthStore.getState().user as User | null
+        const currentUser = useAuthStore.getState().user as User | null;
         if (currentUser) {
-          setUser(currentUser)
-          
+          setUser(currentUser);
+
           // Configurar permissões baseadas no perfil do utilizador
           // Remover esta linha:
           // if (currentUser) {
@@ -38,30 +38,30 @@ export default function ProtectedRoute({
           //   }
           //   permissionManager.setUserPermissions(userPermissions)
           // }
-          
+
           // Verificar permissões se especificadas
           if (requiredPermission) {
             // Remover esta linha:
             // const hasRequiredPermission = permissionManager.hasPermission(requiredPermission)
             // setHasPermission(hasRequiredPermission)
-            setHasPermission(true) // Sem permissão específica requerida
+            setHasPermission(true); // Sem permissão específica requerida
           } else {
-            setHasPermission(true) // Sem permissão específica requerida
+            setHasPermission(true); // Sem permissão específica requerida
           }
         } else {
-          setUser(null)
-          setHasPermission(false)
+          setUser(null);
+          setHasPermission(false);
         }
       } catch (error) {
-        console.error('Erro ao verificar autenticação:', error)
-        setUser(null)
-        setHasPermission(false)
+        console.error("Erro ao verificar autenticação:", error);
+        setUser(null);
+        setHasPermission(false);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    checkAuth()
+    checkAuth();
 
     // Listener para mudanças de autenticação (not implemented)
     // const unsubscribe = authService.onAuthChange((user) => {
@@ -75,7 +75,7 @@ export default function ProtectedRoute({
     // })
 
     // return unsubscribe
-  }, [requiredPermission])
+  }, [requiredPermission]);
 
   if (isLoading) {
     return (
@@ -88,20 +88,16 @@ export default function ProtectedRoute({
           <div className="flex items-center justify-center mb-4">
             <Loader2 className="h-8 w-8 text-primary-600 animate-spin" />
           </div>
-          <p className="text-gray-600 font-medium">Verificando autenticação...</p>
+          <p className="text-gray-600 font-medium">
+            Verificando autenticação...
+          </p>
         </motion.div>
       </div>
-    )
+    );
   }
 
   if (!user) {
-    return (
-      <Navigate 
-        to={fallbackPath} 
-        state={{ from: location }} 
-        replace 
-      />
-    )
+    return <Navigate to={fallbackPath} state={{ from: location }} replace />;
   }
 
   if (!hasPermission) {
@@ -121,8 +117,8 @@ export default function ProtectedRoute({
             Acesso Negado
           </h1>
           <p className="text-gray-600 mb-6">
-            Não tem permissão para aceder a esta página. 
-            Contacte o administrador se acredita que isto é um erro.
+            Não tem permissão para aceder a esta página. Contacte o
+            administrador se acredita que isto é um erro.
           </p>
           <div className="space-y-3">
             <div className="p-4 bg-white rounded-xl border border-red-200">
@@ -147,8 +143,8 @@ export default function ProtectedRoute({
           </div>
         </motion.div>
       </div>
-    )
+    );
   }
 
-  return <>{children}</>
-} 
+  return <>{children}</>;
+}

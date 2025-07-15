@@ -3,6 +3,7 @@
 ## 📋 RESUMO DA MIGRAÇÃO
 
 Esta migração irá:
+
 - ✅ Substituir PocketBase por Supabase como backend
 - ✅ Manter todas as funcionalidades existentes
 - ✅ Melhorar a segurança e escalabilidade
@@ -58,6 +59,7 @@ Esta migração irá:
 ### PASSO 3: Testar a Migração
 
 1. **Inicie o servidor de desenvolvimento:**
+
    ```bash
    npm run dev
    ```
@@ -94,11 +96,13 @@ Esta migração irá:
 ## 🛡️ SEGURANÇA IMPLEMENTADA
 
 ### Row Level Security (RLS):
+
 - Cada usuário só vê seus próprios dados
 - Políticas de acesso por tabela
 - Proteção automática contra acesso não autorizado
 
 ### Autenticação:
+
 - Sistema de login/registro seguro
 - Tokens JWT automáticos
 - Sessões gerenciadas pelo Supabase
@@ -106,6 +110,7 @@ Esta migração irá:
 ## 📊 ESTRUTURA DAS TABELAS
 
 ### Tabelas Principais:
+
 1. **`obras`** - Projetos/obras
 2. **`fornecedores`** - Fornecedores
 3. **`materiais`** - Materiais de construção
@@ -116,6 +121,7 @@ Esta migração irá:
 8. **`rfis`** - Requests for Information
 
 ### Relacionamentos:
+
 - Todas as tabelas têm `user_id` para isolamento
 - Chaves estrangeiras para relacionamentos
 - Índices para performance
@@ -123,15 +129,19 @@ Esta migração irá:
 ## 🚨 POSSÍVEIS PROBLEMAS E SOLUÇÕES
 
 ### Problema: Erro de conexão com Supabase
+
 **Solução:** Verifique se as credenciais em `src/lib/supabase.ts` estão corretas
 
 ### Problema: Usuário não consegue ver dados
+
 **Solução:** Verifique se o RLS está habilitado e as políticas estão corretas
 
 ### Problema: Erro de autenticação
+
 **Solução:** Verifique as configurações de autenticação no painel do Supabase
 
 ### Problema: Dados não aparecem
+
 **Solução:** Verifique se o `user_id` está sendo definido corretamente
 
 ## 🔍 VERIFICAÇÃO PÓS-MIGRAÇÃO
@@ -190,4 +200,4 @@ A migração para Supabase é um investimento no futuro do seu projeto, proporci
 
 ---
 
-**⚠️ IMPORTANTE:** Execute os passos na ordem indicada e teste cada etapa antes de prosseguir para a próxima. 
+**⚠️ IMPORTANTE:** Execute os passos na ordem indicada e teste cada etapa antes de prosseguir para a próxima.

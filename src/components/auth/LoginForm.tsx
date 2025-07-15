@@ -1,28 +1,32 @@
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Eye, EyeOff, Lock, Mail, AlertCircle, Loader2 } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { useAuthStore } from '@/lib/auth'
-import toast from 'react-hot-toast'
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Eye, EyeOff, Lock, Mail, AlertCircle, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { useAuthStore } from "@/lib/auth";
+import toast from "react-hot-toast";
 
 const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-})
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+});
 
-type LoginFormData = z.infer<typeof loginSchema>
+type LoginFormData = z.infer<typeof loginSchema>;
 
 interface LoginFormProps {
-  onSuccess: () => void
-  onSwitchToRegister: () => void
-  onSwitchToReset: () => void
+  onSuccess: () => void;
+  onSwitchToRegister: () => void;
+  onSwitchToReset: () => void;
 }
 
-export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToReset }: LoginFormProps) {
-  const [showPassword, setShowPassword] = useState(false)
-  const { signIn, loading } = useAuthStore()
+export default function LoginForm({
+  onSuccess,
+  onSwitchToRegister,
+  onSwitchToReset,
+}: LoginFormProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  const { signIn, loading } = useAuthStore();
 
   const {
     register,
@@ -31,23 +35,23 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToRes
     setError,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-  })
+  });
 
   const onSubmit = async (data: any) => {
     // Garantir que email e password estão definidos
     if (!data.email || !data.password) {
-      toast.error('Preencha o email e a password.');
+      toast.error("Preencha o email e a password.");
       return;
     }
-    
-    const result = await signIn(data.email, data.password)
+
+    const result = await signIn(data.email, data.password);
     if (result.success) {
-      toast.success('Login efetuado com sucesso!')
-      onSuccess()
+      toast.success("Login efetuado com sucesso!");
+      onSuccess();
     } else {
-      toast.error(result.error || 'Erro ao fazer login')
+      toast.error(result.error || "Erro ao fazer login");
     }
-  }
+  };
 
   return (
     <motion.div
@@ -68,13 +72,16 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToRes
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Email */}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Email
           </label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
-              {...register('email')}
+              {...register("email")}
               type="email"
               id="email"
               className="input pl-10 w-full"
@@ -96,14 +103,17 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToRes
 
         {/* Password */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Senha
           </label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
-              {...register('password')}
-              type={showPassword ? 'text' : 'password'}
+              {...register("password")}
+              type={showPassword ? "text" : "password"}
               id="password"
               className="input pl-10 pr-10 w-full"
               placeholder="••••••••"
@@ -158,7 +168,7 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToRes
               Entrando...
             </>
           ) : (
-            'Entrar'
+            "Entrar"
           )}
         </button>
 
@@ -185,13 +195,21 @@ export default function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToRes
 
       {/* Demo credentials */}
       <div className="mt-8 p-4 bg-gray-50 rounded-xl">
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">Credenciais de Demo:</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-2">
+          Credenciais de Demo:
+        </h3>
         <div className="text-xs text-gray-600 space-y-1">
-          <p><strong>Admin:</strong> admin@qualicore.pt / admin123</p>
-          <p><strong>Qualidade:</strong> qualidade@qualicore.pt / qualidade123</p>
-          <p><strong>Produção:</strong> producao@qualicore.pt / producao123</p>
+          <p>
+            <strong>Admin:</strong> admin@qualicore.pt / admin123
+          </p>
+          <p>
+            <strong>Qualidade:</strong> qualidade@qualicore.pt / qualidade123
+          </p>
+          <p>
+            <strong>Produção:</strong> producao@qualicore.pt / producao123
+          </p>
         </div>
       </div>
     </motion.div>
-  )
-} 
+  );
+}

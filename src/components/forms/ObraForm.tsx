@@ -1,86 +1,107 @@
-import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra, ZonaObra } from '../../types'
-import { useState } from 'react'
-import { Plus, X, Building, MapPin, Calendar, Users, BarChart3 } from 'lucide-react'
+import {
+  Ensaio,
+  Documento,
+  Checklist,
+  Material,
+  Fornecedor,
+  NaoConformidade,
+  Obra,
+  ZonaObra,
+} from "../../types";
+import { useState } from "react";
+import {
+  Plus,
+  X,
+  Building,
+  MapPin,
+  Calendar,
+  Users,
+  BarChart3,
+} from "lucide-react";
 
 interface ObraFormProps {
-  initialData?: Partial<Obra>
-  onCancel: () => void
-  onSubmit: (data: Obra) => void
+  initialData?: Partial<Obra>;
+  onCancel: () => void;
+  onSubmit: (data: Obra) => void;
 }
 
-export default function ObraForm({ initialData, onCancel, onSubmit }: ObraFormProps) {
+export default function ObraForm({
+  initialData,
+  onCancel,
+  onSubmit,
+}: ObraFormProps) {
   const [formData, setFormData] = useState<Partial<Obra>>({
-    codigo: initialData?.codigo || '',
-    nome: initialData?.nome || '',
-    cliente: initialData?.cliente || '',
-    localizacao: initialData?.localizacao || '',
-    data_inicio: initialData?.data_inicio || '',
-    data_fim_prevista: initialData?.data_fim_prevista || '',
+    codigo: initialData?.codigo || "",
+    nome: initialData?.nome || "",
+    cliente: initialData?.cliente || "",
+    localizacao: initialData?.localizacao || "",
+    data_inicio: initialData?.data_inicio || "",
+    data_fim_prevista: initialData?.data_fim_prevista || "",
     valor_contrato: initialData?.valor_contrato || 0,
     valor_executado: initialData?.valor_executado || 0,
     percentual_execucao: initialData?.percentual_execucao || 0,
-    status: initialData?.status || 'planeamento',
-    tipo_obra: initialData?.tipo_obra || 'residencial',
-    categoria: initialData?.categoria || 'media',
-    responsavel_tecnico: initialData?.responsavel_tecnico || '',
-    coordenador_obra: initialData?.coordenador_obra || '',
-    fiscal_obra: initialData?.fiscal_obra || '',
-    engenheiro_responsavel: initialData?.engenheiro_responsavel || '',
-    arquiteto: initialData?.arquiteto || '',
+    status: initialData?.status || "planeamento",
+    tipo_obra: initialData?.tipo_obra || "residencial",
+    categoria: initialData?.categoria || "media",
+    responsavel_tecnico: initialData?.responsavel_tecnico || "",
+    coordenador_obra: initialData?.coordenador_obra || "",
+    fiscal_obra: initialData?.fiscal_obra || "",
+    engenheiro_responsavel: initialData?.engenheiro_responsavel || "",
+    arquiteto: initialData?.arquiteto || "",
     zonas: initialData?.zonas || [],
     fases: initialData?.fases || [],
     equipas: initialData?.equipas || [],
     fornecedores_principais: initialData?.fornecedores_principais || [],
     riscos: initialData?.riscos || [],
     indicadores: initialData?.indicadores || [],
-    observacoes: initialData?.observacoes || ''
-  })
+    observacoes: initialData?.observacoes || "",
+  });
 
   // Adicionar zona
   const addZona = () => {
     const novaZona: ZonaObra = {
       id: Date.now().toString(),
-      nome: '',
-      descricao: '',
+      nome: "",
+      descricao: "",
       area: 0,
-      unidade_area: 'm2',
+      unidade_area: "m2",
       percentual_execucao: 0,
-      data_inicio: '',
-      data_fim_prevista: '',
-      status: 'nao_iniciada',
-      responsavel: '',
+      data_inicio: "",
+      data_fim_prevista: "",
+      status: "nao_iniciada",
+      responsavel: "",
       materiais_utilizados: [],
       ensaios_realizados: [],
       checklists_executados: [],
-      nao_conformidades: []
-    }
+      nao_conformidades: [],
+    };
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      zonas: [...(prev.zonas || []), novaZona]
-    }))
-  }
+      zonas: [...(prev.zonas || []), novaZona],
+    }));
+  };
 
   // Remover zona
   const removeZona = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      zonas: (prev.zonas || []).filter((_, i) => i !== index)
-    }))
-  }
+      zonas: (prev.zonas || []).filter((_, i) => i !== index),
+    }));
+  };
 
   // Atualizar zona
   const updateZona = (index: number, field: keyof ZonaObra, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       zonas: (prev.zonas || []).map((z, i) =>
-        i === index ? { ...z, [field]: value } : z
-      )
-    }))
-  }
+        i === index ? { ...z, [field]: value } : z,
+      ),
+    }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     onSubmit({
       ...formData,
       zonas: formData.zonas || [],
@@ -88,9 +109,9 @@ export default function ObraForm({ initialData, onCancel, onSubmit }: ObraFormPr
       equipas: formData.equipas || [],
       fornecedores_principais: formData.fornecedores_principais || [],
       riscos: formData.riscos || [],
-      indicadores: formData.indicadores || []
-    } as Obra)
-  }
+      indicadores: formData.indicadores || [],
+    } as Obra);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -102,41 +123,60 @@ export default function ObraForm({ initialData, onCancel, onSubmit }: ObraFormPr
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Código da Obra *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Código da Obra *
+            </label>
             <input
               type="text"
               value={formData.codigo}
-              onChange={e => setFormData(prev => ({ ...prev, codigo: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, codigo: e.target.value }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Nome da Obra *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nome da Obra *
+            </label>
             <input
               type="text"
               value={formData.nome}
-              onChange={e => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, nome: e.target.value }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Cliente *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Cliente *
+            </label>
             <input
               type="text"
               value={formData.cliente}
-              onChange={e => setFormData(prev => ({ ...prev, cliente: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, cliente: e.target.value }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Localização *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Localização *
+            </label>
             <input
               type="text"
               value={formData.localizacao}
-              onChange={e => setFormData(prev => ({ ...prev, localizacao: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  localizacao: e.target.value,
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -152,41 +192,69 @@ export default function ObraForm({ initialData, onCancel, onSubmit }: ObraFormPr
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Data de Início *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Data de Início *
+            </label>
             <input
               type="date"
               value={formData.data_inicio}
-              onChange={e => setFormData(prev => ({ ...prev, data_inicio: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  data_inicio: e.target.value,
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Data de Fim Prevista *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Data de Fim Prevista *
+            </label>
             <input
               type="date"
               value={formData.data_fim_prevista}
-              onChange={e => setFormData(prev => ({ ...prev, data_fim_prevista: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  data_fim_prevista: e.target.value,
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Valor do Contrato (€) *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Valor do Contrato (€) *
+            </label>
             <input
               type="number"
               value={formData.valor_contrato}
-              onChange={e => setFormData(prev => ({ ...prev, valor_contrato: parseFloat(e.target.value) || 0 }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  valor_contrato: parseFloat(e.target.value) || 0,
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Valor Executado (€)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Valor Executado (€)
+            </label>
             <input
               type="number"
               value={formData.valor_executado}
-              onChange={e => setFormData(prev => ({ ...prev, valor_executado: parseFloat(e.target.value) || 0 }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  valor_executado: parseFloat(e.target.value) || 0,
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -201,10 +269,17 @@ export default function ObraForm({ initialData, onCancel, onSubmit }: ObraFormPr
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Status *
+            </label>
             <select
               value={formData.status}
-              onChange={e => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  status: e.target.value as any,
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
@@ -216,10 +291,17 @@ export default function ObraForm({ initialData, onCancel, onSubmit }: ObraFormPr
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Obra *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tipo de Obra *
+            </label>
             <select
               value={formData.tipo_obra}
-              onChange={e => setFormData(prev => ({ ...prev, tipo_obra: e.target.value as any }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  tipo_obra: e.target.value as any,
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
@@ -232,10 +314,17 @@ export default function ObraForm({ initialData, onCancel, onSubmit }: ObraFormPr
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Categoria *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Categoria *
+            </label>
             <select
               value={formData.categoria}
-              onChange={e => setFormData(prev => ({ ...prev, categoria: e.target.value as any }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  categoria: e.target.value as any,
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
@@ -256,49 +345,81 @@ export default function ObraForm({ initialData, onCancel, onSubmit }: ObraFormPr
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Responsável Técnico *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Responsável Técnico *
+            </label>
             <input
               type="text"
               value={formData.responsavel_tecnico}
-              onChange={e => setFormData(prev => ({ ...prev, responsavel_tecnico: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  responsavel_tecnico: e.target.value,
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Coordenador da Obra *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Coordenador da Obra *
+            </label>
             <input
               type="text"
               value={formData.coordenador_obra}
-              onChange={e => setFormData(prev => ({ ...prev, coordenador_obra: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  coordenador_obra: e.target.value,
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Fiscal da Obra</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Fiscal da Obra
+            </label>
             <input
               type="text"
               value={formData.fiscal_obra}
-              onChange={e => setFormData(prev => ({ ...prev, fiscal_obra: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  fiscal_obra: e.target.value,
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Engenheiro Responsável</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Engenheiro Responsável
+            </label>
             <input
               type="text"
               value={formData.engenheiro_responsavel}
-              onChange={e => setFormData(prev => ({ ...prev, engenheiro_responsavel: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  engenheiro_responsavel: e.target.value,
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Arquiteto</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Arquiteto
+            </label>
             <input
               type="text"
               value={formData.arquiteto}
-              onChange={e => setFormData(prev => ({ ...prev, arquiteto: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, arquiteto: e.target.value }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -323,7 +444,10 @@ export default function ObraForm({ initialData, onCancel, onSubmit }: ObraFormPr
         </div>
         <div className="space-y-4">
           {(formData.zonas || []).map((zona, idx) => (
-            <div key={zona.id} className="border border-indigo-200 rounded-lg p-4 bg-white">
+            <div
+              key={zona.id}
+              className="border border-indigo-200 rounded-lg p-4 bg-white"
+            >
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-medium text-indigo-900">Zona {idx + 1}</h4>
                 <button
@@ -338,20 +462,24 @@ export default function ObraForm({ initialData, onCancel, onSubmit }: ObraFormPr
                 <input
                   type="text"
                   value={zona.nome}
-                  onChange={e => updateZona(idx, 'nome', e.target.value)}
+                  onChange={(e) => updateZona(idx, "nome", e.target.value)}
                   placeholder="Nome da zona"
                   className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
                   type="number"
                   value={zona.area}
-                  onChange={e => updateZona(idx, 'area', parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    updateZona(idx, "area", parseFloat(e.target.value) || 0)
+                  }
                   placeholder="Área"
                   className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <select
                   value={zona.unidade_area}
-                  onChange={e => updateZona(idx, 'unidade_area', e.target.value)}
+                  onChange={(e) =>
+                    updateZona(idx, "unidade_area", e.target.value)
+                  }
                   className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="m2">m²</option>
@@ -366,10 +494,14 @@ export default function ObraForm({ initialData, onCancel, onSubmit }: ObraFormPr
 
       {/* Observações */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Observações</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Observações
+        </label>
         <textarea
           value={formData.observacoes}
-          onChange={e => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, observacoes: e.target.value }))
+          }
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -392,5 +524,5 @@ export default function ObraForm({ initialData, onCancel, onSubmit }: ObraFormPr
         </button>
       </div>
     </form>
-  )
-} 
+  );
+}

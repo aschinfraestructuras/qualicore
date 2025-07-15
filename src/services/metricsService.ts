@@ -1,13 +1,21 @@
-import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
-import { 
-  documentosAPI, 
-  ensaiosAPI, 
-  checklistsAPI, 
-  materiaisAPI, 
-  fornecedoresAPI, 
+import {
+  Ensaio,
+  Documento,
+  Checklist,
+  Material,
+  Fornecedor,
+  NaoConformidade,
+  Obra,
+} from "@/types";
+import {
+  documentosAPI,
+  ensaiosAPI,
+  checklistsAPI,
+  materiaisAPI,
+  fornecedoresAPI,
   naoConformidadesAPI,
-  obrasAPI
-} from '@/lib/supabase-api'
+  obrasAPI,
+} from "@/lib/supabase-api";
 
 // Tipos para métricas reais
 export interface MetricasReais {
@@ -98,44 +106,52 @@ export interface KPIsGerais {
   conformidade_geral: number;
   total_registros: number;
   alertas_criticos: number;
-  tendencia_qualidade: 'melhorando' | 'estavel' | 'piorando';
+  tendencia_qualidade: "melhorando" | "estavel" | "piorando";
 }
 
 // Função principal para calcular todas as métricas
 export const calcularMetricasReais = async (): Promise<MetricasReais> => {
   try {
     // Buscar todos os dados
-    const [ensaios, checklists, materiais, naoConformidades, documentos, fornecedores, obras] = await Promise.all([
+    const [
+      ensaios,
+      checklists,
+      materiais,
+      naoConformidades,
+      documentos,
+      fornecedores,
+      obras,
+    ] = await Promise.all([
       ensaiosAPI.getAll(),
       checklistsAPI.getAll(),
       materiaisAPI.getAll(),
       naoConformidadesAPI.getAll(),
       documentosAPI.getAll(),
       fornecedoresAPI.getAll(),
-      obrasAPI.getAll()
-    ])
+      obrasAPI.getAll(),
+    ]);
 
     // Calcular métricas de ensaios
-    const kpisEnsaios = calcularKPIsEnsaios(ensaios)
-    
+    const kpisEnsaios = calcularKPIsEnsaios(ensaios);
+
     // Calcular métricas de checklists
-    const kpisChecklists = calcularKPIsChecklists(checklists)
-    
+    const kpisChecklists = calcularKPIsChecklists(checklists);
+
     // Calcular métricas de materiais
-    const kpisMateriais = calcularKPIsMateriais(materiais)
-    
+    const kpisMateriais = calcularKPIsMateriais(materiais);
+
     // Calcular métricas de não conformidades
-    const kpisNCs = calcularKPIsNCs(naoConformidades)
-    
+    const kpisNCs = calcularKPIsNCs(naoConformidades);
+
     // Calcular métricas de documentos
-    const kpisDocumentos = calcularKPIsDocumentos(documentos)
-    
+    const kpisDocumentos = calcularKPIsDocumentos(documentos);
+
     // Calcular métricas de fornecedores
-    const kpisFornecedores = calcularKPIsFornecedores(fornecedores)
-    
+    const kpisFornecedores = calcularKPIsFornecedores(fornecedores);
+
     // Calcular métricas de obras
-    const kpisObras = calcularKPIsObras(obras)
-    
+    const kpisObras = calcularKPIsObras(obras);
+
     // Calcular métricas gerais
     const kpisGerais = calcularKPIsGerais({
       ensaios: kpisEnsaios,
@@ -144,8 +160,8 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       naoConformidades: kpisNCs,
       documentos: kpisDocumentos,
       fornecedores: kpisFornecedores,
-      obras: kpisObras
-    })
+      obras: kpisObras,
+    });
 
     return {
       ensaios: kpisEnsaios,
@@ -155,42 +171,51 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       documentos: kpisDocumentos,
       fornecedores: kpisFornecedores,
       obras: kpisObras,
-      geral: kpisGerais
-    }
+      geral: kpisGerais,
+    };
   } catch (error) {
-    console.error('Erro ao calcular métricas:', error)
-    throw error
+    console.error("Erro ao calcular métricas:", error);
+    throw error;
   }
-}
+};
 
 // Funções específicas para cada módulo
 const calcularKPIsEnsaios = (ensaios: any[]): KPIsEnsaios => {
-  const total = ensaios.length
-  const conformes = ensaios.filter(e => e.conforme).length
-  const naoConformes = total - conformes
-  const taxaConformidade = total > 0 ? (conformes / total) * 100 : 0
+  const total = ensaios.length;
+  const conformes = ensaios.filter((e) => e.conforme).length;
+  const naoConformes = total - conformes;
+  const taxaConformidade = total > 0 ? (conformes / total) * 100 : 0;
 
   // Calcular desvio médio
-  const desvios = ensaios.map(e => Math.abs(e.valor_obtido - e.valor_esperado))
-  const desvioMedio = desvios.length > 0 ? desvios.reduce((a, b) => a + b, 0) / desvios.length : 0
+  const desvios = ensaios.map((e) =>
+    Math.abs(e.valor_obtido - e.valor_esperado),
+  );
+  const desvioMedio =
+    desvios.length > 0
+      ? desvios.reduce((a, b) => a + b, 0) / desvios.length
+      : 0;
 
   // Ensaios por mês (últimos 6 meses)
-  const agora = new Date()
-  const seisMesesAtras = new Date(agora.getFullYear(), agora.getMonth() - 6, 1)
-  const ensaiosRecentes = ensaios.filter(e => new Date(e.data_ensaio) >= seisMesesAtras)
-  const ensaiosPorMes = ensaiosRecentes.length / 6
+  const agora = new Date();
+  const seisMesesAtras = new Date(agora.getFullYear(), agora.getMonth() - 6, 1);
+  const ensaiosRecentes = ensaios.filter(
+    (e) => new Date(e.data_ensaio) >= seisMesesAtras,
+  );
+  const ensaiosPorMes = ensaiosRecentes.length / 6;
 
   // Tipos mais problemáticos
-  const tiposNC = ensaios.filter(e => !e.conforme).map(e => e.tipo)
-  const tiposProblema = contarFrequencias(tiposNC).slice(0, 5)
+  const tiposNC = ensaios.filter((e) => !e.conforme).map((e) => e.tipo);
+  const tiposProblema = contarFrequencias(tiposNC).slice(0, 5);
 
   // Laboratórios mais eficientes
-  const labConformes = ensaios.filter(e => e.conforme).map(e => e.laboratorio)
-  const labEficientes = contarFrequencias(labConformes).slice(0, 5)
+  const labConformes = ensaios
+    .filter((e) => e.conforme)
+    .map((e) => e.laboratorio);
+  const labEficientes = contarFrequencias(labConformes).slice(0, 5);
 
   // Zonas com mais problemas
-  const zonasNC = ensaios.filter(e => !e.conforme).map(e => e.zona)
-  const zonasProblema = contarFrequencias(zonasNC).slice(0, 5)
+  const zonasNC = ensaios.filter((e) => !e.conforme).map((e) => e.zona);
+  const zonasProblema = contarFrequencias(zonasNC).slice(0, 5);
 
   return {
     taxa_conformidade: Math.round(taxaConformidade * 100) / 100,
@@ -201,44 +226,51 @@ const calcularKPIsEnsaios = (ensaios: any[]): KPIsEnsaios => {
     ensaios_por_mes: Math.round(ensaiosPorMes * 100) / 100,
     tipos_mais_problematicos: tiposProblema,
     laboratorios_mais_eficientes: labEficientes,
-    zonas_com_mais_problemas: zonasProblema
-  }
-}
+    zonas_com_mais_problemas: zonasProblema,
+  };
+};
 
 const calcularKPIsChecklists = (checklists: any[]): KPIsChecklists => {
-  const total = checklists.length
-  const concluidos = checklists.filter(c => c.estado === 'concluido').length
-  const pendentes = checklists.filter(c => c.estado === 'pendente').length
-  
-  const conformidadeMedia = total > 0 
-    ? checklists.reduce((acc, c) => acc + c.percentual_conformidade, 0) / total 
-    : 0
+  const total = checklists.length;
+  const concluidos = checklists.filter((c) => c.estado === "concluido").length;
+  const pendentes = checklists.filter((c) => c.estado === "pendente").length;
+
+  const conformidadeMedia =
+    total > 0
+      ? checklists.reduce((acc, c) => acc + c.percentual_conformidade, 0) /
+        total
+      : 0;
 
   // Tempo médio de inspeção (dias entre inspeções)
-  const datasInspecao = checklists.map(c => new Date(c.data_inspecao)).sort()
-  const tempoMedio = calcularTempoMedioEntreDatas(datasInspecao)
+  const datasInspecao = checklists.map((c) => new Date(c.data_inspecao)).sort();
+  const tempoMedio = calcularTempoMedioEntreDatas(datasInspecao);
 
   // Inspetores mais eficientes (maior % conformidade)
-  const inspetores = checklists.reduce((acc, c) => {
-    if (!acc[c.inspetor]) acc[c.inspetor] = []
-    acc[c.inspetor].push(c.percentual_conformidade)
-    return acc
-  }, {} as Record<string, number[]>)
+  const inspetores = checklists.reduce(
+    (acc, c) => {
+      if (!acc[c.inspetor]) acc[c.inspetor] = [];
+      acc[c.inspetor].push(c.percentual_conformidade);
+      return acc;
+    },
+    {} as Record<string, number[]>,
+  );
 
   const inspetoresEficientes = Object.entries(inspetores)
     .map(([nome, valores]) => ({
       nome,
-      media: (valores as number[]).reduce((a: number, b: number) => a + b, 0) / (valores as number[]).length
+      media:
+        (valores as number[]).reduce((a: number, b: number) => a + b, 0) /
+        (valores as number[]).length,
     }))
     .sort((a, b) => b.media - a.media)
     .slice(0, 5)
-    .map(i => i.nome)
+    .map((i) => i.nome);
 
   // Zonas com mais falhas
   const zonasFalhas = checklists
-    .filter(c => c.percentual_conformidade < 80)
-    .map(c => c.zona)
-  const zonasProblema = contarFrequencias(zonasFalhas).slice(0, 5)
+    .filter((c) => c.percentual_conformidade < 80)
+    .map((c) => c.zona);
+  const zonasProblema = contarFrequencias(zonasFalhas).slice(0, 5);
 
   return {
     conformidade_media: Math.round(conformidadeMedia * 100) / 100,
@@ -247,45 +279,57 @@ const calcularKPIsChecklists = (checklists: any[]): KPIsChecklists => {
     checklists_pendentes: pendentes,
     tempo_medio_inspecao: tempoMedio,
     inspetores_mais_eficientes: inspetoresEficientes,
-    zonas_com_mais_falhas: zonasProblema
-  }
-}
+    zonas_com_mais_falhas: zonasProblema,
+  };
+};
 
 const calcularKPIsMateriais = (materiais: any[]): KPIsMateriais => {
-  const total = materiais.length
-  const aprovados = materiais.filter(m => m.estado === 'aprovado').length
-  const pendentes = materiais.filter(m => m.estado === 'pendente').length
-  const reprovados = materiais.filter(m => m.estado === 'reprovado').length
-  
-  const taxaAprovacao = total > 0 ? (aprovados / total) * 100 : 0
+  const total = materiais.length;
+  const aprovados = materiais.filter((m) => m.estado === "aprovado").length;
+  const pendentes = materiais.filter((m) => m.estado === "pendente").length;
+  const reprovados = materiais.filter((m) => m.estado === "reprovado").length;
+
+  const taxaAprovacao = total > 0 ? (aprovados / total) * 100 : 0;
 
   // Materiais recebidos no mês atual
-  const agora = new Date()
-  const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1)
-  const materiaisMes = materiais.filter(m => new Date(m.data_rececao) >= inicioMes).length
+  const agora = new Date();
+  const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+  const materiaisMes = materiais.filter(
+    (m) => new Date(m.data_rececao) >= inicioMes,
+  ).length;
 
   // Volume por tipo
-  const volumePorTipo = materiais.reduce((acc, m) => {
-    acc[m.tipo] = (acc[m.tipo] || 0) + m.quantidade
-    return acc
-  }, {} as Record<string, number>)
+  const volumePorTipo = materiais.reduce(
+    (acc, m) => {
+      acc[m.tipo] = (acc[m.tipo] || 0) + m.quantidade;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   // Fornecedores mais confiáveis (maior % aprovação)
-  const fornecedores = materiais.reduce((acc, m) => {
-    if (!acc[m.fornecedor_id]) acc[m.fornecedor_id] = { total: 0, aprovados: 0 }
-    acc[m.fornecedor_id].total++
-    if (m.estado === 'aprovado') acc[m.fornecedor_id].aprovados++
-    return acc
-  }, {} as Record<string, { total: number; aprovados: number }>)
+  const fornecedores = materiais.reduce(
+    (acc, m) => {
+      if (!acc[m.fornecedor_id])
+        acc[m.fornecedor_id] = { total: 0, aprovados: 0 };
+      acc[m.fornecedor_id].total++;
+      if (m.estado === "aprovado") acc[m.fornecedor_id].aprovados++;
+      return acc;
+    },
+    {} as Record<string, { total: number; aprovados: number }>,
+  );
 
   const fornecedoresConfiaveis = Object.entries(fornecedores)
     .map(([id, stats]) => ({
       id,
-      taxa: ((stats as { total: number; aprovados: number }).aprovados / (stats as { total: number; aprovados: number }).total) * 100
+      taxa:
+        ((stats as { total: number; aprovados: number }).aprovados /
+          (stats as { total: number; aprovados: number }).total) *
+        100,
     }))
     .sort((a, b) => b.taxa - a.taxa)
     .slice(0, 5)
-    .map(f => f.id)
+    .map((f) => f.id);
 
   return {
     taxa_aprovacao: Math.round(taxaAprovacao * 100) / 100,
@@ -295,39 +339,47 @@ const calcularKPIsMateriais = (materiais: any[]): KPIsMateriais => {
     materiais_reprovados: reprovados,
     materiais_recebidos_mes: materiaisMes,
     fornecedores_mais_confiaveis: fornecedoresConfiaveis,
-    volume_por_tipo: volumePorTipo
-  }
-}
+    volume_por_tipo: volumePorTipo,
+  };
+};
 
 const calcularKPIsNCs = (naoConformidades: any[]): KPIsNCs => {
-  const total = naoConformidades.length
-  const pendentes = naoConformidades.filter(nc => nc.estado === 'pendente').length
-  const resolvidas = naoConformidades.filter(nc => nc.estado === 'concluido').length
-  
-  const taxaResolucao = total > 0 ? (resolvidas / total) * 100 : 0
+  const total = naoConformidades.length;
+  const pendentes = naoConformidades.filter(
+    (nc) => nc.estado === "pendente",
+  ).length;
+  const resolvidas = naoConformidades.filter(
+    (nc) => nc.estado === "concluido",
+  ).length;
+
+  const taxaResolucao = total > 0 ? (resolvidas / total) * 100 : 0;
 
   // Tempo médio de resolução
   const temposResolucao = naoConformidades
-    .filter(nc => nc.data_resolucao && nc.data_deteccao)
-    .map(nc => {
-      const deteccao = new Date(nc.data_deteccao)
-      const resolucao = new Date(nc.data_resolucao)
-      return (resolucao.getTime() - deteccao.getTime()) / (1000 * 60 * 60 * 24) // dias
-    })
+    .filter((nc) => nc.data_resolucao && nc.data_deteccao)
+    .map((nc) => {
+      const deteccao = new Date(nc.data_deteccao);
+      const resolucao = new Date(nc.data_resolucao);
+      return (resolucao.getTime() - deteccao.getTime()) / (1000 * 60 * 60 * 24); // dias
+    });
 
-  const tempoMedioResolucao = temposResolucao.length > 0 
-    ? temposResolucao.reduce((a, b) => a + b, 0) / temposResolucao.length 
-    : 0
+  const tempoMedioResolucao =
+    temposResolucao.length > 0
+      ? temposResolucao.reduce((a, b) => a + b, 0) / temposResolucao.length
+      : 0;
 
   // NCs por severidade
-  const ncsPorSeveridade = naoConformidades.reduce((acc, nc) => {
-    acc[nc.severidade] = (acc[nc.severidade] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
+  const ncsPorSeveridade = naoConformidades.reduce(
+    (acc, nc) => {
+      acc[nc.severidade] = (acc[nc.severidade] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   // Zonas com mais NCs
-  const zonasNC = naoConformidades.map(nc => nc.zona)
-  const zonasProblema = contarFrequencias(zonasNC).slice(0, 5)
+  const zonasNC = naoConformidades.map((nc) => nc.zona);
+  const zonasProblema = contarFrequencias(zonasNC).slice(0, 5);
 
   return {
     total_ncs: total,
@@ -336,30 +388,33 @@ const calcularKPIsNCs = (naoConformidades: any[]): KPIsNCs => {
     tempo_medio_resolucao: Math.round(tempoMedioResolucao * 100) / 100,
     ncs_por_severidade: ncsPorSeveridade,
     zonas_com_mais_ncs: zonasProblema,
-    taxa_resolucao: Math.round(taxaResolucao * 100) / 100
-  }
-}
+    taxa_resolucao: Math.round(taxaResolucao * 100) / 100,
+  };
+};
 
 const calcularKPIsDocumentos = (documentos: any[]): KPIsDocumentos => {
-  const total = documentos.length
-  const aprovados = documentos.filter(d => d.estado === 'aprovado').length
-  const pendentes = documentos.filter(d => d.estado === 'pendente').length
-  
+  const total = documentos.length;
+  const aprovados = documentos.filter((d) => d.estado === "aprovado").length;
+  const pendentes = documentos.filter((d) => d.estado === "pendente").length;
+
   // Documentos vencidos
-  const agora = new Date()
-  const vencidos = documentos.filter(d => {
-    if (!d.data_validade) return false
-    return new Date(d.data_validade) < agora
-  }).length
+  const agora = new Date();
+  const vencidos = documentos.filter((d) => {
+    if (!d.data_validade) return false;
+    return new Date(d.data_validade) < agora;
+  }).length;
 
   // Documentos por tipo
-  const docsPorTipo = documentos.reduce((acc, d) => {
-    acc[d.tipo] = (acc[d.tipo] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
+  const docsPorTipo = documentos.reduce(
+    (acc, d) => {
+      acc[d.tipo] = (acc[d.tipo] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   // Tempo médio de aprovação (simulado - seria baseado em timeline)
-  const tempoMedioAprovacao = 7 // dias (simulado)
+  const tempoMedioAprovacao = 7; // dias (simulado)
 
   return {
     documentos_aprovados: aprovados,
@@ -367,57 +422,73 @@ const calcularKPIsDocumentos = (documentos: any[]): KPIsDocumentos => {
     documentos_vencidos: vencidos,
     total_documentos: total,
     documentos_por_tipo: docsPorTipo,
-    tempo_medio_aprovacao: tempoMedioAprovacao
-  }
-}
+    tempo_medio_aprovacao: tempoMedioAprovacao,
+  };
+};
 
 const calcularKPIsFornecedores = (fornecedores: any[]): KPIsFornecedores => {
-  const total = fornecedores.length
-  const ativos = fornecedores.filter(f => f.estado === 'ativo').length
-  const inativos = total - ativos
+  const total = fornecedores.length;
+  const ativos = fornecedores.filter((f) => f.estado === "ativo").length;
+  const inativos = total - ativos;
 
   // Fornecedores com problemas (simulado - seria baseado em NCs/materiais)
-  const comProblemas = Math.floor(ativos * 0.1) // 10% simulado
+  const comProblemas = Math.floor(ativos * 0.1); // 10% simulado
 
   // Performance média (simulado - seria baseado em avaliações)
-  const performanceMedia = 4.2 // 1-5 escala
+  const performanceMedia = 4.2; // 1-5 escala
 
   return {
     fornecedores_ativos: ativos,
     fornecedores_inativos: inativos,
     total_fornecedores: total,
     fornecedores_com_problemas: comProblemas,
-    performance_media: performanceMedia
-  }
-}
+    performance_media: performanceMedia,
+  };
+};
 
 const calcularKPIsObras = (obras: any[]): KPIsObras => {
-  const total = obras.length
-  const emExecucao = obras.filter(o => o.status === 'em_execucao').length
-  const concluidas = obras.filter(o => o.status === 'concluida').length
-  const paralisadas = obras.filter(o => o.status === 'paralisada').length
+  const total = obras.length;
+  const emExecucao = obras.filter((o) => o.status === "em_execucao").length;
+  const concluidas = obras.filter((o) => o.status === "concluida").length;
+  const paralisadas = obras.filter((o) => o.status === "paralisada").length;
 
-  const valorTotalContratos = obras.reduce((sum, o) => sum + o.valor_contrato, 0)
-  const valorTotalExecutado = obras.reduce((sum, o) => sum + o.valor_executado, 0)
-  const percentualExecucaoMedio = total > 0 ? (valorTotalExecutado / valorTotalContratos) * 100 : 0
+  const valorTotalContratos = obras.reduce(
+    (sum, o) => sum + o.valor_contrato,
+    0,
+  );
+  const valorTotalExecutado = obras.reduce(
+    (sum, o) => sum + o.valor_executado,
+    0,
+  );
+  const percentualExecucaoMedio =
+    total > 0 ? (valorTotalExecutado / valorTotalContratos) * 100 : 0;
 
   // Obras por tipo
-  const obrasPorTipo = obras.reduce((acc, o) => {
-    acc[o.tipo] = (acc[o.tipo] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
+  const obrasPorTipo = obras.reduce(
+    (acc, o) => {
+      acc[o.tipo] = (acc[o.tipo] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   // Obras por categoria
-  const obrasPorCategoria = obras.reduce((acc, o) => {
-    acc[o.categoria] = (acc[o.categoria] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
+  const obrasPorCategoria = obras.reduce(
+    (acc, o) => {
+      acc[o.categoria] = (acc[o.categoria] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   // Obras por status
-  const obrasPorStatus = obras.reduce((acc, o) => {
-    acc[o.status] = (acc[o.status] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
+  const obrasPorStatus = obras.reduce(
+    (acc, o) => {
+      acc[o.status] = (acc[o.status] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   return {
     total_obras: total,
@@ -429,69 +500,72 @@ const calcularKPIsObras = (obras: any[]): KPIsObras => {
     percentual_execucao_medio: Math.round(percentualExecucaoMedio * 100) / 100,
     obras_por_tipo: obrasPorTipo,
     obras_por_categoria: obrasPorCategoria,
-    obras_por_status: obrasPorStatus
-  }
-}
+    obras_por_status: obrasPorStatus,
+  };
+};
 
-const calcularKPIsGerais = (metricas: Omit<MetricasReais, 'geral'>): KPIsGerais => {
+const calcularKPIsGerais = (
+  metricas: Omit<MetricasReais, "geral">,
+): KPIsGerais => {
   // Conformidade geral (média ponderada)
-  const conformidadeGeral = (
+  const conformidadeGeral =
     metricas.ensaios.taxa_conformidade * 0.4 +
     metricas.checklists.conformidade_media * 0.3 +
     metricas.materiais.taxa_aprovacao * 0.2 +
-    (100 - metricas.naoConformidades.taxa_resolucao) * 0.1
-  )
+    (100 - metricas.naoConformidades.taxa_resolucao) * 0.1;
 
-  const totalRegistros = 
+  const totalRegistros =
     metricas.ensaios.total_ensaios +
     metricas.checklists.total_checklists +
     metricas.materiais.total_materiais +
     metricas.naoConformidades.total_ncs +
     metricas.documentos.total_documentos +
-    metricas.obras.total_obras
+    metricas.obras.total_obras;
 
   // Alertas críticos
-  const alertasCriticos = 
+  const alertasCriticos =
     metricas.naoConformidades.ncs_pendentes +
     metricas.documentos.documentos_vencidos +
     metricas.materiais.materiais_pendentes +
-    metricas.obras.obras_paralisadas
+    metricas.obras.obras_paralisadas;
 
   // Tendência (simulada - seria baseada em dados históricos)
-  const tendencia: 'melhorando' | 'estavel' | 'piorando' = 'estavel'
+  const tendencia: "melhorando" | "estavel" | "piorando" = "estavel";
 
   return {
     conformidade_geral: Math.round(conformidadeGeral * 100) / 100,
     total_registros: totalRegistros,
     alertas_criticos: alertasCriticos,
-    tendencia_qualidade: tendencia
-  }
-}
+    tendencia_qualidade: tendencia,
+  };
+};
 
 // Funções auxiliares
 const contarFrequencias = (array: string[]): string[] => {
-  const contagem = array.reduce((acc, item) => {
-    acc[item] = (acc[item] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
+  const contagem = array.reduce(
+    (acc, item) => {
+      acc[item] = (acc[item] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   return Object.entries(contagem)
-    .sort(([,a], [,b]) => b - a)
-    .map(([item]) => item)
-}
+    .sort(([, a], [, b]) => b - a)
+    .map(([item]) => item);
+};
 
 const calcularTempoMedioEntreDatas = (datas: Date[]): number => {
-  if (datas.length < 2) return 0
-  
-  const intervalos = []
-  for (let i = 1; i < datas.length; i++) {
-    const intervalo = (datas[i].getTime() - datas[i-1].getTime()) / (1000 * 60 * 60 * 24)
-    intervalos.push(intervalo)
-  }
-  
-  return intervalos.length > 0 
-    ? intervalos.reduce((a, b) => a + b, 0) / intervalos.length 
-    : 0
-} 
+  if (datas.length < 2) return 0;
 
- 
+  const intervalos = [];
+  for (let i = 1; i < datas.length; i++) {
+    const intervalo =
+      (datas[i].getTime() - datas[i - 1].getTime()) / (1000 * 60 * 60 * 24);
+    intervalos.push(intervalo);
+  }
+
+  return intervalos.length > 0
+    ? intervalos.reduce((a, b) => a + b, 0) / intervalos.length
+    : 0;
+};

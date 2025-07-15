@@ -1,28 +1,36 @@
-import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
-import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { Shield, ArrowLeft } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import LoginForm from '@/components/auth/LoginForm'
-import RegisterForm from '@/components/auth/RegisterForm'
-import ResetPasswordForm from '@/components/auth/ResetPasswordForm'
+import {
+  Ensaio,
+  Documento,
+  Checklist,
+  Material,
+  Fornecedor,
+  NaoConformidade,
+  Obra,
+} from "@/types";
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Shield, ArrowLeft } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import LoginForm from "@/components/auth/LoginForm";
+import RegisterForm from "@/components/auth/RegisterForm";
+import ResetPasswordForm from "@/components/auth/ResetPasswordForm";
 
-type AuthMode = 'login' | 'register' | 'reset'
+type AuthMode = "login" | "register" | "reset";
 
 export default function Login() {
-  const [mode, setMode] = useState<AuthMode>('login')
-  const navigate = useNavigate()
-  const location = useLocation()
+  const [mode, setMode] = useState<AuthMode>("login");
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/dashboard'
+  const from = location.state?.from?.pathname || "/dashboard";
 
   const handleLoginSuccess = () => {
-    navigate(from, { replace: true })
-  }
+    navigate(from, { replace: true });
+  };
 
-  const handleSwitchToRegister = () => setMode('register')
-  const handleSwitchToLogin = () => setMode('login')
-  const handleSwitchToReset = () => setMode('reset')
+  const handleSwitchToRegister = () => setMode("register");
+  const handleSwitchToLogin = () => setMode("login");
+  const handleSwitchToReset = () => setMode("reset");
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
@@ -45,15 +53,15 @@ export default function Login() {
               <Shield className="h-12 w-12 text-white" />
             </div>
           </div>
-          
+
           <h1 className="text-4xl lg:text-5xl font-bold font-display mb-4 tracking-tight">
             Qualicore
           </h1>
-          
+
           <p className="text-xl lg:text-2xl text-blue-100 mb-6 font-light">
             Gestão da Qualidade para Construção Civil
           </p>
-          
+
           <div className="space-y-4 text-blue-100">
             <div className="flex items-center justify-center space-x-3">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
@@ -83,7 +91,7 @@ export default function Login() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            onClick={() => navigate('/')}
+            onClick={() => navigate("/")}
             className="flex items-center text-gray-600 hover:text-gray-900 mb-8 transition-colors"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -92,7 +100,7 @@ export default function Login() {
 
           {/* Auth Forms */}
           <AnimatePresence mode="wait">
-            {mode === 'login' && (
+            {mode === "login" && (
               <motion.div
                 key="login"
                 initial={{ opacity: 0, x: 20 }}
@@ -108,7 +116,7 @@ export default function Login() {
               </motion.div>
             )}
 
-            {mode === 'register' && (
+            {mode === "register" && (
               <motion.div
                 key="register"
                 initial={{ opacity: 0, x: 20 }}
@@ -123,7 +131,7 @@ export default function Login() {
               </motion.div>
             )}
 
-            {mode === 'reset' && (
+            {mode === "reset" && (
               <motion.div
                 key="reset"
                 initial={{ opacity: 0, x: 20 }}
@@ -131,14 +139,12 @@ export default function Login() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <ResetPasswordForm
-                  onSwitchToLogin={handleSwitchToLogin}
-                />
+                <ResetPasswordForm onSwitchToLogin={handleSwitchToLogin} />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}

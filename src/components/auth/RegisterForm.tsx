@@ -1,36 +1,58 @@
-import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Eye, EyeOff, Lock, Mail, User, AlertCircle, Loader2, CheckCircle } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { useAuthStore } from '@/lib/auth'
-import toast from 'react-hot-toast'
+import {
+  Ensaio,
+  Documento,
+  Checklist,
+  Material,
+  Fornecedor,
+  NaoConformidade,
+  Obra,
+} from "@/types";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  User,
+  AlertCircle,
+  Loader2,
+  CheckCircle,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { useAuthStore } from "@/lib/auth";
+import toast from "react-hot-toast";
 
-const registerSchema = z.object({
-  nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-  passwordConfirm: z.string(),
-  perfil: z.enum(['qualidade', 'producao', 'fiscal']),
-}).refine((data) => data.password === data.passwordConfirm, {
-  message: "Senhas não coincidem",
-  path: ["passwordConfirm"],
-})
+const registerSchema = z
+  .object({
+    nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+    email: z.string().email("Email inválido"),
+    password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+    passwordConfirm: z.string(),
+    perfil: z.enum(["qualidade", "producao", "fiscal"]),
+  })
+  .refine((data) => data.password === data.passwordConfirm, {
+    message: "Senhas não coincidem",
+    path: ["passwordConfirm"],
+  });
 
-type RegisterFormData = z.infer<typeof registerSchema>
+type RegisterFormData = z.infer<typeof registerSchema>;
 
 interface RegisterFormProps {
-  onSuccess: () => void
-  onSwitchToLogin: () => void
+  onSuccess: () => void;
+  onSwitchToLogin: () => void;
 }
 
-export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) {
-  const [showPassword, setShowPassword] = useState(false)
-  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const { signUp } = useAuthStore()
+export default function RegisterForm({
+  onSuccess,
+  onSwitchToLogin,
+}: RegisterFormProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { signUp } = useAuthStore();
 
   const {
     register,
@@ -40,31 +62,37 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      perfil: 'qualidade'
-    }
-  })
+      perfil: "qualidade",
+    },
+  });
 
   const onSubmit = async (data: any) => {
     // Garantir que todos os campos obrigatórios estão definidos
-    if (!data.email || !data.password || !data.nome || !data.perfil || !data.passwordConfirm) {
-      toast.error('Preencha todos os campos obrigatórios.');
+    if (
+      !data.email ||
+      !data.password ||
+      !data.nome ||
+      !data.perfil ||
+      !data.passwordConfirm
+    ) {
+      toast.error("Preencha todos os campos obrigatórios.");
       return;
     }
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const result = await signUp(data.email, data.password)
+      const result = await signUp(data.email, data.password);
       if (result.success) {
-        toast.success('Conta criada com sucesso!')
-        onSuccess()
+        toast.success("Conta criada com sucesso!");
+        onSuccess();
       } else {
-        toast.error(result.error || 'Erro no registro')
+        toast.error(result.error || "Erro no registro");
       }
     } catch (error: any) {
-      toast.error(error.message || 'Erro no registro')
+      toast.error(error.message || "Erro no registro");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <motion.div
@@ -77,21 +105,22 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
         <h2 className="text-3xl font-bold text-gray-900 font-display mb-2">
           Criar Conta
         </h2>
-        <p className="text-gray-600">
-          Registe-se para aceder ao sistema
-        </p>
+        <p className="text-gray-600">Registe-se para aceder ao sistema</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Nome */}
         <div>
-          <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="nome"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Nome Completo
           </label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
-              {...register('nome')}
+              {...register("nome")}
               type="text"
               id="nome"
               className="input pl-10 w-full"
@@ -113,13 +142,16 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
 
         {/* Email */}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Email
           </label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
-              {...register('email')}
+              {...register("email")}
               type="email"
               id="email"
               className="input pl-10 w-full"
@@ -141,11 +173,14 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
 
         {/* Perfil */}
         <div>
-          <label htmlFor="perfil" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="perfil"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Perfil
           </label>
           <select
-            {...register('perfil')}
+            {...register("perfil")}
             id="perfil"
             className="select w-full"
             disabled={isLoading}
@@ -168,14 +203,17 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
 
         {/* Password */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Senha
           </label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
-              {...register('password')}
-              type={showPassword ? 'text' : 'password'}
+              {...register("password")}
+              type={showPassword ? "text" : "password"}
               id="password"
               className="input pl-10 pr-10 w-full"
               placeholder="••••••••"
@@ -208,14 +246,17 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
 
         {/* Password Confirm */}
         <div>
-          <label htmlFor="passwordConfirm" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="passwordConfirm"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Confirmar Senha
           </label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
-              {...register('passwordConfirm')}
-              type={showPasswordConfirm ? 'text' : 'password'}
+              {...register("passwordConfirm")}
+              type={showPasswordConfirm ? "text" : "password"}
               id="passwordConfirm"
               className="input pl-10 pr-10 w-full"
               placeholder="••••••••"
@@ -270,7 +311,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
               Criando conta...
             </>
           ) : (
-            'Criar Conta'
+            "Criar Conta"
           )}
         </button>
 
@@ -287,5 +328,5 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
         </div>
       </form>
     </motion.div>
-  )
-} 
+  );
+}

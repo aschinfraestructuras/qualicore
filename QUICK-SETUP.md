@@ -3,15 +3,19 @@
 ## 🚀 Configuração em 3 Passos
 
 ### 1. Iniciar PocketBase
+
 ```bash
 npm run setup-simple
 ```
+
 Este comando:
+
 - ✅ Verifica se o PocketBase existe
 - ✅ Inicia o servidor PocketBase
 - ✅ Mostra as URLs de acesso
 
 ### 2. Criar Administrador
+
 1. Abra http://127.0.0.1:8090/_/ no navegador
 2. Clique em "Create your first admin account"
 3. Use estas credenciais:
@@ -19,20 +23,25 @@ Este comando:
    - **Password**: admin123
 
 ### 3. Configurar Coleções
+
 ```bash
 npm run setup-collections
 ```
+
 Este comando cria todas as coleções e dados de demonstração.
 
 ### 4. Iniciar Aplicação
+
 ```bash
 npm run dev
 ```
+
 Aceda a http://localhost:3000
 
 ## 🔑 Credenciais de Login
 
 ### Aplicação (Mock Users)
+
 - **Admin**: admin@qualicore.pt / admin123
 - **Qualidade**: qualidade@qualicore.pt / qualidade123
 - **Produção**: producao@qualicore.pt / producao123
@@ -46,12 +55,12 @@ Aceda a http://localhost:3000
 
 ## 🛠️ Comandos Úteis
 
-| Comando | Descrição |
-|---------|-----------|
-| `npm run setup-simple` | Inicia PocketBase e mostra instruções |
-| `npm run setup-collections` | Cria coleções e dados demo |
-| `npm run pocketbase` | Inicia apenas o PocketBase |
-| `npm run dev` | Inicia a aplicação |
+| Comando                     | Descrição                             |
+| --------------------------- | ------------------------------------- |
+| `npm run setup-simple`      | Inicia PocketBase e mostra instruções |
+| `npm run setup-collections` | Cria coleções e dados demo            |
+| `npm run pocketbase`        | Inicia apenas o PocketBase            |
+| `npm run dev`               | Inicia a aplicação                    |
 
 ## 🚨 Se algo não funcionar
 
@@ -61,4 +70,4 @@ Aceda a http://localhost:3000
 
 ---
 
-**Qualicore** - Sistema de Gestão da Qualidade 
+**Qualicore** - Sistema de Gestão da Qualidade

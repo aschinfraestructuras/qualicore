@@ -1,213 +1,280 @@
-import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { motion } from 'framer-motion'
-import { 
-  Package, 
-  AlertCircle, 
-  Calendar, 
-  User, 
-  MapPin, 
-  Upload, 
-  X, 
+import {
+  Ensaio,
+  Documento,
+  Checklist,
+  Material,
+  Fornecedor,
+  NaoConformidade,
+  Obra,
+} from "@/types";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { motion } from "framer-motion";
+import {
+  Package,
+  AlertCircle,
+  Calendar,
+  User,
+  MapPin,
+  Upload,
+  X,
   FileText,
   Building,
   Scale,
-  Award
-} from 'lucide-react'
-import toast from 'react-hot-toast'
+  Award,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 const materialSchema = z.object({
-  codigo: z.string().min(1, 'Código é obrigatório'),
-  nome: z.string().min(1, 'Nome é obrigatório'),
-  tipo: z.string().min(1, 'Tipo é obrigatório'),
+  codigo: z.string().min(1, "Código é obrigatório"),
+  nome: z.string().min(1, "Nome é obrigatório"),
+  tipo: z.string().min(1, "Tipo é obrigatório"),
   fornecedor_id: z.string().optional(),
   certificado_id: z.string().optional(),
-  data_rececao: z.string().min(1, 'Data de receção é obrigatória'),
-  quantidade: z.number().min(0, 'Quantidade deve ser positiva'),
-  unidade: z.string().min(1, 'Unidade é obrigatória'),
-  lote: z.string().min(1, 'Lote é obrigatório'),
-  responsavel: z.string().min(1, 'Responsável é obrigatório'),
-  zona: z.string().min(1, 'Zona é obrigatória'),
-  estado: z.enum(['pendente', 'em_analise', 'aprovado', 'reprovado', 'concluido']),
-  observacoes: z.string().optional()
-})
+  data_rececao: z.string().min(1, "Data de receção é obrigatória"),
+  quantidade: z.number().min(0, "Quantidade deve ser positiva"),
+  unidade: z.string().min(1, "Unidade é obrigatória"),
+  lote: z.string().min(1, "Lote é obrigatório"),
+  responsavel: z.string().min(1, "Responsável é obrigatório"),
+  zona: z.string().min(1, "Zona é obrigatória"),
+  estado: z.enum([
+    "pendente",
+    "em_analise",
+    "aprovado",
+    "reprovado",
+    "concluido",
+  ]),
+  observacoes: z.string().optional(),
+});
 
-type MaterialFormData = z.infer<typeof materialSchema>
+type MaterialFormData = z.infer<typeof materialSchema>;
 
 interface MaterialFormProps {
-  onSubmit: (data: MaterialFormData) => void
-  onCancel: () => void
-  initialData?: Partial<MaterialFormData>
-  isEditing?: boolean
+  onSubmit: (data: MaterialFormData) => void;
+  onCancel: () => void;
+  initialData?: Partial<MaterialFormData>;
+  isEditing?: boolean;
 }
 
 const materialTypes = [
-  { value: 'betao', label: 'Betão', icon: Package, color: 'text-gray-600' },
-  { value: 'aco', label: 'Aço', icon: Package, color: 'text-blue-600' },
-  { value: 'agregado', label: 'Agregado', icon: Package, color: 'text-yellow-600' },
-  { value: 'cimento', label: 'Cimento', icon: Package, color: 'text-gray-800' },
-  { value: 'outro', label: 'Outro', icon: Package, color: 'text-gray-600' }
-]
+  { value: "betao", label: "Betão", icon: Package, color: "text-gray-600" },
+  { value: "aco", label: "Aço", icon: Package, color: "text-blue-600" },
+  {
+    value: "agregado",
+    label: "Agregado",
+    icon: Package,
+    color: "text-yellow-600",
+  },
+  { value: "cimento", label: "Cimento", icon: Package, color: "text-gray-800" },
+  { value: "outro", label: "Outro", icon: Package, color: "text-gray-600" },
+];
 
 const statusOptions = [
-  { value: 'pendente', label: 'Pendente', color: 'bg-warning-100 text-warning-700' },
-  { value: 'em_analise', label: 'Em Análise', color: 'bg-info-100 text-info-700' },
-  { value: 'aprovado', label: 'Aprovado', color: 'bg-success-100 text-success-700' },
-  { value: 'reprovado', label: 'Reprovado', color: 'bg-danger-100 text-danger-700' },
-  { value: 'concluido', label: 'Concluído', color: 'bg-gray-100 text-gray-700' }
-]
+  {
+    value: "pendente",
+    label: "Pendente",
+    color: "bg-warning-100 text-warning-700",
+  },
+  {
+    value: "em_analise",
+    label: "Em Análise",
+    color: "bg-info-100 text-info-700",
+  },
+  {
+    value: "aprovado",
+    label: "Aprovado",
+    color: "bg-success-100 text-success-700",
+  },
+  {
+    value: "reprovado",
+    label: "Reprovado",
+    color: "bg-danger-100 text-danger-700",
+  },
+  {
+    value: "concluido",
+    label: "Concluído",
+    color: "bg-gray-100 text-gray-700",
+  },
+];
 
 const unidades = [
-  'kg', 'ton', 'm³', 'm²', 'm', 'l', 'un', 'pcs', 'caixas', 'paletes'
-]
+  "kg",
+  "ton",
+  "m³",
+  "m²",
+  "m",
+  "l",
+  "un",
+  "pcs",
+  "caixas",
+  "paletes",
+];
 
 const zonas = [
-  'Zona A - Fundações',
-  'Zona B - Pilares', 
-  'Zona C - Lajes',
-  'Zona D - Estrutura',
-  'Armazém Central',
-  'Laboratório',
-  'Escritório'
-]
+  "Zona A - Fundações",
+  "Zona B - Pilares",
+  "Zona C - Lajes",
+  "Zona D - Estrutura",
+  "Armazém Central",
+  "Laboratório",
+  "Escritório",
+];
 
 const fornecedores = [
-  { id: '1', nome: 'Cimpor - Cimentos de Portugal' },
-  { id: '2', nome: 'Secil - Companhia Geral de Cal e Cimento' },
-  { id: '3', nome: 'Lusical - Cal e Derivados' },
-  { id: '4', nome: 'Siderurgia Nacional' },
-  { id: '5', nome: 'Outro' }
-]
+  { id: "1", nome: "Cimpor - Cimentos de Portugal" },
+  { id: "2", nome: "Secil - Companhia Geral de Cal e Cimento" },
+  { id: "3", nome: "Lusical - Cal e Derivados" },
+  { id: "4", nome: "Siderurgia Nacional" },
+  { id: "5", nome: "Outro" },
+];
 
-export default function MaterialForm({ onSubmit, onCancel, initialData, isEditing = false }: MaterialFormProps) {
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showCustomTipo, setShowCustomTipo] = useState(false)
-  const [showCustomFornecedor, setShowCustomFornecedor] = useState(false)
-  const [showCustomZona, setShowCustomZona] = useState(false)
-  const [customTipo, setCustomTipo] = useState('')
-  const [customFornecedor, setCustomFornecedor] = useState('')
-  const [customZona, setCustomZona] = useState('')
+export default function MaterialForm({
+  onSubmit,
+  onCancel,
+  initialData,
+  isEditing = false,
+}: MaterialFormProps) {
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCustomTipo, setShowCustomTipo] = useState(false);
+  const [showCustomFornecedor, setShowCustomFornecedor] = useState(false);
+  const [showCustomZona, setShowCustomZona] = useState(false);
+  const [customTipo, setCustomTipo] = useState("");
+  const [customFornecedor, setCustomFornecedor] = useState("");
+  const [customZona, setCustomZona] = useState("");
 
   const {
     register,
     handleSubmit,
     formState: { errors, isValid },
     watch,
-    setValue
+    setValue,
   } = useForm<MaterialFormData>({
     resolver: zodResolver(materialSchema),
     defaultValues: initialData || {
-      estado: 'pendente',
-      tipo: 'betao',
-      unidade: 'm³'
-    }
-  })
+      estado: "pendente",
+      tipo: "betao",
+      unidade: "m³",
+    },
+  });
 
   // Inicializar campos customizados se há dados iniciais
   useEffect(() => {
     if (initialData) {
       // Verificar se o tipo é customizado (não está na lista padrão)
-      const isCustomTipo = !materialTypes.find(t => t.value === initialData.tipo)
+      const isCustomTipo = !materialTypes.find(
+        (t) => t.value === initialData.tipo,
+      );
       if (isCustomTipo && initialData.tipo) {
-        setShowCustomTipo(true)
-        setCustomTipo(initialData.tipo)
-        setValue('tipo', 'outro')
+        setShowCustomTipo(true);
+        setCustomTipo(initialData.tipo);
+        setValue("tipo", "outro");
       }
-      
+
       // Verificar se o fornecedor é customizado
-      const isCustomFornecedor = !fornecedores.find(f => f.id === initialData.fornecedor_id)
+      const isCustomFornecedor = !fornecedores.find(
+        (f) => f.id === initialData.fornecedor_id,
+      );
       if (isCustomFornecedor && initialData.fornecedor_id) {
-        setShowCustomFornecedor(true)
-        setCustomFornecedor(initialData.fornecedor_id)
-        setValue('fornecedor_id', 'outro')
+        setShowCustomFornecedor(true);
+        setCustomFornecedor(initialData.fornecedor_id);
+        setValue("fornecedor_id", "outro");
       }
-      
+
       // Verificar se a zona é customizada
-      const isCustomZona = !zonas.find(z => z === initialData.zona)
+      const isCustomZona = !zonas.find((z) => z === initialData.zona);
       if (isCustomZona && initialData.zona) {
-        setShowCustomZona(true)
-        setCustomZona(initialData.zona)
-        setValue('zona', 'outro')
+        setShowCustomZona(true);
+        setCustomZona(initialData.zona);
+        setValue("zona", "outro");
       }
     }
-  }, [initialData, setValue])
+  }, [initialData, setValue]);
 
-  const watchedTipo = watch('tipo')
-  const watchedEstado = watch('estado')
-  const watchedQuantidade = watch('quantidade')
-  const watchedFornecedor = watch('fornecedor_id')
-  const watchedZona = watch('zona')
+  const watchedTipo = watch("tipo");
+  const watchedEstado = watch("estado");
+  const watchedQuantidade = watch("quantidade");
+  const watchedFornecedor = watch("fornecedor_id");
+  const watchedZona = watch("zona");
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || [])
-    setUploadedFiles(prev => [...prev, ...files])
-    toast.success(`${files.length} ficheiro(s) adicionado(s)`)
-  }
+    const files = Array.from(event.target.files || []);
+    setUploadedFiles((prev) => [...prev, ...files]);
+    toast.success(`${files.length} ficheiro(s) adicionado(s)`);
+  };
 
   const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index))
-  }
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const onSubmitForm = async (data: MaterialFormData) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      let processedData = { ...data }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      let processedData = { ...data };
       if (!processedData.codigo) {
-        const date = new Date()
-        const year = date.getFullYear()
-        const month = String(date.getMonth() + 1).padStart(2, '0')
-        const day = String(date.getDate()).padStart(2, '0')
-        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-        processedData.codigo = `MAT-${year}-${month}${day}-${random}`
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const random = Math.floor(Math.random() * 1000)
+          .toString()
+          .padStart(3, "0");
+        processedData.codigo = `MAT-${year}-${month}${day}-${random}`;
       }
       // Se tipo é "outro" e há um tipo customizado, usar o customizado
-      if (data.tipo === 'outro' && customTipo.trim()) {
-        processedData.tipo = customTipo.trim()
+      if (data.tipo === "outro" && customTipo.trim()) {
+        processedData.tipo = customTipo.trim();
       }
       // Se fornecedor é "outro" e há um fornecedor customizado, usar o customizado
-      if (data.fornecedor_id === 'outro' && customFornecedor.trim()) {
-        processedData.fornecedor_id = customFornecedor.trim()
+      if (data.fornecedor_id === "outro" && customFornecedor.trim()) {
+        processedData.fornecedor_id = customFornecedor.trim();
       }
       // Se zona é "outro" e há uma zona customizada, usar a customizada
-      if (data.zona === 'outro' && customZona.trim()) {
-        processedData.zona = customZona.trim()
+      if (data.zona === "outro" && customZona.trim()) {
+        processedData.zona = customZona.trim();
       }
       // Aqui seria feita a chamada para a API
-      console.log('Dados do material:', processedData)
-      console.log('Ficheiros:', uploadedFiles)
-      onSubmit(processedData)
-      toast.success(isEditing ? 'Material atualizado com sucesso!' : 'Material registado com sucesso!')
+      console.log("Dados do material:", processedData);
+      console.log("Ficheiros:", uploadedFiles);
+      onSubmit(processedData);
+      toast.success(
+        isEditing
+          ? "Material atualizado com sucesso!"
+          : "Material registado com sucesso!",
+      );
     } catch (error) {
-      toast.error('Erro ao salvar material')
+      toast.error("Erro ao salvar material");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const generateCode = () => {
-    const date = new Date()
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-    const code = `MAT-${year}-${month}${day}-${random}`
-    setValue('codigo', code)
-  }
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const random = Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, "0");
+    const code = `MAT-${year}-${month}${day}-${random}`;
+    setValue("codigo", code);
+  };
 
   const generateLote = () => {
-    const date = new Date()
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const random = Math.floor(Math.random() * 100).toString().padStart(2, '0')
-    const lote = `L${year}${month}${day}-${random}`
-    setValue('lote', lote)
-  }
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const random = Math.floor(Math.random() * 100)
+      .toString()
+      .padStart(2, "0");
+    const lote = `L${year}${month}${day}-${random}`;
+    setValue("lote", lote);
+  };
 
   return (
     <motion.form
@@ -224,10 +291,12 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
         </div>
         <div>
           <h3 className="text-lg font-semibold text-gray-900">
-            {isEditing ? 'Editar Material' : 'Novo Material'}
+            {isEditing ? "Editar Material" : "Novo Material"}
           </h3>
           <p className="text-sm text-gray-600">
-            {isEditing ? 'Atualize as informações do material' : 'Registe um novo material'}
+            {isEditing
+              ? "Atualize as informações do material"
+              : "Registe um novo material"}
           </p>
         </div>
       </div>
@@ -241,10 +310,10 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
           </label>
           <div className="flex space-x-2">
             <input
-              {...register('codigo')}
+              {...register("codigo")}
               type="text"
               placeholder="MAT-2024-001"
-              className={`input flex-1 ${errors.codigo ? 'border-danger-500' : ''}`}
+              className={`input flex-1 ${errors.codigo ? "border-danger-500" : ""}`}
             />
             <button
               type="button"
@@ -268,10 +337,10 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
             Nome do Material *
           </label>
           <input
-            {...register('nome')}
+            {...register("nome")}
             type="text"
             placeholder="Ex: Betão C30/37, Aço B500B, etc."
-            className={`input ${errors.nome ? 'border-danger-500' : ''}`}
+            className={`input ${errors.nome ? "border-danger-500" : ""}`}
           />
           {errors.nome && (
             <p className="mt-1 text-sm text-danger-600 flex items-center">
@@ -287,20 +356,20 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
             Tipo de Material *
           </label>
           <select
-            {...register('tipo')}
+            {...register("tipo")}
             onChange={(e) => {
-              setValue('tipo', e.target.value)
-              setShowCustomTipo(e.target.value === 'outro')
+              setValue("tipo", e.target.value);
+              setShowCustomTipo(e.target.value === "outro");
             }}
-            className={`select ${errors.tipo ? 'border-danger-500' : ''}`}
+            className={`select ${errors.tipo ? "border-danger-500" : ""}`}
           >
-            {materialTypes.map(type => (
+            {materialTypes.map((type) => (
               <option key={type.value} value={type.value}>
                 {type.label}
               </option>
             ))}
           </select>
-          
+
           {showCustomTipo && (
             <div className="mt-2">
               <input
@@ -315,7 +384,7 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
               </p>
             </div>
           )}
-          
+
           {errors.tipo && (
             <p className="mt-1 text-sm text-danger-600 flex items-center">
               <AlertCircle className="h-4 w-4 mr-1" />
@@ -332,15 +401,15 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
           <div className="relative">
             <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <select
-              {...register('fornecedor_id')}
+              {...register("fornecedor_id")}
               onChange={(e) => {
-                setValue('fornecedor_id', e.target.value)
-                setShowCustomFornecedor(e.target.value === 'outro')
+                setValue("fornecedor_id", e.target.value);
+                setShowCustomFornecedor(e.target.value === "outro");
               }}
               className="select pl-10"
             >
               <option value="">Selecione um fornecedor</option>
-              {fornecedores.map(fornecedor => (
+              {fornecedores.map((fornecedor) => (
                 <option key={fornecedor.id} value={fornecedor.id}>
                   {fornecedor.nome}
                 </option>
@@ -348,7 +417,7 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
               <option value="outro">Outro (especificar)</option>
             </select>
           </div>
-          
+
           {showCustomFornecedor && (
             <div className="mt-2">
               <input
@@ -373,9 +442,9 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
           <div className="relative">
             <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
-              {...register('data_rececao')}
+              {...register("data_rececao")}
               type="date"
-              className={`input pl-10 ${errors.data_rececao ? 'border-danger-500' : ''}`}
+              className={`input pl-10 ${errors.data_rececao ? "border-danger-500" : ""}`}
             />
           </div>
           {errors.data_rececao && (
@@ -392,10 +461,10 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
             Estado *
           </label>
           <select
-            {...register('estado')}
-            className={`select ${errors.estado ? 'border-danger-500' : ''}`}
+            {...register("estado")}
+            className={`select ${errors.estado ? "border-danger-500" : ""}`}
           >
-            {statusOptions.map(status => (
+            {statusOptions.map((status) => (
               <option key={status.value} value={status.value}>
                 {status.label}
               </option>
@@ -416,7 +485,7 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
           <Scale className="h-5 w-5 mr-2 text-orange-600" />
           Informações de Stock
         </h4>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Quantidade */}
           <div>
@@ -424,11 +493,11 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
               Quantidade *
             </label>
             <input
-              {...register('quantidade', { valueAsNumber: true })}
+              {...register("quantidade", { valueAsNumber: true })}
               type="number"
               step="0.01"
               placeholder="100.0"
-              className={`input ${errors.quantidade ? 'border-danger-500' : ''}`}
+              className={`input ${errors.quantidade ? "border-danger-500" : ""}`}
             />
             {errors.quantidade && (
               <p className="mt-1 text-sm text-danger-600 flex items-center">
@@ -444,10 +513,10 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
               Unidade *
             </label>
             <select
-              {...register('unidade')}
-              className={`select ${errors.unidade ? 'border-danger-500' : ''}`}
+              {...register("unidade")}
+              className={`select ${errors.unidade ? "border-danger-500" : ""}`}
             >
-              {unidades.map(unidade => (
+              {unidades.map((unidade) => (
                 <option key={unidade} value={unidade}>
                   {unidade}
                 </option>
@@ -468,10 +537,10 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
             </label>
             <div className="flex space-x-2">
               <input
-                {...register('lote')}
+                {...register("lote")}
                 type="text"
                 placeholder="L20240101-01"
-                className={`input flex-1 ${errors.lote ? 'border-danger-500' : ''}`}
+                className={`input flex-1 ${errors.lote ? "border-danger-500" : ""}`}
               />
               <button
                 type="button"
@@ -498,7 +567,7 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
           <div className="relative">
             <FileText className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
-              {...register('certificado_id')}
+              {...register("certificado_id")}
               type="text"
               placeholder="CERT-2024-001"
               className="input pl-10"
@@ -516,10 +585,10 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
           <div className="relative">
             <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
-              {...register('responsavel')}
+              {...register("responsavel")}
               type="text"
               placeholder="Nome do responsável"
-              className={`input pl-10 ${errors.responsavel ? 'border-danger-500' : ''}`}
+              className={`input pl-10 ${errors.responsavel ? "border-danger-500" : ""}`}
             />
           </div>
           {errors.responsavel && (
@@ -537,15 +606,15 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <select
-              {...register('zona')}
+              {...register("zona")}
               onChange={(e) => {
-                setValue('zona', e.target.value)
-                setShowCustomZona(e.target.value === 'outro')
+                setValue("zona", e.target.value);
+                setShowCustomZona(e.target.value === "outro");
               }}
-              className={`select pl-10 ${errors.zona ? 'border-danger-500' : ''}`}
+              className={`select pl-10 ${errors.zona ? "border-danger-500" : ""}`}
             >
               <option value="">Selecione uma zona</option>
-              {zonas.map(zona => (
+              {zonas.map((zona) => (
                 <option key={zona} value={zona}>
                   {zona}
                 </option>
@@ -553,7 +622,7 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
               <option value="outro">Outra (especificar)</option>
             </select>
           </div>
-          
+
           {showCustomZona && (
             <div className="mt-2">
               <input
@@ -568,7 +637,7 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
               </p>
             </div>
           )}
-          
+
           {errors.zona && (
             <p className="mt-1 text-sm text-danger-600 flex items-center">
               <AlertCircle className="h-4 w-4 mr-1" />
@@ -584,7 +653,7 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
           Observações
         </label>
         <textarea
-          {...register('observacoes')}
+          {...register("observacoes")}
           placeholder="Descrição detalhada do material, especificações, observações..."
           rows={4}
           className="textarea"
@@ -620,9 +689,14 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
         {/* Lista de ficheiros */}
         {uploadedFiles.length > 0 && (
           <div className="mt-4 space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">Ficheiros selecionados:</h4>
+            <h4 className="text-sm font-medium text-gray-700">
+              Ficheiros selecionados:
+            </h4>
             {uploadedFiles.map((file, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
                 <div className="flex items-center space-x-3">
                   <FileText className="h-4 w-4 text-gray-500" />
                   <span className="text-sm text-gray-700">{file.name}</span>
@@ -651,21 +725,39 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Data de Receção</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Data de Receção
+            </label>
             <input type="date" className="input" name="data_rececao" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Responsável pela Receção</label>
-            <input type="text" className="input" name="responsavel_rececao" placeholder="Nome do responsável" />
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Responsável pela Receção
+            </label>
+            <input
+              type="text"
+              className="input"
+              name="responsavel_rececao"
+              placeholder="Nome do responsável"
+            />
           </div>
         </div>
         <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Documento de Receção (upload)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Documento de Receção (upload)
+          </label>
           <input type="file" className="input" name="documento_rececao" />
         </div>
         <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Observações de Receção</label>
-          <textarea className="textarea" name="observacoes_rececao" rows={3} placeholder="Observações sobre a receção..." />
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Observações de Receção
+          </label>
+          <textarea
+            className="textarea"
+            name="observacoes_rececao"
+            rows={3}
+            placeholder="Observações sobre a receção..."
+          />
         </div>
       </div>
 
@@ -676,7 +768,9 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
           Conformidade
         </h4>
         <div className="flex items-center space-x-4 mb-4">
-          <label className="text-sm font-medium text-gray-700">Material Conforme?</label>
+          <label className="text-sm font-medium text-gray-700">
+            Material Conforme?
+          </label>
           <select className="input" name="conforme">
             <option value="">Selecionar</option>
             <option value="sim">Sim</option>
@@ -684,42 +778,68 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
           </select>
         </div>
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Observações de Conformidade</label>
-          <textarea className="textarea" name="observacoes_conformidade" rows={3} placeholder="Observações sobre a conformidade..." />
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Observações de Conformidade
+          </label>
+          <textarea
+            className="textarea"
+            name="observacoes_conformidade"
+            rows={3}
+            placeholder="Observações sobre a conformidade..."
+          />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Anexos de Conformidade (upload)</label>
-          <input type="file" className="input" name="anexos_conformidade" multiple />
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Anexos de Conformidade (upload)
+          </label>
+          <input
+            type="file"
+            className="input"
+            name="anexos_conformidade"
+            multiple
+          />
         </div>
       </div>
 
       {/* Preview do Resultado */}
       <div className="p-4 bg-gray-50 rounded-xl">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Pré-visualização:</h4>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">
+          Pré-visualização:
+        </h4>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">Tipo:</span>
-            <span className={`badge ${materialTypes.find(t => t.value === watchedTipo)?.color || 'bg-gray-100 text-gray-700'}`}>
-              {watchedTipo === 'outro' && customTipo ? customTipo : materialTypes.find(t => t.value === watchedTipo)?.label || watchedTipo}
+            <span
+              className={`badge ${materialTypes.find((t) => t.value === watchedTipo)?.color || "bg-gray-100 text-gray-700"}`}
+            >
+              {watchedTipo === "outro" && customTipo
+                ? customTipo
+                : materialTypes.find((t) => t.value === watchedTipo)?.label ||
+                  watchedTipo}
             </span>
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">Estado:</span>
-            <span className={`badge ${statusOptions.find(s => s.value === watchedEstado)?.color}`}>
-              {statusOptions.find(s => s.value === watchedEstado)?.label}
+            <span
+              className={`badge ${statusOptions.find((s) => s.value === watchedEstado)?.color}`}
+            >
+              {statusOptions.find((s) => s.value === watchedEstado)?.label}
             </span>
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">Quantidade:</span>
             <span className="badge bg-orange-100 text-orange-700">
-              {watchedQuantidade} {watch('unidade')}
+              {watchedQuantidade} {watch("unidade")}
             </span>
           </div>
           {watchedFornecedor && (
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Fornecedor:</span>
               <span className="badge bg-blue-100 text-blue-700">
-                {watchedFornecedor === 'outro' && customFornecedor ? customFornecedor : fornecedores.find(f => f.id === watchedFornecedor)?.nome || watchedFornecedor}
+                {watchedFornecedor === "outro" && customFornecedor
+                  ? customFornecedor
+                  : fornecedores.find((f) => f.id === watchedFornecedor)
+                      ?.nome || watchedFornecedor}
               </span>
             </div>
           )}
@@ -727,7 +847,9 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Zona:</span>
               <span className="badge bg-purple-100 text-purple-700">
-                {watchedZona === 'outro' && customZona ? customZona : watchedZona}
+                {watchedZona === "outro" && customZona
+                  ? customZona
+                  : watchedZona}
               </span>
             </div>
           )}
@@ -755,12 +877,10 @@ export default function MaterialForm({ onSubmit, onCancel, initialData, isEditin
               Salvando...
             </>
           ) : (
-            <>
-              {isEditing ? 'Atualizar' : 'Registar'} Material
-            </>
+            <>{isEditing ? "Atualizar" : "Registar"} Material</>
           )}
         </button>
       </div>
     </motion.form>
-  )
-} 
+  );
+}

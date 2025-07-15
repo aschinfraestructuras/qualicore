@@ -1,8 +1,8 @@
-const http = require('http');
+const http = require("http");
 
-const POCKETBASE_URL = 'http://127.0.0.1:8090';
-const ADMIN_EMAIL = 'sitecore.quality@gmail.com';
-const ADMIN_PASSWORD = 'Hercules2.1';
+const POCKETBASE_URL = "http://127.0.0.1:8090";
+const ADMIN_EMAIL = "sitecore.quality@gmail.com";
+const ADMIN_PASSWORD = "Hercules2.1";
 
 function makeRequest(url, options = {}) {
   return new Promise((resolve, reject) => {
@@ -12,16 +12,16 @@ function makeRequest(url, options = {}) {
       hostname: urlObj.hostname,
       port: urlObj.port,
       path: urlObj.pathname + urlObj.search,
-      method: options.method || 'GET',
+      method: options.method || "GET",
       headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-      }
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     };
     const req = client.request(requestOptions, (res) => {
-      let data = '';
-      res.on('data', (chunk) => data += chunk);
-      res.on('end', () => {
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => {
         try {
           const jsonData = JSON.parse(data);
           resolve({ status: res.statusCode, data: jsonData });
@@ -30,7 +30,7 @@ function makeRequest(url, options = {}) {
         }
       });
     });
-    req.on('error', reject);
+    req.on("error", reject);
     if (options.body) {
       req.write(JSON.stringify(options.body));
     }
@@ -41,15 +41,18 @@ function makeRequest(url, options = {}) {
 // Função para autenticar tentando ambos os endpoints
 async function authenticate() {
   // Primeiro tenta o endpoint mais novo
-  let auth = await makeRequest(`${POCKETBASE_URL}/api/admins/auth-with-password`, {
-    method: 'POST',
-    body: { identity: ADMIN_EMAIL, password: ADMIN_PASSWORD }
-  });
+  let auth = await makeRequest(
+    `${POCKETBASE_URL}/api/admins/auth-with-password`,
+    {
+      method: "POST",
+      body: { identity: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+    },
+  );
   if (auth.status === 404) {
     // Tenta o endpoint alternativo
     auth = await makeRequest(`${POCKETBASE_URL}/api/admins/auth`, {
-      method: 'POST',
-      body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD }
+      method: "POST",
+      body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
     });
   }
   return auth;
@@ -59,7 +62,7 @@ async function main() {
   // 1. Autenticar
   const auth = await authenticate();
   if (auth.status !== 200) {
-    console.error('Erro ao autenticar:', auth.data);
+    console.error("Erro ao autenticar:", auth.data);
     process.exit(1);
   }
   const token = auth.data.token;
@@ -78,9 +81,38 @@ async function main() {
       { name: "valor_contrato", type: "number" },
       { name: "valor_executado", type: "number" },
       { name: "percentual_execucao", type: "number" },
-      { name: "status", type: "select", options: { values: ["planeamento", "em_execucao", "paralisada", "concluida", "cancelada"] } },
-      { name: "tipo_obra", type: "select", options: { values: ["residencial", "comercial", "industrial", "infraestrutura", "reabilitacao", "outro"] } },
-      { name: "categoria", type: "select", options: { values: ["pequena", "media", "grande", "mega"] } },
+      {
+        name: "status",
+        type: "select",
+        options: {
+          values: [
+            "planeamento",
+            "em_execucao",
+            "paralisada",
+            "concluida",
+            "cancelada",
+          ],
+        },
+      },
+      {
+        name: "tipo_obra",
+        type: "select",
+        options: {
+          values: [
+            "residencial",
+            "comercial",
+            "industrial",
+            "infraestrutura",
+            "reabilitacao",
+            "outro",
+          ],
+        },
+      },
+      {
+        name: "categoria",
+        type: "select",
+        options: { values: ["pequena", "media", "grande", "mega"] },
+      },
       { name: "responsavel_tecnico", type: "text" },
       { name: "coordenador_obra", type: "text" },
       { name: "fiscal_obra", type: "text" },
@@ -95,23 +127,26 @@ async function main() {
       { name: "responsavel", type: "text" },
       { name: "zona", type: "text" },
       { name: "estado", type: "text" },
-      { name: "observacoes", type: "text" }
-    ]
+      { name: "observacoes", type: "text" },
+    ],
   };
 
   const create = await makeRequest(`${POCKETBASE_URL}/api/collections`, {
-    method: 'POST',
-    headers: { 'Authorization': token },
-    body
+    method: "POST",
+    headers: { Authorization: token },
+    body,
   });
 
   if (create.status === 200) {
     console.log('✅ Coleção "obras" criada com sucesso!');
-  } else if (create.status === 400 && create.data?.data?.name?.code === "validation_collection_name_exists") {
+  } else if (
+    create.status === 400 &&
+    create.data?.data?.name?.code === "validation_collection_name_exists"
+  ) {
     console.log('⚠️  Coleção "obras" já existe.');
   } else {
-    console.error('Erro ao criar coleção:', create.data);
+    console.error("Erro ao criar coleção:", create.data);
   }
 }
 
-main(); 
+main();

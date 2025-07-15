@@ -74,9 +74,9 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_checklist_pontos_updated_at 
-  BEFORE UPDATE ON checklist_pontos 
-  FOR EACH ROW 
+CREATE TRIGGER update_checklist_pontos_updated_at
+  BEFORE UPDATE ON checklist_pontos
+  FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 ```
 
@@ -98,4 +98,4 @@ CREATE TRIGGER update_checklist_pontos_updated_at
 ✅ **Campos inválidos filtrados em Não Conformidades**
 ✅ **Validação de datas vazias em checklists**
 ✅ **Import circular removido**
-✅ **Campos obrigatórios validados** 
+✅ **Campos obrigatórios validados**

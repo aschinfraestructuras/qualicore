@@ -1,26 +1,34 @@
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Mail, AlertCircle, Loader2, CheckCircle, ArrowLeft } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { useAuthStore } from '@/lib/auth'
-import toast from 'react-hot-toast'
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Mail,
+  AlertCircle,
+  Loader2,
+  CheckCircle,
+  ArrowLeft,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { useAuthStore } from "@/lib/auth";
+import toast from "react-hot-toast";
 
 const resetSchema = z.object({
-  email: z.string().email('Email inválido'),
-})
+  email: z.string().email("Email inválido"),
+});
 
-type ResetFormData = z.infer<typeof resetSchema>
+type ResetFormData = z.infer<typeof resetSchema>;
 
 interface ResetPasswordFormProps {
-  onSwitchToLogin: () => void
+  onSwitchToLogin: () => void;
 }
 
-export default function ResetPasswordForm({ onSwitchToLogin }: ResetPasswordFormProps) {
-  const [isLoading, setIsLoading] = useState(false)
-  const { resetPassword } = useAuthStore()
-  const [isSuccess, setIsSuccess] = useState(false)
+export default function ResetPasswordForm({
+  onSwitchToLogin,
+}: ResetPasswordFormProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const { resetPassword } = useAuthStore();
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const {
     register,
@@ -29,32 +37,33 @@ export default function ResetPasswordForm({ onSwitchToLogin }: ResetPasswordForm
     setError,
   } = useForm<ResetFormData>({
     resolver: zodResolver(resetSchema),
-  })
+  });
 
   const onSubmit = async (data: any) => {
     if (!data.email) {
-      toast.error('Preencha o email.');
+      toast.error("Preencha o email.");
       return;
     }
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const result = await resetPassword(data.email)
+      const result = await resetPassword(data.email);
       if (result.success) {
-        toast.success('Email de redefinição enviado!')
+        toast.success("Email de redefinição enviado!");
       } else {
-        toast.error(result.error || 'Erro ao enviar email de redefinição')
+        toast.error(result.error || "Erro ao enviar email de redefinição");
       }
     } catch (error: any) {
-      console.error('Erro ao solicitar reset:', error)
-      setError('root', {
-        type: 'manual',
-        message: error instanceof Error ? error.message : 'Erro ao solicitar reset'
-      })
-      toast.error('Falha ao solicitar reset de senha')
+      console.error("Erro ao solicitar reset:", error);
+      setError("root", {
+        type: "manual",
+        message:
+          error instanceof Error ? error.message : "Erro ao solicitar reset",
+      });
+      toast.error("Falha ao solicitar reset de senha");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (isSuccess) {
     return (
@@ -69,24 +78,21 @@ export default function ResetPasswordForm({ onSwitchToLogin }: ResetPasswordForm
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
         </div>
-        
+
         <h2 className="text-2xl font-bold text-gray-900 font-display mb-4">
           Email Enviado!
         </h2>
-        
+
         <p className="text-gray-600 mb-6">
-          Enviámos um link para redefinir a sua senha. 
-          Verifique a sua caixa de entrada e siga as instruções.
+          Enviámos um link para redefinir a sua senha. Verifique a sua caixa de
+          entrada e siga as instruções.
         </p>
-        
+
         <div className="space-y-4">
-          <button
-            onClick={onSwitchToLogin}
-            className="btn btn-primary w-full"
-          >
+          <button onClick={onSwitchToLogin} className="btn btn-primary w-full">
             Voltar ao Login
           </button>
-          
+
           <button
             onClick={() => setIsSuccess(false)}
             className="btn btn-secondary w-full"
@@ -95,7 +101,7 @@ export default function ResetPasswordForm({ onSwitchToLogin }: ResetPasswordForm
           </button>
         </div>
       </motion.div>
-    )
+    );
   }
 
   return (
@@ -117,13 +123,16 @@ export default function ResetPasswordForm({ onSwitchToLogin }: ResetPasswordForm
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Email */}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Email
           </label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
-              {...register('email')}
+              {...register("email")}
               type="email"
               id="email"
               className="input pl-10 w-full"
@@ -167,7 +176,7 @@ export default function ResetPasswordForm({ onSwitchToLogin }: ResetPasswordForm
               Enviando...
             </>
           ) : (
-            'Enviar Email de Reset'
+            "Enviar Email de Reset"
           )}
         </button>
 
@@ -185,5 +194,5 @@ export default function ResetPasswordForm({ onSwitchToLogin }: ResetPasswordForm
         </div>
       </form>
     </motion.div>
-  )
-} 
+  );
+}

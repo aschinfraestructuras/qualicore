@@ -1,139 +1,159 @@
-import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { motion } from 'framer-motion'
-import { 
-  Building, 
-  AlertCircle, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Upload, 
-  X, 
+import {
+  Ensaio,
+  Documento,
+  Checklist,
+  Material,
+  Fornecedor,
+  NaoConformidade,
+  Obra,
+} from "@/types";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { motion } from "framer-motion";
+import {
+  Building,
+  AlertCircle,
+  Mail,
+  Phone,
+  MapPin,
+  Upload,
+  X,
   FileText,
   User,
   Hash,
   Globe,
-  Award
-} from 'lucide-react'
-import toast from 'react-hot-toast'
+  Award,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 const fornecedorSchema = z.object({
-  nome: z.string().min(1, 'Nome é obrigatório'),
-  nif: z.string().min(9, 'NIF deve ter pelo menos 9 dígitos').max(9, 'NIF deve ter no máximo 9 dígitos'),
-  morada: z.string().min(1, 'Morada é obrigatória'),
-  telefone: z.string().min(1, 'Telefone é obrigatório'),
-  email: z.string().email('Email inválido'),
-  contacto: z.string().min(1, 'Contacto é obrigatório'),
-  estado: z.enum(['ativo', 'inativo']),
+  nome: z.string().min(1, "Nome é obrigatório"),
+  nif: z
+    .string()
+    .min(9, "NIF deve ter pelo menos 9 dígitos")
+    .max(9, "NIF deve ter no máximo 9 dígitos"),
+  morada: z.string().min(1, "Morada é obrigatória"),
+  telefone: z.string().min(1, "Telefone é obrigatório"),
+  email: z.string().email("Email inválido"),
+  contacto: z.string().min(1, "Contacto é obrigatório"),
+  estado: z.enum(["ativo", "inativo"]),
   website: z.string().optional(),
   certificacoes: z.string().optional(),
   produtos_servicos: z.string().optional(),
-  observacoes: z.string().optional()
-})
+  observacoes: z.string().optional(),
+});
 
-type FornecedorFormData = z.infer<typeof fornecedorSchema>
+type FornecedorFormData = z.infer<typeof fornecedorSchema>;
 
 interface FornecedorFormProps {
-  onSubmit: (data: FornecedorFormData) => void
-  onCancel: () => void
-  initialData?: Partial<FornecedorFormData>
-  isEditing?: boolean
+  onSubmit: (data: FornecedorFormData) => void;
+  onCancel: () => void;
+  initialData?: Partial<FornecedorFormData>;
+  isEditing?: boolean;
 }
 
 const statusOptions = [
-  { value: 'ativo', label: 'Ativo', color: 'bg-success-100 text-success-700' },
-  { value: 'inativo', label: 'Inativo', color: 'bg-gray-100 text-gray-700' }
-]
+  { value: "ativo", label: "Ativo", color: "bg-success-100 text-success-700" },
+  { value: "inativo", label: "Inativo", color: "bg-gray-100 text-gray-700" },
+];
 
-export default function FornecedorForm({ onSubmit, onCancel, initialData, isEditing = false }: FornecedorFormProps) {
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showAvaliacaoModal, setShowAvaliacaoModal] = useState(false)
-  const [avaliacoes, setAvaliacoes] = useState<any[]>([]) // Mock data
+export default function FornecedorForm({
+  onSubmit,
+  onCancel,
+  initialData,
+  isEditing = false,
+}: FornecedorFormProps) {
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAvaliacaoModal, setShowAvaliacaoModal] = useState(false);
+  const [avaliacoes, setAvaliacoes] = useState<any[]>([]); // Mock data
 
   const {
     register,
     handleSubmit,
     formState: { errors, isValid },
     watch,
-    setValue
+    setValue,
   } = useForm<FornecedorFormData>({
     resolver: zodResolver(fornecedorSchema),
     defaultValues: initialData || {
-      estado: 'ativo',
-      website: '',
-      certificacoes: '',
-      produtos_servicos: '',
-      observacoes: ''
-    }
-  })
+      estado: "ativo",
+      website: "",
+      certificacoes: "",
+      produtos_servicos: "",
+      observacoes: "",
+    },
+  });
 
-  const watchedEstado = watch('estado')
-  const watchedWebsite = watch('website')
-  const watchedCertificacoes = watch('certificacoes')
-  const watchedProdutosServicos = watch('produtos_servicos')
+  const watchedEstado = watch("estado");
+  const watchedWebsite = watch("website");
+  const watchedCertificacoes = watch("certificacoes");
+  const watchedProdutosServicos = watch("produtos_servicos");
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || [])
-    setUploadedFiles(prev => [...prev, ...files])
-    toast.success(`${files.length} ficheiro(s) adicionado(s)`)
-  }
+    const files = Array.from(event.target.files || []);
+    setUploadedFiles((prev) => [...prev, ...files]);
+    toast.success(`${files.length} ficheiro(s) adicionado(s)`);
+  };
 
   const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index))
-  }
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const onSubmitForm = async (data: FornecedorFormData) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       // Simular delay de submissão
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Aqui seria feita a chamada para a API
-      console.log('Dados do fornecedor:', data)
-      console.log('Ficheiros:', uploadedFiles)
-      
-      onSubmit(data)
-      toast.success(isEditing ? 'Fornecedor atualizado com sucesso!' : 'Fornecedor registado com sucesso!')
+      console.log("Dados do fornecedor:", data);
+      console.log("Ficheiros:", uploadedFiles);
+
+      onSubmit(data);
+      toast.success(
+        isEditing
+          ? "Fornecedor atualizado com sucesso!"
+          : "Fornecedor registado com sucesso!",
+      );
     } catch (error) {
-      toast.error('Erro ao salvar fornecedor')
+      toast.error("Erro ao salvar fornecedor");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const validateNIF = (nif: string) => {
     // Validação básica de NIF português
-    if (nif.length !== 9) return false
-    
-    const weights = [9, 8, 7, 6, 5, 4, 3, 2]
-    let sum = 0
-    
+    if (nif.length !== 9) return false;
+
+    const weights = [9, 8, 7, 6, 5, 4, 3, 2];
+    let sum = 0;
+
     for (let i = 0; i < 8; i++) {
-      sum += parseInt(nif[i]) * weights[i]
+      sum += parseInt(nif[i]) * weights[i];
     }
-    
-    const remainder = sum % 11
-    const checkDigit = remainder === 0 || remainder === 1 ? 0 : 11 - remainder
-    
-    return parseInt(nif[8]) === checkDigit
-  }
+
+    const remainder = sum % 11;
+    const checkDigit = remainder === 0 || remainder === 1 ? 0 : 11 - remainder;
+
+    return parseInt(nif[8]) === checkDigit;
+  };
 
   const handleNIFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const nif = e.target.value.replace(/\D/g, '')
-    setValue('nif', nif)
-    
+    const nif = e.target.value.replace(/\D/g, "");
+    setValue("nif", nif);
+
     if (nif.length === 9) {
       if (validateNIF(nif)) {
-        toast.success('NIF válido!')
+        toast.success("NIF válido!");
       } else {
-        toast.error('NIF inválido!')
+        toast.error("NIF inválido!");
       }
     }
-  }
+  };
 
   return (
     <motion.form
@@ -150,10 +170,12 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
         </div>
         <div>
           <h3 className="text-lg font-semibold text-gray-900">
-            {isEditing ? 'Editar Fornecedor' : 'Novo Fornecedor'}
+            {isEditing ? "Editar Fornecedor" : "Novo Fornecedor"}
           </h3>
           <p className="text-sm text-gray-600">
-            {isEditing ? 'Atualize as informações do fornecedor' : 'Registe um novo fornecedor'}
+            {isEditing
+              ? "Atualize as informações do fornecedor"
+              : "Registe um novo fornecedor"}
           </p>
         </div>
       </div>
@@ -164,7 +186,7 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
           <Building className="h-5 w-5 mr-2 text-cyan-600" />
           Informações Empresariais
         </h4>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Nome da Empresa */}
           <div className="md:col-span-2">
@@ -174,10 +196,10 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
             <div className="relative">
               <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
-                {...register('nome')}
+                {...register("nome")}
                 type="text"
                 placeholder="Nome da empresa"
-                className={`input pl-10 ${errors.nome ? 'border-danger-500' : ''}`}
+                className={`input pl-10 ${errors.nome ? "border-danger-500" : ""}`}
               />
             </div>
             {errors.nome && (
@@ -196,12 +218,12 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
             <div className="relative">
               <Hash className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
-                {...register('nif')}
+                {...register("nif")}
                 type="text"
                 placeholder="123456789"
                 maxLength={9}
                 onChange={handleNIFChange}
-                className={`input pl-10 ${errors.nif ? 'border-danger-500' : ''}`}
+                className={`input pl-10 ${errors.nif ? "border-danger-500" : ""}`}
               />
             </div>
             {errors.nif && (
@@ -218,10 +240,10 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
               Estado *
             </label>
             <select
-              {...register('estado')}
-              className={`select ${errors.estado ? 'border-danger-500' : ''}`}
+              {...register("estado")}
+              className={`select ${errors.estado ? "border-danger-500" : ""}`}
             >
-              {statusOptions.map(status => (
+              {statusOptions.map((status) => (
                 <option key={status.value} value={status.value}>
                   {status.label}
                 </option>
@@ -243,7 +265,7 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
           <User className="h-5 w-5 mr-2 text-cyan-600" />
           Informações de Contacto
         </h4>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Nome do Contacto */}
           <div>
@@ -253,10 +275,10 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
             <div className="relative">
               <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
-                {...register('contacto')}
+                {...register("contacto")}
                 type="text"
                 placeholder="Nome do contacto principal"
-                className={`input pl-10 ${errors.contacto ? 'border-danger-500' : ''}`}
+                className={`input pl-10 ${errors.contacto ? "border-danger-500" : ""}`}
               />
             </div>
             {errors.contacto && (
@@ -275,10 +297,10 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
-                {...register('email')}
+                {...register("email")}
                 type="email"
                 placeholder="contacto@empresa.pt"
-                className={`input pl-10 ${errors.email ? 'border-danger-500' : ''}`}
+                className={`input pl-10 ${errors.email ? "border-danger-500" : ""}`}
               />
             </div>
             {errors.email && (
@@ -297,10 +319,10 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
-                {...register('telefone')}
+                {...register("telefone")}
                 type="tel"
                 placeholder="+351 123 456 789"
-                className={`input pl-10 ${errors.telefone ? 'border-danger-500' : ''}`}
+                className={`input pl-10 ${errors.telefone ? "border-danger-500" : ""}`}
               />
             </div>
             {errors.telefone && (
@@ -319,7 +341,7 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
             <div className="relative">
               <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
-                {...register('website')}
+                {...register("website")}
                 type="url"
                 placeholder="https://www.empresa.pt"
                 className="input pl-10"
@@ -335,7 +357,7 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
           <MapPin className="h-5 w-5 mr-2 text-cyan-600" />
           Morada
         </h4>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Morada Completa *
@@ -343,10 +365,10 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <textarea
-              {...register('morada')}
+              {...register("morada")}
               placeholder="Rua, número, andar, código postal, localidade"
               rows={3}
-              className={`textarea pl-10 ${errors.morada ? 'border-danger-500' : ''}`}
+              className={`textarea pl-10 ${errors.morada ? "border-danger-500" : ""}`}
             />
           </div>
           {errors.morada && (
@@ -364,7 +386,7 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
           <Award className="h-5 w-5 mr-2 text-cyan-600" />
           Informações Adicionais
         </h4>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Certificações */}
           <div>
@@ -372,7 +394,7 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
               Certificações
             </label>
             <textarea
-              {...register('certificacoes')}
+              {...register("certificacoes")}
               placeholder="ISO 9001, ISO 14001, etc."
               rows={3}
               className="textarea"
@@ -385,7 +407,7 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
               Produtos/Serviços
             </label>
             <textarea
-              {...register('produtos_servicos')}
+              {...register("produtos_servicos")}
               placeholder="Principais produtos ou serviços fornecidos"
               rows={3}
               className="textarea"
@@ -400,13 +422,13 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
           <FileText className="h-5 w-5 mr-2 text-cyan-600" />
           Observações
         </h4>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Observações Adicionais
           </label>
           <textarea
-            {...register('observacoes')}
+            {...register("observacoes")}
             placeholder="Observações, notas ou comentários adicionais sobre o fornecedor"
             rows={4}
             className="textarea"
@@ -423,13 +445,31 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
         {/* Listagem de avaliações (mock) */}
         <div className="space-y-4 mb-4">
           {/* Aqui será listado cada avaliação (mock) */}
-          {avaliacoes.map(avaliacao => (
-            <div key={avaliacao.id} className="p-4 bg-gray-50 rounded flex flex-col md:flex-row md:items-center md:justify-between">
+          {avaliacoes.map((avaliacao) => (
+            <div
+              key={avaliacao.id}
+              className="p-4 bg-gray-50 rounded flex flex-col md:flex-row md:items-center md:justify-between"
+            >
               <div>
-                <div className="font-medium text-gray-800">Nota Global: <span className="text-yellow-600 font-bold">{avaliacao.nota}</span></div>
-                <div className="text-xs text-gray-500">Por: {avaliacao.avaliador} em {new Date(avaliacao.data).toLocaleDateString()}</div>
-                <div className="text-xs text-gray-500">Qualidade: {avaliacao.criterios.qualidade} | Prazo: {avaliacao.criterios.prazo} | Preço: {avaliacao.criterios.preco} | Atendimento: {avaliacao.criterios.atendimento}</div>
-                <div className="text-sm text-gray-700 mt-1">"{avaliacao.comentarios}"</div>
+                <div className="font-medium text-gray-800">
+                  Nota Global:{" "}
+                  <span className="text-yellow-600 font-bold">
+                    {avaliacao.nota}
+                  </span>
+                </div>
+                <div className="text-xs text-gray-500">
+                  Por: {avaliacao.avaliador} em{" "}
+                  {new Date(avaliacao.data).toLocaleDateString()}
+                </div>
+                <div className="text-xs text-gray-500">
+                  Qualidade: {avaliacao.criterios.qualidade} | Prazo:{" "}
+                  {avaliacao.criterios.prazo} | Preço:{" "}
+                  {avaliacao.criterios.preco} | Atendimento:{" "}
+                  {avaliacao.criterios.atendimento}
+                </div>
+                <div className="text-sm text-gray-700 mt-1">
+                  "{avaliacao.comentarios}"
+                </div>
               </div>
             </div>
           ))}
@@ -462,27 +502,31 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
                 </button>
               </div>
 
-              <form onSubmit={(e) => {
-                e.preventDefault()
-                const formData = new FormData(e.currentTarget)
-                                 const novaAvaliacao = {
-                   id: Date.now().toString(),
-                   fornecedor_id: 'mock-id', // Será substituído pelo ID real quando integrado com backend
-                   data: new Date().toISOString(),
-                   avaliador: formData.get('avaliador') as string,
-                   nota: parseInt(formData.get('nota') as string),
-                   criterios: {
-                     qualidade: parseInt(formData.get('qualidade') as string),
-                     prazo: parseInt(formData.get('prazo') as string),
-                     preco: parseInt(formData.get('preco') as string),
-                     atendimento: parseInt(formData.get('atendimento') as string),
-                   },
-                   comentarios: formData.get('comentarios') as string,
-                 }
-                setAvaliacoes([...avaliacoes, novaAvaliacao])
-                setShowAvaliacaoModal(false)
-                toast.success('Avaliação registada com sucesso!')
-              }}>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const novaAvaliacao = {
+                    id: Date.now().toString(),
+                    fornecedor_id: "mock-id", // Será substituído pelo ID real quando integrado com backend
+                    data: new Date().toISOString(),
+                    avaliador: formData.get("avaliador") as string,
+                    nota: parseInt(formData.get("nota") as string),
+                    criterios: {
+                      qualidade: parseInt(formData.get("qualidade") as string),
+                      prazo: parseInt(formData.get("prazo") as string),
+                      preco: parseInt(formData.get("preco") as string),
+                      atendimento: parseInt(
+                        formData.get("atendimento") as string,
+                      ),
+                    },
+                    comentarios: formData.get("comentarios") as string,
+                  };
+                  setAvaliacoes([...avaliacoes, novaAvaliacao]);
+                  setShowAvaliacaoModal(false);
+                  toast.success("Avaliação registada com sucesso!");
+                }}
+              >
                 <div className="space-y-4">
                   {/* Avaliador */}
                   <div>
@@ -518,11 +562,17 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
                     <label className="block text-sm font-medium text-gray-700">
                       Critérios de Avaliação
                     </label>
-                    
+
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">Qualidade</label>
-                        <select name="qualidade" required className="input text-sm">
+                        <label className="block text-xs text-gray-600 mb-1">
+                          Qualidade
+                        </label>
+                        <select
+                          name="qualidade"
+                          required
+                          className="input text-sm"
+                        >
                           <option value="">-</option>
                           <option value="1">1</option>
                           <option value="2">2</option>
@@ -531,9 +581,11 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
                           <option value="5">5</option>
                         </select>
                       </div>
-                      
+
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">Prazo</label>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          Prazo
+                        </label>
                         <select name="prazo" required className="input text-sm">
                           <option value="">-</option>
                           <option value="1">1</option>
@@ -543,9 +595,11 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
                           <option value="5">5</option>
                         </select>
                       </div>
-                      
+
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">Preço</label>
+                        <label className="block text-xs text-gray-600 mb-1">
+                          Preço
+                        </label>
                         <select name="preco" required className="input text-sm">
                           <option value="">-</option>
                           <option value="1">1</option>
@@ -555,10 +609,16 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
                           <option value="5">5</option>
                         </select>
                       </div>
-                      
+
                       <div>
-                        <label className="block text-xs text-gray-600 mb-1">Atendimento</label>
-                        <select name="atendimento" required className="input text-sm">
+                        <label className="block text-xs text-gray-600 mb-1">
+                          Atendimento
+                        </label>
+                        <select
+                          name="atendimento"
+                          required
+                          className="input text-sm"
+                        >
                           <option value="">-</option>
                           <option value="1">1</option>
                           <option value="2">2</option>
@@ -592,10 +652,7 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
                   >
                     Cancelar
                   </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary flex-1"
-                  >
+                  <button type="submit" className="btn btn-primary flex-1">
                     Guardar Avaliação
                   </button>
                 </div>
@@ -634,9 +691,14 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
         {/* Lista de ficheiros */}
         {uploadedFiles.length > 0 && (
           <div className="mt-4 space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">Ficheiros selecionados:</h4>
+            <h4 className="text-sm font-medium text-gray-700">
+              Ficheiros selecionados:
+            </h4>
             {uploadedFiles.map((file, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
                 <div className="flex items-center space-x-3">
                   <FileText className="h-4 w-4 text-gray-500" />
                   <span className="text-sm text-gray-700">{file.name}</span>
@@ -659,24 +721,28 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
 
       {/* Preview do Resultado */}
       <div className="p-4 bg-gray-50 rounded-xl">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Pré-visualização:</h4>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">
+          Pré-visualização:
+        </h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">Estado:</span>
-            <span className={`badge ${statusOptions.find(s => s.value === watchedEstado)?.color}`}>
-              {statusOptions.find(s => s.value === watchedEstado)?.label}
+            <span
+              className={`badge ${statusOptions.find((s) => s.value === watchedEstado)?.color}`}
+            >
+              {statusOptions.find((s) => s.value === watchedEstado)?.label}
             </span>
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">NIF:</span>
             <span className="badge bg-gray-100 text-gray-700">
-              {watch('nif')}
+              {watch("nif")}
             </span>
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">Contacto:</span>
             <span className="badge bg-cyan-100 text-cyan-700">
-              {watch('contacto')}
+              {watch("contacto")}
             </span>
           </div>
           {watchedWebsite && (
@@ -727,12 +793,10 @@ export default function FornecedorForm({ onSubmit, onCancel, initialData, isEdit
               Salvando...
             </>
           ) : (
-            <>
-              {isEditing ? 'Atualizar' : 'Registar'} Fornecedor
-            </>
+            <>{isEditing ? "Atualizar" : "Registar"} Fornecedor</>
           )}
         </button>
       </div>
     </motion.form>
-  )
-} 
+  );
+}

@@ -1,32 +1,75 @@
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Plus, X, FileText, Calendar, User, MapPin, Building, AlertCircle, Upload, CheckCircle } from 'lucide-react'
-import { motion } from 'framer-motion'
-import toast from 'react-hot-toast'
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Plus,
+  X,
+  FileText,
+  Calendar,
+  User,
+  MapPin,
+  Building,
+  AlertCircle,
+  Upload,
+  CheckCircle,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 const documentoSchema = z.object({
-  codigo: z.string().min(1, 'Código é obrigatório'),
-  tipo: z.enum(['projeto', 'especificacao', 'relatorio', 'certificado', 'rfi', 'procedimento', 'plano_ensaio', 'plano_qualidade', 'manual', 'instrucao_trabalho', 'formulario', 'registro', 'outro']),
+  codigo: z.string().min(1, "Código é obrigatório"),
+  tipo: z.enum([
+    "projeto",
+    "especificacao",
+    "relatorio",
+    "certificado",
+    "rfi",
+    "procedimento",
+    "plano_ensaio",
+    "plano_qualidade",
+    "manual",
+    "instrucao_trabalho",
+    "formulario",
+    "registro",
+    "outro",
+  ]),
   tipo_outro: z.string().optional(),
-  versao: z.string().min(1, 'Versão é obrigatória'),
+  versao: z.string().min(1, "Versão é obrigatória"),
   data_validade: z.string().optional(),
   data_aprovacao: z.string().optional(),
   data_revisao: z.string().optional(),
-  responsavel: z.string().min(1, 'Responsável é obrigatório'),
-  zona: z.string().min(1, 'Zona é obrigatória'),
+  responsavel: z.string().min(1, "Responsável é obrigatório"),
+  zona: z.string().min(1, "Zona é obrigatória"),
   zona_outro: z.string().optional(),
-  estado: z.enum(['pendente', 'em_analise', 'aprovado', 'reprovado', 'concluido']),
+  estado: z.enum([
+    "pendente",
+    "em_analise",
+    "aprovado",
+    "reprovado",
+    "concluido",
+  ]),
   aprovador: z.string().optional(),
   revisor: z.string().optional(),
-  categoria: z.enum(['tecnico', 'administrativo', 'seguranca', 'ambiente', 'qualidade', 'comercial', 'outro']).optional(),
+  categoria: z
+    .enum([
+      "tecnico",
+      "administrativo",
+      "seguranca",
+      "ambiente",
+      "qualidade",
+      "comercial",
+      "outro",
+    ])
+    .optional(),
   categoria_outro: z.string().optional(),
   observacoes: z.string().optional(),
   palavras_chave: z.array(z.string()).optional(),
-  classificacao_confidencialidade: z.enum(['publico', 'interno', 'confidencial', 'restrito']).optional(),
+  classificacao_confidencialidade: z
+    .enum(["publico", "interno", "confidencial", "restrito"])
+    .optional(),
   distribuicao: z.array(z.string()).optional(),
-  
+
   // Integração com outros módulos
   relacionado_obra_id: z.string().optional(),
   relacionado_obra_outro: z.string().optional(),
@@ -40,17 +83,17 @@ const documentoSchema = z.object({
   relacionado_fornecedor_outro: z.string().optional(),
   relacionado_checklist_id: z.string().optional(),
   relacionado_checklist_outro: z.string().optional(),
-  
+
   // Campos específicos RFI
   numero_rfi: z.string().optional(),
   solicitante: z.string().optional(),
   data_solicitacao: z.string().optional(),
   data_resposta: z.string().optional(),
-  prioridade: z.enum(['baixa', 'media', 'alta', 'urgente']).optional(),
+  prioridade: z.enum(["baixa", "media", "alta", "urgente"]).optional(),
   impacto_custo: z.number().optional(),
   impacto_prazo: z.number().optional(),
   resposta: z.string().optional(),
-  
+
   // Campos específicos Procedimento
   escopo: z.string().optional(),
   responsabilidades: z.array(z.string()).optional(),
@@ -58,7 +101,7 @@ const documentoSchema = z.object({
   criterios_aceitacao: z.array(z.string()).optional(),
   registros_obrigatorios: z.array(z.string()).optional(),
   frequencia_revisao: z.string().optional(),
-  
+
   // Campos específicos Plano de Ensaio
   material_ensaio: z.string().optional(),
   tipo_ensaio: z.string().optional(),
@@ -67,7 +110,7 @@ const documentoSchema = z.object({
   laboratorio_responsavel: z.string().optional(),
   frequencia_ensaios: z.string().optional(),
   acoes_nao_conformidade: z.array(z.string()).optional(),
-  
+
   // Campos específicos Plano de Qualidade
   escopo_obra: z.string().optional(),
   objetivos_qualidade: z.array(z.string()).optional(),
@@ -76,127 +119,207 @@ const documentoSchema = z.object({
   controlos_qualidade: z.array(z.string()).optional(),
   indicadores_qualidade: z.array(z.string()).optional(),
   auditorias_planeadas: z.array(z.string()).optional(),
-  acoes_melhoria: z.array(z.string()).optional()
-})
+  acoes_melhoria: z.array(z.string()).optional(),
+});
 
-type DocumentoFormData = z.infer<typeof documentoSchema>
+type DocumentoFormData = z.infer<typeof documentoSchema>;
 
 interface DocumentoFormProps {
-  onSubmit: (data: DocumentoFormData) => void
-  onCancel: () => void
-  initialData?: Partial<DocumentoFormData>
-  isEditing?: boolean
+  onSubmit: (data: DocumentoFormData) => void;
+  onCancel: () => void;
+  initialData?: Partial<DocumentoFormData>;
+  isEditing?: boolean;
 }
 
 const documentTypes = [
-  { value: 'projeto', label: 'Projeto', icon: FileText, color: 'text-blue-600' },
-  { value: 'especificacao', label: 'Especificação', icon: FileText, color: 'text-green-600' },
-  { value: 'relatorio', label: 'Relatório', icon: FileText, color: 'text-purple-600' },
-  { value: 'certificado', label: 'Certificado', icon: FileText, color: 'text-orange-600' },
-  { value: 'rfi', label: 'RFI (Request for Information)', icon: FileText, color: 'text-red-600' },
-  { value: 'procedimento', label: 'Procedimento', icon: FileText, color: 'text-indigo-600' },
-  { value: 'plano_ensaio', label: 'Plano de Ensaio', icon: FileText, color: 'text-yellow-600' },
-  { value: 'plano_qualidade', label: 'Plano de Qualidade', icon: FileText, color: 'text-teal-600' },
-  { value: 'manual', label: 'Manual', icon: FileText, color: 'text-pink-600' },
-  { value: 'instrucao_trabalho', label: 'Instrução de Trabalho', icon: FileText, color: 'text-cyan-600' },
-  { value: 'formulario', label: 'Formulário', icon: FileText, color: 'text-lime-600' },
-  { value: 'registro', label: 'Registro', icon: FileText, color: 'text-amber-600' },
-  { value: 'outro', label: 'Outro', icon: FileText, color: 'text-gray-600' }
-]
+  {
+    value: "projeto",
+    label: "Projeto",
+    icon: FileText,
+    color: "text-blue-600",
+  },
+  {
+    value: "especificacao",
+    label: "Especificação",
+    icon: FileText,
+    color: "text-green-600",
+  },
+  {
+    value: "relatorio",
+    label: "Relatório",
+    icon: FileText,
+    color: "text-purple-600",
+  },
+  {
+    value: "certificado",
+    label: "Certificado",
+    icon: FileText,
+    color: "text-orange-600",
+  },
+  {
+    value: "rfi",
+    label: "RFI (Request for Information)",
+    icon: FileText,
+    color: "text-red-600",
+  },
+  {
+    value: "procedimento",
+    label: "Procedimento",
+    icon: FileText,
+    color: "text-indigo-600",
+  },
+  {
+    value: "plano_ensaio",
+    label: "Plano de Ensaio",
+    icon: FileText,
+    color: "text-yellow-600",
+  },
+  {
+    value: "plano_qualidade",
+    label: "Plano de Qualidade",
+    icon: FileText,
+    color: "text-teal-600",
+  },
+  { value: "manual", label: "Manual", icon: FileText, color: "text-pink-600" },
+  {
+    value: "instrucao_trabalho",
+    label: "Instrução de Trabalho",
+    icon: FileText,
+    color: "text-cyan-600",
+  },
+  {
+    value: "formulario",
+    label: "Formulário",
+    icon: FileText,
+    color: "text-lime-600",
+  },
+  {
+    value: "registro",
+    label: "Registro",
+    icon: FileText,
+    color: "text-amber-600",
+  },
+  { value: "outro", label: "Outro", icon: FileText, color: "text-gray-600" },
+];
 
 const categorias = [
-  { value: 'tecnico', label: 'Técnico' },
-  { value: 'administrativo', label: 'Administrativo' },
-  { value: 'seguranca', label: 'Segurança' },
-  { value: 'ambiente', label: 'Ambiente' },
-  { value: 'qualidade', label: 'Qualidade' },
-  { value: 'comercial', label: 'Comercial' },
-  { value: 'outro', label: 'Outro' }
-]
+  { value: "tecnico", label: "Técnico" },
+  { value: "administrativo", label: "Administrativo" },
+  { value: "seguranca", label: "Segurança" },
+  { value: "ambiente", label: "Ambiente" },
+  { value: "qualidade", label: "Qualidade" },
+  { value: "comercial", label: "Comercial" },
+  { value: "outro", label: "Outro" },
+];
 
 const classificacoes = [
-  { value: 'publico', label: 'Público' },
-  { value: 'interno', label: 'Interno' },
-  { value: 'confidencial', label: 'Confidencial' },
-  { value: 'restrito', label: 'Restrito' }
-]
+  { value: "publico", label: "Público" },
+  { value: "interno", label: "Interno" },
+  { value: "confidencial", label: "Confidencial" },
+  { value: "restrito", label: "Restrito" },
+];
 
 const prioridades = [
-  { value: 'baixa', label: 'Baixa', color: 'text-green-600' },
-  { value: 'media', label: 'Média', color: 'text-yellow-600' },
-  { value: 'alta', label: 'Alta', color: 'text-orange-600' },
-  { value: 'urgente', label: 'Urgente', color: 'text-red-600' }
-]
+  { value: "baixa", label: "Baixa", color: "text-green-600" },
+  { value: "media", label: "Média", color: "text-yellow-600" },
+  { value: "alta", label: "Alta", color: "text-orange-600" },
+  { value: "urgente", label: "Urgente", color: "text-red-600" },
+];
 
 const statusOptions = [
-  { value: 'pendente', label: 'Pendente', color: 'bg-warning-100 text-warning-700' },
-  { value: 'em_analise', label: 'Em Análise', color: 'bg-info-100 text-info-700' },
-  { value: 'aprovado', label: 'Aprovado', color: 'bg-success-100 text-success-700' },
-  { value: 'reprovado', label: 'Reprovado', color: 'bg-danger-100 text-danger-700' },
-  { value: 'concluido', label: 'Concluído', color: 'bg-gray-100 text-gray-700' }
-]
+  {
+    value: "pendente",
+    label: "Pendente",
+    color: "bg-warning-100 text-warning-700",
+  },
+  {
+    value: "em_analise",
+    label: "Em Análise",
+    color: "bg-info-100 text-info-700",
+  },
+  {
+    value: "aprovado",
+    label: "Aprovado",
+    color: "bg-success-100 text-success-700",
+  },
+  {
+    value: "reprovado",
+    label: "Reprovado",
+    color: "bg-danger-100 text-danger-700",
+  },
+  {
+    value: "concluido",
+    label: "Concluído",
+    color: "bg-gray-100 text-gray-700",
+  },
+];
 
 const zonas = [
-  'Zona A - Fundações',
-  'Zona B - Pilares',
-  'Zona C - Lajes',
-  'Zona D - Estrutura',
-  'Armazém Central',
-  'Laboratório',
-  'Escritório'
-]
+  "Zona A - Fundações",
+  "Zona B - Pilares",
+  "Zona C - Lajes",
+  "Zona D - Estrutura",
+  "Armazém Central",
+  "Laboratório",
+  "Escritório",
+];
 
-export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditing = false }: DocumentoFormProps) {
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showAdvanced, setShowAdvanced] = useState(false)
-  const [obras, setObras] = useState<any[]>([])
+export default function DocumentoForm({
+  onSubmit,
+  onCancel,
+  initialData,
+  isEditing = false,
+}: DocumentoFormProps) {
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [obras, setObras] = useState<any[]>([]);
 
   // Carregar obras do localStorage
   useEffect(() => {
     const loadObras = () => {
       try {
-        const stored = localStorage.getItem('qualicore_obras')
+        const stored = localStorage.getItem("qualicore_obras");
         if (stored) {
-          const obrasData = JSON.parse(stored)
-          setObras(obrasData)
+          const obrasData = JSON.parse(stored);
+          setObras(obrasData);
         }
       } catch (error) {
-        console.error('Erro ao carregar obras:', error)
+        console.error("Erro ao carregar obras:", error);
       }
-    }
-    loadObras()
-  }, [])
+    };
+    loadObras();
+  }, []);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isValid },
     watch,
-    setValue
+    setValue,
   } = useForm<DocumentoFormData>({
     resolver: zodResolver(documentoSchema),
     defaultValues: initialData || {
-      estado: 'pendente',
-      tipo: 'projeto'
-    }
-  })
+      estado: "pendente",
+      tipo: "projeto",
+    },
+  });
 
-  const watchedTipo = watch('tipo')
-  const watchedEstado = watch('estado')
+  const watchedTipo = watch("tipo");
+  const watchedEstado = watch("estado");
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || [])
-    setUploadedFiles(prev => [...prev, ...files])
-    toast.success(`${files.length} ficheiro(s) adicionado(s)`)
-  }
+    const files = Array.from(event.target.files || []);
+    setUploadedFiles((prev) => [...prev, ...files]);
+    toast.success(`${files.length} ficheiro(s) adicionado(s)`);
+  };
 
   const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index))
-  }
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const onSubmitForm = async (data: DocumentoFormData) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       // Filtrar apenas os campos válidos do schema Supabase
       const docData: any = {
@@ -257,26 +380,32 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
         relacionado_fornecedor_id: data.relacionado_fornecedor_id,
         relacionado_fornecedor_outro: data.relacionado_fornecedor_outro,
         relacionado_checklist_id: data.relacionado_checklist_id,
-        relacionado_checklist_outro: data.relacionado_checklist_outro
-      }
-      onSubmit(docData)
-      toast.success(isEditing ? 'Documento atualizado com sucesso!' : 'Documento criado com sucesso!')
+        relacionado_checklist_outro: data.relacionado_checklist_outro,
+      };
+      onSubmit(docData);
+      toast.success(
+        isEditing
+          ? "Documento atualizado com sucesso!"
+          : "Documento criado com sucesso!",
+      );
     } catch (error) {
-      toast.error('Erro ao salvar documento')
+      toast.error("Erro ao salvar documento");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const generateCode = () => {
-    const date = new Date()
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-    const code = `DOC-${year}-${month}${day}-${random}`
-    setValue('codigo', code)
-  }
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const random = Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, "0");
+    const code = `DOC-${year}-${month}${day}-${random}`;
+    setValue("codigo", code);
+  };
 
   return (
     <motion.form
@@ -293,10 +422,12 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
         </div>
         <div>
           <h3 className="text-lg font-semibold text-gray-900">
-            {isEditing ? 'Editar Documento' : 'Novo Documento'}
+            {isEditing ? "Editar Documento" : "Novo Documento"}
           </h3>
           <p className="text-sm text-gray-600">
-            {isEditing ? 'Atualize as informações do documento' : 'Preencha as informações do novo documento'}
+            {isEditing
+              ? "Atualize as informações do documento"
+              : "Preencha as informações do novo documento"}
           </p>
         </div>
       </div>
@@ -310,10 +441,10 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
           </label>
           <div className="flex space-x-2">
             <input
-              {...register('codigo')}
+              {...register("codigo")}
               type="text"
               placeholder="DOC-2024-001"
-              className={`input flex-1 ${errors.codigo ? 'border-danger-500' : ''}`}
+              className={`input flex-1 ${errors.codigo ? "border-danger-500" : ""}`}
             />
             <button
               type="button"
@@ -337,18 +468,18 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
             Tipo de Documento *
           </label>
           <select
-            {...register('tipo')}
-            className={`select ${errors.tipo ? 'border-danger-500' : ''}`}
+            {...register("tipo")}
+            className={`select ${errors.tipo ? "border-danger-500" : ""}`}
           >
-            {documentTypes.map(type => (
+            {documentTypes.map((type) => (
               <option key={type.value} value={type.value}>
                 {type.label}
               </option>
             ))}
           </select>
-          {watchedTipo === 'outro' && (
+          {watchedTipo === "outro" && (
             <input
-              {...register('tipo_outro')}
+              {...register("tipo_outro")}
               type="text"
               placeholder="Descreva o tipo de documento..."
               className="input mt-2"
@@ -368,10 +499,10 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
             Versão *
           </label>
           <input
-            {...register('versao')}
+            {...register("versao")}
             type="text"
             placeholder="1.0"
-            className={`input ${errors.versao ? 'border-danger-500' : ''}`}
+            className={`input ${errors.versao ? "border-danger-500" : ""}`}
           />
           {errors.versao && (
             <p className="mt-1 text-sm text-danger-600 flex items-center">
@@ -389,7 +520,7 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
           <div className="relative">
             <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
-              {...register('data_validade')}
+              {...register("data_validade")}
               type="date"
               className="input pl-10"
             />
@@ -402,10 +533,10 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
             Estado *
           </label>
           <select
-            {...register('estado')}
-            className={`select ${errors.estado ? 'border-danger-500' : ''}`}
+            {...register("estado")}
+            className={`select ${errors.estado ? "border-danger-500" : ""}`}
           >
-            {statusOptions.map(status => (
+            {statusOptions.map((status) => (
               <option key={status.value} value={status.value}>
                 {status.label}
               </option>
@@ -429,10 +560,10 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
           <div className="relative">
             <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
-              {...register('responsavel')}
+              {...register("responsavel")}
               type="text"
               placeholder="Nome do responsável"
-              className={`input pl-10 ${errors.responsavel ? 'border-danger-500' : ''}`}
+              className={`input pl-10 ${errors.responsavel ? "border-danger-500" : ""}`}
             />
           </div>
           {errors.responsavel && (
@@ -450,11 +581,11 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <select
-              {...register('zona')}
-              className={`select pl-10 ${errors.zona ? 'border-danger-500' : ''}`}
+              {...register("zona")}
+              className={`select pl-10 ${errors.zona ? "border-danger-500" : ""}`}
             >
               <option value="">Selecione uma zona</option>
-              {zonas.map(zona => (
+              {zonas.map((zona) => (
                 <option key={zona} value={zona}>
                   {zona}
                 </option>
@@ -462,9 +593,9 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
               <option value="outro">Outro</option>
             </select>
           </div>
-          {watch('zona') === 'outro' && (
+          {watch("zona") === "outro" && (
             <input
-              {...register('zona_outro')}
+              {...register("zona_outro")}
               type="text"
               placeholder="Descreva a zona..."
               className="input mt-2"
@@ -480,58 +611,74 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
       </div>
 
       {/* Campos específicos por tipo de documento */}
-      {watchedTipo === 'rfi' && (
+      {watchedTipo === "rfi" && (
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-          <h4 className="text-sm font-semibold text-blue-900 mb-4">Informações RFI</h4>
+          <h4 className="text-sm font-semibold text-blue-900 mb-4">
+            Informações RFI
+          </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Número RFI</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Número RFI
+              </label>
               <input
-                {...register('numero_rfi')}
+                {...register("numero_rfi")}
                 type="text"
                 placeholder="RFI-2024-001"
                 className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Solicitante</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Solicitante
+              </label>
               <input
-                {...register('solicitante')}
+                {...register("solicitante")}
                 type="text"
                 placeholder="Nome do solicitante"
                 className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Data de Solicitação</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Data de Solicitação
+              </label>
               <input
-                {...register('data_solicitacao')}
+                {...register("data_solicitacao")}
                 type="date"
                 className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
-              <select {...register('prioridade')} className="select">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Prioridade
+              </label>
+              <select {...register("prioridade")} className="select">
                 <option value="">Selecione...</option>
-                {prioridades.map(pri => (
-                  <option key={pri.value} value={pri.value}>{pri.label}</option>
+                {prioridades.map((pri) => (
+                  <option key={pri.value} value={pri.value}>
+                    {pri.label}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Impacto no Custo (€)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Impacto no Custo (€)
+              </label>
               <input
-                {...register('impacto_custo')}
+                {...register("impacto_custo")}
                 type="number"
                 placeholder="0.00"
                 className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Impacto no Prazo (dias)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Impacto no Prazo (dias)
+              </label>
               <input
-                {...register('impacto_prazo')}
+                {...register("impacto_prazo")}
                 type="number"
                 placeholder="0"
                 className="input"
@@ -539,9 +686,11 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
             </div>
           </div>
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Resposta</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Resposta
+            </label>
             <textarea
-              {...register('resposta')}
+              {...register("resposta")}
               rows={3}
               placeholder="Resposta à solicitação..."
               className="textarea"
@@ -550,50 +699,62 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
         </div>
       )}
 
-      {watchedTipo === 'procedimento' && (
+      {watchedTipo === "procedimento" && (
         <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
-          <h4 className="text-sm font-semibold text-indigo-900 mb-4">Informações do Procedimento</h4>
+          <h4 className="text-sm font-semibold text-indigo-900 mb-4">
+            Informações do Procedimento
+          </h4>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Escopo</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Escopo
+              </label>
               <textarea
-                {...register('escopo')}
+                {...register("escopo")}
                 rows={2}
                 placeholder="Descrição do escopo do procedimento..."
                 className="textarea"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Responsabilidades</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Responsabilidades
+              </label>
               <textarea
-                {...register('responsabilidades')}
+                {...register("responsabilidades")}
                 rows={2}
                 placeholder="Lista de responsabilidades (separadas por vírgula)..."
                 className="textarea"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Recursos Necessários</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Recursos Necessários
+              </label>
               <textarea
-                {...register('recursos_necessarios')}
+                {...register("recursos_necessarios")}
                 rows={2}
                 placeholder="Lista de recursos necessários..."
                 className="textarea"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Critérios de Aceitação</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Critérios de Aceitação
+              </label>
               <textarea
-                {...register('criterios_aceitacao')}
+                {...register("criterios_aceitacao")}
                 rows={2}
                 placeholder="Critérios de aceitação..."
                 className="textarea"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Frequência de Revisão</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Frequência de Revisão
+              </label>
               <input
-                {...register('frequencia_revisao')}
+                {...register("frequencia_revisao")}
                 type="text"
                 placeholder="ex: Anual, Semestral, etc."
                 className="input"
@@ -603,41 +764,51 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
         </div>
       )}
 
-      {watchedTipo === 'plano_ensaio' && (
+      {watchedTipo === "plano_ensaio" && (
         <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-          <h4 className="text-sm font-semibold text-yellow-900 mb-4">Informações do Plano de Ensaio</h4>
+          <h4 className="text-sm font-semibold text-yellow-900 mb-4">
+            Informações do Plano de Ensaio
+          </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Material do Ensaio</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Material do Ensaio
+              </label>
               <input
-                {...register('material_ensaio')}
+                {...register("material_ensaio")}
                 type="text"
                 placeholder="ex: Betão, Aço, etc."
                 className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Ensaio</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de Ensaio
+              </label>
               <input
-                {...register('tipo_ensaio')}
+                {...register("tipo_ensaio")}
                 type="text"
                 placeholder="ex: Resistência, Qualidade, etc."
                 className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Laboratório Responsável</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Laboratório Responsável
+              </label>
               <input
-                {...register('laboratorio_responsavel')}
+                {...register("laboratorio_responsavel")}
                 type="text"
                 placeholder="Nome do laboratório"
                 className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Frequência de Ensaios</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Frequência de Ensaios
+              </label>
               <input
-                {...register('frequencia_ensaios')}
+                {...register("frequencia_ensaios")}
                 type="text"
                 placeholder="ex: Diário, Semanal, etc."
                 className="input"
@@ -646,18 +817,22 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
           </div>
           <div className="mt-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Normas de Referência</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Normas de Referência
+              </label>
               <textarea
-                {...register('normas_referencia')}
+                {...register("normas_referencia")}
                 rows={2}
                 placeholder="Lista de normas de referência..."
                 className="textarea"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Equipamentos Necessários</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Equipamentos Necessários
+              </label>
               <textarea
-                {...register('equipamentos_necessarios')}
+                {...register("equipamentos_necessarios")}
                 rows={2}
                 placeholder="Lista de equipamentos..."
                 className="textarea"
@@ -667,50 +842,62 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
         </div>
       )}
 
-      {watchedTipo === 'plano_qualidade' && (
+      {watchedTipo === "plano_qualidade" && (
         <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
-          <h4 className="text-sm font-semibold text-teal-900 mb-4">Informações do Plano de Qualidade</h4>
+          <h4 className="text-sm font-semibold text-teal-900 mb-4">
+            Informações do Plano de Qualidade
+          </h4>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Escopo da Obra</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Escopo da Obra
+              </label>
               <textarea
-                {...register('escopo_obra')}
+                {...register("escopo_obra")}
                 rows={2}
                 placeholder="Descrição do escopo da obra..."
                 className="textarea"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Objetivos de Qualidade</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Objetivos de Qualidade
+              </label>
               <textarea
-                {...register('objetivos_qualidade')}
+                {...register("objetivos_qualidade")}
                 rows={2}
                 placeholder="Lista de objetivos de qualidade..."
                 className="textarea"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Responsabilidades de Qualidade</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Responsabilidades de Qualidade
+              </label>
               <textarea
-                {...register('responsabilidades_qualidade')}
+                {...register("responsabilidades_qualidade")}
                 rows={2}
                 placeholder="Lista de responsabilidades..."
                 className="textarea"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Controlos de Qualidade</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Controlos de Qualidade
+              </label>
               <textarea
-                {...register('controlos_qualidade')}
+                {...register("controlos_qualidade")}
                 rows={2}
                 placeholder="Lista de controlos..."
                 className="textarea"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Indicadores de Qualidade</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Indicadores de Qualidade
+              </label>
               <textarea
-                {...register('indicadores_qualidade')}
+                {...register("indicadores_qualidade")}
                 rows={2}
                 placeholder="Lista de indicadores..."
                 className="textarea"
@@ -722,11 +909,15 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
 
       {/* Integração com outros módulos */}
       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-        <h4 className="text-sm font-semibold text-gray-900 mb-4">Integração com outros módulos</h4>
+        <h4 className="text-sm font-semibold text-gray-900 mb-4">
+          Integração com outros módulos
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Obra Relacionada</label>
-            <select {...register('relacionado_obra_id')} className="select">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Obra Relacionada
+            </label>
+            <select {...register("relacionado_obra_id")} className="select">
               <option value="">Selecionar obra...</option>
               {obras.map((obra) => (
                 <option key={obra.id} value={obra.id}>
@@ -735,9 +926,9 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
               ))}
               <option value="outro">Outro</option>
             </select>
-            {watch('relacionado_obra_id') === 'outro' && (
+            {watch("relacionado_obra_id") === "outro" && (
               <input
-                {...register('relacionado_obra_outro')}
+                {...register("relacionado_obra_outro")}
                 type="text"
                 placeholder="Descreva a obra..."
                 className="input mt-2"
@@ -745,16 +936,18 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Zona Relacionada</label>
-            <select {...register('relacionado_zona_id')} className="select">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Zona Relacionada
+            </label>
+            <select {...register("relacionado_zona_id")} className="select">
               <option value="">Selecionar zona...</option>
               <option value="zona-001">Zona A - Fundações</option>
               <option value="zona-002">Zona B - Pilares</option>
               <option value="outro">Outro</option>
             </select>
-            {watch('relacionado_zona_id') === 'outro' && (
+            {watch("relacionado_zona_id") === "outro" && (
               <input
-                {...register('relacionado_zona_outro')}
+                {...register("relacionado_zona_outro")}
                 type="text"
                 placeholder="Descreva a zona..."
                 className="input mt-2"
@@ -762,16 +955,18 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ensaio Relacionado</label>
-            <select {...register('relacionado_ensaio_id')} className="select">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Ensaio Relacionado
+            </label>
+            <select {...register("relacionado_ensaio_id")} className="select">
               <option value="">Selecionar ensaio...</option>
               <option value="ensaio-001">Ensaio de Resistência</option>
               <option value="ensaio-002">Ensaio de Qualidade</option>
               <option value="outro">Outro</option>
             </select>
-            {watch('relacionado_ensaio_id') === 'outro' && (
+            {watch("relacionado_ensaio_id") === "outro" && (
               <input
-                {...register('relacionado_ensaio_outro')}
+                {...register("relacionado_ensaio_outro")}
                 type="text"
                 placeholder="Descreva o ensaio..."
                 className="input mt-2"
@@ -779,16 +974,18 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Material Relacionado</label>
-            <select {...register('relacionado_material_id')} className="select">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Material Relacionado
+            </label>
+            <select {...register("relacionado_material_id")} className="select">
               <option value="">Selecionar material...</option>
               <option value="mat-001">Cimento</option>
               <option value="mat-002">Aço</option>
               <option value="outro">Outro</option>
             </select>
-            {watch('relacionado_material_id') === 'outro' && (
+            {watch("relacionado_material_id") === "outro" && (
               <input
-                {...register('relacionado_material_outro')}
+                {...register("relacionado_material_outro")}
                 type="text"
                 placeholder="Descreva o material..."
                 className="input mt-2"
@@ -796,16 +993,21 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fornecedor Relacionado</label>
-            <select {...register('relacionado_fornecedor_id')} className="select">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Fornecedor Relacionado
+            </label>
+            <select
+              {...register("relacionado_fornecedor_id")}
+              className="select"
+            >
               <option value="">Selecionar fornecedor...</option>
               <option value="for-001">Fornecedor A</option>
               <option value="for-002">Fornecedor B</option>
               <option value="outro">Outro</option>
             </select>
-            {watch('relacionado_fornecedor_id') === 'outro' && (
+            {watch("relacionado_fornecedor_id") === "outro" && (
               <input
-                {...register('relacionado_fornecedor_outro')}
+                {...register("relacionado_fornecedor_outro")}
                 type="text"
                 placeholder="Descreva o fornecedor..."
                 className="input mt-2"
@@ -813,16 +1015,21 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Checklist Relacionado</label>
-            <select {...register('relacionado_checklist_id')} className="select">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Checklist Relacionado
+            </label>
+            <select
+              {...register("relacionado_checklist_id")}
+              className="select"
+            >
               <option value="">Selecionar checklist...</option>
               <option value="chk-001">Checklist Fundações</option>
               <option value="chk-002">Checklist Estrutura</option>
               <option value="outro">Outro</option>
             </select>
-            {watch('relacionado_checklist_id') === 'outro' && (
+            {watch("relacionado_checklist_id") === "outro" && (
               <input
-                {...register('relacionado_checklist_outro')}
+                {...register("relacionado_checklist_outro")}
                 type="text"
                 placeholder="Descreva o checklist..."
                 className="input mt-2"
@@ -835,17 +1042,21 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
       {/* Campos adicionais */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
-          <select {...register('categoria')} className="select">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Categoria
+          </label>
+          <select {...register("categoria")} className="select">
             <option value="">Selecione...</option>
-            {categorias.map(cat => (
-              <option key={cat.value} value={cat.value}>{cat.label}</option>
+            {categorias.map((cat) => (
+              <option key={cat.value} value={cat.value}>
+                {cat.label}
+              </option>
             ))}
             <option value="outro">Outro</option>
           </select>
-          {watch('categoria') === 'outro' && (
+          {watch("categoria") === "outro" && (
             <input
-              {...register('categoria_outro')}
+              {...register("categoria_outro")}
               type="text"
               placeholder="Descreva a categoria..."
               className="input mt-2"
@@ -853,11 +1064,18 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Classificação de Confidencialidade</label>
-          <select {...register('classificacao_confidencialidade')} className="select">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Classificação de Confidencialidade
+          </label>
+          <select
+            {...register("classificacao_confidencialidade")}
+            className="select"
+          >
             <option value="">Selecione...</option>
-            {classificacoes.map(cls => (
-              <option key={cls.value} value={cls.value}>{cls.label}</option>
+            {classificacoes.map((cls) => (
+              <option key={cls.value} value={cls.value}>
+                {cls.label}
+              </option>
             ))}
           </select>
         </div>
@@ -869,7 +1087,7 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
           Observações
         </label>
         <textarea
-          {...register('observacoes')}
+          {...register("observacoes")}
           placeholder="Descrição detalhada do documento..."
           rows={4}
           className="textarea"
@@ -905,9 +1123,14 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
         {/* Lista de ficheiros */}
         {uploadedFiles.length > 0 && (
           <div className="mt-4 space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">Ficheiros selecionados:</h4>
+            <h4 className="text-sm font-medium text-gray-700">
+              Ficheiros selecionados:
+            </h4>
             {uploadedFiles.map((file, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
                 <div className="flex items-center space-x-3">
                   <FileText className="h-4 w-4 text-gray-500" />
                   <span className="text-sm text-gray-700">{file.name}</span>
@@ -930,18 +1153,24 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
 
       {/* Preview do Estado */}
       <div className="p-4 bg-gray-50 rounded-xl">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Pré-visualização:</h4>
+        <h4 className="text-sm font-medium text-gray-700 mb-3">
+          Pré-visualização:
+        </h4>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">Tipo:</span>
-            <span className={`badge ${documentTypes.find(t => t.value === watchedTipo)?.color}`}>
-              {documentTypes.find(t => t.value === watchedTipo)?.label}
+            <span
+              className={`badge ${documentTypes.find((t) => t.value === watchedTipo)?.color}`}
+            >
+              {documentTypes.find((t) => t.value === watchedTipo)?.label}
             </span>
           </div>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">Estado:</span>
-            <span className={`badge ${statusOptions.find(s => s.value === watchedEstado)?.color}`}>
-              {statusOptions.find(s => s.value === watchedEstado)?.label}
+            <span
+              className={`badge ${statusOptions.find((s) => s.value === watchedEstado)?.color}`}
+            >
+              {statusOptions.find((s) => s.value === watchedEstado)?.label}
             </span>
           </div>
         </div>
@@ -970,11 +1199,11 @@ export default function DocumentoForm({ onSubmit, onCancel, initialData, isEditi
           ) : (
             <div className="flex items-center space-x-2">
               <CheckCircle className="h-4 w-4" />
-              <span>{isEditing ? 'Atualizar' : 'Criar'} Documento</span>
+              <span>{isEditing ? "Atualizar" : "Criar"} Documento</span>
             </div>
           )}
         </button>
       </div>
     </motion.form>
-  )
-} 
+  );
+}

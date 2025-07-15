@@ -1,4 +1,4 @@
-import { Ensaio, Documento, Checklist, Material, Fornecedor, NaoConformidade, Obra } from '@/types'
+// Removido o import que causava conflito de tipos
 // Tipos base para todos os módulos
 export interface BaseEntity {
   id: string;
@@ -7,7 +7,7 @@ export interface BaseEntity {
   data_atualizacao: string;
   responsavel: string;
   zona: string;
-  estado: 'pendente' | 'em_analise' | 'aprovado' | 'reprovado' | 'concluido';
+  estado: "pendente" | "em_analise" | "aprovado" | "reprovado" | "concluido";
   observacoes?: string;
   anexos?: Anexo[];
 }
@@ -26,7 +26,18 @@ export interface Anexo {
 export interface EventoDocumento {
   id: string;
   data: string;
-  tipo: 'criacao' | 'revisao' | 'aprovacao' | 'reprovacao' | 'distribuicao' | 'arquivamento' | 'comentario' | 'anexo' | 'rfi_solicitacao' | 'rfi_resposta' | 'outro';
+  tipo:
+    | "criacao"
+    | "revisao"
+    | "aprovacao"
+    | "reprovacao"
+    | "distribuicao"
+    | "arquivamento"
+    | "comentario"
+    | "anexo"
+    | "rfi_solicitacao"
+    | "rfi_resposta"
+    | "outro";
   responsavel: string;
   descricao: string;
   detalhes?: string;
@@ -36,7 +47,20 @@ export interface EventoDocumento {
 
 // Tipos específicos para cada módulo
 export interface Documento extends BaseEntity {
-  tipo: 'projeto' | 'especificacao' | 'relatorio' | 'certificado' | 'rfi' | 'procedimento' | 'plano_ensaio' | 'plano_qualidade' | 'manual' | 'instrucao_trabalho' | 'formulario' | 'registro' | 'outro';
+  tipo:
+    | "projeto"
+    | "especificacao"
+    | "relatorio"
+    | "certificado"
+    | "rfi"
+    | "procedimento"
+    | "plano_ensaio"
+    | "plano_qualidade"
+    | "manual"
+    | "instrucao_trabalho"
+    | "formulario"
+    | "registro"
+    | "outro";
   tipo_outro?: string;
   versao: string;
   data_validade?: string;
@@ -44,25 +68,32 @@ export interface Documento extends BaseEntity {
   data_revisao?: string;
   aprovador?: string;
   revisor?: string;
-  
+
   // Campos específicos por tipo
-  categoria?: 'tecnico' | 'administrativo' | 'seguranca' | 'ambiente' | 'qualidade' | 'comercial' | 'outro';
+  categoria?:
+    | "tecnico"
+    | "administrativo"
+    | "seguranca"
+    | "ambiente"
+    | "qualidade"
+    | "comercial"
+    | "outro";
   categoria_outro?: string;
-  
+
   // Para RFI (Request for Information)
   rfi?: {
     numero_rfi: string;
     solicitante: string;
     data_solicitacao: string;
     data_resposta?: string;
-    prioridade: 'baixa' | 'media' | 'alta' | 'urgente';
-    status: 'pendente' | 'em_analise' | 'respondido' | 'fechado';
+    prioridade: "baixa" | "media" | "alta" | "urgente";
+    status: "pendente" | "em_analise" | "respondido" | "fechado";
     impacto_custo?: number;
     impacto_prazo?: number;
     resposta?: string;
     anexos_resposta?: Anexo[];
   };
-  
+
   // Para Procedimentos
   procedimento?: {
     escopo: string;
@@ -74,7 +105,7 @@ export interface Documento extends BaseEntity {
     ultima_revisao?: string;
     proxima_revisao?: string;
   };
-  
+
   // Para Planos de Ensaio
   plano_ensaio?: {
     material_ensaio: string;
@@ -86,7 +117,7 @@ export interface Documento extends BaseEntity {
     criterios_aceitacao: string;
     acoes_nao_conformidade: string[];
   };
-  
+
   // Para Planos de Qualidade
   plano_qualidade?: {
     escopo_obra: string;
@@ -98,7 +129,7 @@ export interface Documento extends BaseEntity {
     auditorias_planeadas: string[];
     acoes_melhoria: string[];
   };
-  
+
   // Integração com outros módulos
   relacionado_obra_id?: string;
   relacionado_obra_outro?: string;
@@ -112,19 +143,23 @@ export interface Documento extends BaseEntity {
   relacionado_fornecedor_outro?: string;
   relacionado_checklist_id?: string;
   relacionado_checklist_outro?: string;
-  
+
   // Timeline e histórico
   timeline: EventoDocumento[];
-  
+
   // Anexos específicos
   anexos_principal?: Anexo[];
   anexos_apendices?: Anexo[];
   anexos_revisoes?: Anexo[];
-  
+
   // Campos adicionais
   observacoes?: string;
   palavras_chave?: string[];
-  classificacao_confidencialidade?: 'publico' | 'interno' | 'confidencial' | 'restrito';
+  classificacao_confidencialidade?:
+    | "publico"
+    | "interno"
+    | "confidencial"
+    | "restrito";
   distribuicao?: string[];
 }
 
@@ -159,7 +194,7 @@ export interface ContextoAdicional {
 export interface Checklist extends BaseEntity {
   obra: string;
   titulo: string;
-  status: 'em_andamento' | 'concluido' | 'aprovado' | 'reprovado';
+  status: "em_andamento" | "concluido" | "aprovado" | "reprovado";
   pontos: PontoInspecao[];
   anexos_gerais?: AnexoChecklist[];
   observacoes?: string;
@@ -171,7 +206,7 @@ export interface PontoInspecao {
   tipo: string;
   localizacao: string;
   responsavel: string;
-  status: 'pendente' | 'aprovado' | 'reprovado' | 'correcao';
+  status: "pendente" | "aprovado" | "reprovado" | "correcao";
   data_inspecao: string;
   linha_tempo: EventoPonto[];
   anexos?: AnexoChecklist[];
@@ -181,7 +216,14 @@ export interface PontoInspecao {
 export interface EventoPonto {
   id: string;
   data: string;
-  acao: 'criado' | 'inspecionado' | 'aprovado' | 'reprovado' | 'comentario' | 'anexo' | 'correcao';
+  acao:
+    | "criado"
+    | "inspecionado"
+    | "aprovado"
+    | "reprovado"
+    | "comentario"
+    | "anexo"
+    | "correcao";
   responsavel: string;
   detalhes: string;
   anexo?: AnexoChecklist;
@@ -216,7 +258,7 @@ export interface ItemChecklist {
 
 export interface Material extends BaseEntity {
   nome: string;
-  tipo: 'betao' | 'aco' | 'agregado' | 'cimento' | 'outro';
+  tipo: "betao" | "aco" | "agregado" | "cimento" | "outro";
   fornecedor_id: string;
   certificado_id?: string;
   data_rececao: string;
@@ -234,44 +276,60 @@ export interface Fornecedor {
   email: string;
   contacto: string;
   data_registo: string;
-  estado: 'ativo' | 'inativo';
+  estado: "ativo" | "inativo";
 }
 
 export interface NaoConformidade extends BaseEntity {
   // Informações básicas
-  tipo: 'material' | 'execucao' | 'documentacao' | 'seguranca' | 'ambiente' | 'qualidade' | 'prazo' | 'custo' | 'outro';
+  tipo:
+    | "material"
+    | "execucao"
+    | "documentacao"
+    | "seguranca"
+    | "ambiente"
+    | "qualidade"
+    | "prazo"
+    | "custo"
+    | "outro";
   tipo_outro?: string;
-  severidade: 'baixa' | 'media' | 'alta' | 'critica';
-  categoria: 'auditoria' | 'inspecao' | 'reclamacao' | 'acidente' | 'incidente' | 'desvio' | 'outro';
+  severidade: "baixa" | "media" | "alta" | "critica";
+  categoria:
+    | "auditoria"
+    | "inspecao"
+    | "reclamacao"
+    | "acidente"
+    | "incidente"
+    | "desvio"
+    | "outro";
   categoria_outro?: string;
-  
+
   // Datas importantes
   data_deteccao: string;
   data_resolucao?: string;
   data_limite_resolucao?: string;
   data_verificacao_eficacia?: string;
-  
+
   // Descrição e contexto
   descricao: string;
   causa_raiz?: string;
-  impacto: 'baixo' | 'medio' | 'alto' | 'critico';
+  impacto: "baixo" | "medio" | "alto" | "critico";
   area_afetada: string;
-  
+
   // Responsabilidades
   responsavel_deteccao: string;
   responsavel_resolucao?: string;
   responsavel_verificacao?: string;
-  
+
   // Ações
   acao_corretiva?: string;
   acao_preventiva?: string;
   medidas_implementadas?: string[];
-  
+
   // Custos
   custo_estimado?: number;
   custo_real?: number;
   custo_preventivo?: number;
-  
+
   // Integração com outros módulos
   relacionado_ensaio_id?: string;
   relacionado_ensaio_outro?: string;
@@ -286,22 +344,22 @@ export interface NaoConformidade extends BaseEntity {
   relacionado_obra_outro?: string;
   relacionado_zona_id?: string;
   relacionado_zona_outro?: string;
-  
+
   // Auditoria relacionada
   auditoria_id?: string;
   auditoria_outro?: string;
-  
+
   // Timeline e eventos
   timeline: EventoNaoConformidade[];
-  
+
   // Verificação de eficácia
   verificacao_eficacia?: VerificacaoEficacia;
-  
+
   // Anexos específicos
   anexos_evidencia?: Anexo[];
   anexos_corretiva?: Anexo[];
   anexos_verificacao?: Anexo[];
-  
+
   // Campos adicionais
   observacoes?: string;
   lições_aprendidas?: string;
@@ -311,7 +369,15 @@ export interface NaoConformidade extends BaseEntity {
 export interface EventoNaoConformidade {
   id: string;
   data: string;
-  tipo: 'deteccao' | 'analise' | 'acao_corretiva' | 'verificacao' | 'resolucao' | 'reabertura' | 'comentario' | 'anexo';
+  tipo:
+    | "deteccao"
+    | "analise"
+    | "acao_corretiva"
+    | "verificacao"
+    | "resolucao"
+    | "reabertura"
+    | "comentario"
+    | "anexo";
   responsavel: string;
   descricao: string;
   detalhes?: string;
@@ -332,7 +398,14 @@ export interface VerificacaoEficacia {
 
 // Tipos para Auditorias
 export interface Auditoria extends BaseEntity {
-  tipo: 'interna' | 'externa' | 'certificacao' | 'fornecedor' | 'seguranca' | 'ambiente' | 'qualidade';
+  tipo:
+    | "interna"
+    | "externa"
+    | "certificacao"
+    | "fornecedor"
+    | "seguranca"
+    | "ambiente"
+    | "qualidade";
   escopo: string;
   data_inicio: string;
   data_fim: string;
@@ -340,30 +413,30 @@ export interface Auditoria extends BaseEntity {
   auditor_principal: string;
   auditores: string[];
   entidade_auditada: string;
-  
+
   // Critérios e normas
   normas_referencia: string[];
   criterios_auditoria: string[];
-  
+
   // Resultados
   conformidade_geral: number; // percentual
   nao_conformidades_encontradas: number;
   observacoes_encontradas: number;
   recomendacoes: number;
-  
+
   // Status
-  status: 'planeada' | 'em_execucao' | 'concluida' | 'cancelada' | 'atrasada';
-  
+  status: "planeada" | "em_execucao" | "concluida" | "cancelada" | "atrasada";
+
   // Relatórios
   relatorio_auditoria?: string;
   plano_acao?: string;
-  
+
   // Checklist de auditoria
   checklist_auditoria: ItemChecklistAuditoria[];
-  
+
   // Não conformidades encontradas
   nao_conformidades: string[]; // IDs das NCs
-  
+
   // Anexos
   anexos?: Anexo[];
   observacoes?: string;
@@ -374,7 +447,7 @@ export interface ItemChecklistAuditoria {
   criterio: string;
   norma_referencia: string;
   descricao: string;
-  conformidade: 'conforme' | 'nao_conforme' | 'observacao' | 'nao_aplicavel';
+  conformidade: "conforme" | "nao_conforme" | "observacao" | "nao_aplicavel";
   evidencia: string;
   responsavel: string;
   data_verificacao: string;
@@ -386,32 +459,38 @@ export interface ItemChecklistAuditoria {
 // Tipos para Medidas Corretivas e Preventivas
 export interface MedidaCorretiva extends BaseEntity {
   nao_conformidade_id: string;
-  tipo: 'corretiva' | 'preventiva' | 'melhoria';
+  tipo: "corretiva" | "preventiva" | "melhoria";
   descricao: string;
   causa_raiz: string;
   acao_especifica: string;
-  
+
   // Responsabilidades
   responsavel_implementacao: string;
   responsavel_verificacao: string;
-  
+
   // Prazos
   data_inicio: string;
   data_limite: string;
   data_conclusao?: string;
-  
+
   // Recursos
   recursos_necessarios: string[];
   custo_estimado: number;
   custo_real?: number;
-  
+
   // Status e acompanhamento
-  status: 'planeada' | 'em_execucao' | 'concluida' | 'verificada' | 'atrasada' | 'cancelada';
+  status:
+    | "planeada"
+    | "em_execucao"
+    | "concluida"
+    | "verificada"
+    | "atrasada"
+    | "cancelada";
   percentual_execucao: number;
-  
+
   // Verificação
   verificacao_eficacia?: VerificacaoEficacia;
-  
+
   // Anexos
   anexos?: Anexo[];
   observacoes?: string;
@@ -425,7 +504,7 @@ export interface RelatorioNaoConformidade {
   periodo_fim: string;
   gerado_por: string;
   data_geracao: string;
-  
+
   // Estatísticas
   estatisticas: {
     total_nc: number;
@@ -437,7 +516,7 @@ export interface RelatorioNaoConformidade {
     tempo_medio_resolucao: number;
     custo_total: number;
   };
-  
+
   // Análise por módulo
   analise_por_modulo: {
     ensaios: {
@@ -461,7 +540,7 @@ export interface RelatorioNaoConformidade {
       percentual: number;
     };
   };
-  
+
   // Auditorias realizadas
   auditorias: {
     total: number;
@@ -469,7 +548,7 @@ export interface RelatorioNaoConformidade {
     externas: number;
     conformidade_media: number;
   };
-  
+
   // Medidas implementadas
   medidas: {
     corretivas: number;
@@ -477,23 +556,23 @@ export interface RelatorioNaoConformidade {
     eficazes: number;
     custo_total: number;
   };
-  
+
   // Conteúdo detalhado
   nao_conformidades: NaoConformidade[];
   auditorias_realizadas: Auditoria[];
   medidas_implementadas: MedidaCorretiva[];
-  
+
   // Recomendações
   recomendacoes: string[];
   acoes_futuras: string[];
-  
+
   // Anexos
   anexos?: Anexo[];
 }
 
 export interface Relatorio {
   id: string;
-  tipo: 'mensal' | 'trimestral' | 'anual' | 'especifico';
+  tipo: "mensal" | "trimestral" | "anual" | "especifico";
   titulo: string;
   data_inicio: string;
   data_fim: string;
@@ -530,9 +609,20 @@ export interface Obra extends BaseEntity {
   valor_contrato: number;
   valor_executado: number;
   percentual_execucao: number;
-  status: 'planeamento' | 'em_execucao' | 'paralisada' | 'concluida' | 'cancelada';
-  tipo_obra: 'residencial' | 'comercial' | 'industrial' | 'infraestrutura' | 'reabilitacao' | 'outro';
-  categoria: 'pequena' | 'media' | 'grande' | 'mega';
+  status:
+    | "planeamento"
+    | "em_execucao"
+    | "paralisada"
+    | "concluida"
+    | "cancelada";
+  tipo_obra:
+    | "residencial"
+    | "comercial"
+    | "industrial"
+    | "infraestrutura"
+    | "reabilitacao"
+    | "outro";
+  categoria: "pequena" | "media" | "grande" | "mega";
   responsavel_tecnico: string;
   coordenador_obra: string;
   fiscal_obra: string;
@@ -552,12 +642,12 @@ export interface ZonaObra {
   nome: string;
   descricao: string;
   area: number;
-  unidade_area: 'm2' | 'm3' | 'un';
+  unidade_area: "m2" | "m3" | "un";
   percentual_execucao: number;
   data_inicio: string;
   data_fim_prevista: string;
   data_fim_real?: string;
-  status: 'nao_iniciada' | 'em_execucao' | 'concluida' | 'paralisada';
+  status: "nao_iniciada" | "em_execucao" | "concluida" | "paralisada";
   responsavel: string;
   materiais_utilizados: MaterialZona[];
   ensaios_realizados: string[];
@@ -576,7 +666,12 @@ export interface FaseObra {
   data_inicio_real?: string;
   data_fim_real?: string;
   percentual_execucao: number;
-  status: 'nao_iniciada' | 'em_execucao' | 'concluida' | 'atrasada' | 'paralisada';
+  status:
+    | "nao_iniciada"
+    | "em_execucao"
+    | "concluida"
+    | "atrasada"
+    | "paralisada";
   dependencias: string[];
   recursos_necessarios: RecursoFase[];
   custo_previsto: number;
@@ -587,13 +682,19 @@ export interface FaseObra {
 export interface EquipaObra {
   id: string;
   nome: string;
-  tipo: 'construcao' | 'eletrica' | 'mecanica' | 'acabamentos' | 'especializada' | 'outro';
+  tipo:
+    | "construcao"
+    | "eletrica"
+    | "mecanica"
+    | "acabamentos"
+    | "especializada"
+    | "outro";
   lider: string;
   membros: MembroEquipa[];
   especialidades: string[];
   data_inicio: string;
   data_fim?: string;
-  status: 'ativa' | 'inativa' | 'concluida';
+  status: "ativa" | "inativa" | "concluida";
   zona_atual?: string;
   fase_atual?: string;
   observacoes?: string;
@@ -608,7 +709,7 @@ export interface MembroEquipa {
   email: string;
   data_entrada: string;
   data_saida?: string;
-  status: 'ativo' | 'inativo';
+  status: "ativo" | "inativo";
   certificacoes: string[];
   observacoes?: string;
 }
@@ -627,7 +728,7 @@ export interface MaterialZona {
 }
 
 export interface RecursoFase {
-  tipo: 'material' | 'equipamento' | 'mao_obra' | 'servico' | 'outro';
+  tipo: "material" | "equipamento" | "mao_obra" | "servico" | "outro";
   descricao: string;
   quantidade: number;
   unidade: string;
@@ -635,22 +736,29 @@ export interface RecursoFase {
   custo_total: number;
   fornecedor_id?: string;
   data_necessaria: string;
-  status: 'pendente' | 'disponivel' | 'utilizado';
+  status: "pendente" | "disponivel" | "utilizado";
   observacoes?: string;
 }
 
 export interface RiscoObra {
   id: string;
   descricao: string;
-  categoria: 'tecnico' | 'ambiental' | 'seguranca' | 'financeiro' | 'prazo' | 'qualidade' | 'outro';
-  probabilidade: 'baixa' | 'media' | 'alta' | 'critica';
-  impacto: 'baixo' | 'medio' | 'alto' | 'critico';
-  nivel_risco: 'baixo' | 'medio' | 'alto' | 'critico';
+  categoria:
+    | "tecnico"
+    | "ambiental"
+    | "seguranca"
+    | "financeiro"
+    | "prazo"
+    | "qualidade"
+    | "outro";
+  probabilidade: "baixa" | "media" | "alta" | "critica";
+  impacto: "baixo" | "medio" | "alto" | "critico";
+  nivel_risco: "baixo" | "medio" | "alto" | "critico";
   data_identificacao: string;
   responsavel: string;
   medidas_preventivas: string[];
   medidas_corretivas?: string[];
-  status: 'ativo' | 'mitigado' | 'resolvido' | 'ocorreu';
+  status: "ativo" | "mitigado" | "resolvido" | "ocorreu";
   custo_estimado?: number;
   observacoes?: string;
 }
@@ -658,16 +766,23 @@ export interface RiscoObra {
 export interface IndicadorObra {
   id: string;
   nome: string;
-  tipo: 'qualidade' | 'prazo' | 'custo' | 'seguranca' | 'ambiental' | 'satisfacao' | 'outro';
+  tipo:
+    | "qualidade"
+    | "prazo"
+    | "custo"
+    | "seguranca"
+    | "ambiental"
+    | "satisfacao"
+    | "outro";
   unidade: string;
   valor_meta: number;
   valor_atual: number;
   percentual_atingimento: number;
-  frequencia_medicao: 'diaria' | 'semanal' | 'mensal' | 'trimestral' | 'anual';
+  frequencia_medicao: "diaria" | "semanal" | "mensal" | "trimestral" | "anual";
   responsavel: string;
   data_ultima_medicao: string;
   historico: MedicaoIndicador[];
-  status: 'dentro_meta' | 'acima_meta' | 'abaixo_meta' | 'critico';
+  status: "dentro_meta" | "acima_meta" | "abaixo_meta" | "critico";
   observacoes?: string;
 }
 
@@ -700,7 +815,12 @@ export interface AtividadeCronograma {
   data_inicio_real?: string;
   data_fim_real?: string;
   percentual_execucao: number;
-  status: 'nao_iniciada' | 'em_execucao' | 'concluida' | 'atrasada' | 'paralisada';
+  status:
+    | "nao_iniciada"
+    | "em_execucao"
+    | "concluida"
+    | "atrasada"
+    | "paralisada";
   dependencias: string[];
   responsavel: string;
   recursos: string[];
@@ -712,7 +832,7 @@ export interface AtividadeCronograma {
 export interface RelatorioObra {
   id: string;
   obra_id: string;
-  tipo: 'diario' | 'semanal' | 'mensal' | 'trimestral' | 'final';
+  tipo: "diario" | "semanal" | "mensal" | "trimestral" | "final";
   periodo_inicio: string;
   periodo_fim: string;
   gerado_por: string;
@@ -808,13 +928,13 @@ export interface User {
   id: string;
   nome: string;
   email: string;
-  perfil: 'qualidade' | 'producao' | 'fiscal' | 'admin';
+  perfil: "qualidade" | "producao" | "fiscal" | "admin";
   avatar?: string;
 }
 
 export interface Notification {
   id: string;
-  tipo: 'info' | 'success' | 'warning' | 'error';
+  tipo: "info" | "success" | "warning" | "error";
   titulo: string;
   mensagem: string;
   data: string;
@@ -834,7 +954,7 @@ export interface AvaliacaoFornecedor {
     atendimento: number;
   };
   comentarios: string;
-} 
+}
 
 export interface RFI extends BaseEntity {
   numero: string;
@@ -844,8 +964,8 @@ export interface RFI extends BaseEntity {
   destinatario: string;
   data_solicitacao: string;
   data_resposta?: string;
-  prioridade: 'baixa' | 'media' | 'alta' | 'urgente';
-  status: 'pendente' | 'em_analise' | 'respondido' | 'fechado';
+  prioridade: "baixa" | "media" | "alta" | "urgente";
+  status: "pendente" | "em_analise" | "respondido" | "fechado";
   resposta?: string;
   anexos?: Anexo[];
   impacto_custo?: number;
@@ -862,9 +982,9 @@ export interface RFI extends BaseEntity {
 export interface EventoRFI {
   id: string;
   data: string;
-  tipo: 'criado' | 'respondido' | 'comentario' | 'anexo' | 'outro';
+  tipo: "criado" | "respondido" | "comentario" | "anexo" | "outro";
   responsavel: string;
   descricao: string;
   detalhes?: string;
   anexo?: Anexo;
-} 
+}

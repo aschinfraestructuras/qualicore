@@ -13,4 +13,4 @@ services:
       - key: POCKETBASE_ADMIN_EMAIL
         value: admin@qualicore.pt
       - key: POCKETBASE_ADMIN_PASSWORD
-        generateValue: true 
+        generateValue: true

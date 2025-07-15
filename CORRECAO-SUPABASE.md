@@ -57,6 +57,7 @@ O arquivo `src/lib/supabase-api.ts` já está implementado corretamente.
 ### PASSO 5: Testar a Configuração
 
 1. **Inicie o servidor:**
+
    ```bash
    npm run dev
    ```
@@ -78,41 +79,46 @@ Execute este script no SQL Editor para verificar se tudo está correto:
 
 ```sql
 -- Verificar se todas as tabelas existem
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
 AND table_name IN ('obras', 'fornecedores', 'materiais', 'ensaios', 'checklists', 'documentos', 'nao_conformidades', 'rfis', 'zonas')
 ORDER BY table_name;
 
 -- Verificar políticas RLS
-SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual 
-FROM pg_policies 
+SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual
+FROM pg_policies
 WHERE schemaname = 'public';
 
 -- Verificar índices
-SELECT tablename, indexname, indexdef 
-FROM pg_indexes 
-WHERE schemaname = 'public' 
+SELECT tablename, indexname, indexdef
+FROM pg_indexes
+WHERE schemaname = 'public'
 ORDER BY tablename, indexname;
 ```
 
 ## 🔍 POSSÍVEIS ERROS E SOLUÇÕES
 
 ### Erro: "relation does not exist"
+
 **Solução:** Execute o script SQL completo novamente
 
 ### Erro: "permission denied"
+
 **Solução:** Verifique se as políticas RLS estão corretas
 
 ### Erro: "invalid input syntax"
+
 **Solução:** Verifique se os tipos de dados estão corretos
 
 ### Erro: "duplicate key value"
+
 **Solução:** Verifique se os campos UNIQUE não estão duplicados
 
 ## 📊 ESTRUTURA FINAL
 
 ### Tabelas Principais:
+
 1. **`obras`** - Projetos/obras (9 campos principais)
 2. **`fornecedores`** - Fornecedores (12 campos)
 3. **`materiais`** - Materiais de construção (15 campos)
@@ -124,12 +130,14 @@ ORDER BY tablename, indexname;
 9. **`zonas`** - Zonas das obras (13 campos)
 
 ### Relacionamentos:
+
 - Todas as tabelas têm `user_id` para isolamento
 - Chaves estrangeiras para relacionamentos
 - Índices para performance
 - RLS para segurança
 
 ### Funcionalidades:
+
 - ✅ Autenticação completa
 - ✅ CRUD para todos os módulos
 - ✅ Relacionamentos funcionais
@@ -148,6 +156,7 @@ ORDER BY tablename, indexname;
 ## 📞 SUPORTE
 
 Se ainda houver problemas:
+
 1. Verifique os logs do Supabase
 2. Verifique o console do navegador
 3. Teste cada módulo individualmente
@@ -158,4 +167,4 @@ Se ainda houver problemas:
 **Status:** ✅ Pronto para execução
 **Compatibilidade:** 100% com frontend
 **Segurança:** RLS implementado
-**Performance:** Índices otimizados 
+**Performance:** Índices otimizados
