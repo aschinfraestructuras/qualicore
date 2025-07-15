@@ -11,10 +11,13 @@ import {
   Filter,
   Calendar,
   XCircle,
+  FileText,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ObraForm from "@/components/forms/ObraForm";
+import RelatorioObrasPremium from "@/components/RelatorioObrasPremium";
 import { obrasAPI } from "@/lib/supabase-api";
+import { PDFService } from "@/services/pdfService";
 import { AnimatePresence, motion } from "framer-motion";
 
 // Dados mock iniciais para demonstração
@@ -120,6 +123,7 @@ export default function Obras() {
   const [showModal, setShowModal] = useState(false);
   const [editingObra, setEditingObra] = useState<any | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showRelatorios, setShowRelatorios] = useState(false);
 
   // Filtros ativos
   const [filters, setFilters] = useState({
@@ -263,6 +267,16 @@ export default function Obras() {
     }
   };
 
+  const handleGenerateIndividualReport = async (obra: any) => {
+    try {
+      await PDFService.generateObrasIndividualReport([obra]);
+      toast.success("Relatório individual gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar relatório individual:", error);
+      toast.error("Erro ao gerar relatório individual");
+    }
+  };
+
   // Aplicar filtros
   const filteredObras = obras.filter((obra) => {
     const matchesSearch = !filters.search || 
@@ -357,7 +371,7 @@ export default function Obras() {
         </button>
       </div>
 
-      {/* Botão de Filtros */}
+      {/* Botões de Ação */}
       <div className="flex items-center space-x-4">
         <button
           onClick={() => setShowFilters(!showFilters)}
@@ -369,6 +383,14 @@ export default function Obras() {
           title="Filtros"
         >
           <Filter className="h-5 w-5" />
+        </button>
+        
+        <button
+          onClick={() => setShowRelatorios(true)}
+          className="p-2 rounded-lg shadow-soft hover:shadow-md transition-all bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600"
+          title="Relatórios PDF"
+        >
+          <FileText className="h-5 w-5" />
         </button>
       </div>
 
@@ -663,12 +685,21 @@ export default function Obras() {
                       <button
                         className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                         onClick={() => handleEdit(obra)}
+                        title="Editar"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
+                        className="p-2 text-gray-400 hover:text-green-600 transition-colors"
+                        onClick={() => handleGenerateIndividualReport(obra)}
+                        title="Relatório Individual"
+                      >
+                        <FileText className="h-4 w-4" />
+                      </button>
+                      <button
                         className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                         onClick={() => handleDelete(obra.id)}
+                        title="Excluir"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -705,6 +736,14 @@ export default function Obras() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de Relatórios */}
+      {showRelatorios && (
+        <RelatorioObrasPremium
+          obras={obras}
+          onClose={() => setShowRelatorios(false)}
+        />
       )}
     </div>
   );

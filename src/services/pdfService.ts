@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { MetricasReais } from './metricsService';
-import { Material } from '@/types';
+import { Material, Obra } from '@/types';
 
 interface RelatorioPDFOptions {
   titulo: string;
@@ -21,6 +21,14 @@ interface RelatorioMateriaisOptions {
   materialEspecifico?: Material;
   mostrarCusto?: boolean;
   colunas?: Record<string, boolean>;
+}
+
+interface RelatorioObrasOptions {
+  titulo: string;
+  subtitulo?: string;
+  obras: Obra[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
 }
 
 export class PDFService {
@@ -948,6 +956,571 @@ export class PDFService {
 
   public download(filename: string): void {
     this.doc.save(filename);
+  }
+
+  // Métodos para Relatórios de Obras
+  public async generateObrasExecutiveReport(obras: Obra[]): Promise<void> {
+    const options: RelatorioObrasOptions = {
+      titulo: 'Relatório Executivo de Obras',
+      subtitulo: 'Visão Geral e Indicadores de Performance',
+      obras,
+      tipo: 'executivo'
+    };
+    this.gerarRelatorioExecutivoObras(options);
+    this.download(`relatorio-obras-executivo-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateObrasFilteredReport(obras: Obra[], filtros: any): Promise<void> {
+    const options: RelatorioObrasOptions = {
+      titulo: 'Relatório Filtrado de Obras',
+      subtitulo: 'Análise Detalhada com Filtros Aplicados',
+      obras,
+      tipo: 'filtrado',
+      filtros
+    };
+    this.gerarRelatorioFiltradoObras(options);
+    this.download(`relatorio-obras-filtrado-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateObrasComparativeReport(obras: Obra[]): Promise<void> {
+    const options: RelatorioObrasOptions = {
+      titulo: 'Relatório Comparativo de Obras',
+      subtitulo: 'Análise Comparativa e Benchmarks',
+      obras,
+      tipo: 'comparativo'
+    };
+    this.gerarRelatorioComparativoObras(options);
+    this.download(`relatorio-obras-comparativo-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateObrasIndividualReport(obras: Obra[]): Promise<void> {
+    if (obras.length !== 1) {
+      throw new Error('Relatório individual deve conter apenas uma obra');
+    }
+    
+    const obra = obras[0];
+    const options: RelatorioObrasOptions = {
+      titulo: `Relatório Individual - ${obra.nome}`,
+      subtitulo: `Código: ${obra.codigo} | Cliente: ${obra.cliente}`,
+      obras,
+      tipo: 'individual'
+    };
+    this.gerarRelatorioIndividualObra(options);
+    this.download(`relatorio-obras-individual-${obra.codigo}-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  private gerarRelatorioExecutivoObras(options: RelatorioObrasOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addEstatisticasObras(options.obras, startY);
+    currentY = this.addRelatorioExecutivoObras(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioFiltradoObras(options: RelatorioObrasOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addFiltrosObras(options.filtros, startY);
+    currentY = this.addRelatorioFiltradoObras(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioComparativoObras(options: RelatorioObrasOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioComparativoObras(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioIndividualObra(options: RelatorioObrasOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioIndividualObra(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private calcularEstatisticasObras(obras: Obra[]) {
+    const stats = {
+      total: obras.length,
+      em_execucao: obras.filter(o => o.status === 'em_execucao').length,
+      concluidas: obras.filter(o => o.status === 'concluida').length,
+      paralisadas: obras.filter(o => o.status === 'paralisada').length,
+      canceladas: obras.filter(o => o.status === 'cancelada').length,
+      planeamento: obras.filter(o => o.status === 'planeamento').length,
+      valor_total: obras.reduce((acc, o) => acc + o.valor_contrato, 0),
+      valor_executado: obras.reduce((acc, o) => acc + o.valor_executado, 0),
+      percentual_medio: obras.length > 0 ? obras.reduce((acc, o) => acc + o.percentual_execucao, 0) / obras.length : 0,
+      por_tipo: obras.reduce((acc, o) => {
+        acc[o.tipo_obra] = (acc[o.tipo_obra] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+      por_categoria: obras.reduce((acc, o) => {
+        acc[o.categoria] = (acc[o.categoria] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    };
+    
+    return stats;
+  }
+
+  private addEstatisticasObras(obras: Obra[], startY: number): number {
+    const stats = this.calcularEstatisticasObras(obras);
+    
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Indicadores de Performance', 20, startY);
+    
+    // Cards de KPI
+    this.addKPICard(20, startY + 10, 'Total Obras', stats.total.toString(), [59, 130, 246]); // Azul
+    this.addKPICard(70, startY + 10, 'Em Execução', stats.em_execucao.toString(), [34, 197, 94]); // Verde
+    this.addKPICard(120, startY + 10, 'Concluídas', stats.concluidas.toString(), [16, 185, 129]); // Verde escuro
+    this.addKPICard(170, startY + 10, 'Valor Total', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(stats.valor_total), [168, 85, 247]); // Roxo
+    
+    // Segunda linha de cards
+    this.addKPICard(20, startY + 35, 'Valor Executado', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(stats.valor_executado), [251, 146, 60]); // Laranja
+    this.addKPICard(70, startY + 35, 'Progresso Médio', `${stats.percentual_medio.toFixed(1)}%`, [236, 72, 153]); // Rosa
+    this.addKPICard(120, startY + 35, 'Paralisadas', stats.paralisadas.toString(), [245, 158, 11]); // Amarelo
+    this.addKPICard(170, startY + 35, 'Canceladas', stats.canceladas.toString(), [239, 68, 68]); // Vermelho
+    
+    return startY + 65;
+  }
+
+  private addRelatorioExecutivoObras(options: RelatorioObrasOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Resumo Executivo', 20, startY);
+    
+    // Resumo executivo
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const stats = this.calcularEstatisticasObras(options.obras);
+    const percentualExecucao = stats.valor_total > 0 ? (stats.valor_executado / stats.valor_total) * 100 : 0;
+    
+    const resumo = [
+      `• Total de obras em gestão: ${stats.total}`,
+      `• Obras em execução: ${stats.em_execucao} (${((stats.em_execucao / stats.total) * 100).toFixed(1)}%)`,
+      `• Obras concluídas: ${stats.concluidas} (${((stats.concluidas / stats.total) * 100).toFixed(1)}%)`,
+      `• Valor total dos contratos: ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(stats.valor_total)}`,
+      `• Valor executado: ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(stats.valor_executado)}`,
+      `• Percentual de execução financeira: ${percentualExecucao.toFixed(1)}%`,
+      `• Progresso físico médio: ${stats.percentual_medio.toFixed(1)}%`
+    ];
+    
+    let currentY = startY + 15;
+    resumo.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    currentY += 10;
+    
+    // Tabela de obras principais
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Principais Obras', 20, currentY);
+    
+    const obrasPrincipais = options.obras
+      .sort((a, b) => b.valor_contrato - a.valor_contrato)
+      .slice(0, 10);
+    
+    const tableData = obrasPrincipais.map(obra => [
+      obra.codigo,
+      obra.nome,
+      obra.cliente,
+      new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_contrato),
+      `${obra.percentual_execucao}%`,
+      this.getStatusTextObra(obra.status)
+    ]);
+    
+    autoTable(this.doc, {
+      startY: currentY + 8,
+      head: [['Código', 'Nome', 'Cliente', 'Valor Contrato', 'Progresso', 'Status']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255,
+        fontSize: 8,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 7,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addFiltrosObras(filtros: any, startY: number): number {
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Filtros Aplicados', 20, startY);
+    
+    if (filtros) {
+      let filterY = startY + 15;
+      let filterCount = 0;
+      Object.entries(filtros).forEach(([key, value]) => {
+        if (value) {
+          const label = this.getFilterLabelObra(key);
+          this.doc.setFontSize(9);
+          this.doc.setFont('helvetica', 'normal');
+          this.doc.setTextColor(107, 114, 128);
+          this.doc.text(`${label}: ${value}`, 25, filterY);
+          filterY += 5;
+          filterCount++;
+        }
+      });
+      
+      if (filterCount === 0) {
+        this.doc.setFontSize(9);
+        this.doc.setFont('helvetica', 'italic');
+        this.doc.setTextColor(156, 163, 175);
+        this.doc.text('Nenhum filtro aplicado', 25, filterY);
+        filterY += 5;
+      }
+      
+      return filterY + 10;
+    }
+    
+    return startY + 20;
+  }
+
+  private addRelatorioFiltradoObras(options: RelatorioObrasOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Obras Filtradas', 20, startY);
+    
+    // Tabela de obras
+    const tableData = options.obras.map(obra => [
+      obra.codigo,
+      obra.nome,
+      obra.cliente,
+      obra.localizacao,
+      new Date(obra.data_inicio).toLocaleDateString('pt-PT'),
+      new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_contrato),
+      `${obra.percentual_execucao}%`,
+      this.getStatusTextObra(obra.status),
+      obra.responsavel_tecnico
+    ]);
+    
+    autoTable(this.doc, {
+      startY: startY + 8,
+      head: [['Código', 'Nome', 'Cliente', 'Localização', 'Início', 'Valor', 'Progresso', 'Status', 'Responsável']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [34, 197, 94],
+        textColor: 255,
+        fontSize: 7,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 6,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addRelatorioComparativoObras(options: RelatorioObrasOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, startY);
+    
+    const stats = this.calcularEstatisticasObras(options.obras);
+    
+    // Comparação por status
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Distribuição por Status', 20, startY + 15);
+    
+    const analisePorStatus = {
+      'Em Execução': stats.em_execucao,
+      'Concluídas': stats.concluidas,
+      'Paralisadas': stats.paralisadas,
+      'Canceladas': stats.canceladas,
+      'Planeamento': stats.planeamento
+    };
+    
+    const tableDataStatus = Object.entries(analisePorStatus).map(([status, quantidade]) => [
+      status,
+      quantidade.toString(),
+      `${((quantidade / stats.total) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: startY + 20,
+      head: [['Status', 'Quantidade', 'Percentual']],
+      body: tableDataStatus,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [99, 102, 241],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 8,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    let currentY = (this.doc as any).lastAutoTable.finalY + 15;
+    
+    // Comparação por tipo de obra
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Distribuição por Tipo de Obra', 20, currentY);
+    
+    const tableDataTipo = Object.entries(stats.por_tipo).map(([tipo, quantidade]) => [
+      tipo.charAt(0).toUpperCase() + tipo.slice(1),
+      quantidade.toString(),
+      `${((quantidade / stats.total) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: currentY + 8,
+      head: [['Tipo', 'Quantidade', 'Percentual']],
+      body: tableDataTipo,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [16, 185, 129],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 8,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    currentY = (this.doc as any).lastAutoTable.finalY + 15;
+    
+    // Comparação por categoria
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Distribuição por Categoria', 20, currentY);
+    
+    const tableDataCategoria = Object.entries(stats.por_categoria).map(([categoria, quantidade]) => [
+      categoria.charAt(0).toUpperCase() + categoria.slice(1),
+      quantidade.toString(),
+      `${((quantidade / stats.total) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: currentY + 8,
+      head: [['Categoria', 'Quantidade', 'Percentual']],
+      body: tableDataCategoria,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [251, 146, 60],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fontSize: 8,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 20, right: 20 },
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private getFilterLabelObra(key: string): string {
+    const labels: Record<string, string> = {
+      status: 'Status',
+      tipo_obra: 'Tipo de Obra',
+      categoria: 'Categoria',
+      dataInicio: 'Data de Início',
+      dataFim: 'Data de Fim'
+    };
+    return labels[key] || key;
+  }
+
+  private getStatusTextObra(status: string): string {
+    switch (status) {
+      case 'em_execucao': return 'Em Execução';
+      case 'concluida': return 'Concluída';
+      case 'paralisada': return 'Paralisada';
+      case 'cancelada': return 'Cancelada';
+      case 'planeamento': return 'Planeamento';
+      default: return status;
+    }
+  }
+
+  private addRelatorioIndividualObra(options: RelatorioObrasOptions, startY: number): number {
+    const obra = options.obras[0];
+    
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Ficha Técnica da Obra', 20, startY);
+    
+    // Informações básicas
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Informações Básicas', 20, startY + 20);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const infoBasicas = [
+      `Código: ${obra.codigo}`,
+      `Nome: ${obra.nome}`,
+      `Cliente: ${obra.cliente}`,
+      `Localização: ${obra.localizacao}`,
+      `Tipo: ${obra.tipo_obra.charAt(0).toUpperCase() + obra.tipo_obra.slice(1)}`,
+      `Categoria: ${obra.categoria.charAt(0).toUpperCase() + obra.categoria.slice(1)}`,
+      `Status: ${this.getStatusTextObra(obra.status)}`
+    ];
+    
+    let currentY = startY + 30;
+    infoBasicas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    currentY += 10;
+    
+    // Datas e valores
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Datas e Valores', 20, currentY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const datasValores = [
+      `Data de Início: ${new Date(obra.data_inicio).toLocaleDateString('pt-PT')}`,
+      `Data Fim Prevista: ${new Date(obra.data_fim_prevista).toLocaleDateString('pt-PT')}`,
+      obra.data_fim_real ? `Data Fim Real: ${new Date(obra.data_fim_real).toLocaleDateString('pt-PT')}` : null,
+      `Valor do Contrato: ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(obra.valor_contrato)}`,
+      `Valor Executado: ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(obra.valor_executado)}`,
+      `Percentual de Execução: ${obra.percentual_execucao}%`
+    ].filter(Boolean);
+    
+    currentY += 15;
+    datasValores.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    currentY += 10;
+    
+    // Equipa técnica
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(75, 85, 99);
+    this.doc.text('Equipa Técnica', 20, currentY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const equipaTecnica = [
+      `Responsável Técnico: ${obra.responsavel_tecnico}`,
+      `Coordenador de Obra: ${obra.coordenador_obra}`,
+      `Fiscal de Obra: ${obra.fiscal_obra}`,
+      `Engenheiro Responsável: ${obra.engenheiro_responsavel}`,
+      `Arquiteto: ${obra.arquiteto}`
+    ];
+    
+    currentY += 15;
+    equipaTecnica.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+    
+    currentY += 10;
+    
+    // Observações
+    if (obra.observacoes) {
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(75, 85, 99);
+      this.doc.text('Observações', 20, currentY);
+      
+      this.doc.setFontSize(10);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(75, 85, 99);
+      
+      // Quebrar texto em linhas
+      const maxWidth = 170;
+      const words = obra.observacoes.split(' ');
+      let line = '';
+      currentY += 15;
+      
+      words.forEach(word => {
+        const testLine = line + word + ' ';
+        const testWidth = this.doc.getTextWidth(testLine);
+        
+        if (testWidth > maxWidth && line !== '') {
+          this.doc.text(line, 25, currentY);
+          line = word + ' ';
+          currentY += 6;
+        } else {
+          line = testLine;
+        }
+      });
+      
+      if (line) {
+        this.doc.text(line, 25, currentY);
+        currentY += 6;
+      }
+    }
+    
+    return currentY + 15;
   }
 }
 
