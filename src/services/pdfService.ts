@@ -116,27 +116,35 @@ export class PDFService {
   }
 
   private addKPICard(x: number, y: number, titulo: string, valor: string, cor: number[]) {
-    const cardWidth = 40;
-    const cardHeight = 20;
-    
-    // Fundo do card com cor
-    this.doc.setFillColor(cor[0], cor[1], cor[2]);
-    this.doc.rect(x, y, cardWidth, cardHeight, 'F');
-    
-    // Borda
-    this.doc.setDrawColor(200, 200, 200);
-    this.doc.rect(x, y, cardWidth, cardHeight);
-    
-    // Valor (branco)
-    this.doc.setFontSize(10);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(255, 255, 255);
-    this.doc.text(valor, x + cardWidth/2, y + 10, { align: 'center' });
-    
-    // Título (branco)
-    this.doc.setFontSize(6);
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.text(titulo, x + cardWidth/2, y + 16, { align: 'center' });
+    try {
+      const cardWidth = 40;
+      const cardHeight = 20;
+      
+      // Fundo do card com cor
+      this.doc.setFillColor(cor[0], cor[1], cor[2]);
+      this.doc.rect(x, y, cardWidth, cardHeight, 'F');
+      
+      // Borda
+      this.doc.setDrawColor(200, 200, 200);
+      this.doc.rect(x, y, cardWidth, cardHeight);
+      
+      // Valor (branco)
+      this.doc.setFontSize(10);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(255, 255, 255);
+      this.doc.text(valor, x + cardWidth/2, y + 10, { align: 'center' });
+      
+      // Título (branco)
+      this.doc.setFontSize(6);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text(titulo, x + cardWidth/2, y + 16, { align: 'center' });
+    } catch (error) {
+      console.error('Erro ao adicionar KPI card:', error);
+      // Fallback simples
+      this.doc.setFontSize(10);
+      this.doc.setTextColor(0, 0, 0);
+      this.doc.text(`${titulo}: ${valor}`, x, y + 10);
+    }
   }
 
   private getStatusColor(estado: string): number[] {
@@ -960,14 +968,34 @@ export class PDFService {
 
   // Métodos para Relatórios de Obras
   public async generateObrasExecutiveReport(obras: Obra[]): Promise<void> {
-    const options: RelatorioObrasOptions = {
-      titulo: 'Relatório Executivo de Obras',
-      subtitulo: 'Visão Geral e Indicadores de Performance',
-      obras,
-      tipo: 'executivo'
-    };
-    this.gerarRelatorioExecutivoObras(options);
-    this.download(`relatorio-obras-executivo-${new Date().toISOString().split('T')[0]}.pdf`);
+    console.log('PDFService: Iniciando relatório executivo com', obras.length, 'obras');
+    
+    try {
+      // Teste simples primeiro
+      console.log('PDFService: Testando jsPDF...');
+      const testDoc = new jsPDF();
+      testDoc.text('Teste jsPDF', 20, 20);
+      testDoc.save('teste-jspdf.pdf');
+      console.log('PDFService: Teste jsPDF OK');
+      
+      const options: RelatorioObrasOptions = {
+        titulo: 'Relatório Executivo de Obras',
+        subtitulo: 'Visão Geral e Indicadores de Performance',
+        obras,
+        tipo: 'executivo'
+      };
+      
+      console.log('PDFService: Gerando relatório...');
+      this.gerarRelatorioExecutivoObras(options);
+      
+      console.log('PDFService: Fazendo download...');
+      this.download(`relatorio-obras-executivo-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      console.log('PDFService: Relatório executivo concluído!');
+    } catch (error) {
+      console.error('PDFService: Erro no relatório executivo:', error);
+      throw error;
+    }
   }
 
   public async generateObrasFilteredReport(obras: Obra[], filtros: any): Promise<void> {

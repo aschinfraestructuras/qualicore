@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FileText, Download, X, Filter, Calendar, Building, TrendingUp, Users, MapPin, DollarSign, Clock, CheckCircle, AlertCircle, XCircle, Info } from 'lucide-react';
-import { PDFService } from '../services/pdfService';
+import { pdfService } from '../services/pdfService';
 import { Obra } from '../types';
 
 interface RelatorioObrasPremiumProps {
@@ -22,23 +22,34 @@ export default function RelatorioObrasPremium({ obras, onClose }: RelatorioObras
   const handleGenerateReport = async (reportType: string) => {
     setLoading(true);
     try {
+      console.log('Iniciando geração de relatório:', reportType);
+      console.log('Obras disponíveis:', obras.length);
+      
       const filteredObras = applyFilters(obras);
+      console.log('Obras filtradas:', filteredObras.length);
       
       switch (reportType) {
         case 'executivo':
-          await PDFService.generateObrasExecutiveReport(filteredObras);
+          console.log('Gerando relatório executivo...');
+          await pdfService.generateObrasExecutiveReport(filteredObras);
+          console.log('Relatório executivo gerado com sucesso!');
           break;
         case 'filtrado':
-          await PDFService.generateObrasFilteredReport(filteredObras, filters);
+          console.log('Gerando relatório filtrado...');
+          await pdfService.generateObrasFilteredReport(filteredObras, filters);
+          console.log('Relatório filtrado gerado com sucesso!');
           break;
         case 'comparativo':
-          await PDFService.generateObrasComparativeReport(filteredObras);
+          console.log('Gerando relatório comparativo...');
+          await pdfService.generateObrasComparativeReport(filteredObras);
+          console.log('Relatório comparativo gerado com sucesso!');
           break;
         default:
           throw new Error('Tipo de relatório não reconhecido');
       }
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);
+      alert(`Erro ao gerar relatório: ${error}`);
     } finally {
       setLoading(false);
     }

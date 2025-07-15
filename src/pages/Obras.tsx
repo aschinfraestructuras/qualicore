@@ -17,7 +17,7 @@ import toast from "react-hot-toast";
 import ObraForm from "@/components/forms/ObraForm";
 import RelatorioObrasPremium from "@/components/RelatorioObrasPremium";
 import { obrasAPI } from "@/lib/supabase-api";
-import { PDFService } from "@/services/pdfService";
+import { pdfService } from "@/services/pdfService";
 import { AnimatePresence, motion } from "framer-motion";
 
 // Dados mock iniciais para demonstração
@@ -269,7 +269,7 @@ export default function Obras() {
 
   const handleGenerateIndividualReport = async (obra: any) => {
     try {
-      await PDFService.generateObrasIndividualReport([obra]);
+      await pdfService.generateObrasIndividualReport([obra]);
       toast.success("Relatório individual gerado com sucesso!");
     } catch (error) {
       console.error("Erro ao gerar relatório individual:", error);
