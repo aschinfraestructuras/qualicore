@@ -199,7 +199,11 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="modern-loader">
+          <div className="modern-loader-dot"></div>
+          <div className="modern-loader-dot" style={{animationDelay: '0.1s'}}></div>
+          <div className="modern-loader-dot" style={{animationDelay: '0.2s'}}></div>
+        </div>
       </div>
     );
   }
@@ -445,7 +449,7 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Gráfico de Pizza - Distribuição de Ensaios */}
-          <div className="card">
+          <div className="glass-card">
             <div className="card-header">
               <h3 className="card-title">Distribuição de Ensaios</h3>
               <p className="card-description">Por estado de conformidade</p>
@@ -494,7 +498,7 @@ export default function Dashboard() {
           </div>
 
           {/* Gráfico de Barras - Performance por Módulo */}
-          <div className="card">
+          <div className="glass-card">
             <div className="card-header">
               <h3 className="card-title">Performance por Módulo</h3>
               <p className="card-description">Taxa de conformidade geral</p>
@@ -539,7 +543,7 @@ export default function Dashboard() {
           </div>
 
           {/* Gráfico de Área - Tendência Mensal */}
-          <div className="card">
+          <div className="glass-card">
             <div className="card-header">
               <h3 className="card-title">Tendência Mensal</h3>
               <p className="card-description">Evolução dos registos</p>
@@ -571,7 +575,7 @@ export default function Dashboard() {
           </div>
 
           {/* Gráfico de Pizza - Distribuição de Materiais */}
-          <div className="card">
+          <div className="glass-card">
             <div className="card-header">
               <h3 className="card-title">Estado dos Materiais</h3>
               <p className="card-description">Por status de aprovação</p>

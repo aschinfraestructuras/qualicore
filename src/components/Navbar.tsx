@@ -169,7 +169,7 @@ export default function Navbar() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   return (
-    <nav className="w-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 shadow-lg px-6 py-0 flex flex-col md:flex-row md:items-center md:justify-between z-40 relative">
+    <nav className="w-full bg-gradient-to-r from-blue-600/95 via-blue-500/95 to-blue-600/95 backdrop-blur-md shadow-xl px-6 py-0 flex flex-col md:flex-row md:items-center md:justify-between z-40 relative border-b border-white/20">
       {/* Branding & Mobile Menu Button */}
       <div className="flex items-center justify-between py-3">
         <Link to="/" className="flex items-center space-x-3 group">
@@ -209,7 +209,7 @@ export default function Navbar() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 ${isActive ? `bg-white/20 text-white shadow-glow scale-105 border border-white/20` : "text-blue-100 hover:bg-white/10 hover:text-white hover:scale-102"}`}
+                className={`flex items-center px-4 py-2 rounded-xl font-medium text-sm transition-all duration-300 hover:scale-105 ${isActive ? `bg-white/20 text-white shadow-glow scale-105 border border-white/20` : "text-blue-100 hover:bg-white/10 hover:text-white"}`}
                 title={item.description}
               >
                 <Icon className="h-5 w-5 mr-2" />
