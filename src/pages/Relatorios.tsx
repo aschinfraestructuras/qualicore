@@ -35,6 +35,8 @@ import {
   calcularMetricasReais,
   MetricasReais,
 } from "@/services/metricsService";
+import { printService } from "@/services/printService";
+import UniversalPrintModal from "@/components/UniversalPrintModal";
 import toast from "react-hot-toast";
 
 interface FiltrosRelatorio {
@@ -63,6 +65,8 @@ export default function Relatorios() {
   const [relatorioAtivo, setRelatorioAtivo] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [printModulo, setPrintModulo] = useState<string>("geral");
 
   useEffect(() => {
     carregarMetricas();
@@ -110,12 +114,43 @@ export default function Relatorios() {
     toast.success(`Relatório ${tipo} exportado com sucesso!`);
   };
 
-  const handleExportPDF = (tipo: string) => {
-    // Simular exportação PDF
-    toast.success(`Relatório ${tipo} em PDF será gerado...`);
-    setTimeout(() => {
-      toast.success(`Relatório ${tipo} em PDF exportado com sucesso!`);
-    }, 2000);
+  const handleExportPDF = async (tipo: string) => {
+    try {
+      setLoading(true);
+      
+      // Configurar dados para o relatório executivo
+      const dadosRelatorio = {
+        tipo: 'executivo',
+        modulo: tipo,
+        metricas: metricas,
+        filtros: filtros,
+        periodo: filtros.periodo,
+        dataGeracao: new Date().toISOString()
+      };
+
+      // Usar o sistema universal de impressão
+      await printService.printRelatorio({
+        titulo: `Relatório Executivo - ${getModuloTitle(tipo)}`,
+        subtitulo: `Dashboard Executivo - ${new Date().toLocaleDateString('pt-PT')}`,
+        tipo: 'executivo',
+        modulo: tipo as any,
+        dados: [], // Dados específicos podem ser carregados se necessário
+        metricas: metricas,
+        filtros: filtros,
+        orientacao: 'portrait',
+        tamanho: 'a4',
+        incluirKPIs: true,
+        incluirTabelas: false, // Relatório executivo foca em KPIs
+        incluirGraficos: true
+      });
+
+      toast.success(`Relatório Executivo ${getModuloTitle(tipo)} exportado com sucesso!`);
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      toast.error('Erro ao gerar relatório PDF');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleExportExcel = (tipo: string) => {
@@ -134,12 +169,33 @@ export default function Relatorios() {
     toast.success(`Relatório ${tipo} em Excel exportado com sucesso!`);
   };
 
-  const handlePrintRelatorio = (tipo: string) => {
-    toast.success(`Preparando impressão do relatório ${tipo}...`);
-    setTimeout(() => {
-      window.print();
-      toast.success(`Relatório ${tipo} enviado para impressão!`);
-    }, 1000);
+  const handlePrintRelatorio = async (tipo: string) => {
+    try {
+      setLoading(true);
+      
+      // Usar o sistema universal de impressão
+      await printService.printRelatorio({
+        titulo: `Relatório Executivo - ${getModuloTitle(tipo)}`,
+        subtitulo: `Dashboard Executivo - ${new Date().toLocaleDateString('pt-PT')}`,
+        tipo: 'executivo',
+        modulo: tipo as any,
+        dados: [], // Dados específicos podem ser carregados se necessário
+        metricas: metricas,
+        filtros: filtros,
+        orientacao: 'portrait',
+        tamanho: 'a4',
+        incluirKPIs: true,
+        incluirTabelas: false, // Relatório executivo foca em KPIs
+        incluirGraficos: true
+      });
+
+      toast.success(`Relatório Executivo ${getModuloTitle(tipo)} enviado para impressão!`);
+    } catch (error) {
+      console.error('Erro ao imprimir relatório:', error);
+      toast.error('Erro ao gerar relatório para impressão');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleShareRelatorio = (tipo: string) => {
@@ -184,6 +240,39 @@ export default function Relatorios() {
   const handleViewRelatorio = (tipo: string) => {
     setRelatorioAtivo(relatorioAtivo === tipo ? null : tipo);
     toast.success(`Visualizando relatório ${tipo}`);
+  };
+
+  // Função auxiliar para obter título do módulo
+  const getModuloTitle = (modulo: string): string => {
+    const titles: Record<string, string> = {
+      'geral': 'Geral',
+      'executivo': 'Executivo',
+      'ensaios': 'Ensaios',
+      'checklists': 'Checklists',
+      'materiais': 'Materiais',
+      'ncs': 'Não Conformidades',
+      'documentos': 'Documentos',
+      'fornecedores': 'Fornecedores',
+      'obras': 'Obras'
+    };
+    return titles[modulo] || modulo;
+  };
+
+  // Função para gerar dashboard executivo geral
+  const handleDashboardGeral = async () => {
+    try {
+      setLoading(true);
+      
+      // Usar o sistema universal para dashboard geral
+      await printService.printDashboard(metricas);
+
+      toast.success('Dashboard Executivo Geral enviado para impressão!');
+    } catch (error) {
+      console.error('Erro ao gerar dashboard geral:', error);
+      toast.error('Erro ao gerar dashboard executivo');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -254,6 +343,14 @@ export default function Relatorios() {
             title="Atualizar dados"
           >
             <RefreshCw className="h-5 w-5 text-gray-600" />
+          </button>
+
+          <button
+            onClick={handleDashboardGeral}
+            className="p-2 rounded-lg bg-white shadow-soft hover:shadow-md transition-all"
+            title="Dashboard Executivo Geral"
+          >
+            <Printer className="h-5 w-5 text-gray-600" />
           </button>
 
           <div className="flex items-center space-x-2 bg-white rounded-xl p-1 shadow-soft">
@@ -547,8 +644,8 @@ export default function Relatorios() {
           <div className="card-header">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="card-title">Relatório Executivo</h3>
-                <p className="card-description">Visão geral para gestão</p>
+                <h3 className="card-title">Relatório Executivo Geral</h3>
+                <p className="card-description">Dashboard executivo para gestão</p>
               </div>
               <BarChart3 className="h-8 w-8 text-blue-500" />
             </div>
@@ -635,9 +732,9 @@ export default function Relatorios() {
           <div className="card-header">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="card-title">Relatório de Ensaios</h3>
+                <h3 className="card-title">Relatório Executivo - Ensaios</h3>
                 <p className="card-description">
-                  Análise detalhada de conformidade
+                  Dashboard executivo de conformidade
                 </p>
               </div>
               <TrendingUp className="h-8 w-8 text-emerald-500" />
@@ -723,8 +820,8 @@ export default function Relatorios() {
           <div className="card-header">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="card-title">Relatório de Checklists</h3>
-                <p className="card-description">Inspeções e verificações</p>
+                <h3 className="card-title">Relatório Executivo - Checklists</h3>
+                <p className="card-description">Dashboard executivo de inspeções</p>
               </div>
               <BarChart3 className="h-8 w-8 text-purple-500" />
             </div>
@@ -811,9 +908,9 @@ export default function Relatorios() {
           <div className="card-header">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="card-title">Relatório de Materiais</h3>
+                <h3 className="card-title">Relatório Executivo - Materiais</h3>
                 <p className="card-description">
-                  Controlo de stocks e aprovações
+                  Dashboard executivo de controlo
                 </p>
               </div>
               <Package className="h-8 w-8 text-orange-500" />
@@ -899,7 +996,7 @@ export default function Relatorios() {
           <div className="card-header">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="card-title">Relatório de NCs</h3>
+                <h3 className="card-title">Relatório Executivo - NCs</h3>
                 <p className="card-description">
                   Gestão de problemas e resoluções
                 </p>
@@ -987,8 +1084,8 @@ export default function Relatorios() {
           <div className="card-header">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="card-title">Relatório de Documentos</h3>
-                <p className="card-description">Gestão documental</p>
+                <h3 className="card-title">Relatório Executivo - Documentos</h3>
+                <p className="card-description">Dashboard executivo documental</p>
               </div>
               <FileText className="h-8 w-8 text-indigo-500" />
             </div>
@@ -1284,6 +1381,17 @@ export default function Relatorios() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Modal de Impressão Universal */}
+      <UniversalPrintModal
+        isOpen={showPrintModal}
+        onClose={() => setShowPrintModal(false)}
+        modulo={printModulo}
+        dados={[]} // Dados específicos podem ser passados aqui
+        metricas={metricas}
+        titulo={`Relatório de ${printModulo.charAt(0).toUpperCase() + printModulo.slice(1)}`}
+        subtitulo={`Sistema de Gestão da Qualidade - ${new Date().toLocaleDateString('pt-PT')}`}
+      />
     </div>
   );
 }
