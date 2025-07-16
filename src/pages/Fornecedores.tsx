@@ -21,6 +21,8 @@ import { fornecedoresAPI } from "@/lib/supabase-api";
 import { Fornecedor } from "@/types";
 import toast from "react-hot-toast";
 import FornecedorForm from "@/components/forms/FornecedorForm";
+import RelatorioFornecedoresPremium from "@/components/RelatorioFornecedoresPremium";
+import { pdfService } from "@/services/pdfService";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function Fornecedores() {
@@ -32,6 +34,7 @@ export default function Fornecedores() {
   const [showForm, setShowForm] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showRelatorioModal, setShowRelatorioModal] = useState(false);
   const [editingFornecedor, setEditingFornecedor] = useState<Fornecedor | null>(
     null,
   );
@@ -156,7 +159,17 @@ export default function Fornecedores() {
   };
 
   const handleExport = () => {
-    setShowExportModal(true);
+    setShowRelatorioModal(true);
+  };
+
+  const handleIndividualReport = async (fornecedor: Fornecedor) => {
+    try {
+      await pdfService.generateFornecedoresIndividualReport([fornecedor]);
+      toast.success("Relatório individual gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar relatório individual:", error);
+      toast.error("Erro ao gerar relatório individual");
+    }
   };
 
   const getStats = () => {
@@ -448,6 +461,13 @@ export default function Fornecedores() {
                             <Eye className="h-4 w-4" />
                           </button>
                           <button
+                            className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                            onClick={() => handleIndividualReport(fornecedor)}
+                            title="Relatório individual"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </button>
+                          <button
                             className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
                             onClick={() => handleEdit(fornecedor)}
                             title="Editar"
@@ -722,6 +742,13 @@ export default function Fornecedores() {
           </div>
         </div>
       )}
+
+      {/* Modal de Relatórios Premium */}
+      <RelatorioFornecedoresPremium
+        isOpen={showRelatorioModal}
+        onClose={() => setShowRelatorioModal(false)}
+        fornecedores={fornecedores}
+      />
     </div>
   );
 }
