@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { NaoConformidade, naoConformidadesAPI } from "@/lib/supabase-api";
 import NaoConformidadeForm from "@/components/forms/NaoConformidadeForm";
+import RelatorioNaoConformidadesPremium from "@/components/RelatorioNaoConformidadesPremium";
 import toast from "react-hot-toast";
 import { sanitizeUUIDField } from "@/utils/uuid";
-import { Plus, Search, Filter, FileText, XCircle } from "lucide-react";
+import { Plus, Search, Filter, FileText, XCircle, Download } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function NaoConformidades() {
@@ -21,6 +22,9 @@ export default function NaoConformidades() {
   const [filterDataResolucao, setFilterDataResolucao] = useState("");
   const [filterAreaAfetada, setFilterAreaAfetada] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [showRelatorioModal, setShowRelatorioModal] = useState(false);
+  const [ncSelecionada, setNcSelecionada] = useState<string>("");
+  const [tipoRelatorio, setTipoRelatorio] = useState<"executivo" | "individual" | "filtrado" | "comparativo">("executivo");
 
   useEffect(() => {
     loadNaoConformidades();
@@ -57,9 +61,8 @@ export default function NaoConformidades() {
     // TODO: Implementar modal/formulário de auditoria
   };
 
-  const handleExportar = () => {
-    toast.success("Funcionalidade de exportação será implementada em breve!");
-    // TODO: Implementar exportação para PDF/Excel
+  const handleRelatorios = () => {
+    setShowRelatorioModal(true);
   };
 
   const handleSubmitNC = async (data: any) => {
@@ -261,11 +264,11 @@ export default function NaoConformidades() {
               Auditoria
             </button>
             <button
-              onClick={handleExportar}
+              onClick={handleRelatorios}
               className="btn btn-outline btn-md"
             >
-              <FileText className="h-4 w-4 mr-2" />
-              Exportar
+              <Download className="h-4 w-4 mr-2" />
+              Relatórios
             </button>
           </div>
         </div>
@@ -503,6 +506,17 @@ export default function NaoConformidades() {
                       </div>
                       <div className="flex gap-2">
                         <button
+                          onClick={() => {
+                            setNcSelecionada(nc.id);
+                            setTipoRelatorio("individual");
+                            setShowRelatorioModal(true);
+                          }}
+                          className="btn btn-sm btn-outline"
+                          title="Relatório Individual"
+                        >
+                          <FileText className="h-4 w-4" />
+                        </button>
+                        <button
                           onClick={() => setEditingNC(nc)}
                           className="btn btn-sm btn-outline"
                         >
@@ -543,6 +557,13 @@ export default function NaoConformidades() {
           </div>
         </div>
       )}
+
+      {/* MODAL DE RELATÓRIOS */}
+      <RelatorioNaoConformidadesPremium
+        isOpen={showRelatorioModal}
+        onClose={() => setShowRelatorioModal(false)}
+        naoConformidades={naoConformidades}
+      />
     </div>
   );
 }

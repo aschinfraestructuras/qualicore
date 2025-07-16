@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { MetricasReais } from './metricsService';
-import { Material, Obra, Ensaio, RFI, Checklist, Documento, Fornecedor } from '@/types';
+import { Material, Obra, Ensaio, RFI, Checklist, Documento, Fornecedor, NaoConformidade } from '@/types';
 
 interface RelatorioPDFOptions {
   titulo: string;
@@ -67,6 +67,14 @@ interface RelatorioFornecedoresOptions {
   titulo: string;
   subtitulo?: string;
   fornecedores: Fornecedor[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
+interface RelatorioNaoConformidadesOptions {
+  titulo: string;
+  subtitulo?: string;
+  naoConformidades: NaoConformidade[];
   tipo: "executivo" | "filtrado" | "comparativo" | "individual";
   filtros?: any;
 }
@@ -4410,6 +4418,586 @@ export class PDFService {
       'inativo': 'Inativo'
     };
     return estadoMap[estado] || estado;
+  }
+
+  // Métodos para Relatórios de Não Conformidades
+  public async generateNaoConformidadesExecutiveReport(naoConformidades: NaoConformidade[]): Promise<void> {
+    const options: RelatorioNaoConformidadesOptions = {
+      titulo: 'Relatório Executivo de Não Conformidades',
+      subtitulo: 'Visão Geral e Indicadores de Performance',
+      naoConformidades,
+      tipo: 'executivo'
+    };
+    this.gerarRelatorioExecutivoNaoConformidades(options);
+    this.download(`relatorio-nao-conformidades-executivo-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateNaoConformidadesFilteredReport(naoConformidades: NaoConformidade[], filtros: any): Promise<void> {
+    const options: RelatorioNaoConformidadesOptions = {
+      titulo: 'Relatório Filtrado de Não Conformidades',
+      subtitulo: 'Análise Detalhada com Filtros Aplicados',
+      naoConformidades,
+      tipo: 'filtrado',
+      filtros
+    };
+    this.gerarRelatorioFiltradoNaoConformidades(options);
+    this.download(`relatorio-nao-conformidades-filtrado-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateNaoConformidadesComparativeReport(naoConformidades: NaoConformidade[]): Promise<void> {
+    const options: RelatorioNaoConformidadesOptions = {
+      titulo: 'Relatório Comparativo de Não Conformidades',
+      subtitulo: 'Análise Comparativa e Benchmarks',
+      naoConformidades,
+      tipo: 'comparativo'
+    };
+    this.gerarRelatorioComparativoNaoConformidades(options);
+    this.download(`relatorio-nao-conformidades-comparativo-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateNaoConformidadesIndividualReport(naoConformidades: NaoConformidade[]): Promise<void> {
+    if (naoConformidades.length !== 1) {
+      throw new Error('Relatório individual deve conter apenas uma não conformidade');
+    }
+    
+    const nc = naoConformidades[0];
+    const options: RelatorioNaoConformidadesOptions = {
+      titulo: `Relatório Individual - ${nc.codigo}`,
+      subtitulo: `Tipo: ${this.getTipoTextNC(nc.tipo)} | Severidade: ${this.getSeveridadeTextNC(nc.severidade)}`,
+      naoConformidades,
+      tipo: 'individual'
+    };
+    this.gerarRelatorioIndividualNaoConformidade(options);
+    this.download(`relatorio-nao-conformidades-individual-${nc.codigo}-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  private gerarRelatorioExecutivoNaoConformidades(options: RelatorioNaoConformidadesOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addEstatisticasNaoConformidades(options.naoConformidades, startY);
+    currentY = this.addRelatorioExecutivoNaoConformidades(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioFiltradoNaoConformidades(options: RelatorioNaoConformidadesOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addFiltrosNaoConformidades(options.filtros, startY);
+    currentY = this.addRelatorioFiltradoNaoConformidades(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioComparativoNaoConformidades(options: RelatorioNaoConformidadesOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioComparativoNaoConformidades(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioIndividualNaoConformidade(options: RelatorioNaoConformidadesOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioIndividualNaoConformidade(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private addRelatorioIndividualNaoConformidade(options: RelatorioNaoConformidadesOptions, startY: number): number {
+    const nc = options.naoConformidades[0];
+    
+    // Título da seção com fundo colorido
+    this.doc.setFillColor(239, 68, 68); // Vermelho
+    this.doc.rect(15, startY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica da Não Conformidade', 20, startY + 2);
+    
+    // KPIs alinhados: Status, Severidade, Impacto, Custo
+    const statusColors = {
+      'pendente': [245, 158, 11], // Amarelo
+      'em_analise': [99, 102, 241], // Índigo
+      'aprovado': [34, 197, 94], // Verde
+      'reprovado': [239, 68, 68], // Vermelho
+      'concluido': [16, 185, 129] // Verde escuro
+    };
+    
+    const statusColor = statusColors[nc.estado] || [107, 114, 128];
+    const statusText = this.getStatusTextNC(nc.estado);
+    
+    const severidadeColors = {
+      'baixa': [34, 197, 94], // Verde
+      'media': [245, 158, 11], // Amarelo
+      'alta': [251, 146, 60], // Laranja
+      'critica': [239, 68, 68] // Vermelho
+    };
+    
+    const severidadeColor = severidadeColors[nc.severidade] || [107, 114, 128];
+    const severidadeText = this.getSeveridadeTextNC(nc.severidade);
+    
+    // KPIs: 4 cards, espaçados
+    const kpiY = startY + 12;
+    this.addKPICard(20, kpiY, 'Status', statusText, statusColor);
+    this.addKPICard(65, kpiY, 'Severidade', severidadeText, severidadeColor);
+    this.addKPICard(110, kpiY, 'Impacto', this.getImpactoTextNC(nc.impacto), [59, 130, 246]);
+    this.addKPICard(155, kpiY, 'Custo', nc.custo_real ? `€${nc.custo_real}` : 'N/A', [251, 146, 60]);
+    
+    // Informações básicas - sem bordas, apenas fundo colorido
+    const infoY = kpiY + 30;
+    this.doc.setFillColor(249, 250, 251); // Cinza claro
+    this.doc.rect(15, infoY - 5, 180, 50, 'F');
+    
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Informações Básicas', 20, infoY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const infoStartY = infoY + 8;
+    this.doc.text(`Código: ${nc.codigo}`, 20, infoStartY);
+    this.doc.text(`Tipo: ${this.getTipoTextNC(nc.tipo)}`, 20, infoStartY + 6);
+    this.doc.text(`Categoria: ${this.getCategoriaTextNC(nc.categoria)}`, 20, infoStartY + 12);
+    this.doc.text(`Área Afetada: ${nc.area_afetada}`, 20, infoStartY + 18);
+    this.doc.text(`Responsável Detecção: ${nc.responsavel_deteccao}`, 20, infoStartY + 24);
+    
+    // Datas importantes
+    const datasY = infoY + 60;
+    this.doc.setFillColor(254, 242, 242); // Vermelho claro
+    this.doc.rect(15, datasY - 5, 180, 40, 'F');
+    
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Datas Importantes', 20, datasY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const datasStartY = datasY + 8;
+    this.doc.text(`Data Detecção: ${new Date(nc.data_deteccao).toLocaleDateString('pt-PT')}`, 20, datasStartY);
+    if (nc.data_resolucao) {
+      this.doc.text(`Data Resolução: ${new Date(nc.data_resolucao).toLocaleDateString('pt-PT')}`, 20, datasStartY + 6);
+    }
+    if (nc.data_limite_resolucao) {
+      this.doc.text(`Data Limite: ${new Date(nc.data_limite_resolucao).toLocaleDateString('pt-PT')}`, 20, datasStartY + 12);
+    }
+    if (nc.data_verificacao_eficacia) {
+      this.doc.text(`Verificação Eficácia: ${new Date(nc.data_verificacao_eficacia).toLocaleDateString('pt-PT')}`, 20, datasStartY + 18);
+    }
+    
+    // Descrição
+    const descricaoY = datasY + 50;
+    this.doc.setFillColor(240, 249, 255); // Azul claro
+    this.doc.rect(15, descricaoY - 5, 180, 35, 'F');
+    
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Descrição', 20, descricaoY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const descricao = this.doc.splitTextToSize(nc.descricao, 170);
+    this.doc.text(descricao, 20, descricaoY + 8);
+    
+    // Ações (se existirem)
+    const acoesY = descricaoY + 40;
+    if (nc.acao_corretiva || nc.acao_preventiva) {
+      this.doc.setFillColor(254, 251, 235); // Amarelo claro
+      this.doc.rect(15, acoesY - 5, 180, 30, 'F');
+      
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Ações Implementadas', 20, acoesY);
+      
+      this.doc.setFontSize(10);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(75, 85, 99);
+      
+      if (nc.acao_corretiva) {
+        this.doc.text('Ação Corretiva:', 20, acoesY + 8);
+        const acaoCorretiva = this.doc.splitTextToSize(nc.acao_corretiva, 160);
+        this.doc.text(acaoCorretiva, 25, acoesY + 14);
+      }
+      
+      if (nc.acao_preventiva) {
+        this.doc.text('Ação Preventiva:', 20, acoesY + 20);
+        const acaoPreventiva = this.doc.splitTextToSize(nc.acao_preventiva, 160);
+        this.doc.text(acaoPreventiva, 25, acoesY + 26);
+      }
+      
+      return acoesY + 40;
+    }
+    
+    return acoesY;
+  }
+
+  private calcularEstatisticasNaoConformidades(naoConformidades: NaoConformidade[]) {
+    const total = naoConformidades.length;
+    const pendentes = naoConformidades.filter(nc => !nc.data_resolucao).length;
+    const resolvidas = naoConformidades.filter(nc => nc.data_resolucao).length;
+    const percentualResolucao = total > 0 ? Math.round((resolvidas / total) * 100) : 0;
+    
+    // Análise por severidade
+    const porSeveridade = {
+      baixa: naoConformidades.filter(nc => nc.severidade === 'baixa').length,
+      media: naoConformidades.filter(nc => nc.severidade === 'media').length,
+      alta: naoConformidades.filter(nc => nc.severidade === 'alta').length,
+      critica: naoConformidades.filter(nc => nc.severidade === 'critica').length
+    };
+    
+    // Análise por tipo
+    const porTipo = naoConformidades.reduce((acc, nc) => {
+      acc[nc.tipo] = (acc[nc.tipo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    // Custo total
+    const custoTotal = naoConformidades.reduce((total, nc) => {
+      return total + (nc.custo_real || 0);
+    }, 0);
+    
+    // Tempo médio de resolução
+    const ncsComResolucao = naoConformidades.filter(nc => nc.data_resolucao && nc.data_deteccao);
+    const tempoMedioResolucao = ncsComResolucao.length > 0 
+      ? ncsComResolucao.reduce((total, nc) => {
+          const deteccao = new Date(nc.data_deteccao);
+          const resolucao = new Date(nc.data_resolucao!);
+          return total + Math.floor((resolucao.getTime() - deteccao.getTime()) / (1000 * 60 * 60 * 24));
+        }, 0) / ncsComResolucao.length
+      : 0;
+    
+    return {
+      total,
+      pendentes,
+      resolvidas,
+      percentualResolucao,
+      porSeveridade,
+      porTipo,
+      custoTotal,
+      tempoMedioResolucao
+    };
+  }
+
+  private addEstatisticasNaoConformidades(naoConformidades: NaoConformidade[], startY: number): number {
+    const stats = this.calcularEstatisticasNaoConformidades(naoConformidades);
+    
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Estatísticas Gerais', 20, startY);
+    
+    // KPIs em 2 linhas
+    const kpiY = startY + 15;
+    this.addKPICard(20, kpiY, 'Total', stats.total.toString(), [239, 68, 68]);
+    this.addKPICard(65, kpiY, 'Pendentes', stats.pendentes.toString(), [245, 158, 11]);
+    this.addKPICard(110, kpiY, 'Resolvidas', stats.resolvidas.toString(), [34, 197, 94]);
+    this.addKPICard(155, kpiY, '% Resolução', `${stats.percentualResolucao}%`, [59, 130, 246]);
+    
+    const kpiY2 = kpiY + 25;
+    this.addKPICard(20, kpiY2, 'Custo Total', `€${stats.custoTotal.toLocaleString()}`, [251, 146, 60]);
+    this.addKPICard(85, kpiY2, 'Tempo Médio', `${Math.round(stats.tempoMedioResolucao)} dias`, [168, 85, 247]);
+    
+    return kpiY2 + 35;
+  }
+
+  private addRelatorioExecutivoNaoConformidades(options: RelatorioNaoConformidadesOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Executiva', 20, startY);
+    
+    // Resumo executivo
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    const stats = this.calcularEstatisticasNaoConformidades(options.naoConformidades);
+    const resumo = [
+      `O sistema de gestão de não conformidades registou ${stats.total} ocorrências no período analisado.`,
+      `Deste total, ${stats.resolvidas} foram resolvidas (${stats.percentualResolucao}%) e ${stats.pendentes} estão pendentes.`,
+      `O custo total associado às não conformidades foi de €${stats.custoTotal.toLocaleString()}.`,
+      `O tempo médio de resolução foi de ${Math.round(stats.tempoMedioResolucao)} dias.`
+    ];
+    
+    let currentY = startY + 10;
+    resumo.forEach(paragrafo => {
+      const linhas = this.doc.splitTextToSize(paragrafo, 170);
+      this.doc.text(linhas, 20, currentY);
+      currentY += linhas.length * 5 + 3;
+    });
+    
+    // Tabela das NCs mais críticas
+    currentY += 10;
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Não Conformidades Mais Críticas', 20, currentY);
+    
+    const ncsCriticas = options.naoConformidades
+      .filter(nc => nc.severidade === 'critica' || nc.severidade === 'alta')
+      .sort((a, b) => {
+        if (a.severidade === 'critica' && b.severidade !== 'critica') return -1;
+        if (b.severidade === 'critica' && a.severidade !== 'critica') return 1;
+        return new Date(b.data_deteccao).getTime() - new Date(a.data_deteccao).getTime();
+      })
+      .slice(0, 5);
+    
+    const tableData = ncsCriticas.map(nc => [
+      nc.codigo,
+      this.getTipoTextNC(nc.tipo),
+      this.getSeveridadeTextNC(nc.severidade),
+      new Date(nc.data_deteccao).toLocaleDateString('pt-PT'),
+      nc.data_resolucao ? 'Resolvida' : 'Pendente'
+    ]);
+    
+    autoTable(this.doc, {
+      startY: currentY + 5,
+      head: [['Código', 'Tipo', 'Severidade', 'Data Detecção', 'Status']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [239, 68, 68],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      },
+      margin: { left: 20, right: 20 }
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 10;
+  }
+
+  private addFiltrosNaoConformidades(filtros: any, startY: number): number {
+    if (!filtros || Object.keys(filtros).length === 0) {
+      return startY;
+    }
+    
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Filtros Aplicados', 20, startY);
+    
+    // Lista de filtros
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    let currentY = startY + 10;
+    Object.entries(filtros).forEach(([key, value]) => {
+      if (value && value !== '') {
+        const label = this.getFilterLabelNaoConformidade(key);
+        const text = `${label}: ${value}`;
+        this.doc.text(text, 20, currentY);
+        currentY += 6;
+      }
+    });
+    
+    return currentY + 5;
+  }
+
+  private addRelatorioFiltradoNaoConformidades(options: RelatorioNaoConformidadesOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Resultados Filtrados', 20, startY);
+    
+    // Tabela com todas as NCs filtradas
+    const tableData = options.naoConformidades.map(nc => [
+      nc.codigo,
+      this.getTipoTextNC(nc.tipo),
+      this.getSeveridadeTextNC(nc.severidade),
+      this.getStatusTextNC(nc.estado),
+      new Date(nc.data_deteccao).toLocaleDateString('pt-PT'),
+      nc.custo_real ? `€${nc.custo_real}` : 'N/A'
+    ]);
+    
+    autoTable(this.doc, {
+      startY: startY + 5,
+      head: [['Código', 'Tipo', 'Severidade', 'Status', 'Data Detecção', 'Custo']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [239, 68, 68],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      styles: {
+        fontSize: 8,
+        cellPadding: 2
+      },
+      margin: { left: 20, right: 20 }
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 10;
+  }
+
+  private addRelatorioComparativoNaoConformidades(options: RelatorioNaoConformidadesOptions, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, startY);
+    
+    // Estatísticas comparativas
+    const stats = this.calcularEstatisticasNaoConformidades(options.naoConformidades);
+    
+    // Gráfico de pizza para severidade
+    const chartY = startY + 15;
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Severidade', 20, chartY);
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+    
+    // Legenda do gráfico
+    const legendY = chartY + 10;
+    this.doc.setFillColor(34, 197, 94); // Verde
+    this.doc.rect(20, legendY - 2, 8, 8, 'F');
+    this.doc.text(`Baixa: ${stats.porSeveridade.baixa}`, 35, legendY + 3);
+    
+    this.doc.setFillColor(245, 158, 11); // Amarelo
+    this.doc.rect(20, legendY + 8, 8, 8, 'F');
+    this.doc.text(`Média: ${stats.porSeveridade.media}`, 35, legendY + 13);
+    
+    this.doc.setFillColor(251, 146, 60); // Laranja
+    this.doc.rect(20, legendY + 16, 8, 8, 'F');
+    this.doc.text(`Alta: ${stats.porSeveridade.alta}`, 35, legendY + 21);
+    
+    this.doc.setFillColor(239, 68, 68); // Vermelho
+    this.doc.rect(20, legendY + 24, 8, 8, 'F');
+    this.doc.text(`Crítica: ${stats.porSeveridade.critica}`, 35, legendY + 29);
+    
+    // Análise por tipo
+    const tipoY = legendY + 40;
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Distribuição por Tipo', 20, tipoY);
+    
+    const tableDataTipo = Object.entries(stats.porTipo).map(([tipo, quantidade]) => [
+      this.getTipoTextNC(tipo),
+      quantidade.toString(),
+      `${((quantidade / stats.total) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: tipoY + 5,
+      head: [['Tipo', 'Quantidade', 'Percentual']],
+      body: tableDataTipo,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [239, 68, 68],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      styles: {
+        fontSize: 9,
+        cellPadding: 3
+      },
+      margin: { left: 20, right: 20 }
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 10;
+  }
+
+  private getFilterLabelNaoConformidade(key: string): string {
+    const labels: Record<string, string> = {
+      search: 'Pesquisa',
+      tipo: 'Tipo',
+      severidade: 'Severidade',
+      categoria: 'Categoria',
+      status: 'Status',
+      dataInicio: 'Data Início',
+      dataFim: 'Data Fim'
+    };
+    return labels[key] || key;
+  }
+
+  private getStatusTextNC(status: string): string {
+    const statusMap: Record<string, string> = {
+      'pendente': 'Pendente',
+      'em_analise': 'Em Análise',
+      'aprovado': 'Aprovado',
+      'reprovado': 'Reprovado',
+      'concluido': 'Concluído'
+    };
+    return statusMap[status] || status;
+  }
+
+  private getSeveridadeTextNC(severidade: string): string {
+    const severidadeMap: Record<string, string> = {
+      'baixa': 'Baixa',
+      'media': 'Média',
+      'alta': 'Alta',
+      'critica': 'Crítica'
+    };
+    return severidadeMap[severidade] || severidade;
+  }
+
+  private getTipoTextNC(tipo: string): string {
+    const tipoMap: Record<string, string> = {
+      'material': 'Material',
+      'execucao': 'Execução',
+      'documentacao': 'Documentação',
+      'seguranca': 'Segurança',
+      'ambiente': 'Ambiente',
+      'qualidade': 'Qualidade',
+      'prazo': 'Prazo',
+      'custo': 'Custo',
+      'outro': 'Outro'
+    };
+    return tipoMap[tipo] || tipo;
+  }
+
+  private getCategoriaTextNC(categoria: string): string {
+    const categoriaMap: Record<string, string> = {
+      'auditoria': 'Auditoria',
+      'inspecao': 'Inspeção',
+      'reclamacao': 'Reclamação',
+      'acidente': 'Acidente',
+      'incidente': 'Incidente',
+      'desvio': 'Desvio',
+      'outro': 'Outro'
+    };
+    return categoriaMap[categoria] || categoria;
+  }
+
+  private getImpactoTextNC(impacto: string): string {
+    const impactoMap: Record<string, string> = {
+      'baixo': 'Baixo',
+      'medio': 'Médio',
+      'alto': 'Alto',
+      'critico': 'Crítico'
+    };
+    return impactoMap[impacto] || impacto;
   }
 }
 
