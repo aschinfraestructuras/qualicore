@@ -13,9 +13,13 @@ import {
   XCircle,
   BarChart3,
   Download,
+  Share2,
+  Cloud,
 } from "lucide-react";
 import RFIForm from "../components/forms/RFIForm";
 import RelatorioRFIsPremium from "../components/RelatorioRFIsPremium";
+import ShareRFIModal from "../components/ShareRFIModal";
+import SavedRFIsViewer from "../components/SavedRFIsViewer";
 import { rfisAPI } from "@/lib/supabase-api";
 import type { RFI } from "@/lib/supabase-api";
 import type { RFI as RFIType } from "@/types";
@@ -31,6 +35,9 @@ export default function RFIs() {
   const [editingRFI, setEditingRFI] = useState<RFI | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showRelatorios, setShowRelatorios] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showSavedRFIs, setShowSavedRFIs] = useState(false);
+  const [selectedRFI, setSelectedRFI] = useState<RFI | null>(null);
 
   // Filtros ativos
   const [filters, setFilters] = useState({
@@ -156,6 +163,11 @@ export default function RFIs() {
     }
   };
 
+  const handleShare = (rfi: RFI) => {
+    setSelectedRFI(rfi);
+    setShowShareModal(true);
+  };
+
   const clearFilters = () => {
     setFilters({
       search: "",
@@ -189,6 +201,12 @@ export default function RFIs() {
           </p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowSavedRFIs(true)}
+            className="btn btn-outline flex items-center gap-2"
+          >
+            <Cloud className="h-5 w-5" /> RFIs Salvos
+          </button>
           <button
             onClick={() => setShowRelatorios(true)}
             className="btn btn-outline flex items-center gap-2"
@@ -380,6 +398,13 @@ export default function RFIs() {
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button
+                    onClick={() => handleShare(rfi)}
+                    className="btn btn-xs btn-outline mr-2"
+                    title="Partilhar RFI"
+                  >
+                    <Share2 className="h-3 w-3" />
+                  </button>
+                  <button
                     onClick={() => handleIndividualReport(rfi)}
                     className="btn btn-xs btn-outline mr-2"
                     title="Relatório Individual"
@@ -422,6 +447,26 @@ export default function RFIs() {
         <RelatorioRFIsPremium
           rfis={rfis as unknown as RFIType[]}
           onClose={() => setShowRelatorios(false)}
+        />
+      )}
+
+      {/* Modal de Partilha */}
+      {showShareModal && selectedRFI && (
+        <ShareRFIModal
+          rfi={selectedRFI as unknown as RFIType}
+          isOpen={showShareModal}
+          onClose={() => {
+            setShowShareModal(false);
+            setSelectedRFI(null);
+          }}
+        />
+      )}
+
+      {/* Modal de RFIs Salvos */}
+      {showSavedRFIs && (
+        <SavedRFIsViewer
+          isOpen={showSavedRFIs}
+          onClose={() => setShowSavedRFIs(false)}
         />
       )}
     </div>

@@ -977,6 +977,7 @@ export interface RFI extends BaseEntity {
   relacionado_material_id?: string;
   observacoes?: string;
   timeline?: EventoRFI[];
+  arquivo_url?: string; // URL do arquivo PDF salvo no backend
 }
 
 export interface EventoRFI {
