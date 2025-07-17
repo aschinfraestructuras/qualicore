@@ -14,6 +14,7 @@ import {
   FileText,
   Share2,
   Cloud,
+  Download,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ObraForm from "@/components/forms/ObraForm";
@@ -278,6 +279,17 @@ export default function Obras() {
     try {
       const pdfService = new PDFService();
 
+      await pdfService.generateObrasIndividualReport([obra]);
+      toast.success("Relatório individual gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar relatório individual:", error);
+      toast.error("Erro ao gerar relatório individual");
+    }
+  };
+
+  const handleExportObra = async (obra: any) => {
+    try {
+      const pdfService = new PDFService();
       await pdfService.generateObrasIndividualReport([obra]);
       toast.success("Relatório individual gerado com sucesso!");
     } catch (error) {
@@ -721,6 +733,13 @@ export default function Obras() {
                         title="Relatório Individual"
                       >
                         <FileText className="h-4 w-4" />
+                      </button>
+                      <button
+                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                        onClick={() => handleExportObra(obra)}
+                        title="Exportar"
+                      >
+                        <Download className="h-4 w-4" />
                       </button>
                       <button
                         className="p-2 text-gray-400 hover:text-purple-600 transition-colors"

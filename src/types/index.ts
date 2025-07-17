@@ -1253,6 +1253,7 @@ export interface EnsaioCompactacao {
   densidadeSecaMedia: number;
   humidadeMedia: number;
   grauCompactacaoMedio: number;
+  referenciaLaboratorioExterno?: string; // Referência do relatório do laboratório externo
   observacoes?: string;
   created?: string;
   updated?: string;

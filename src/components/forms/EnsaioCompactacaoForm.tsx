@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Calculator } from 'lucide-react';
 import { EnsaioCompactacao, PontoEnsaioCompactacao } from '../../types';
+import { obrasAPI } from '../../lib/supabase-api';
 
 interface EnsaioCompactacaoFormProps {
   ensaio?: EnsaioCompactacao;
@@ -22,17 +23,33 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
     densidadeSecaMedia: 0,
     humidadeMedia: 0,
     grauCompactacaoMedio: 0,
+    referenciaLaboratorioExterno: '',
     observacoes: ''
   });
 
   const [densidadeMaximaRef, setDensidadeMaximaRef] = useState(0);
+  const [obras, setObras] = useState<any[]>([]);
+  const [loadingObras, setLoadingObras] = useState(true);
 
   useEffect(() => {
     if (ensaio) {
       setFormData(ensaio);
       setDensidadeMaximaRef(ensaio.densidadeMaximaReferencia);
     }
+    loadObras();
   }, [ensaio]);
+
+  const loadObras = async () => {
+    try {
+      setLoadingObras(true);
+      const obrasData = await obrasAPI.getAll();
+      setObras(obrasData);
+    } catch (error) {
+      console.error('Erro ao carregar obras:', error);
+    } finally {
+      setLoadingObras(false);
+    }
+  };
 
   const addPonto = () => {
     if (formData.pontos.length < 20) {
@@ -110,37 +127,49 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Obra
+                Obra *
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.obra}
                 onChange={(e) => setFormData(prev => ({ ...prev, obra: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
-              />
+                disabled={loadingObras}
+              >
+                <option value="">Selecionar obra...</option>
+                {obras.map(obra => (
+                  <option key={obra.id} value={obra.nome}>
+                    {obra.codigo} - {obra.nome}
+                  </option>
+                ))}
+              </select>
+              {loadingObras && (
+                <p className="text-sm text-gray-500 mt-1">Carregando obras...</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Localização (PK)
+                Localização (PK) *
               </label>
               <input
                 type="text"
                 value={formData.localizacao}
                 onChange={(e) => setFormData(prev => ({ ...prev, localizacao: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ex: PK 0+000 a PK 0+100"
                 required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Elemento
+                Elemento *
               </label>
               <input
                 type="text"
                 value={formData.elemento}
                 onChange={(e) => setFormData(prev => ({ ...prev, elemento: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ex: Aterro, Sub-base, Base"
                 required
               />
             </div>
@@ -150,43 +179,45 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Número do Ensaio
+                Número do Ensaio *
               </label>
               <input
                 type="text"
                 value={formData.numeroEnsaio}
                 onChange={(e) => setFormData(prev => ({ ...prev, numeroEnsaio: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ex: EC-2024-001"
                 required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Código
+                Código *
               </label>
               <input
                 type="text"
                 value={formData.codigo}
                 onChange={(e) => setFormData(prev => ({ ...prev, codigo: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ex: CÓD-001"
                 required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Data da Amostra
+                Data da Amostra *
               </label>
               <input
                 type="date"
                 value={formData.dataAmostra}
                 onChange={(e) => setFormData(prev => ({ ...prev, dataAmostra: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Densidade Máxima Seca (g/cm³)
+                Densidade Máxima Seca (g/cm³) *
               </label>
               <input
                 type="number"
@@ -197,7 +228,8 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
                   setDensidadeMaximaRef(value);
                   setFormData(prev => ({ ...prev, densidadeMaximaReferencia: value }));
                 }}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ex: 2.150"
                 required
               />
             </div>
@@ -207,15 +239,28 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Humidade Ótima (%)
+                Humidade Ótima (%) *
               </label>
               <input
                 type="number"
                 step="0.01"
                 value={formData.humidadeOtimaReferencia}
                 onChange={(e) => setFormData(prev => ({ ...prev, humidadeOtimaReferencia: parseFloat(e.target.value) || 0 }))}
-                className="w-full p-2 border border-gray-300 rounded-md"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ex: 12.5"
                 required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Referência Laboratório Externo
+              </label>
+              <input
+                type="text"
+                value={formData.referenciaLaboratorioExterno || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, referenciaLaboratorioExterno: e.target.value }))}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ex: REL-2024-001, Relatório Proctor"
               />
             </div>
           </div>
@@ -228,9 +273,9 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
                 type="button"
                 onClick={addPonto}
                 disabled={formData.pontos.length >= 20}
-                className="btn btn-primary btn-sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:bg-gray-400"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4" />
                 Adicionar Ponto
               </button>
             </div>
@@ -259,7 +304,7 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
                             step="0.001"
                             value={ponto.densidadeSeca}
                             onChange={(e) => updatePonto(index, 'densidadeSeca', parseFloat(e.target.value) || 0)}
-                            className="w-full p-1 border border-gray-300 rounded"
+                            className="w-full p-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </td>
                         <td className="border border-gray-300 p-2">
@@ -268,7 +313,7 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
                             step="0.01"
                             value={ponto.humidade}
                             onChange={(e) => updatePonto(index, 'humidade', parseFloat(e.target.value) || 0)}
-                            className="w-full p-1 border border-gray-300 rounded"
+                            className="w-full p-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </td>
                         <td className="border border-gray-300 p-2">
@@ -277,7 +322,7 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
                             step="0.01"
                             value={ponto.grauCompactacao}
                             onChange={(e) => updatePonto(index, 'grauCompactacao', parseFloat(e.target.value) || 0)}
-                            className="w-full p-1 border border-gray-300 rounded"
+                            className="w-full p-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </td>
                         <td className="border border-gray-300 p-2 text-center">
@@ -302,9 +347,9 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
                 <button
                   type="button"
                   onClick={calcularMedias}
-                  className="btn btn-secondary btn-sm"
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
                 >
-                  <Calculator className="h-4 w-4 mr-2" />
+                  <Calculator className="h-4 w-4" />
                   Calcular Médias
                 </button>
               </div>
@@ -362,10 +407,11 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
               Observações
             </label>
             <textarea
-              value={formData.observacoes}
+              value={formData.observacoes || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
               rows={3}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Observações adicionais sobre o ensaio..."
             />
           </div>
 
@@ -374,13 +420,13 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
             <button
               type="button"
               onClick={onCancel}
-              className="btn btn-outline"
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="btn btn-primary"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
             >
               {ensaio ? 'Atualizar' : 'Criar'} Ensaio
             </button>

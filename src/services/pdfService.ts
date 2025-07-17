@@ -6310,6 +6310,185 @@ export class PDFService {
       percentagemConclusao
     };
   }
+
+  static async exportEnsaioCompactacao(ensaio: any): Promise<string> {
+    const doc = new jsPDF();
+    
+    // Cabeçalho profissional
+    doc.setFillColor(30, 64, 175);
+    doc.rect(0, 0, doc.internal.pageSize.width, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Qualicore', 20, 20);
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('ASCH Infraestructuras y Servicios SA', 20, 28);
+    doc.text('Praça das Industrias - Edificio Aip - Sala 7, Nº Aip, 3, Lisboa 1300-307 Lisboa', 20, 32);
+    
+    // Título do relatório
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Relatório de Ensaio de Compactação', 20, 55);
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(75, 85, 99);
+    doc.text(`Ensaio: ${ensaio.numeroEnsaio}`, 20, 65);
+    
+    // Data de geração
+    doc.setFontSize(10);
+    doc.setTextColor(107, 114, 128);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-PT')}`, 20, 75);
+    
+    // Linha separadora
+    doc.setDrawColor(229, 231, 235);
+    doc.setLineWidth(0.5);
+    doc.line(20, 80, doc.internal.pageSize.width - 20, 80);
+    
+    let currentY = 100;
+    
+    // Informações do ensaio
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text('Informações do Ensaio', 20, currentY);
+    currentY += 20;
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    
+    const infoData = [
+      ['Código:', ensaio.codigo],
+      ['Obra:', ensaio.obra],
+      ['Localização:', ensaio.localizacao],
+      ['Elemento:', ensaio.elemento],
+      ['Data da Amostra:', new Date(ensaio.dataAmostra).toLocaleDateString('pt-PT')],
+      ['Número de Pontos:', ensaio.pontos.length.toString()],
+      ['Densidade Seca Média:', `${ensaio.densidadeSecaMedia?.toFixed(3)} g/cm³`],
+      ['Grau de Compactação Médio:', `${ensaio.grauCompactacaoMedio?.toFixed(1)}%`],
+      ['Umidade Média:', `${ensaio.umidadeMedia?.toFixed(2)}%`]
+    ];
+    
+    infoData.forEach(([label, value]) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label, 20, currentY);
+      doc.setFont('helvetica', 'normal');
+      doc.text(value || 'N/A', 80, currentY);
+      currentY += 8;
+    });
+    
+    currentY += 10;
+    
+    // Tabela de pontos
+    if (ensaio.pontos && ensaio.pontos.length > 0) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Dados dos Pontos de Ensaio', 20, currentY);
+      currentY += 20;
+      
+      const tableData = ensaio.pontos.map((ponto: any, index: number) => [
+        (index + 1).toString(),
+        ponto.densidadeSeca?.toFixed(3) || 'N/A',
+        ponto.umidade?.toFixed(2) || 'N/A',
+        ponto.grauCompactacao?.toFixed(1) || 'N/A'
+      ]);
+      
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Ponto', 'Densidade Seca (g/cm³)', 'Umidade (%)', 'Grau Compactação (%)']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [30, 64, 175],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold'
+        },
+        styles: {
+          fontSize: 8
+        }
+      });
+      
+      currentY = (doc as any).lastAutoTable.finalY + 20;
+    }
+    
+    // Resultados e conclusões
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resultados e Conclusões', 20, currentY);
+    currentY += 20;
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    
+    const grauMedio = ensaio.grauCompactacaoMedio || 0;
+    let conclusao = '';
+    let status = '';
+    
+    if (grauMedio >= 95) {
+      status = 'EXCELENTE';
+      conclusao = 'O grau de compactação está excelente, acima dos 95% requeridos.';
+    } else if (grauMedio >= 90) {
+      status = 'BOM';
+      conclusao = 'O grau de compactação está bom, entre 90% e 95%.';
+    } else {
+      status = 'INSUFICIENTE';
+      conclusao = 'O grau de compactação está abaixo dos 90% requeridos. É necessário recompactar.';
+    }
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Status:', 20, currentY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(status, 80, currentY);
+    currentY += 15;
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text('Conclusão:', 20, currentY);
+    currentY += 8;
+    
+    // Quebrar texto da conclusão em múltiplas linhas
+    const maxWidth = doc.internal.pageSize.width - 40;
+    const words = conclusao.split(' ');
+    let line = '';
+    let lines = [];
+    
+    words.forEach(word => {
+      const testLine = line + word + ' ';
+      const testWidth = doc.getTextWidth(testLine);
+      if (testWidth > maxWidth && line !== '') {
+        lines.push(line);
+        line = word + ' ';
+      } else {
+        line = testLine;
+      }
+    });
+    lines.push(line);
+    
+    lines.forEach(line => {
+      doc.text(line.trim(), 20, currentY);
+      currentY += 6;
+    });
+    
+    // Rodapé
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setDrawColor(229, 231, 235);
+    doc.setLineWidth(0.5);
+    doc.line(20, pageHeight - 30, doc.internal.pageSize.width - 20, pageHeight - 30);
+    
+    doc.setFontSize(8);
+    doc.setTextColor(107, 114, 128);
+    doc.text('Qualicore - Sistema de Gestão da Qualidade', 20, pageHeight - 20);
+    doc.text(`Página 1 de 1`, doc.internal.pageSize.width - 40, pageHeight - 20);
+    
+    // Gerar URL do PDF
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    
+    return pdfUrl;
+  }
 }
 
 export default PDFService; 
