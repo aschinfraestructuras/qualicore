@@ -55,6 +55,7 @@ export class EnsaioCompactacaoService {
           densidade_seca_media: ensaio.densidadeSecaMedia,
           humidade_media: ensaio.humidadeMedia,
           grau_compactacao_medio: ensaio.grauCompactacaoMedio,
+          referencia_laboratorio_externo: ensaio.referenciaLaboratorioExterno,
           observacoes: ensaio.observacoes
         }])
         .select()
@@ -85,6 +86,7 @@ export class EnsaioCompactacaoService {
       if (ensaio.densidadeSecaMedia !== undefined) updateData.densidade_seca_media = ensaio.densidadeSecaMedia;
       if (ensaio.humidadeMedia !== undefined) updateData.humidade_media = ensaio.humidadeMedia;
       if (ensaio.grauCompactacaoMedio !== undefined) updateData.grau_compactacao_medio = ensaio.grauCompactacaoMedio;
+      if (ensaio.referenciaLaboratorioExterno !== undefined) updateData.referencia_laboratorio_externo = ensaio.referenciaLaboratorioExterno;
       if (ensaio.observacoes !== undefined) updateData.observacoes = ensaio.observacoes;
 
       const { data, error } = await supabase
@@ -184,6 +186,7 @@ export class EnsaioCompactacaoService {
       densidadeSecaMedia: data.densidade_seca_media,
       humidadeMedia: data.humidade_media,
       grauCompactacaoMedio: data.grau_compactacao_medio,
+      referenciaLaboratorioExterno: data.referencia_laboratorio_externo,
       observacoes: data.observacoes,
       created: data.created_at,
       updated: data.updated_at

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Download, Share2, Cloud, Building } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Download, Share2, Cloud, Building, FileText, BarChart3 } from 'lucide-react';
 import { EnsaioCompactacao } from '../types';
 import { ensaioCompactacaoService } from '../services/ensaioCompactacaoService';
 import EnsaioCompactacaoForm from '../components/forms/EnsaioCompactacaoForm';
+import RelatorioEnsaiosCompactacaoPremium from '../components/RelatorioEnsaiosCompactacaoPremium';
 import { PDFService } from '../services/pdfService';
 import { obrasAPI } from '../lib/supabase-api';
 import toast from 'react-hot-toast';
@@ -12,6 +13,7 @@ export default function EnsaiosCompactacao() {
   const [obras, setObras] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showRelatorio, setShowRelatorio] = useState(false);
   const [editingEnsaio, setEditingEnsaio] = useState<EnsaioCompactacao | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterObra, setFilterObra] = useState('');
@@ -137,13 +139,22 @@ export default function EnsaiosCompactacao() {
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-900">Ensaios de Compactação</h1>
-          <button 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-            onClick={handleCreate}
-          >
-            <Plus className="h-4 w-4" />
-            Novo Ensaio
-          </button>
+          <div className="flex gap-3">
+            <button 
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              onClick={() => setShowRelatorio(true)}
+            >
+              <FileText className="h-4 w-4" />
+              Relatórios
+            </button>
+            <button 
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              onClick={handleCreate}
+            >
+              <Plus className="h-4 w-4" />
+              Novo Ensaio
+            </button>
+          </div>
         </div>
       </div>
 
@@ -380,6 +391,14 @@ export default function EnsaiosCompactacao() {
           ensaio={editingEnsaio || undefined}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
+        />
+      )}
+
+      {/* Modal de Relatórios */}
+      {showRelatorio && (
+        <RelatorioEnsaiosCompactacaoPremium
+          ensaios={filteredEnsaios}
+          onClose={() => setShowRelatorio(false)}
         />
       )}
     </div>

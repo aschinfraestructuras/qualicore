@@ -6489,6 +6489,169 @@ export class PDFService {
     
     return pdfUrl;
   }
+
+  static async generateEnsaiosCompactacaoFilteredReport(ensaios: any[]): Promise<void> {
+    const doc = new jsPDF();
+    
+    // Cabeçalho
+    doc.setFillColor(30, 64, 175);
+    doc.rect(0, 0, doc.internal.pageSize.width, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Qualicore', 20, 20);
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('ASCH Infraestructuras y Servicios SA', 20, 28);
+    doc.text('Praça das Industrias - Edificio Aip - Sala 7, Nº Aip, 3, Lisboa 1300-307 Lisboa', 20, 32);
+    
+    // Título
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Relatório Filtrado - Ensaios de Compactação', 20, 60);
+    
+    // Informações do relatório
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, 75);
+    doc.text(`Total de Ensaios: ${ensaios.length}`, 20, 85);
+    
+    // Tabela de ensaios
+    let y = 100;
+    const headers = ['Ensaio', 'Obra', 'Localização', 'Elemento', 'Densidade Média', 'Grau Compactação'];
+    const colWidths = [30, 40, 35, 25, 25, 25];
+    
+    // Cabeçalho da tabela
+    doc.setFillColor(240, 240, 240);
+    doc.rect(20, y, colWidths.reduce((a, b) => a + b, 0), 10, 'F');
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    
+    let x = 20;
+    headers.forEach((header, i) => {
+      doc.text(header, x + 2, y + 7);
+      x += colWidths[i];
+    });
+    
+    y += 15;
+    
+    // Dados da tabela
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    
+    ensaios.forEach(ensaio => {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      
+      x = 20;
+      const rowData = [
+        ensaio.numeroEnsaio,
+        ensaio.obra,
+        ensaio.localizacao,
+        ensaio.elemento,
+        `${ensaio.densidadeSecaMedia?.toFixed(2) || 'N/A'}`,
+        `${ensaio.grauCompactacaoMedio?.toFixed(1) || 'N/A'}%`
+      ];
+      
+      rowData.forEach((text, i) => {
+        doc.text(text.substring(0, 15), x + 2, y + 5);
+        x += colWidths[i];
+      });
+      
+      y += 8;
+    });
+    
+    // Download do PDF
+    const pdfBlob = doc.output('blob');
+    const url = URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Relatorio-Ensaios-Compactacao-Filtrado-${new Date().toISOString().split('T')[0]}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  static async generateEnsaiosCompactacaoExecutiveReport(ensaios: any[]): Promise<void> {
+    const doc = new jsPDF();
+    
+    // Cabeçalho
+    doc.setFillColor(30, 64, 175);
+    doc.rect(0, 0, doc.internal.pageSize.width, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Qualicore', 20, 20);
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('ASCH Infraestructuras y Servicios SA', 20, 28);
+    doc.text('Praça das Industrias - Edificio Aip - Sala 7, Nº Aip, 3, Lisboa 1300-307 Lisboa', 20, 32);
+    
+    // Título
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Relatório Executivo - Ensaios de Compactação', 20, 60);
+    
+    // Estatísticas
+    const totalEnsaios = ensaios.length;
+    const obrasUnicas = [...new Set(ensaios.map(e => e.obra))];
+    const densidadeMedia = ensaios.reduce((sum, e) => sum + (e.densidadeSecaMedia || 0), 0) / totalEnsaios;
+    const grauCompactacaoMedia = ensaios.reduce((sum, e) => sum + (e.grauCompactacaoMedio || 0), 0) / totalEnsaios;
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resumo Executivo', 20, 80);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Total de Ensaios: ${totalEnsaios}`, 20, 95);
+    doc.text(`Obras Analisadas: ${obrasUnicas.length}`, 20, 105);
+    doc.text(`Densidade Seca Média: ${densidadeMedia.toFixed(2)} g/cm³`, 20, 115);
+    doc.text(`Grau de Compactação Médio: ${grauCompactacaoMedia.toFixed(1)}%`, 20, 125);
+    
+    // Análise por obra
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Análise por Obra', 20, 150);
+    
+    let y = 165;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    
+    obrasUnicas.forEach(obra => {
+      const ensaiosObra = ensaios.filter(e => e.obra === obra);
+      const mediaObra = ensaiosObra.reduce((sum, e) => sum + (e.grauCompactacaoMedio || 0), 0) / ensaiosObra.length;
+      
+      doc.text(`${obra}: ${ensaiosObra.length} ensaios, ${mediaObra.toFixed(1)}% compactação média`, 20, y);
+      y += 8;
+      
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+    });
+    
+    // Download do PDF
+    const pdfBlob = doc.output('blob');
+    const url = URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Relatorio-Executivo-Ensaios-Compactacao-${new Date().toISOString().split('T')[0]}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
 }
 
 export default PDFService; 
