@@ -12,12 +12,17 @@ import {
   Calendar,
   XCircle,
   FileText,
+  Share2,
+  Cloud,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ObraForm from "@/components/forms/ObraForm";
 import RelatorioObrasPremium from "@/components/RelatorioObrasPremium";
+import { ShareObraModal } from "@/components/ShareObraModal";
+import { SavedObrasViewer } from "@/components/SavedObrasViewer";
 import { obrasAPI } from "@/lib/supabase-api";
 import { PDFService } from "@/services/pdfService";
+import { ShareService } from "@/services/shareService";
 import { AnimatePresence, motion } from "framer-motion";
 
 // Dados mock iniciais para demonstração
@@ -124,6 +129,8 @@ export default function Obras() {
   const [editingObra, setEditingObra] = useState<any | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showRelatorios, setShowRelatorios] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showSavedObrasViewer, setShowSavedObrasViewer] = useState(false);
 
   // Filtros ativos
   const [filters, setFilters] = useState({
@@ -352,6 +359,15 @@ export default function Obras() {
     });
   };
 
+  const handleShareObra = async (obra: any) => {
+    setEditingObra(obra);
+    setShowShareModal(true);
+  };
+
+  const handleViewSavedObras = () => {
+    setShowSavedObrasViewer(true);
+  };
+
   const stats = {
     total: filteredObras.length,
     em_execucao: filteredObras.filter((o) => o.status === "em_execucao").length,
@@ -393,6 +409,14 @@ export default function Obras() {
           title="Relatórios PDF"
         >
           <FileText className="h-5 w-5" />
+        </button>
+
+        <button
+          onClick={handleViewSavedObras}
+          className="p-2 rounded-lg shadow-soft hover:shadow-md transition-all bg-white text-gray-600 hover:bg-green-50 hover:text-green-600"
+          title="Ver Salvos"
+        >
+          <Cloud className="h-5 w-5" />
         </button>
       </div>
 
@@ -699,6 +723,13 @@ export default function Obras() {
                         <FileText className="h-4 w-4" />
                       </button>
                       <button
+                        className="p-2 text-gray-400 hover:text-purple-600 transition-colors"
+                        onClick={() => handleShareObra(obra)}
+                        title="Partilhar"
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </button>
+                      <button
                         className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                         onClick={() => handleDelete(obra.id)}
                         title="Excluir"
@@ -745,6 +776,23 @@ export default function Obras() {
         <RelatorioObrasPremium
           obras={obras}
           onClose={() => setShowRelatorios(false)}
+        />
+      )}
+
+      {/* Modal de Partilha */}
+      {showShareModal && (
+        <ShareObraModal
+          obra={editingObra}
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
+
+      {/* Modal de Visualização de Obras Salvos */}
+      {showSavedObrasViewer && (
+        <SavedObrasViewer
+          isOpen={showSavedObrasViewer}
+          onClose={() => setShowSavedObrasViewer(false)}
         />
       )}
     </div>

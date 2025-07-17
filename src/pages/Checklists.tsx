@@ -12,11 +12,15 @@ import {
   Calendar,
   XCircle,
   Download,
+  Share2,
+  Cloud,
 } from "lucide-react";
 import { checklistsAPI } from "@/lib/supabase-api";
 import toast from "react-hot-toast";
 import ChecklistForm from "@/components/forms/ChecklistForm";
 import RelatorioChecklistsPremium from "@/components/RelatorioChecklistsPremium";
+import { ShareChecklistModal } from "@/components/ShareChecklistModal";
+import { SavedChecklistsViewer } from "@/components/SavedChecklistsViewer";
 import { AnimatePresence, motion } from "framer-motion";
 import { PDFService } from "@/services/pdfService";
 import type { Checklist } from "@/types";
@@ -28,6 +32,11 @@ export default function Checklists() {
   const [editingChecklist, setEditingChecklist] = useState<any | null>(null);
   const [showRelatorios, setShowRelatorios] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Sharing states
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showSavedViewer, setShowSavedViewer] = useState(false);
+  const [selectedChecklist, setSelectedChecklist] = useState<any | null>(null);
 
   // Filtros ativos
   const [filters, setFilters] = useState({
@@ -257,6 +266,13 @@ export default function Checklists() {
           <p className="text-gray-600">Gestão de checklists e inspeções</p>
         </div>
         <div className="flex gap-3">
+          <button
+            className="btn btn-outline btn-md"
+            onClick={() => setShowSavedViewer(true)}
+          >
+            <Cloud className="h-4 w-4 mr-2" />
+            Ver Guardados
+          </button>
           <button
             className="btn btn-secondary btn-md"
             onClick={() => setShowRelatorios(true)}
@@ -511,6 +527,16 @@ export default function Checklists() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
+                        onClick={() => {
+                          setSelectedChecklist(checklist);
+                          setShowShareModal(true);
+                        }}
+                        className="btn btn-xs btn-outline"
+                        title="Partilhar"
+                      >
+                        <Share2 className="h-3 w-3" />
+                      </button>
+                      <button
                         onClick={() => handleIndividualReport(checklist)}
                         className="btn btn-xs btn-outline"
                         title="Relatório Individual"
@@ -593,6 +619,21 @@ export default function Checklists() {
             observacoes: c.observacoes || ''
           }))}
           onClose={() => setShowRelatorios(false)}
+        />
+      )}
+
+      {/* Modal de Partilha de Checklist */}
+      {showShareModal && selectedChecklist && (
+        <ShareChecklistModal
+          checklist={selectedChecklist}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
+
+      {/* Modal de Guardados */}
+      {showSavedViewer && (
+        <SavedChecklistsViewer
+          onClose={() => setShowSavedViewer(false)}
         />
       )}
     </div>

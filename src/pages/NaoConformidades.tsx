@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { NaoConformidade, naoConformidadesAPI } from "@/lib/supabase-api";
 import NaoConformidadeForm from "@/components/forms/NaoConformidadeForm";
 import RelatorioNaoConformidadesPremium from "@/components/RelatorioNaoConformidadesPremium";
+import { ShareNaoConformidadeModal } from "@/components/ShareNaoConformidadeModal";
+import { SavedNaoConformidadesViewer } from "@/components/SavedNaoConformidadesViewer";
 import toast from "react-hot-toast";
 import { sanitizeUUIDField } from "@/utils/uuid";
-import { Plus, Search, Filter, FileText, XCircle, Download } from "lucide-react";
+import { Plus, Search, Filter, FileText, XCircle, Download, Share2, Cloud } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function NaoConformidades() {
@@ -25,6 +27,9 @@ export default function NaoConformidades() {
   const [showRelatorioModal, setShowRelatorioModal] = useState(false);
   const [ncSelecionada, setNcSelecionada] = useState<string>("");
   const [tipoRelatorio, setTipoRelatorio] = useState<"executivo" | "individual" | "filtrado" | "comparativo">("executivo");
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showSavedNCs, setShowSavedNCs] = useState(false);
+  const [selectedNC, setSelectedNC] = useState<any>(null);
 
   useEffect(() => {
     loadNaoConformidades();
@@ -63,6 +68,11 @@ export default function NaoConformidades() {
 
   const handleRelatorios = () => {
     setShowRelatorioModal(true);
+  };
+
+  const handleShare = (nc: any) => {
+    setSelectedNC(nc);
+    setShowShareModal(true);
   };
 
   const handleSubmitNC = async (data: any) => {
@@ -250,11 +260,18 @@ export default function NaoConformidades() {
           </div>
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={handleCreateNC}
-              className="btn btn-primary btn-md"
+              onClick={() => setShowSavedNCs(true)}
+              className="btn btn-outline btn-md"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Nova NC
+              <Cloud className="h-4 w-4 mr-2" />
+              NCs Salvos
+            </button>
+            <button
+              onClick={handleRelatorios}
+              className="btn btn-outline btn-md"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Relatórios
             </button>
             <button
               onClick={handleCreateAuditoria}
@@ -264,11 +281,11 @@ export default function NaoConformidades() {
               Auditoria
             </button>
             <button
-              onClick={handleRelatorios}
-              className="btn btn-outline btn-md"
+              onClick={handleCreateNC}
+              className="btn btn-primary btn-md"
             >
-              <Download className="h-4 w-4 mr-2" />
-              Relatórios
+              <Plus className="h-4 w-4 mr-2" />
+              Nova NC
             </button>
           </div>
         </div>
@@ -506,6 +523,13 @@ export default function NaoConformidades() {
                       </div>
                       <div className="flex gap-2">
                         <button
+                          onClick={() => handleShare(nc)}
+                          className="btn btn-sm btn-outline"
+                          title="Partilhar NC"
+                        >
+                          <Share2 className="h-4 w-4" />
+                        </button>
+                        <button
                           onClick={() => {
                             setNcSelecionada(nc.id);
                             setTipoRelatorio("individual");
@@ -564,6 +588,26 @@ export default function NaoConformidades() {
         onClose={() => setShowRelatorioModal(false)}
         naoConformidades={naoConformidades}
       />
+
+      {/* MODAL DE PARTILHA */}
+      {showShareModal && selectedNC && (
+        <ShareNaoConformidadeModal
+          isOpen={showShareModal}
+          onClose={() => {
+            setShowShareModal(false);
+            setSelectedNC(null);
+          }}
+          naoConformidade={selectedNC}
+        />
+      )}
+
+      {/* MODAL DE NCs SALVOS */}
+      {showSavedNCs && (
+        <SavedNaoConformidadesViewer
+          isOpen={showSavedNCs}
+          onClose={() => setShowSavedNCs(false)}
+        />
+      )}
     </div>
   );
 }

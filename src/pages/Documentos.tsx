@@ -17,6 +17,8 @@ import {
   ArrowUpDown,
   Filter,
   XCircle,
+  Share2,
+  Cloud,
 } from "lucide-react";
 
 import { documentosAPI } from "@/lib/supabase-api";
@@ -25,6 +27,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import Modal from "@/components/Modal";
 import DocumentoForm from "@/components/forms/DocumentoForm";
 import RelatorioDocumentosPremium from "@/components/RelatorioDocumentosPremium";
+import { ShareDocumentoModal } from "@/components/ShareDocumentoModal";
+import { SavedDocumentosViewer } from "@/components/SavedDocumentosViewer";
 import { PDFService } from "@/services/pdfService";
 import type { Documento } from "@/types";
 
@@ -280,6 +284,9 @@ export default function Documentos() {
   const [viewingDocument, setViewingDocument] = useState<any | null>(null); // Changed to any
   const [showFilters, setShowFilters] = useState(false);
   const [showRelatorioPremiumModal, setShowRelatorioPremiumModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showSavedDocumentsModal, setShowSavedDocumentsModal] = useState(false);
+  const [selectedDocumento, setSelectedDocumento] = useState<Documento | null>(null);
 
   useEffect(() => {
     loadDocumentos();
@@ -512,39 +519,12 @@ export default function Documentos() {
   };
 
   const handleExport = () => {
-    const csvContent = [
-      [
-        "Código",
-        "Tipo",
-        "Versão",
-        "Responsável",
-        "Zona",
-        "Estado",
-        "Data Validade",
-        "Observações",
-      ],
-      ...sortedDocumentos.map((doc) => [
-        doc.codigo,
-        getTipoInfo(doc.tipo).label,
-        doc.versao,
-        doc.responsavel,
-        doc.zona,
-        getEstadoInfo(doc.estado).label,
-        doc.data_validade || "-",
-        doc.observacoes || "-",
-      ]),
-    ]
-      .map((row) => row.join(","))
-      .join("\n");
+    setShowRelatorioPremiumModal(true);
+  };
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `documentos_${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Exportação concluída");
+  const handleShare = (documento: Documento) => {
+    setSelectedDocumento(documento);
+    setShowShareModal(true);
   };
 
   const handleBulkAction = (action: string) => {
@@ -681,6 +661,13 @@ export default function Documentos() {
         </div>
 
         <div className="flex items-center space-x-3">
+          <button
+            onClick={() => setShowSavedDocumentsModal(true)}
+            className="btn btn-outline btn-md"
+          >
+            <Cloud className="h-4 w-4 mr-2" />
+            Documentos Salvos
+          </button>
           <button
             onClick={() => setShowCreateModal(true)}
             className="btn btn-outline btn-md"
@@ -1185,6 +1172,13 @@ export default function Documentos() {
                                 <FileText className="h-4 w-4 text-gray-600" />
                               </button>
                               <button
+                                onClick={() => handleShare(doc)}
+                                className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                                title="Compartilhar"
+                              >
+                                <Share2 className="h-4 w-4 text-gray-600" />
+                              </button>
+                              <button
                                 onClick={() => handleDelete(doc.id)}
                                 className="p-1 rounded-lg hover:bg-red-100 transition-colors"
                                 title="Eliminar"
@@ -1409,6 +1403,26 @@ export default function Documentos() {
            onClose={() => setShowRelatorioPremiumModal(false)}
          />
        )}
+
+       {/* Share Document Modal */}
+       {showShareModal && selectedDocumento && (
+         <ShareDocumentoModal
+           isOpen={showShareModal}
+           onClose={() => {
+             setShowShareModal(false);
+             setSelectedDocumento(null);
+           }}
+           documento={selectedDocumento}
+         />
+       )}
+
+        {/* Saved Documents Modal */}
+        {showSavedDocumentsModal && (
+          <SavedDocumentosViewer
+            isOpen={showSavedDocumentsModal}
+            onClose={() => setShowSavedDocumentsModal(false)}
+          />
+        )}
     </div>
   );
 }

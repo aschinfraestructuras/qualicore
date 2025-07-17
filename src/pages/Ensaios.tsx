@@ -18,14 +18,19 @@ import {
   Clock,
   AlertTriangle,
   X,
+  Share2,
+  Cloud,
 } from "lucide-react";
 import { ensaiosAPI } from "@/lib/supabase-api";
 import { toast } from "react-hot-toast";
 import EnsaioForm from "@/components/forms/EnsaioForm";
 import Modal from "@/components/Modal";
 import RelatorioEnsaiosPremium from "@/components/RelatorioEnsaiosPremium";
+import { ShareEnsaioModal } from "@/components/ShareEnsaioModal";
+import { SavedEnsaiosViewer } from "@/components/SavedEnsaiosViewer";
 import { AnimatePresence, motion } from "framer-motion";
 import { PDFService } from "@/services/pdfService";
+import { ShareService } from "@/services/shareService";
 
 export default function Ensaios() {
   const [ensaios, setEnsaios] = useState<any[]>([]); // Changed type to any[] as Ensaio type is removed
@@ -34,6 +39,8 @@ export default function Ensaios() {
   const [editingEnsaio, setEditingEnsaio] = useState<any>(null);
   const [showRelatorioPremium, setShowRelatorioPremium] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showSavedEnsaiosViewer, setShowSavedEnsaiosViewer] = useState(false);
 
   // Filtros ativos
   const [filters, setFilters] = useState({
@@ -254,6 +261,15 @@ export default function Ensaios() {
     }
   };
 
+  const handleShareEnsaio = async (ensaio: any) => {
+    setEditingEnsaio(ensaio);
+    setShowShareModal(true);
+  };
+
+  const handleViewSavedEnsaios = () => {
+    setShowSavedEnsaiosViewer(true);
+  };
+
   const clearFilters = () => {
     setFilters({
       search: "",
@@ -316,6 +332,14 @@ export default function Ensaios() {
         >
           <FileText className="h-4 w-4" />
           <span>Relatórios PDF</span>
+        </button>
+
+        <button
+          onClick={handleViewSavedEnsaios}
+          className="btn btn-outline flex items-center space-x-2"
+        >
+          <Cloud className="h-4 w-4" />
+          <span>Ver Salvos</span>
         </button>
 
         <button
@@ -564,6 +588,13 @@ export default function Ensaios() {
                         <FileText className="h-4 w-4" />
                       </button>
                       <button
+                        onClick={() => handleShareEnsaio(ensaio)}
+                        className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                        title="Compartilhar Ensaio"
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </button>
+                      <button
                         onClick={() => handleDelete(ensaio.id)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Excluir"
@@ -614,6 +645,23 @@ export default function Ensaios() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de Compartilhamento */}
+      {showShareModal && (
+        <ShareEnsaioModal
+          ensaio={editingEnsaio}
+          onClose={() => setShowShareModal(false)}
+          isOpen={showShareModal}
+        />
+      )}
+
+      {/* Modal de Visualização de Ensaios Salvos */}
+      {showSavedEnsaiosViewer && (
+        <SavedEnsaiosViewer
+          isOpen={showSavedEnsaiosViewer}
+          onClose={() => setShowSavedEnsaiosViewer(false)}
+        />
       )}
     </div>
   );

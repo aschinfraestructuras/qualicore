@@ -80,6 +80,13 @@ const moduleCategories = {
       color: "from-emerald-500 to-emerald-600",
     },
     {
+      path: "/ensaios-compactacao",
+      icon: TestTube,
+      label: "Ensaios de Compactação",
+      description: "Ensaios Proctor e compactação",
+      color: "from-green-500 to-green-600",
+    },
+    {
       path: "/checklists",
       icon: ClipboardCheck,
       label: "Checklists",
@@ -161,6 +168,12 @@ const quickActions = [
     icon: TestTube,
     label: "Registar Ensaio",
     color: "from-emerald-500 to-emerald-600",
+  },
+  {
+    path: "/ensaios-compactacao/novo",
+    icon: TestTube,
+    label: "Novo Ensaio Compactação",
+    color: "from-green-500 to-green-600",
   },
   {
     path: "/checklists/novo",

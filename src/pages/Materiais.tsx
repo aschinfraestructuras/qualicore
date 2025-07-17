@@ -20,10 +20,14 @@ import {
   Clock,
   FileText,
   XCircle,
+  Share2,
+  Cloud,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import MaterialForm from "@/components/forms/MaterialForm";
 import MaterialView from "@/components/MaterialView";
+import { ShareMaterialModal } from "@/components/ShareMaterialModal";
+import { SavedMateriaisViewer } from "@/components/SavedMateriaisViewer";
 
 import { materiaisAPI } from "@/lib/supabase-api";
 import { sanitizeUUIDField } from "@/utils/uuid";
@@ -58,6 +62,9 @@ export default function Materiais() {
     dataFim: "",
   });
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showSavedMateriais, setShowSavedMateriais] = useState(false);
+  const [sharingMaterial, setSharingMaterial] = useState<Material | null>(null);
 
 
   useEffect(() => {
@@ -306,6 +313,10 @@ export default function Materiais() {
     }
   };
 
+  const handleShare = (material: Material) => {
+    setSharingMaterial(material);
+    setShowShareModal(true);
+  };
 
 
   const generateCSV = (materiais: Material[]) => {
@@ -627,6 +638,13 @@ export default function Materiais() {
 
       {/* Botões de ação abaixo dos filtros */}
       <div className="flex flex-wrap items-center gap-3 mb-2">
+        <button 
+          className="btn btn-outline btn-md" 
+          onClick={() => setShowSavedMateriais(true)}
+        >
+          <Cloud className="h-4 w-4 mr-2" />
+          Materiais Salvos
+        </button>
         <button className="btn btn-outline btn-md" onClick={handleExport}>
           <Download className="h-4 w-4 mr-2" />
           Exportar
@@ -800,6 +818,13 @@ export default function Materiais() {
                     <div className="flex items-center space-x-2">
                       <button
                         className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                        onClick={() => handleShare(material)}
+                        title="Partilhar material"
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                         onClick={() => handleView(material)}
                         title="Visualizar"
                       >
@@ -949,6 +974,26 @@ export default function Materiais() {
           </div>
         </div>
       </Modal>
+
+      {/* Modal de Partilha */}
+      {showShareModal && sharingMaterial && (
+        <ShareMaterialModal
+          isOpen={showShareModal}
+          onClose={() => {
+            setShowShareModal(false);
+            setSharingMaterial(null);
+          }}
+          material={sharingMaterial}
+        />
+      )}
+
+      {/* Modal de Materiais Salvos */}
+      {showSavedMateriais && (
+        <SavedMateriaisViewer
+          isOpen={showSavedMateriais}
+          onClose={() => setShowSavedMateriais(false)}
+        />
+      )}
 
 
     </div>

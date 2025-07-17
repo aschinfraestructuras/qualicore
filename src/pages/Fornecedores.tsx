@@ -16,12 +16,16 @@ import {
   User,
   Filter,
   XCircle,
+  Share2,
+  Cloud,
 } from "lucide-react";
 import { fornecedoresAPI } from "@/lib/supabase-api";
 import { Fornecedor } from "@/types";
 import toast from "react-hot-toast";
 import FornecedorForm from "@/components/forms/FornecedorForm";
 import RelatorioFornecedoresPremium from "@/components/RelatorioFornecedoresPremium";
+import { ShareFornecedorModal } from "@/components/ShareFornecedorModal";
+import { SavedFornecedoresViewer } from "@/components/SavedFornecedoresViewer";
 import { PDFService } from "@/services/pdfService";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -35,11 +39,14 @@ export default function Fornecedores() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showRelatorioModal, setShowRelatorioModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showSavedFornecedores, setShowSavedFornecedores] = useState(false);
   const [editingFornecedor, setEditingFornecedor] = useState<Fornecedor | null>(
     null,
   );
   const [selectedFornecedor, setSelectedFornecedor] =
     useState<Fornecedor | null>(null);
+  const [sharingFornecedor, setSharingFornecedor] = useState<Fornecedor | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
   // Filtros
@@ -162,6 +169,11 @@ export default function Fornecedores() {
     setShowRelatorioModal(true);
   };
 
+  const handleShare = (fornecedor: Fornecedor) => {
+    setSharingFornecedor(fornecedor);
+    setShowShareModal(true);
+  };
+
   const handleIndividualReport = async (fornecedor: Fornecedor) => {
     try {
       const pdfService = new PDFService();
@@ -205,6 +217,13 @@ export default function Fornecedores() {
           <p className="text-gray-600">Controlo de fornecedores e parceiros</p>
         </div>
         <div className="flex items-center space-x-3">
+          <button 
+            className="btn btn-outline btn-md" 
+            onClick={() => setShowSavedFornecedores(true)}
+          >
+            <Cloud className="h-4 w-4 mr-2" />
+            Fornecedores Salvos
+          </button>
           <button className="btn btn-outline btn-md" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             Exportar
@@ -455,6 +474,13 @@ export default function Fornecedores() {
                       </td>
                       <td>
                         <div className="flex items-center space-x-2">
+                          <button
+                            className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                            onClick={() => handleShare(fornecedor)}
+                            title="Partilhar fornecedor"
+                          >
+                            <Share2 className="h-4 w-4" />
+                          </button>
                           <button
                             className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
                             onClick={() => handleView(fornecedor)}
@@ -750,6 +776,24 @@ export default function Fornecedores() {
         isOpen={showRelatorioModal}
         onClose={() => setShowRelatorioModal(false)}
         fornecedores={fornecedores}
+      />
+
+      {/* Modal de Partilha */}
+      {showShareModal && sharingFornecedor && (
+        <ShareFornecedorModal
+          isOpen={showShareModal}
+          onClose={() => {
+            setShowShareModal(false);
+            setSharingFornecedor(null);
+          }}
+          fornecedor={sharingFornecedor}
+        />
+      )}
+
+      {/* Modal de Fornecedores Salvos */}
+      <SavedFornecedoresViewer
+        isOpen={showSavedFornecedores}
+        onClose={() => setShowSavedFornecedores(false)}
       />
     </div>
   );

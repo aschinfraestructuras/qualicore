@@ -14,6 +14,7 @@ import { useAuthStore } from "./lib/auth";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Ensaios from "./pages/Ensaios";
+import EnsaiosCompactacao from "./pages/EnsaiosCompactacao";
 import Checklists from "./pages/Checklists";
 import Materiais from "./pages/Materiais";
 import Fornecedores from "./pages/Fornecedores";
@@ -25,6 +26,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import DocumentoForm from "./components/forms/DocumentoForm";
 import EnsaioForm from "./components/forms/EnsaioForm";
+import EnsaioCompactacaoForm from "./components/forms/EnsaioCompactacaoForm";
 import ChecklistForm from "./components/forms/ChecklistForm";
 import ObraForm from "./components/forms/ObraForm";
 import MaterialForm from "./components/forms/MaterialForm";
@@ -103,6 +105,19 @@ function App() {
             user ? (
               <Layout>
                 <Ensaios />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/ensaios-compactacao"
+          element={
+            user ? (
+              <Layout>
+                <EnsaiosCompactacao />
               </Layout>
             ) : (
               <Navigate to="/login" replace />
@@ -290,6 +305,23 @@ function App() {
             user ? (
               <Layout>
                 <EnsaioForm
+                  isEditing={false}
+                  onSubmit={() => {}}
+                  onCancel={() => {}}
+                />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/ensaios-compactacao/novo"
+          element={
+            user ? (
+              <Layout>
+                <EnsaioCompactacaoForm
                   isEditing={false}
                   onSubmit={() => {}}
                   onCancel={() => {}}

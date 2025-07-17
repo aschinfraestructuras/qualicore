@@ -265,6 +265,7 @@ export interface Material extends BaseEntity {
   quantidade: number;
   unidade: string;
   lote: string;
+  arquivo_url?: string;
 }
 
 export interface Fornecedor {
@@ -277,6 +278,7 @@ export interface Fornecedor {
   contacto: string;
   data_registo: string;
   estado: "ativo" | "inativo";
+  arquivo_url?: string;
 }
 
 export interface NaoConformidade extends BaseEntity {
@@ -364,6 +366,7 @@ export interface NaoConformidade extends BaseEntity {
   observacoes?: string;
   lições_aprendidas?: string;
   recomendacoes?: string;
+  arquivo_url?: string;
 }
 
 export interface EventoNaoConformidade {
@@ -1227,3 +1230,30 @@ export interface ConfiguracaoPPI {
 
 // Tipos PIE (Pontos de Inspeção e Ensaios)
 export type { PIEInstancia, PIESecao, PIEPonto, PIEResposta } from "./pie";
+
+// Tipos para Ensaios de Compactação
+export interface PontoEnsaioCompactacao {
+  numero: number;
+  densidadeSeca: number;
+  humidade: number;
+  grauCompactacao: number;
+}
+
+export interface EnsaioCompactacao {
+  id?: string;
+  obra: string;
+  localizacao: string;
+  elemento: string;
+  numeroEnsaio: string;
+  codigo: string;
+  dataAmostra: string;
+  densidadeMaximaReferencia: number;
+  humidadeOtimaReferencia: number;
+  pontos: PontoEnsaioCompactacao[];
+  densidadeSecaMedia: number;
+  humidadeMedia: number;
+  grauCompactacaoMedio: number;
+  observacoes?: string;
+  created?: string;
+  updated?: string;
+}
