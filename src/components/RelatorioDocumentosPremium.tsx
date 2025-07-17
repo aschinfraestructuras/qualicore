@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, FileText, Download, Filter, BarChart3, PieChart, User } from 'lucide-react';
 import { Documento } from '@/types';
-import { pdfService } from '@/services/pdfService';
+import { PDFService } from "@/services/pdfService";
 import toast from 'react-hot-toast';
 
 interface RelatorioDocumentosPremiumProps {
@@ -25,6 +25,7 @@ export default function RelatorioDocumentosPremium({ documentos, onClose }: Rela
     setLoading(true);
     try {
       const filteredDocumentos = applyFilters(documentos);
+      const pdfService = new PDFService();
       
       switch (reportType) {
         case 'executivo':

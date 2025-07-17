@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FileText, Download, X, Filter, Calendar, TestTube, TrendingUp, Users, MapPin, CheckCircle, AlertCircle, XCircle, Info, Clock, Zap } from 'lucide-react';
-import { pdfService } from '../services/pdfService';
+import { PDFService } from '../services/pdfService';
 import { Ensaio } from '../types';
 
 interface RelatorioEnsaiosPremiumProps {
@@ -24,6 +24,7 @@ export default function RelatorioEnsaiosPremium({ ensaios, onClose }: RelatorioE
     setLoading(true);
     try {
       const filteredEnsaios = applyFilters(ensaios);
+      const pdfService = new PDFService();
       
       switch (reportType) {
         case 'executivo':

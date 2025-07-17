@@ -13,7 +13,7 @@ import {
   FileText,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { reportService, type EmpresaConfig } from "@/services/reportService";
+import { reportService, type EmpresaConfig as EmpresaConfigType } from "@/services/reportService";
 
 interface EmpresaConfigProps {
   isOpen: boolean;
@@ -21,7 +21,7 @@ interface EmpresaConfigProps {
 }
 
 export default function EmpresaConfig({ isOpen, onClose }: EmpresaConfigProps) {
-  const [config, setConfig] = useState<EmpresaConfig>({
+  const [config, setConfig] = useState<EmpresaConfigType>({
     nome: "Qualicore",
     morada: "Rua da Qualidade, 123",
     telefone: "+351 123 456 789",

@@ -8,7 +8,7 @@ import {
   Eye,
   X,
   FolderOpen,
-  File,
+  File as FileIcon,
   Calendar,
   User,
 } from "lucide-react";
@@ -148,7 +148,7 @@ export default function DocumentUpload({
       return <FileText className="h-5 w-5 text-blue-500" />;
     if (tipo.includes("excel") || tipo.includes("spreadsheet"))
       return <FileText className="h-5 w-5 text-green-600" />;
-    return <File className="h-5 w-5 text-gray-500" />;
+    return <FileIcon className="h-5 w-5 text-gray-500" />;
   };
 
   const filteredDocs = documentos.filter((doc) => {

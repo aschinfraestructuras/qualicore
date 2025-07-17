@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, FileText, Download, Filter, BarChart3, PieChart, User } from 'lucide-react';
 import { RFI } from '@/types';
-import { pdfService } from '@/services/pdfService';
+import { PDFService } from "@/services/pdfService";
 import toast from 'react-hot-toast';
 
 interface RelatorioRFIsPremiumProps {
@@ -25,6 +25,7 @@ export default function RelatorioRFIsPremium({ rfis, onClose }: RelatorioRFIsPre
     setLoading(true);
     try {
       const filteredRFIs = applyFilters(rfis);
+      const pdfService = new PDFService();
       
       switch (reportType) {
         case 'executivo':

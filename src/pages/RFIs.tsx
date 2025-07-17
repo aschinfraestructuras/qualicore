@@ -22,7 +22,7 @@ import type { RFI as RFIType } from "@/types";
 import Modal from "../components/Modal";
 import toast from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
-import { pdfService } from "@/services/pdfService";
+import { PDFService } from "@/services/pdfService";
 
 export default function RFIs() {
   const [rfis, setRFIs] = useState<RFI[]>([]);
@@ -146,6 +146,8 @@ export default function RFIs() {
 
   const handleIndividualReport = async (rfi: RFI) => {
     try {
+      const pdfService = new PDFService();
+
       await pdfService.generateRFIsIndividualReport([rfi as unknown as RFIType]);
       toast.success("Relatório individual gerado com sucesso!");
     } catch (error) {

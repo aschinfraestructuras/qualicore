@@ -99,11 +99,11 @@ const naoConformidadeSchema = z.object({
     .optional(),
 });
 
-type FormData = z.infer<typeof naoConformidadeSchema>;
+type NaoConformidadeFormData = z.infer<typeof naoConformidadeSchema>;
 
 interface NaoConformidadeFormProps {
   naoConformidade?: NaoConformidade;
-  onSubmit: (data: FormData) => void;
+  onSubmit: (data: NaoConformidadeFormData) => void;
   onCancel: () => void;
 }
 
@@ -143,7 +143,7 @@ export default function NaoConformidadeForm({
     handleSubmit,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({
+  } = useForm<NaoConformidadeFormData>({
     resolver: zodResolver(naoConformidadeSchema),
     defaultValues: {
       codigo: naoConformidade?.codigo || "",
@@ -231,7 +231,7 @@ export default function NaoConformidadeForm({
     }));
   };
 
-  const onFormSubmit = async (data: FormData) => {
+  const onFormSubmit = async (data: NaoConformidadeFormData) => {
     try {
       // Processar ficheiros anexados
       const processedData = {

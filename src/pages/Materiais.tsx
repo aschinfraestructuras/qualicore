@@ -1,5 +1,6 @@
 import { Material } from "@/types";
 import { useState, useEffect, useMemo, useRef } from "react";
+import { PDFService } from "@/services/pdfService";
 import {
   Plus,
   Package,
@@ -214,7 +215,6 @@ export default function Materiais() {
     setShowPrintModal(false);
     
     try {
-      const { PDFService } = await import("@/services/pdfService");
       const pdfService = new PDFService();
       
       // Determinar quais materiais usar baseado no tipo
@@ -272,7 +272,6 @@ export default function Materiais() {
 
   const handleRelatorioIndividual = async (material: Material) => {
     try {
-      const { PDFService } = await import("@/services/pdfService");
       const pdfService = new PDFService();
       
       const options = {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X, FileText, Filter, BarChart3, User, Download, Building } from "lucide-react";
 import { Fornecedor } from "@/types";
-import { pdfService } from "@/services/pdfService";
+import { PDFService } from "@/services/pdfService";
 import toast from "react-hot-toast";
 
 interface RelatorioFornecedoresPremiumProps {
@@ -74,6 +74,7 @@ export default function RelatorioFornecedoresPremium({
       }
 
       // Gerar relatório baseado no tipo
+      const pdfService = new PDFService();
       switch (tipoRelatorio) {
         case "executivo":
           await pdfService.generateFornecedoresExecutiveReport(

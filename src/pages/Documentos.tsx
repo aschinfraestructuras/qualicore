@@ -25,7 +25,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Modal from "@/components/Modal";
 import DocumentoForm from "@/components/forms/DocumentoForm";
 import RelatorioDocumentosPremium from "@/components/RelatorioDocumentosPremium";
-import { pdfService } from "@/services/pdfService";
+import { PDFService } from "@/services/pdfService";
 import type { Documento } from "@/types";
 
 // Dados mockados mais realistas
@@ -616,6 +616,9 @@ export default function Documentos() {
         estado: document.estado,
         anexos: document.anexos || []
       };
+      
+      const pdfService = new PDFService();
+
       
       await pdfService.generateDocumentosIndividualReport([documentoData]);
       toast.success("Relatório individual gerado com sucesso!");

@@ -2,6 +2,57 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { MetricasReais } from './metricsService';
 import { Material, Obra, Ensaio, RFI, Checklist, Documento, Fornecedor, NaoConformidade } from '@/types';
+import { PIEInstancia, PIESecao, PIEPonto, PIEResposta } from './pieService';
+
+interface PIEReportData {
+  pie: PIEInstancia;
+  secoes: (PIESecao & { pontos: (PIEPonto & { resposta?: PIEResposta })[] })[];
+  estatisticas: {
+    totalPontos: number;
+    pontosPreenchidos: number;
+    pontosConformes: number;
+    pontosNaoConformes: number;
+    pontosNA: number;
+    percentagemConclusao: number;
+  };
+  filters?: {
+    status: string;
+    prioridade: string;
+    responsavel: string;
+    zona: string;
+    dataInicio: string;
+    dataFim: string;
+  };
+  // Informações de assinatura e responsáveis
+  assinaturas?: {
+    qualidade?: {
+      nome: string;
+      cargo: string;
+      data: string;
+      assinatura?: string; // URL da imagem da assinatura
+    };
+    chefeObra?: {
+      nome: string;
+      cargo: string;
+      data: string;
+      assinatura?: string;
+    };
+  };
+  // Responsáveis por tipo de inspeção
+  responsaveis?: {
+    betonagem?: string;
+    geometria?: string;
+    ensaios?: string;
+    acabamentos?: string;
+    estrutural?: string;
+  };
+  // Datas importantes
+  datas?: {
+    inicio: string;
+    fim?: string;
+    aprovacao?: string;
+  };
+}
 
 interface RelatorioPDFOptions {
   titulo: string;
@@ -4999,6 +5050,1266 @@ export class PDFService {
     };
     return impactoMap[impacto] || impacto;
   }
+
+  static async generatePIEReport(data: PIEReportData, tipo: 'executivo' | 'individual' | 'filtrado' = 'individual'): Promise<string> {
+    console.log('PDFService: Iniciando geração do relatório PIE - Tipo:', tipo);
+    console.log('PDFService: Dados recebidos:', data);
+    
+    try {
+      const doc = new jsPDF();
+      
+      if (tipo === 'individual') {
+        return this.generatePIEReportIndividual(doc, data);
+      } else if (tipo === 'executivo') {
+        return this.generatePIEReportExecutivo(doc, data);
+      } else {
+        return this.generatePIEReportFiltrado(doc, data);
+      }
+    } catch (error) {
+      console.error('PDFService: Erro ao gerar relatório PIE:', error);
+      throw error;
+    }
+  }
+
+  private static generatePIEReportIndividual(doc: jsPDF, data: PIEReportData): string {
+    let yPosition = 20;
+    
+    // Cabeçalho profissional
+    doc.setFillColor(30, 64, 175);
+    doc.rect(0, 0, doc.internal.pageSize.width, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Relatório Individual PIE', 20, 25);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Plano de Inspeção e Ensaios - Ficha Técnica Detalhada', 20, 35);
+    
+    // Informações do PIE em cards visuais
+    yPosition = 60;
+    this.addInfoCard(doc, 'Código', data.pie.codigo, 20, yPosition);
+    this.addInfoCard(doc, 'Título', data.pie.titulo, 110, yPosition);
+    
+    yPosition += 45;
+    this.addInfoCard(doc, 'Status', this.formatStatus(data.pie.status), 20, yPosition);
+    this.addInfoCard(doc, 'Prioridade', this.formatPriority(data.pie.prioridade), 110, yPosition);
+    
+    yPosition += 45;
+    this.addInfoCard(doc, 'Responsável', data.pie.responsavel || 'Não definido', 20, yPosition);
+    this.addInfoCard(doc, 'Zona', data.pie.zona || 'Não definida', 110, yPosition);
+    
+    yPosition += 45;
+    this.addInfoCard(doc, 'Data Início', data.datas?.inicio ? this.formatDate(data.datas.inicio) : this.formatDate(data.pie.created_at), 20, yPosition);
+    this.addInfoCard(doc, 'Data Planeada', data.pie.data_planeada ? this.formatDate(data.pie.data_planeada) : 'Não definida', 110, yPosition);
+    
+    // Estatísticas com gráficos visuais
+    yPosition += 80;
+    this.addStatisticsSection(doc, data.estatisticas, yPosition);
+    
+    // Seções e Pontos detalhados
+    yPosition += 100;
+    data.secoes.forEach((secao, secaoIndex) => {
+      yPosition = this.addSectionDetails(doc, secao, yPosition);
+    });
+    
+    // Seção de assinaturas
+    yPosition = this.addSignatureSection(doc, data, yPosition);
+    
+    // Rodapé profissional
+    this.addProfessionalFooter(doc);
+    
+    const pdfBlob = doc.output('blob');
+    return URL.createObjectURL(pdfBlob);
+  }
+
+  private static generatePIEReportExecutivo(doc: jsPDF, data: PIEReportData): string {
+    let yPosition = 20;
+    
+    // Cabeçalho executivo
+    doc.setFillColor(30, 64, 175);
+    doc.rect(0, 0, doc.internal.pageSize.width, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Relatório Executivo PIE', 20, 25);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Visão Geral e Indicadores de Performance', 20, 35);
+    
+    // Resumo executivo
+    yPosition = 60;
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resumo Executivo', 20, yPosition);
+    
+    yPosition += 20;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`O PIE "${data.pie.titulo}" (${data.pie.codigo}) apresenta um progresso de ${data.estatisticas.percentagemConclusao}% de conclusão.`, 20, yPosition);
+    yPosition += 15;
+    doc.text(`Com ${data.estatisticas.totalPontos} pontos de inspeção, ${data.estatisticas.pontosConformes} estão conformes e ${data.estatisticas.pontosNaoConformes} não conformes.`, 20, yPosition);
+    
+    // Informações de datas
+    yPosition += 20;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Cronologia:', 20, yPosition);
+    yPosition += 15;
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Início: ${data.datas?.inicio ? this.formatDate(data.datas.inicio) : this.formatDate(data.pie.created_at)}`, 25, yPosition);
+    yPosition += 10;
+    if (data.datas?.fim) {
+      doc.text(`Finalização: ${this.formatDate(data.datas.fim)}`, 25, yPosition);
+      yPosition += 10;
+    }
+    if (data.datas?.aprovacao) {
+      doc.text(`Aprovação: ${this.formatDate(data.datas.aprovacao)}`, 25, yPosition);
+      yPosition += 10;
+    }
+    
+    // KPIs visuais
+    yPosition += 20;
+    this.addKPISection(doc, data.estatisticas, yPosition);
+    
+    // Gráfico de progresso
+    yPosition += 50;
+    this.addProgressChart(doc, data.estatisticas, yPosition);
+    
+    // Resumo por seção
+    yPosition += 40;
+    this.addSectionSummary(doc, data.secoes, yPosition);
+    
+    // Responsáveis por tipo de inspeção
+    if (data.responsaveis) {
+      yPosition += 20;
+      this.addResponsaveisSection(doc, data.responsaveis, yPosition);
+    }
+    
+    this.addProfessionalFooter(doc);
+    
+    const pdfBlob = doc.output('blob');
+    return URL.createObjectURL(pdfBlob);
+  }
+
+  private static generatePIEReportFiltrado(doc: jsPDF, data: PIEReportData): string {
+    let yPosition = 20;
+    
+    // Cabeçalho filtrado
+    doc.setFillColor(30, 64, 175);
+    doc.rect(0, 0, doc.internal.pageSize.width, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Relatório Filtrado PIE', 20, 25);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Análise com Filtros Aplicados', 20, 35);
+    
+    // Tabela de dados filtrados
+    yPosition = 60;
+    this.addFilteredDataTable(doc, data, yPosition);
+    
+    this.addProfessionalFooter(doc);
+    
+    const pdfBlob = doc.output('blob');
+    return URL.createObjectURL(pdfBlob);
+  }
+
+  private static addInfoCard(doc: jsPDF, label: string, value: string, x: number, y: number): void {
+    const cardWidth = 85;
+    const cardHeight = 25;
+    
+    // Fundo do card
+    doc.setFillColor(248, 250, 252);
+    doc.rect(x, y, cardWidth, cardHeight, 'F');
+    
+    // Borda
+    doc.setDrawColor(226, 232, 240);
+    doc.rect(x, y, cardWidth, cardHeight);
+    
+    // Label
+    doc.setFontSize(8);
+    doc.setTextColor(107, 114, 128);
+    doc.setFont('helvetica', 'bold');
+    doc.text(label, x + 5, y + 8);
+    
+    // Valor - permitir texto mais longo e quebrar linhas se necessário
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    
+    // Função para quebrar texto em múltiplas linhas
+    const wrapText = (text: string, maxWidth: number) => {
+      const words = text.split(' ');
+      const lines: string[] = [];
+      let currentLine = '';
+      
+      for (const word of words) {
+        const testLine = currentLine ? currentLine + ' ' + word : word;
+        if (doc.getTextWidth(testLine) <= maxWidth) {
+          currentLine = testLine;
+        } else {
+          if (currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            // Palavra muito longa, quebrar
+            lines.push(word.substring(0, Math.floor(maxWidth / doc.getTextWidth('a'))) + '...');
+            currentLine = '';
+          }
+        }
+      }
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      return lines;
+    };
+    
+    const maxTextWidth = cardWidth - 10; // 5px de margem de cada lado
+    const lines = wrapText(value, maxTextWidth);
+    
+    // Desenhar as linhas de texto
+    lines.forEach((line, index) => {
+      if (index < 2) { // Máximo 2 linhas para não sair do card
+        doc.text(line, x + 5, y + 16 + (index * 6));
+      }
+    });
+  }
+
+  private static addStatisticsSection(doc: jsPDF, stats: any, startY: number): number {
+    let yPosition = startY;
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Estatísticas de Progresso', 20, yPosition);
+    
+    yPosition += 40;
+    
+    // Cards de estatísticas
+    const statsData = [
+      { label: 'Total', value: stats.totalPontos, color: [59, 130, 246] },
+      { label: 'Preenchidos', value: stats.pontosPreenchidos, color: [34, 197, 94] },
+      { label: 'Conformes', value: stats.pontosConformes, color: [34, 197, 94] },
+      { label: 'Não Conformes', value: stats.pontosNaoConformes, color: [239, 68, 68] },
+      { label: 'N/A', value: stats.pontosNA, color: [245, 158, 11] },
+      { label: 'Conclusão', value: `${stats.percentagemConclusao}%`, color: [59, 130, 246] }
+    ];
+    
+    statsData.forEach((stat, index) => {
+      const x = 20 + (index % 3) * 70;
+      const y = yPosition + Math.floor(index / 3) * 45;
+      
+      // Fundo colorido
+      doc.setFillColor(stat.color[0], stat.color[1], stat.color[2]);
+      doc.rect(x, y, 60, 35, 'F');
+      
+      // Valor
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(stat.value.toString(), x + 30, y + 15, { align: 'center' });
+      
+      // Label
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(stat.label, x + 30, y + 28, { align: 'center' });
+    });
+    
+    return yPosition + 95;
+  }
+
+  private static addSectionDetails(doc: jsPDF, secao: any, startY: number): number {
+    let yPosition = startY;
+    
+    // Verificar se precisa de nova página
+    if (yPosition > 220) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    
+    // Cabeçalho da seção
+    doc.setFillColor(248, 250, 252);
+    doc.rect(20, yPosition - 5, doc.internal.pageSize.width - 40, 15, 'F');
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${secao.codigo} - ${secao.nome}`, 25, yPosition + 5);
+    
+    yPosition += 35;
+    
+    if (secao.descricao) {
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(107, 114, 128);
+      doc.text(secao.descricao, 25, yPosition);
+      yPosition += 25;
+    }
+    
+    // Pontos da seção
+    secao.pontos.forEach((ponto: any) => {
+      yPosition = this.addPointDetails(doc, ponto, yPosition);
+    });
+    
+    return yPosition + 35;
+  }
+
+  private static addPointDetails(doc: jsPDF, ponto: any, startY: number): number {
+    let yPosition = startY;
+    
+    // Verificar se precisa de nova página
+    if (yPosition > 220) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    
+    // Cabeçalho do ponto
+    doc.setFillColor(255, 255, 255);
+    doc.rect(30, yPosition - 3, doc.internal.pageSize.width - 50, 12, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.rect(30, yPosition - 3, doc.internal.pageSize.width - 50, 12);
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${ponto.codigo} - ${ponto.titulo}`, 35, yPosition + 3);
+    
+    yPosition += 25;
+    
+    if (ponto.descricao) {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(107, 114, 128);
+      doc.text(ponto.descricao, 35, yPosition);
+      yPosition += 15;
+    }
+    
+    // Adicionar informações de data do ponto
+    if (ponto.data_planeada || ponto.data_inicio || ponto.data_fim) {
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(75, 85, 99);
+      
+      const dateInfo = [];
+      if (ponto.data_inicio) dateInfo.push(`Início: ${this.formatDate(ponto.data_inicio, true)}`);
+      if (ponto.data_planeada) dateInfo.push(`Planeada: ${this.formatDate(ponto.data_planeada, true)}`);
+      if (ponto.data_fim) dateInfo.push(`Fim: ${this.formatDate(ponto.data_fim, true)}`);
+      
+      doc.text(dateInfo.join(' | '), 35, yPosition);
+      yPosition += 15;
+    }
+    
+    // Resposta do ponto
+    if (ponto.resposta) {
+      const statusColor = ponto.resposta.conforme === true ? [34, 197, 94] : 
+                         ponto.resposta.conforme === false ? [239, 68, 68] : [245, 158, 11];
+      
+      doc.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
+      doc.rect(35, yPosition - 2, 60, 8, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text(this.getStatusText(ponto.resposta.conforme), 40, yPosition + 3);
+      
+      yPosition += 25;
+      
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Resposta: ${this.formatResponseValue(ponto, ponto.resposta)}`, 35, yPosition);
+      yPosition += 15;
+      
+      if (ponto.resposta.observacoes) {
+        doc.text(`Observações: ${ponto.resposta.observacoes}`, 35, yPosition);
+        yPosition += 15;
+      }
+      
+      if (ponto.resposta.responsavel) {
+        doc.text(`Responsável: ${ponto.resposta.responsavel}`, 35, yPosition);
+        yPosition += 15;
+      }
+      
+      // Adicionar data da resposta
+      if (ponto.resposta.data_resposta) {
+        doc.text(`Data Resposta: ${this.formatDate(ponto.resposta.data_resposta, true)}`, 35, yPosition);
+        yPosition += 15;
+      }
+    } else {
+      doc.setFillColor(156, 163, 175);
+      doc.rect(35, yPosition - 2, 50, 8, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Pendente', 40, yPosition + 3);
+      yPosition += 25;
+    }
+    
+    return yPosition + 15;
+  }
+
+  private static addKPISection(doc: jsPDF, stats: any, startY: number): number {
+    let yPosition = startY;
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Indicadores de Performance (KPIs)', 20, yPosition);
+    
+    yPosition += 25;
+    
+    const kpis = [
+      { label: 'Taxa de Conformidade', value: `${Math.round((stats.pontosConformes / stats.totalPontos) * 100)}%`, color: [34, 197, 94] },
+      { label: 'Taxa de Não Conformidade', value: `${Math.round((stats.pontosNaoConformes / stats.totalPontos) * 100)}%`, color: [239, 68, 68] },
+      { label: 'Progresso Geral', value: `${stats.percentagemConclusao}%`, color: [59, 130, 246] }
+    ];
+    
+    kpis.forEach((kpi, index) => {
+      const x = 20 + index * 65;
+      
+      // Fundo do KPI
+      doc.setFillColor(kpi.color[0], kpi.color[1], kpi.color[2]);
+      doc.rect(x, yPosition, 55, 35, 'F');
+      
+      // Valor
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(kpi.value, x + 27.5, yPosition + 18, { align: 'center' });
+      
+      // Label
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(kpi.label, x + 27.5, yPosition + 28, { align: 'center' });
+    });
+    
+    return yPosition + 45;
+  }
+
+  private static addProgressChart(doc: jsPDF, stats: any, startY: number): number {
+    let yPosition = startY;
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Gráfico de Progresso', 20, yPosition);
+    
+    yPosition += 25;
+    
+    // Barra de progresso
+    const barWidth = 150;
+    const barHeight = 18;
+    const progressWidth = (stats.percentagemConclusao / 100) * barWidth;
+    
+    // Fundo da barra
+    doc.setFillColor(226, 232, 240);
+    doc.rect(20, yPosition, barWidth, barHeight, 'F');
+    
+    // Progresso
+    doc.setFillColor(34, 197, 94);
+    doc.rect(20, yPosition, progressWidth, barHeight, 'F');
+    
+    // Borda
+    doc.setDrawColor(156, 163, 175);
+    doc.rect(20, yPosition, barWidth, barHeight);
+    
+    // Texto da porcentagem
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${stats.percentagemConclusao}%`, 20 + barWidth + 15, yPosition + 12);
+    
+    return yPosition + 35;
+  }
+
+  private static addSectionSummary(doc: jsPDF, secoes: any[], startY: number): number {
+    let yPosition = startY;
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resumo por Seção', 20, yPosition);
+    
+    yPosition += 25;
+    
+    secoes.forEach((secao, index) => {
+      const pontosConformes = secao.pontos.filter((p: any) => p.resposta?.conforme === true).length;
+      const pontosNaoConformes = secao.pontos.filter((p: any) => p.resposta?.conforme === false).length;
+      const pontosPendentes = secao.pontos.filter((p: any) => !p.resposta).length;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${secao.codigo} - ${secao.nome}`, 20, yPosition);
+      
+      yPosition += 12;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(107, 114, 128);
+      doc.text(`Conformes: ${pontosConformes} | Não Conformes: ${pontosNaoConformes} | Pendentes: ${pontosPendentes}`, 25, yPosition);
+      
+      yPosition += 20;
+    });
+    
+    return yPosition;
+  }
+
+  private static addFilteredDataTable(doc: jsPDF, data: PIEReportData, startY: number): number {
+    let yPosition = startY;
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Dados Filtrados', 20, yPosition);
+    
+    yPosition += 20;
+    
+    // Mostrar filtros aplicados
+    if (data.filters) {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Filtros Aplicados:', 20, yPosition);
+      yPosition += 15;
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(107, 114, 128);
+      
+      const activeFilters = [];
+      if (data.filters.status) activeFilters.push(`Status: ${this.formatStatus(data.filters.status)}`);
+      if (data.filters.prioridade) activeFilters.push(`Prioridade: ${this.formatPriority(data.filters.prioridade)}`);
+      if (data.filters.responsavel) activeFilters.push(`Responsável: ${data.filters.responsavel}`);
+      if (data.filters.zona) activeFilters.push(`Zona: ${data.filters.zona}`);
+      if (data.filters.dataInicio) activeFilters.push(`Data Início: ${this.formatDate(data.filters.dataInicio)}`);
+      if (data.filters.dataFim) activeFilters.push(`Data Fim: ${this.formatDate(data.filters.dataFim)}`);
+      
+      if (activeFilters.length > 0) {
+        doc.text(activeFilters.join(' | '), 20, yPosition);
+        yPosition += 20;
+      } else {
+        doc.text('Nenhum filtro específico aplicado', 20, yPosition);
+        yPosition += 20;
+      }
+    }
+    
+    // Cabeçalho da tabela
+    const headers = ['Código', 'Título', 'Status', 'Progresso', 'Conformidade'];
+    const colWidths = [30, 60, 25, 25, 25];
+    let x = 20;
+    
+    doc.setFillColor(248, 250, 252);
+    doc.rect(x, yPosition - 5, colWidths.reduce((a, b) => a + b, 0), 12, 'F');
+    
+    headers.forEach((header, index) => {
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text(header, x + 5, yPosition + 2);
+      x += colWidths[index];
+    });
+    
+    yPosition += 15;
+    
+    // Dados da tabela
+    const conformidade = Math.round((data.estatisticas.pontosConformes / data.estatisticas.totalPontos) * 100);
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    doc.text(data.pie.codigo, 25, yPosition);
+    doc.text(data.pie.titulo.substring(0, 20) + (data.pie.titulo.length > 20 ? '...' : ''), 55, yPosition);
+    doc.text(this.formatStatus(data.pie.status), 115, yPosition);
+    doc.text(`${data.estatisticas.percentagemConclusao}%`, 140, yPosition);
+    doc.text(`${conformidade}%`, 165, yPosition);
+    
+    return yPosition + 20;
+  }
+
+  private static addProfessionalFooter(doc: jsPDF): void {
+    const pageCount = doc.internal.getNumberOfPages();
+    
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      
+      // Linha separadora
+      doc.setDrawColor(226, 232, 240);
+      doc.line(20, doc.internal.pageSize.height - 20, doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 20);
+      
+      // Informações do rodapé
+      doc.setFontSize(8);
+      doc.setTextColor(107, 114, 128);
+      doc.setFont('helvetica', 'normal');
+      
+      doc.text('Qualicore - Sistema de Gestão da Qualidade', 20, doc.internal.pageSize.height - 15);
+      doc.text(`Página ${i} de ${pageCount}`, doc.internal.pageSize.width - 50, doc.internal.pageSize.height - 15);
+      doc.text(`Gerado em: ${this.formatDate(new Date().toISOString(), true)}`, 20, doc.internal.pageSize.height - 10);
+    }
+  }
+
+  private static addSignatureSection(doc: jsPDF, data: PIEReportData, startY: number): number {
+    let yPosition = startY;
+    
+    // Verificar se precisa de nova página
+    if (yPosition > 160) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    
+    // Título da seção
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Conformidade e Assinaturas', 20, yPosition);
+    
+    yPosition += 40;
+    
+    // Linha separadora
+    doc.setDrawColor(226, 232, 240);
+    doc.line(20, yPosition, doc.internal.pageSize.width - 20, yPosition);
+    yPosition += 35;
+    
+    // Data de finalização
+    const dataFinalizacao = data.datas?.fim || new Date().toISOString();
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Data de Finalização:', 20, yPosition);
+    doc.setFont('helvetica', 'normal');
+    doc.text(this.formatDate(dataFinalizacao), 130, yPosition);
+    
+    yPosition += 40;
+    
+    // Área de assinaturas
+    const signatureWidth = 90;
+    const signatureHeight = 70;
+    const spacing = 30;
+    
+    // Assinatura da Qualidade
+    const qualidadeX = 20;
+    const chefeObraX = qualidadeX + signatureWidth + spacing;
+    
+    // Assinatura da Qualidade
+    doc.setDrawColor(156, 163, 175);
+    doc.rect(qualidadeX, yPosition, signatureWidth, signatureHeight);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Responsável pela Qualidade', qualidadeX + 5, yPosition + 15);
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(107, 114, 128);
+    doc.text(data.assinaturas?.qualidade?.nome || '_________________', qualidadeX + 5, yPosition + 32);
+    doc.text(data.assinaturas?.qualidade?.cargo || 'Técnico de Qualidade', qualidadeX + 5, yPosition + 42);
+    doc.text(data.assinaturas?.qualidade?.data ? this.formatDate(data.assinaturas.qualidade.data, true) : this.formatDate(new Date().toISOString(), true), qualidadeX + 5, yPosition + 52);
+    
+    // Assinatura do Chefe de Obra
+    doc.setDrawColor(156, 163, 175);
+    doc.rect(chefeObraX, yPosition, signatureWidth, signatureHeight);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text('Chefe de Obra', chefeObraX + 5, yPosition + 15);
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(107, 114, 128);
+    doc.text(data.assinaturas?.chefeObra?.nome || '_________________', chefeObraX + 5, yPosition + 32);
+    doc.text(data.assinaturas?.chefeObra?.cargo || 'Chefe de Obra', chefeObraX + 5, yPosition + 42);
+    doc.text(data.assinaturas?.chefeObra?.data ? this.formatDate(data.assinaturas.chefeObra.data, true) : this.formatDate(new Date().toISOString(), true), chefeObraX + 5, yPosition + 52);
+    
+    yPosition += signatureHeight + 35;
+    
+    // Responsáveis por tipo de inspeção
+    if (data.responsaveis) {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text('Responsáveis por Tipo de Inspeção:', 20, yPosition);
+      
+      yPosition += 25;
+      
+      const responsaveis = [
+        { label: 'Betonagem', value: data.responsaveis.betonagem },
+        { label: 'Geometria', value: data.responsaveis.geometria },
+        { label: 'Ensaios', value: data.responsaveis.ensaios },
+        { label: 'Acabamentos', value: data.responsaveis.acabamentos },
+        { label: 'Estrutural', value: data.responsaveis.estrutural }
+      ];
+      
+      responsaveis.forEach((resp, index) => {
+        if (resp.value) {
+          const x = 20 + (index % 2) * 100;
+          const y = yPosition + Math.floor(index / 2) * 20;
+          
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`${resp.label}:`, x, y);
+          doc.setFont('helvetica', 'normal');
+          doc.text(resp.value, x + 50, y);
+        }
+      });
+      
+      yPosition += Math.ceil(responsaveis.filter(r => r.value).length / 2) * 20 + 20;
+    }
+    
+    return yPosition;
+  }
+
+  private static addResponsaveisSection(doc: jsPDF, responsaveis: any, startY: number): number {
+    let yPosition = startY;
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Responsáveis por Tipo de Inspeção', 20, yPosition);
+    
+    yPosition += 20;
+    
+    const responsaveisList = [
+      { label: 'Betonagem', value: responsaveis.betonagem },
+      { label: 'Geometria', value: responsaveis.geometria },
+      { label: 'Ensaios', value: responsaveis.ensaios },
+      { label: 'Acabamentos', value: responsaveis.acabamentos },
+      { label: 'Estrutural', value: responsaveis.estrutural }
+    ];
+    
+    const activeResponsaveis = responsaveisList.filter(r => r.value);
+    
+    if (activeResponsaveis.length > 0) {
+      activeResponsaveis.forEach((resp, index) => {
+        const x = 20 + (index % 2) * 90;
+        const y = yPosition + Math.floor(index / 2) * 15;
+        
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${resp.label}:`, x, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(resp.value, x + 45, y);
+      });
+      
+      yPosition += Math.ceil(activeResponsaveis.length / 2) * 15 + 10;
+    } else {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(107, 114, 128);
+      doc.text('Nenhum responsável específico definido', 20, yPosition);
+      yPosition += 15;
+    }
+    
+    return yPosition;
+  }
+
+  private static generateReportContent(data: PIEReportData): string {
+    const { pie, secoes, estatisticas } = data;
+    
+    return `
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório PIE - ${pie.codigo}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .report-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .header .subtitle {
+            margin: 10px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+        .info-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-size: 14px;
+            color: #212529;
+            font-weight: 500;
+        }
+        .stats-section {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s ease;
+        }
+        .sections-container {
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .section-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #495057;
+            margin: 0;
+        }
+        .section-code {
+            font-size: 14px;
+            color: #6c757d;
+            margin: 5px 0 0 0;
+        }
+        .section-description {
+            font-size: 14px;
+            color: #6c757d;
+            margin: 5px 0 0 0;
+        }
+        .points-container {
+            padding: 20px;
+        }
+        .point {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            background: white;
+        }
+        .point-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .point-number {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .point-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #495057;
+            margin: 0 0 0 15px;
+            flex: 1;
+        }
+        .point-type {
+            background: #e9ecef;
+            color: #6c757d;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .point-description {
+            font-size: 14px;
+            color: #6c757d;
+            margin: 10px 0;
+            font-style: italic;
+        }
+        .point-response {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #28a745;
+        }
+        .response-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .response-value {
+            font-size: 14px;
+            color: #212529;
+            font-weight: 500;
+        }
+        .response-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-conforme {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-nao-conforme {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-na {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-pendente {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer-text {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .report-container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <div class="header">
+            <h1>Relatório PIE</h1>
+            <p class="subtitle">Plano de Inspeção e Ensaios</p>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Código</div>
+                <div class="info-value">${pie.codigo}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Título</div>
+                <div class="info-value">${pie.titulo}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Status</div>
+                <div class="info-value">${this.formatStatus(pie.status)}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Prioridade</div>
+                <div class="info-value">${this.formatPriority(pie.prioridade)}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Responsável</div>
+                <div class="info-value">${pie.responsavel || 'Não definido'}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Zona</div>
+                <div class="info-value">${pie.zona || 'Não definida'}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Data Planeada</div>
+                <div class="info-value">${pie.data_planeada ? this.formatDate(pie.data_planeada) : 'Não definida'}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Data de Criação</div>
+                <div class="info-value">${this.formatDate(pie.created_at)}</div>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <h3 style="margin: 0 0 20px 0; color: #495057;">Estatísticas de Progresso</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">${estatisticas.totalPontos}</div>
+                    <div class="stat-label">Total de Pontos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${estatisticas.pontosPreenchidos}</div>
+                    <div class="stat-label">Preenchidos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${estatisticas.pontosConformes}</div>
+                    <div class="stat-label">Conformes</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${estatisticas.pontosNaoConformes}</div>
+                    <div class="stat-label">Não Conformes</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${estatisticas.pontosNA}</div>
+                    <div class="stat-label">N/A</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${estatisticas.percentagemConclusao}%</div>
+                    <div class="stat-label">Conclusão</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${estatisticas.percentagemConclusao}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sections-container">
+            ${secoes.map(secao => this.generateSectionHTML(secao)).join('')}
+        </div>
+
+        <div class="footer">
+            <p class="footer-text">
+                Relatório gerado em ${this.formatDate(new Date().toISOString())} | 
+                Qualicore - Sistema de Gestão da Qualidade
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+    `;
+  }
+
+  private static generateSectionHTML(secao: PIESecao & { pontos: (PIEPonto & { resposta?: PIEResposta })[] }): string {
+    return `
+        <div class="section">
+            <div class="section-header">
+                <h3 class="section-title">${secao.nome}</h3>
+                <p class="section-code">${secao.codigo}</p>
+                ${secao.descricao ? `<p class="section-description">${secao.descricao}</p>` : ''}
+            </div>
+            <div class="points-container">
+                ${secao.pontos.map(ponto => this.generatePointHTML(ponto)).join('')}
+            </div>
+        </div>
+    `;
+  }
+
+  private static generatePointHTML(ponto: PIEPonto & { resposta?: PIEResposta }): string {
+    const resposta = ponto.resposta;
+    const statusClass = this.getStatusClass(resposta?.conforme);
+    const statusText = this.getStatusText(resposta?.conforme);
+    
+    return `
+        <div class="point">
+            <div class="point-header">
+                <div class="point-number">${ponto.ordem}</div>
+                <h4 class="point-title">${ponto.titulo}</h4>
+                <span class="point-type">${ponto.tipo}</span>
+            </div>
+            ${ponto.descricao ? `<p class="point-description">${ponto.descricao}</p>` : ''}
+            ${resposta ? `
+                <div class="point-response">
+                    <div class="response-label">Resposta</div>
+                    <div class="response-value">${this.formatResponseValue(ponto, resposta)}</div>
+                    <div class="response-label" style="margin-top: 10px;">Status</div>
+                    <span class="response-status ${statusClass}">${statusText}</span>
+                    ${resposta.observacoes ? `
+                        <div class="response-label" style="margin-top: 10px;">Observações</div>
+                        <div class="response-value">${resposta.observacoes}</div>
+                    ` : ''}
+                    ${resposta.responsavel ? `
+                        <div class="response-label" style="margin-top: 10px;">Responsável</div>
+                        <div class="response-value">${resposta.responsavel}</div>
+                    ` : ''}
+                </div>
+            ` : `
+                <div class="point-response">
+                    <div class="response-label">Status</div>
+                    <span class="response-status status-pendente">Pendente</span>
+                </div>
+            `}
+        </div>
+    `;
+  }
+
+  private static formatResponseValue(ponto: PIEPonto, resposta: PIEResposta): string {
+    switch (ponto.tipo) {
+      case 'checkbox':
+        return resposta.valor_booleano ? 'Sim' : 'Não';
+      case 'text':
+        return resposta.valor || 'Não preenchido';
+      case 'number':
+        return resposta.valor_numerico?.toString() || 'Não preenchido';
+      case 'date':
+        return resposta.valor_data ? this.formatDate(resposta.valor_data) : 'Não preenchido';
+      case 'select':
+        return resposta.valor || 'Não selecionado';
+      case 'file':
+        return resposta.arquivos && resposta.arquivos.length > 0 
+          ? `${resposta.arquivos.length} arquivo(s) anexado(s)`
+          : 'Nenhum arquivo anexado';
+      default:
+        return 'Não preenchido';
+    }
+  }
+
+  private static getStatusClass(conforme: boolean | null | undefined): string {
+    if (conforme === true) return 'status-conforme';
+    if (conforme === false) return 'status-nao-conforme';
+    if (conforme === null) return 'status-na';
+    return 'status-pendente';
+  }
+
+  private static getStatusText(conforme: boolean | null | undefined): string {
+    if (conforme === true) return 'Conforme';
+    if (conforme === false) return 'Não Conforme';
+    if (conforme === null) return 'N/A';
+    return 'Pendente';
+  }
+
+  private static formatStatus(status: string): string {
+    return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  private static formatPriority(priority: string): string {
+    return priority.replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  private static formatDate(dateString: string, includeTime: boolean = false): string {
+    try {
+      const date = new Date(dateString);
+      if (includeTime) {
+        return date.toLocaleString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+      return date.toLocaleDateString('pt-BR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return dateString;
+    }
+  }
+
+  static calculateStatistics(secoes: (PIESecao & { pontos: (PIEPonto & { resposta?: PIEResposta })[] })[]): {
+    totalPontos: number;
+    pontosPreenchidos: number;
+    pontosConformes: number;
+    pontosNaoConformes: number;
+    pontosNA: number;
+    percentagemConclusao: number;
+  } {
+    let totalPontos = 0;
+    let pontosPreenchidos = 0;
+    let pontosConformes = 0;
+    let pontosNaoConformes = 0;
+    let pontosNA = 0;
+
+    secoes.forEach(secao => {
+      secao.pontos.forEach(ponto => {
+        totalPontos++;
+        if (ponto.resposta) {
+          pontosPreenchidos++;
+          if (ponto.resposta.conforme === true) {
+            pontosConformes++;
+          } else if (ponto.resposta.conforme === false) {
+            pontosNaoConformes++;
+          } else if (ponto.resposta.conforme === null) {
+            pontosNA++;
+          }
+        }
+      });
+    });
+
+    const percentagemConclusao = totalPontos > 0 ? Math.round((pontosPreenchidos / totalPontos) * 100) : 0;
+
+    return {
+      totalPontos,
+      pontosPreenchidos,
+      pontosConformes,
+      pontosNaoConformes,
+      pontosNA,
+      percentagemConclusao
+    };
+  }
 }
 
-export const pdfService = new PDFService(); 
+export default PDFService; 

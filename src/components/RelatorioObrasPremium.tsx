@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FileText, Download, X, Filter, Calendar, Building, TrendingUp, Users, MapPin, DollarSign, Clock, CheckCircle, AlertCircle, XCircle, Info } from 'lucide-react';
-import { pdfService } from '../services/pdfService';
+import { PDFService } from '../services/pdfService';
 import { Obra } from '../types';
 
 interface RelatorioObrasPremiumProps {
@@ -23,6 +23,7 @@ export default function RelatorioObrasPremium({ obras, onClose }: RelatorioObras
     setLoading(true);
     try {
       const filteredObras = applyFilters(obras);
+      const pdfService = new PDFService();
       
       switch (reportType) {
         case 'executivo':

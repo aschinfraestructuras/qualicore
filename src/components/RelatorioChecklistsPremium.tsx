@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, FileText, Download, Filter, BarChart3, PieChart, User } from 'lucide-react';
 import { Checklist } from '@/types';
-import { pdfService } from '@/services/pdfService';
+import { PDFService } from "@/services/pdfService";
 import toast from 'react-hot-toast';
 
 interface RelatorioChecklistsPremiumProps {
@@ -25,6 +25,7 @@ export default function RelatorioChecklistsPremium({ checklists, onClose }: Rela
     setLoading(true);
     try {
       const filteredChecklists = applyFilters(checklists);
+      const pdfService = new PDFService();
       
       switch (reportType) {
         case 'executivo':

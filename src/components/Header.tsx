@@ -17,19 +17,34 @@ import { useForm } from "react-hook-form";
 import { User as UserType } from "@/types";
 import { useAuthStore } from "@/lib/auth";
 import toast from "react-hot-toast";
+import { notificationService } from "@/services/notificationService";
 
 export default function Header() {
-  const { toggleSidebar, notifications, user, setUser } = useAppStore();
+  const { toggleSidebar, user, setUser } = useAppStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState(notificationService.getNotifications());
+  const [unreadCount, setUnreadCount] = useState(notificationService.getUnreadCount());
   const [darkMode, setDarkMode] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const navigate = useNavigate();
 
-  const unreadNotifications = notifications.filter((n) => !n.lida).length;
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNotifications([...notificationService.getNotifications()]);
+      setUnreadCount(notificationService.getUnreadCount());
+    }, 2000); // Atualiza a cada 2s
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleMarkAsRead = (id: string) => {
+    notificationService.markAsRead(id);
+    setNotifications([...notificationService.getNotifications()]);
+    setUnreadCount(notificationService.getUnreadCount());
+  };
 
   // Dark mode inicial: ler do localStorage ou preferências do sistema
   useEffect(() => {
@@ -92,7 +107,6 @@ export default function Header() {
   return (
     <header
       className="bg-white/80 backdrop-blur-sm shadow-soft border-b border-gray-200/60 fixed w-full z-30 left-0 top-0 h-20 flex items-center"
-      style={{ top: "80px" }}
     >
       <div className="flex h-20 items-center justify-between px-8 w-full">
         {/* Left side */}
@@ -160,66 +174,64 @@ export default function Header() {
               title="Notificações"
             >
               <Bell className="h-5 w-5 text-gray-600" />
-              {unreadNotifications > 0 && (
+              {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-danger text-white text-xs flex items-center justify-center font-semibold animate-pulse">
-                  {unreadNotifications}
+                  {unreadCount}
                 </span>
               )}
             </button>
-
             {/* Notifications dropdown */}
             {showNotifications && (
               <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-strong border border-gray-200 py-2 z-50">
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <h3 className="text-sm font-semibold text-gray-900">
-                    Notificações
-                  </h3>
-                  <p className="text-xs text-gray-500">
-                    {unreadNotifications} não lidas
-                  </p>
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-gray-900">Notificações</h3>
+                  <button
+                    className="text-xs text-blue-600 hover:underline"
+                    onClick={() => { notificationService.markAllAsRead(); setNotifications([...notificationService.getNotifications()]); setUnreadCount(0); }}
+                  >
+                    Marcar todas como lidas
+                  </button>
                 </div>
                 <div className="max-h-64 overflow-y-auto">
                   {notifications.length > 0 ? (
                     notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className="px-4 py-3 hover:bg-gray-50 transition-colors"
+                        className={`px-4 py-3 hover:bg-gray-50 transition-colors flex items-start space-x-3 ${!notification.read ? 'bg-blue-50' : ''}`}
                       >
-                        <div className="flex items-start space-x-3">
-                          <div
-                            className={`w-2 h-2 rounded-full mt-2 ${
-                              notification.tipo === "warning"
-                                ? "bg-warning-500"
-                                : notification.tipo === "error"
-                                  ? "bg-danger-500"
-                                  : notification.tipo === "success"
-                                    ? "bg-success-500"
-                                    : "bg-info-500"
-                            }`}
-                          />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">
-                              {notification.titulo}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {notification.mensagem}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1">
-                              {new Date(notification.data).toLocaleString(
-                                "pt-BR",
-                              )}
-                            </p>
+                        <div className="flex-shrink-0 mt-1">
+                          {notification.type === 'urgent' && <span className="text-red-500">🚨</span>}
+                          {notification.type === 'high' && <span className="text-orange-500">⚠️</span>}
+                          {notification.type === 'medium' && <span className="text-yellow-500">ℹ️</span>}
+                          {notification.type === 'low' && <span className="text-blue-500">✅</span>}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-gray-900 text-sm">{notification.title}</span>
+                            {!notification.read && (
+                              <button
+                                className="text-xs text-blue-600 hover:underline ml-2"
+                                onClick={() => handleMarkAsRead(notification.id)}
+                              >
+                                Marcar como lida
+                              </button>
+                            )}
                           </div>
+                          <p className="text-xs text-gray-700 mt-1">{notification.message}</p>
+                          <span className="text-xs text-gray-400 mt-1 block">{notification.timestamp.toLocaleString()}</span>
+                          {notification.action && (
+                            <a
+                              href={notification.action.url}
+                              className="text-xs text-blue-600 hover:underline mt-1 inline-block"
+                            >
+                              {notification.action.label}
+                            </a>
+                          )}
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="px-4 py-8 text-center">
-                      <Bell className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500">
-                        Nenhuma notificação
-                      </p>
-                    </div>
+                    <div className="px-4 py-6 text-center text-gray-400 text-sm">Sem notificações</div>
                   )}
                 </div>
               </div>
@@ -346,8 +358,9 @@ export default function Header() {
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
         title="Configurações do Sistema"
+        size="sm"
       >
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <span className="text-gray-700 dark:text-gray-200 font-medium">
@@ -364,9 +377,9 @@ export default function Header() {
             </button>
           </div>
 
-          <div className="border-t border-gray-200 pt-4">
-            <h4 className="font-medium text-gray-900 mb-3">Preferências de Notificações</h4>
-            <div className="space-y-3">
+          <div className="border-t border-gray-200 pt-3">
+            <h4 className="font-medium text-gray-900 mb-2">Preferências de Notificações</h4>
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-700">Notificações por email</span>
                 <button className="btn btn-secondary btn-sm">Ativar</button>
@@ -378,8 +391,8 @@ export default function Header() {
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-4">
-            <h4 className="font-medium text-gray-900 mb-3">Exportação de Dados</h4>
+          <div className="border-t border-gray-200 pt-3">
+            <h4 className="font-medium text-gray-900 mb-2">Exportação de Dados</h4>
             <div className="space-y-2">
               <button className="w-full btn btn-outline btn-sm">
                 Exportar todos os dados
@@ -390,13 +403,22 @@ export default function Header() {
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-4">
-            <h4 className="font-medium text-gray-900 mb-3">Sobre o Sistema</h4>
+          <div className="border-t border-gray-200 pt-3">
+            <h4 className="font-medium text-gray-900 mb-2">Sobre o Sistema</h4>
             <div className="text-sm text-gray-600 space-y-1">
               <p><strong>Versão:</strong> Qualicore v1.0.0</p>
               <p><strong>Desenvolvido por:</strong> José Antunes</p>
               <p><strong>Contacto:</strong> jose.antunes@qualicore.pt</p>
             </div>
+          </div>
+
+          <div className="flex justify-end pt-3">
+            <button
+              onClick={() => setShowSettingsModal(false)}
+              className="btn btn-primary"
+            >
+              Fechar
+            </button>
           </div>
         </div>
       </Modal>

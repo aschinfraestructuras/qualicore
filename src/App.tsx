@@ -27,7 +27,13 @@ import DocumentoForm from "./components/forms/DocumentoForm";
 import EnsaioForm from "./components/forms/EnsaioForm";
 import ChecklistForm from "./components/forms/ChecklistForm";
 import ObraForm from "./components/forms/ObraForm";
+import MaterialForm from "./components/forms/MaterialForm";
+import FornecedorForm from "./components/forms/FornecedorForm";
+import NaoConformidadeForm from "./components/forms/NaoConformidadeForm";
+import RFIForm from "./components/forms/RFIForm";
 import RFIs from "./pages/RFIs";
+import PontosInspecaoEnsaiosPage from "./pages/PontosInspecaoEnsaios";
+import PontosInspecaoEnsaiosEditor from "./components/pie/PontosInspecaoEnsaiosEditor";
 import "./styles/globals.css";
 
 function App() {
@@ -208,6 +214,58 @@ function App() {
           }
         />
 
+        <Route
+          path="/pie"
+          element={
+            user ? (
+              <Layout>
+                <PontosInspecaoEnsaiosPage />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/pie/editor"
+          element={
+            user ? (
+              <Layout>
+                <PontosInspecaoEnsaiosEditor />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/pie/editor/:id"
+          element={
+            user ? (
+              <Layout>
+                <PontosInspecaoEnsaiosEditor />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/pie/view/:id"
+          element={
+            user ? (
+              <Layout>
+                <PontosInspecaoEnsaiosEditor />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
         {/* Rotas para ações rápidas */}
         <Route
           path="/documentos/novo"
@@ -262,6 +320,58 @@ function App() {
             user ? (
               <Layout>
                 <ObraForm onSubmit={() => {}} onCancel={() => {}} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/materiais/novo"
+          element={
+            user ? (
+              <Layout>
+                <MaterialForm onSubmit={() => {}} onCancel={() => {}} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/fornecedores/novo"
+          element={
+            user ? (
+              <Layout>
+                <FornecedorForm onSubmit={() => {}} onCancel={() => {}} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/nao-conformidades/nova"
+          element={
+            user ? (
+              <Layout>
+                <NaoConformidadeForm onSubmit={() => {}} onCancel={() => {}} />
+              </Layout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/rfis/novo"
+          element={
+            user ? (
+              <Layout>
+                <RFIForm onSubmit={() => {}} onCancel={() => {}} />
               </Layout>
             ) : (
               <Navigate to="/login" replace />

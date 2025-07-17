@@ -18,7 +18,7 @@ import toast from "react-hot-toast";
 import ChecklistForm from "@/components/forms/ChecklistForm";
 import RelatorioChecklistsPremium from "@/components/RelatorioChecklistsPremium";
 import { AnimatePresence, motion } from "framer-motion";
-import { pdfService } from "@/services/pdfService";
+import { PDFService } from "@/services/pdfService";
 import type { Checklist } from "@/types";
 
 export default function Checklists() {
@@ -160,6 +160,9 @@ export default function Checklists() {
         pontos: [],
         observacoes: checklist.observacoes || ''
       };
+      
+      const pdfService = new PDFService();
+
       
       await pdfService.generateChecklistsIndividualReport([checklistData]);
       toast.success("Relatório individual gerado com sucesso!");

@@ -42,9 +42,10 @@ export default function Modal({
               </h2>
               <button
                 onClick={onClose}
-                className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
+                title="Fechar"
               >
-                <X className="h-5 w-5 text-gray-500" />
+                <X className="h-6 w-6" />
               </button>
             </div>
             <div className="modal-body">{children}</div>

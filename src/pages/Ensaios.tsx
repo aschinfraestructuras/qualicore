@@ -26,7 +26,7 @@ import Modal from "@/components/Modal";
 import { RelatorioEnsaios } from "@/components/RelatorioExport";
 import RelatorioEnsaiosPremium from "@/components/RelatorioEnsaiosPremium";
 import { AnimatePresence, motion } from "framer-motion";
-import { pdfService } from "@/services/pdfService";
+import { PDFService } from "@/services/pdfService";
 
 export default function Ensaios() {
   const [ensaios, setEnsaios] = useState<any[]>([]); // Changed type to any[] as Ensaio type is removed
@@ -248,6 +248,7 @@ export default function Ensaios() {
 
   const handleGenerateIndividualReport = async (ensaio: any) => {
     try {
+      const pdfService = new PDFService();
       await pdfService.generateEnsaiosIndividualReport([ensaio]);
     } catch (error) {
       console.error('Erro ao gerar relatório individual:', error);

@@ -22,7 +22,7 @@ import { Fornecedor } from "@/types";
 import toast from "react-hot-toast";
 import FornecedorForm from "@/components/forms/FornecedorForm";
 import RelatorioFornecedoresPremium from "@/components/RelatorioFornecedoresPremium";
-import { pdfService } from "@/services/pdfService";
+import { PDFService } from "@/services/pdfService";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function Fornecedores() {
@@ -164,6 +164,8 @@ export default function Fornecedores() {
 
   const handleIndividualReport = async (fornecedor: Fornecedor) => {
     try {
+      const pdfService = new PDFService();
+
       await pdfService.generateFornecedoresIndividualReport([fornecedor]);
       toast.success("Relatório individual gerado com sucesso!");
     } catch (error) {

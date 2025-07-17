@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X, FileText, Filter, BarChart3, AlertTriangle, Download } from "lucide-react";
 import { NaoConformidade } from "@/types";
-import { pdfService } from "@/services/pdfService";
+import { PDFService } from "@/services/pdfService";
 import toast from "react-hot-toast";
 
 interface RelatorioNaoConformidadesPremiumProps {
@@ -91,6 +91,7 @@ export default function RelatorioNaoConformidadesPremium({
       }
 
       // Gerar relatório baseado no tipo
+      const pdfService = new PDFService();
       switch (tipoRelatorio) {
         case "executivo":
           await pdfService.generateNaoConformidadesExecutiveReport(

@@ -63,27 +63,10 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [metricas, setMetricas] = useState<MetricasReais | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedPeriod, setSelectedPeriod] = useState("month");
-  const [showSettings, setShowSettings] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    projeto: "",
-    responsavel: "",
-    status: "",
-    dataInicio: "",
-    dataFim: "",
-  });
-  const [autoRefresh, setAutoRefresh] = useState(true);
-  const [refreshInterval, setRefreshInterval] = useState(300000); // 5 minutos
 
   useEffect(() => {
     carregarMetricas();
-
-    if (autoRefresh) {
-      const interval = setInterval(carregarMetricas, refreshInterval);
-      return () => clearInterval(interval);
-    }
-  }, [autoRefresh, refreshInterval]);
+  }, []);
 
   const carregarMetricas = async () => {
     try {
@@ -103,98 +86,9 @@ export default function Dashboard() {
     toast.success("Dados atualizados");
   };
 
-  const handleExportDashboard = () => {
-    const data = {
-      metricas,
-      filtros: filters,
-      periodo: selectedPeriod,
-      dataExportacao: new Date().toISOString(),
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `dashboard-qualidade-${new Date().toISOString().split("T")[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    toast.success("Dashboard exportado com sucesso!");
-  };
-
-  const handleClearFilters = () => {
-    setFilters({
-      projeto: "",
-      responsavel: "",
-      status: "",
-      dataInicio: "",
-      dataFim: "",
-    });
-    toast.success("Filtros limpos");
-  };
-
-  const handleApplyFilters = () => {
-    carregarMetricas();
-    setShowFilters(false);
-    toast.success("Filtros aplicados");
-  };
-
-  // Ações rápidas funcionais
-  const handleNovoEnsaio = () => {
-    navigate("/ensaios");
-    toast.success("Redirecionando para criar novo ensaio...");
-  };
-
-  const handleNovoChecklist = () => {
-    navigate("/checklists");
-    toast.success("Redirecionando para criar novo checklist...");
-  };
-
-  const handleNovaNC = () => {
-    navigate("/nao-conformidades");
-    toast.success("Redirecionando para criar nova não conformidade...");
-  };
-
-  const handleNovoDocumento = () => {
-    navigate("/documentos");
-    toast.success("Redirecionando para criar novo documento...");
-  };
-
-  const handleNovaObra = () => {
-    navigate("/obras");
-    toast.success("Redirecionando para criar nova obra...");
-  };
-
-  const handleNovoMaterial = () => {
-    navigate("/materiais");
-    toast.success("Redirecionando para criar novo material...");
-  };
-
-  const handleNovoFornecedor = () => {
-    navigate("/fornecedores");
-    toast.success("Redirecionando para criar novo fornecedor...");
-  };
-
-  const handleNovoRFI = () => {
-    navigate("/rfis");
-    toast.success("Redirecionando para criar novo RFI...");
-  };
-
   const handleVerDetalhes = (modulo: string) => {
     navigate(`/${modulo}`);
-    toast.success(`Redirecionando para ${modulo}...`);
   };
-
-  const handleConfiguracoes = () => {
-    setShowSettings(!showSettings);
-    toast.success("Configurações do dashboard");
-  };
-
-
 
   if (loading) {
     return (
@@ -220,1073 +114,297 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-4 animate-fade-in pt-0">
-      {/* Header Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mt-0"
-      >
+    <div className="space-y-6 animate-fade-in">
+      {/* Header Simples */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 font-display mt-0 mb-0">
+          <h1 className="text-3xl font-bold text-gray-900 font-display">
             Dashboard de Qualidade
           </h1>
           <p className="text-gray-600 mt-1">
-            Métricas reais e objetivas do sistema de qualidade
+            Visão geral do sistema de qualidade
           </p>
         </div>
 
-        <div className="flex items-center space-x-4">
-          {/* Barra de Pesquisa Rápida */}
-          <div className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Pesquisar registos..."
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  toast.success("Pesquisa rápida será implementada em breve!");
-                }
-              }}
-            />
-          </div>
-
-          <div className="flex items-center space-x-2 bg-white rounded-xl p-1 shadow-soft">
-            {["week", "month", "quarter"].map((period) => (
-              <button
-                key={period}
-                onClick={() => setSelectedPeriod(period)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  selectedPeriod === period
-                    ? "bg-gradient-primary text-white shadow-glow"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                {period === "week"
-                  ? "Semana"
-                  : period === "month"
-                    ? "Mês"
-                    : "Trimestre"}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`p-2 rounded-lg shadow-soft hover:shadow-md transition-all ${
-              showFilters
-                ? "bg-primary-100 text-primary-600"
-                : "bg-white text-gray-600"
-            }`}
-            title="Filtros"
-          >
-            <Filter className="h-5 w-5" />
-          </button>
-
-          <button
-            onClick={handleRefresh}
-            className="p-2 rounded-lg bg-white shadow-soft hover:shadow-md transition-all"
-            title="Atualizar dados"
-          >
-            <RefreshCw className="h-5 w-5 text-gray-600" />
-          </button>
-
-
-
-          <button
-            onClick={handleConfiguracoes}
-            className="p-2 rounded-lg bg-white shadow-soft hover:shadow-md transition-all"
-            title="Configurações"
-          >
-            <Settings className="h-5 w-5 text-gray-600" />
-          </button>
-
-          <button
-            onClick={handleExportDashboard}
-            className="btn btn-outline btn-sm"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
-          </button>
-        </div>
-      </motion.div>
-
-      {/* Filtros Avançados */}
-      <AnimatePresence>
-        {showFilters && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="card"
-          >
-            <div className="card-header">
-              <div className="flex items-center justify-between">
-                <h3 className="card-title">Filtros Avançados</h3>
-                <button
-                  onClick={() => setShowFilters(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XCircle className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-            <div className="card-content">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Projeto/Obra
-                  </label>
-                  <input
-                    type="text"
-                    value={filters.projeto}
-                    onChange={(e) =>
-                      setFilters({ ...filters, projeto: e.target.value })
-                    }
-                    placeholder="Filtrar por projeto..."
-                    className="w-full p-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Responsável
-                  </label>
-                  <input
-                    type="text"
-                    value={filters.responsavel}
-                    onChange={(e) =>
-                      setFilters({ ...filters, responsavel: e.target.value })
-                    }
-                    placeholder="Filtrar por responsável..."
-                    className="w-full p-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
-                  </label>
-                  <select
-                    value={filters.status}
-                    onChange={(e) =>
-                      setFilters({ ...filters, status: e.target.value })
-                    }
-                    className="w-full p-2 border border-gray-300 rounded-lg"
-                  >
-                    <option value="">Todos os status</option>
-                    <option value="pendente">Pendente</option>
-                    <option value="em_andamento">Em Andamento</option>
-                    <option value="concluido">Concluído</option>
-                    <option value="cancelado">Cancelado</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Data Início
-                  </label>
-                  <input
-                    type="date"
-                    value={filters.dataInicio}
-                    onChange={(e) =>
-                      setFilters({ ...filters, dataInicio: e.target.value })
-                    }
-                    className="w-full p-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Data Fim
-                  </label>
-                  <input
-                    type="date"
-                    value={filters.dataFim}
-                    onChange={(e) =>
-                      setFilters({ ...filters, dataFim: e.target.value })
-                    }
-                    className="w-full p-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-
-                <div className="flex items-end space-x-2">
-                  <button
-                    onClick={handleApplyFilters}
-                    className="btn btn-primary btn-sm flex-1"
-                  >
-                    Aplicar Filtros
-                  </button>
-                  <button
-                    onClick={handleClearFilters}
-                    className="btn btn-secondary btn-sm"
-                  >
-                    Limpar
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Gráficos Visuais */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="space-y-6"
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Análise Visual</h2>
-          <div className="flex items-center space-x-2">
-            <BarChart3 className="h-5 w-5 text-primary-600" />
-            <span className="text-sm text-gray-600">Dados em tempo real</span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Gráfico de Pizza - Distribuição de Ensaios */}
-          <div className="glass-card">
-            <div className="card-header">
-              <h3 className="card-title">Distribuição de Ensaios</h3>
-              <p className="card-description">Por estado de conformidade</p>
-            </div>
-            <div className="card-content">
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={[
-                        {
-                          name: "Conformes",
-                          value: metricas.ensaios.ensaios_conformes,
-                          color: "#10B981",
-                        },
-                        {
-                          name: "Não Conformes",
-                          value: metricas.ensaios.ensaios_nao_conformes,
-                          color: "#EF4444",
-                        },
-                        {
-                          name: "Pendentes",
-                          value: metricas.ensaios.total_ensaios - metricas.ensaios.ensaios_conformes - metricas.ensaios.ensaios_nao_conformes,
-                          color: "#F59E0B",
-                        },
-                      ]}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {[
-                        { name: "Conformes", value: metricas.ensaios.ensaios_conformes, color: "#10B981" },
-                        { name: "Não Conformes", value: metricas.ensaios.ensaios_nao_conformes, color: "#EF4444" },
-                        { name: "Pendentes", value: metricas.ensaios.total_ensaios - metricas.ensaios.ensaios_conformes - metricas.ensaios.ensaios_nao_conformes, color: "#F59E0B" },
-                      ].map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-
-          {/* Gráfico de Barras - Performance por Módulo */}
-          <div className="glass-card">
-            <div className="card-header">
-              <h3 className="card-title">Performance por Módulo</h3>
-              <p className="card-description">Taxa de conformidade geral</p>
-            </div>
-            <div className="card-content">
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={[
-                      {
-                        name: "Ensaios",
-                        conformidade: metricas.ensaios.taxa_conformidade,
-                        color: "#10B981",
-                      },
-                      {
-                        name: "Checklists",
-                        conformidade: metricas.checklists.conformidade_media,
-                        color: "#8B5CF6",
-                      },
-                      {
-                        name: "Materiais",
-                        conformidade: metricas.materiais.taxa_aprovacao,
-                        color: "#F97316",
-                      },
-                      {
-                        name: "NCs",
-                        conformidade: metricas.naoConformidades.taxa_resolucao,
-                        color: "#EF4444",
-                      },
-                    ]}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="conformidade" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-
-          {/* Gráfico de Área - Tendência Mensal */}
-          <div className="glass-card">
-            <div className="card-header">
-              <h3 className="card-title">Tendência Mensal</h3>
-              <p className="card-description">Evolução dos registos</p>
-            </div>
-            <div className="card-content">
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={[
-                      { mes: "Jan", ensaios: metricas.ensaios.ensaios_por_mes * 0.8, checklists: metricas.checklists.checklists_concluidos * 0.7 },
-                      { mes: "Fev", ensaios: metricas.ensaios.ensaios_por_mes * 0.9, checklists: metricas.checklists.checklists_concluidos * 0.8 },
-                      { mes: "Mar", ensaios: metricas.ensaios.ensaios_por_mes, checklists: metricas.checklists.checklists_concluidos },
-                      { mes: "Abr", ensaios: metricas.ensaios.ensaios_por_mes * 1.1, checklists: metricas.checklists.checklists_concluidos * 1.2 },
-                      { mes: "Mai", ensaios: metricas.ensaios.ensaios_por_mes * 1.05, checklists: metricas.checklists.checklists_concluidos * 1.1 },
-                      { mes: "Jun", ensaios: metricas.ensaios.ensaios_por_mes * 1.15, checklists: metricas.checklists.checklists_concluidos * 1.3 },
-                    ]}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="mes" />
-                    <YAxis />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="ensaios" stackId="1" stroke="#10B981" fill="#10B981" fillOpacity={0.6} />
-                    <Area type="monotone" dataKey="checklists" stackId="1" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.6} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-
-          {/* Gráfico de Pizza - Distribuição de Materiais */}
-          <div className="glass-card">
-            <div className="card-header">
-              <h3 className="card-title">Estado dos Materiais</h3>
-              <p className="card-description">Por status de aprovação</p>
-            </div>
-            <div className="card-content">
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={[
-                        {
-                          name: "Aprovados",
-                          value: metricas.materiais.materiais_aprovados,
-                          color: "#10B981",
-                        },
-                        {
-                          name: "Pendentes",
-                          value: metricas.materiais.materiais_pendentes,
-                          color: "#F59E0B",
-                        },
-                        {
-                          name: "Reprovados",
-                          value: metricas.materiais.total_materiais - metricas.materiais.materiais_aprovados - metricas.materiais.materiais_pendentes,
-                          color: "#EF4444",
-                        },
-                      ]}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={80}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {[
-                        { name: "Aprovados", value: metricas.materiais.materiais_aprovados, color: "#10B981" },
-                        { name: "Pendentes", value: metricas.materiais.materiais_pendentes, color: "#F59E0B" },
-                        { name: "Reprovados", value: metricas.materiais.total_materiais - metricas.materiais.materiais_aprovados - metricas.materiais.materiais_pendentes, color: "#EF4444" },
-                      ].map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* KPIs Principais */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-      >
-        {/* Conformidade Geral */}
-        <div
-          className="stat-card group cursor-pointer"
-          onClick={() => handleVerDetalhes("relatorios")}
+        <button
+          onClick={handleRefresh}
+          className="btn btn-outline btn-sm"
         >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Atualizar
+        </button>
+      </div>
+
+      {/* KPIs Principais - 4 Cards Essenciais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Conformidade Geral */}
+        <div className="card cursor-pointer" onClick={() => handleVerDetalhes("relatorios")}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-glow">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600">
               <CheckCircle className="h-6 w-6 text-white" />
             </div>
-            <div className="flex items-center text-sm font-medium text-green-600">
-              <TrendingUp className="h-4 w-4 mr-1" />
-              {metricas.geral.tendencia_qualidade === "melhorando"
-                ? "Melhorando"
-                : metricas.geral.tendencia_qualidade === "piorando"
-                  ? "Piorando"
-                  : "Estável"}
-            </div>
+            <TrendingUp className="h-5 w-5 text-green-600" />
           </div>
-          <div className="stat-value">{metricas.geral.conformidade_geral}%</div>
-          <div className="stat-label">Conformidade Geral</div>
-          <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity"></div>
+          <div className="text-3xl font-bold text-gray-900 mb-1">
+            {metricas.geral.conformidade_geral}%
+          </div>
+          <div className="text-sm text-gray-600">Conformidade Geral</div>
         </div>
 
         {/* Total de Registos */}
-        <div
-          className="stat-card group cursor-pointer"
-          onClick={() => handleVerDetalhes("relatorios")}
-        >
+        <div className="card cursor-pointer" onClick={() => handleVerDetalhes("relatorios")}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-glow">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600">
               <BarChart3 className="h-6 w-6 text-white" />
             </div>
           </div>
-          <div className="stat-value">{metricas.geral.total_registros}</div>
-          <div className="stat-label">Total de Registos</div>
-          <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity"></div>
+          <div className="text-3xl font-bold text-gray-900 mb-1">
+            {metricas.geral.total_registros}
+          </div>
+          <div className="text-sm text-gray-600">Total de Registos</div>
         </div>
 
-        {/* Ensaios Conformes */}
-        <div
-          className="stat-card group cursor-pointer"
-          onClick={() => handleVerDetalhes("ensaios")}
-        >
+        {/* Ensaios */}
+        <div className="card cursor-pointer" onClick={() => handleVerDetalhes("ensaios")}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-glow">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600">
               <TestTube className="h-6 w-6 text-white" />
             </div>
           </div>
-          <div className="stat-value">
-            {metricas.ensaios.taxa_conformidade}%
+          <div className="text-3xl font-bold text-gray-900 mb-1">
+            {metricas.ensaios.total_ensaios}
           </div>
-          <div className="stat-label">Taxa Conformidade Ensaios</div>
-          <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity"></div>
+          <div className="text-sm text-gray-600">Ensaios ({metricas.ensaios.taxa_conformidade}% conformes)</div>
         </div>
 
-        {/* Checklists Concluídos */}
-        <div
-          className="stat-card group cursor-pointer"
-          onClick={() => handleVerDetalhes("checklists")}
-        >
+        {/* Checklists */}
+        <div className="card cursor-pointer" onClick={() => handleVerDetalhes("checklists")}>
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-glow">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600">
               <ClipboardCheck className="h-6 w-6 text-white" />
             </div>
           </div>
-          <div className="stat-value">
-            {metricas.checklists.conformidade_media}%
+          <div className="text-3xl font-bold text-gray-900 mb-1">
+            {metricas.checklists.total_checklists}
           </div>
-          <div className="stat-label">Conformidade Checklists</div>
-          <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity"></div>
+          <div className="text-sm text-gray-600">Checklists ({metricas.checklists.conformidade_media}% conformes)</div>
         </div>
-      </motion.div>
-
-      {/* Métricas Detalhadas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Ensaios */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="card card-hover cursor-pointer"
-          onClick={() => handleVerDetalhes("ensaios")}
-        >
-          <div className="card-header">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="card-title">Ensaios</h3>
-                <p className="card-description">
-                  Métricas de conformidade e performance
-                </p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <TestTube className="h-8 w-8 text-emerald-500" />
-                <Eye className="h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-          </div>
-          <div className="card-content">
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-emerald-600">
-                  {metricas.ensaios.total_ensaios}
-                </div>
-                <div className="text-sm text-gray-600">Total</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {metricas.ensaios.ensaios_conformes}
-                </div>
-                <div className="text-sm text-gray-600">Conformes</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">
-                  {metricas.ensaios.ensaios_nao_conformes}
-                </div>
-                <div className="text-sm text-gray-600">Não Conformes</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {metricas.ensaios.ensaios_por_mes}
-                </div>
-                <div className="text-sm text-gray-600">Por Mês</div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Desvio Médio:</span>
-                <span className="font-medium">
-                  {metricas.ensaios.desvio_medio}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">
-                  Tipos Problemáticos:
-                </span>
-                <span className="font-medium text-sm">
-                  {metricas.ensaios.tipos_mais_problematicos
-                    .slice(0, 2)
-                    .join(", ")}
-                </span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Checklists */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="card card-hover cursor-pointer"
-          onClick={() => handleVerDetalhes("checklists")}
-        >
-          <div className="card-header">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="card-title">Checklists</h3>
-                <p className="card-description">Inspeções e verificações</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <ClipboardCheck className="h-8 w-8 text-purple-500" />
-                <Eye className="h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-          </div>
-          <div className="card-content">
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">
-                  {metricas.checklists.total_checklists}
-                </div>
-                <div className="text-sm text-gray-600">Total</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {metricas.checklists.conformidade_media}%
-                </div>
-                <div className="text-sm text-gray-600">Conformidade</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {metricas.checklists.checklists_concluidos}
-                </div>
-                <div className="text-sm text-gray-600">Concluídos</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">
-                  {metricas.checklists.checklists_pendentes}
-                </div>
-                <div className="text-sm text-gray-600">Pendentes</div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">
-                  Tempo Médio Inspeção:
-                </span>
-                <span className="font-medium">
-                  {metricas.checklists.tempo_medio_inspecao.toFixed(1)} dias
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">
-                  Inspetores Eficientes:
-                </span>
-                <span className="font-medium text-sm">
-                  {metricas.checklists.inspetores_mais_eficientes
-                    .slice(0, 2)
-                    .join(", ")}
-                </span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Materiais */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="card card-hover cursor-pointer"
-          onClick={() => handleVerDetalhes("materiais")}
-        >
-          <div className="card-header">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="card-title">Materiais</h3>
-                <p className="card-description">
-                  Controlo de stocks e aprovações
-                </p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Package className="h-8 w-8 text-orange-500" />
-                <Eye className="h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-          </div>
-          <div className="card-content">
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">
-                  {metricas.materiais.total_materiais}
-                </div>
-                <div className="text-sm text-gray-600">Total</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {metricas.materiais.taxa_aprovacao}%
-                </div>
-                <div className="text-sm text-gray-600">Taxa Aprovação</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {metricas.materiais.materiais_aprovados}
-                </div>
-                <div className="text-sm text-gray-600">Aprovados</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">
-                  {metricas.materiais.materiais_pendentes}
-                </div>
-                <div className="text-sm text-gray-600">Pendentes</div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">
-                  Recebidos este mês:
-                </span>
-                <span className="font-medium">
-                  {metricas.materiais.materiais_recebidos_mes}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Tipos principais:</span>
-                <span className="font-medium text-sm">
-                  {Object.keys(metricas.materiais.volume_por_tipo)
-                    .slice(0, 2)
-                    .join(", ")}
-                </span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Não Conformidades */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="card card-hover cursor-pointer"
-          onClick={() => handleVerDetalhes("nao-conformidades")}
-        >
-          <div className="card-header">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="card-title">Não Conformidades</h3>
-                <p className="card-description">
-                  Gestão de problemas e resoluções
-                </p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <AlertTriangle className="h-8 w-8 text-red-500" />
-                <Eye className="h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-          </div>
-          <div className="card-content">
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">
-                  {metricas.naoConformidades.total_ncs}
-                </div>
-                <div className="text-sm text-gray-600">Total</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {metricas.naoConformidades.taxa_resolucao}%
-                </div>
-                <div className="text-sm text-gray-600">Taxa Resolução</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">
-                  {metricas.naoConformidades.ncs_pendentes}
-                </div>
-                <div className="text-sm text-gray-600">Pendentes</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {metricas.naoConformidades.ncs_resolvidas}
-                </div>
-                <div className="text-sm text-gray-600">Resolvidas</div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">
-                  Tempo médio resolução:
-                </span>
-                <span className="font-medium">
-                  {metricas.naoConformidades.tempo_medio_resolucao.toFixed(1)}{" "}
-                  dias
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Severidades:</span>
-                <span className="font-medium text-sm">
-                  {Object.keys(metricas.naoConformidades.ncs_por_severidade)
-                    .slice(0, 2)
-                    .join(", ")}
-                </span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Obras */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="card card-hover cursor-pointer"
-          onClick={() => handleVerDetalhes("obras")}
-        >
-          <div className="card-header">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="card-title">Obras</h3>
-                <p className="card-description">
-                  Gestão de projetos e construções
-                </p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Building className="h-8 w-8 text-indigo-500" />
-                <Eye className="h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-          </div>
-          <div className="card-content">
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-indigo-600">
-                  {metricas.obras.total_obras}
-                </div>
-                <div className="text-sm text-gray-600">Total</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {metricas.obras.obras_em_execucao}
-                </div>
-                <div className="text-sm text-gray-600">Em Execução</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {metricas.obras.obras_concluidas}
-                </div>
-                <div className="text-sm text-gray-600">Concluídas</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">
-                  {metricas.obras.obras_paralisadas}
-                </div>
-                <div className="text-sm text-gray-600">Paralisadas</div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Execução média:</span>
-                <span className="font-medium">
-                  {metricas.obras.percentual_execucao_medio}%
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Valor contratos:</span>
-                <span className="font-medium text-sm">
-                  {new Intl.NumberFormat("pt-PT", {
-                    style: "currency",
-                    currency: "EUR",
-                  }).format(metricas.obras.valor_total_contratos)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
       </div>
 
-
-
-      {/* Estatísticas em Tempo Real */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.7 }}
-        className="card"
-      >
-        <div className="card-header">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="card-title">Estatísticas em Tempo Real</h3>
-              <p className="card-description">Atividade recente do sistema</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-1 text-sm text-gray-500">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span>Online</span>
-              </div>
-              <button
-                onClick={handleRefresh}
-                className="p-1 text-gray-400 hover:text-gray-600"
-              >
-                <RefreshCw className="h-4 w-4" />
-              </button>
+      {/* 4 Gráficos Principais - Mais Pequenos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Gráfico de Pizza - Distribuição de Ensaios */}
+        <div className="card">
+          <div className="card-header">
+            <h3 className="card-title">Distribuição de Ensaios</h3>
+          </div>
+          <div className="card-content">
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      {
+                        name: "Conformes",
+                        value: metricas.ensaios.ensaios_conformes,
+                        color: "#10B981",
+                      },
+                      {
+                        name: "Não Conformes",
+                        value: metricas.ensaios.ensaios_nao_conformes,
+                        color: "#EF4444",
+                      },
+                    ]}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={60}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    <Cell fill="#10B981" />
+                    <Cell fill="#EF4444" />
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </div>
+        </div>
+
+        {/* Gráfico de Barras - Performance por Módulo */}
+        <div className="card">
+          <div className="card-header">
+            <h3 className="card-title">Performance por Módulo</h3>
+          </div>
+          <div className="card-content">
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={[
+                    { name: "Ensaios", conformidade: metricas.ensaios.taxa_conformidade },
+                    { name: "Checklists", conformidade: metricas.checklists.conformidade_media },
+                    { name: "Materiais", conformidade: metricas.materiais.taxa_aprovacao },
+                    { name: "NCs", conformidade: metricas.naoConformidades.taxa_resolucao },
+                  ]}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value: any) => [`${value.toFixed(1)}%`, 'Conformidade']} />
+                  <Bar dataKey="conformidade" radius={[4, 4, 0, 0]} fill="#3B82F6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Gráfico de Pizza - Estado dos Materiais */}
+        <div className="card">
+          <div className="card-header">
+            <h3 className="card-title">Estado dos Materiais</h3>
+          </div>
+          <div className="card-content">
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: "Aprovados", value: metricas.materiais.materiais_aprovados, color: "#10B981" },
+                      { name: "Pendentes", value: metricas.materiais.materiais_pendentes, color: "#F59E0B" },
+                      { name: "Reprovados", value: metricas.materiais.materiais_reprovados, color: "#EF4444" },
+                    ]}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={30}
+                    outerRadius={60}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    <Cell fill="#10B981" />
+                    <Cell fill="#F59E0B" />
+                    <Cell fill="#EF4444" />
+                  </Pie>
+                  <Tooltip formatter={(value: any, name: any) => [value, name]} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Gráfico de Barras - NCs por Severidade */}
+        <div className="card">
+          <div className="card-header">
+            <h3 className="card-title">NCs por Severidade</h3>
+          </div>
+          <div className="card-content">
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={[
+                    { name: "Crítica", value: metricas.naoConformidades.ncs_por_severidade?.critica || 0, color: "#EF4444" },
+                    { name: "Alta", value: metricas.naoConformidades.ncs_por_severidade?.alta || 0, color: "#F59E0B" },
+                    { name: "Média", value: metricas.naoConformidades.ncs_por_severidade?.media || 0, color: "#3B82F6" },
+                    { name: "Baixa", value: metricas.naoConformidades.ncs_por_severidade?.baixa || 0, color: "#10B981" },
+                  ]}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value: any, name: any) => [value, 'Quantidade']} />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="#EF4444" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Resumo dos Módulos - Cards Simples */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Materiais */}
+        <div className="card cursor-pointer" onClick={() => handleVerDetalhes("materiais")}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 rounded-lg bg-orange-100">
+              <Package className="h-5 w-5 text-orange-600" />
+            </div>
+            <span className="text-sm text-gray-500">Materiais</span>
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">
+            {metricas.materiais.total_materiais}
+          </div>
+          <div className="text-sm text-gray-600">
+            {metricas.materiais.taxa_aprovacao}% aprovados
+          </div>
+        </div>
+
+        {/* Não Conformidades */}
+        <div className="card cursor-pointer" onClick={() => handleVerDetalhes("nao-conformidades")}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 rounded-lg bg-red-100">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+            </div>
+            <span className="text-sm text-gray-500">NCs</span>
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">
+            {metricas.naoConformidades.total_ncs}
+          </div>
+          <div className="text-sm text-gray-600">
+            {metricas.naoConformidades.taxa_resolucao}% resolvidas
+          </div>
+        </div>
+
+        {/* Obras */}
+        <div className="card cursor-pointer" onClick={() => handleVerDetalhes("obras")}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 rounded-lg bg-indigo-100">
+              <Building className="h-5 w-5 text-indigo-600" />
+            </div>
+            <span className="text-sm text-gray-500">Obras</span>
+          </div>
+          <div className="text-2xl font-bold text-gray-900 mb-1">
+            {metricas.obras.total_obras}
+          </div>
+          <div className="text-sm text-gray-600">
+            {metricas.obras.obras_em_execucao} em execução
+          </div>
+        </div>
+      </div>
+
+      {/* Status do Sistema */}
+      <div className="card">
+        <div className="card-header">
+          <h3 className="card-title">Status do Sistema</h3>
         </div>
         <div className="card-content">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600 mb-1">
-                {metricas.ensaios.ensaios_por_mes}
-              </div>
-              <div className="text-sm text-blue-700">Ensaios este mês</div>
-              <div className="text-xs text-blue-600 mt-1">
-                +{Math.floor(metricas.ensaios.ensaios_por_mes * 0.15)} vs mês
-                anterior
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <div>
+                <div className="font-medium text-green-800">Sistema Online</div>
+                <div className="text-sm text-green-600">Todos os serviços ativos</div>
               </div>
             </div>
-
-            <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
-              <div className="text-2xl font-bold text-green-600 mb-1">
-                {metricas.checklists.checklists_concluidos}
-              </div>
-              <div className="text-sm text-green-700">
-                Checklists concluídos
-              </div>
-              <div className="text-xs text-green-600 mt-1">
-                {(
-                  (metricas.checklists.checklists_concluidos /
-                    metricas.checklists.total_checklists) *
-                  100
-                ).toFixed(1)}
-                % taxa conclusão
+            
+            <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              <div>
+                <div className="font-medium text-blue-800">Dados Atualizados</div>
+                <div className="text-sm text-blue-600">Última atualização: {new Date().toLocaleTimeString("pt-PT")}</div>
               </div>
             </div>
-
-            <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600 mb-1">
-                {metricas.materiais.materiais_aprovados}
+            
+            <div className="flex items-center space-x-3 p-3 bg-orange-50 rounded-lg">
+              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+              <div>
+                <div className="font-medium text-orange-800">{metricas.naoConformidades.ncs_pendentes} NCs Pendentes</div>
+                <div className="text-sm text-orange-600">Requerem atenção</div>
               </div>
-              <div className="text-sm text-purple-700">Materiais aprovados</div>
-              <div className="text-xs text-purple-600 mt-1">
-                {metricas.materiais.taxa_aprovacao}% taxa aprovação
-              </div>
-            </div>
-
-            <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg">
-              <div className="text-2xl font-bold text-orange-600 mb-1">
-                {metricas.naoConformidades.ncs_resolvidas}
-              </div>
-              <div className="text-sm text-orange-700">NCs resolvidas</div>
-              <div className="text-xs text-orange-600 mt-1">
-                {metricas.naoConformidades.taxa_resolucao}% taxa resolução
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <span>
-                Última atualização: {new Date().toLocaleTimeString("pt-PT")}
-              </span>
-              <span>
-                Próxima atualização:{" "}
-                {autoRefresh
-                  ? new Date(Date.now() + refreshInterval).toLocaleTimeString(
-                      "pt-PT",
-                    )
-                  : "Manual"}
-              </span>
             </div>
           </div>
         </div>
-      </motion.div>
-
-
-
-      {/* Configurações do Dashboard (Modal) */}
-      {showSettings && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          onClick={() => setShowSettings(false)}
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-2xl p-6 w-full max-w-md mx-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">
-                Configurações do Dashboard
-              </h3>
-              <button
-                onClick={() => setShowSettings(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XCircle className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Período Padrão
-                </label>
-                <select
-                  value={selectedPeriod}
-                  onChange={(e) => setSelectedPeriod(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-lg"
-                >
-                  <option value="week">Semana</option>
-                  <option value="month">Mês</option>
-                  <option value="quarter">Trimestre</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Atualização Automática
-                </label>
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="mr-2"
-                      checked={autoRefresh}
-                      onChange={(e) => setAutoRefresh(e.target.checked)}
-                    />
-                    <span className="text-sm text-gray-600">
-                      Atualizar automaticamente
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <select
-                      value={refreshInterval / 60000}
-                      onChange={(e) =>
-                        setRefreshInterval(parseInt(e.target.value) * 60000)
-                      }
-                      className="p-1 border border-gray-300 rounded text-sm"
-                      disabled={!autoRefresh}
-                    >
-                      <option value={1}>1 minuto</option>
-                      <option value={5}>5 minutos</option>
-                      <option value={10}>10 minutos</option>
-                      <option value={30}>30 minutos</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notificações
-                </label>
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <input type="checkbox" className="mr-2" defaultChecked />
-                    <span className="text-sm text-gray-600">
-                      Alertas críticos
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <input type="checkbox" className="mr-2" defaultChecked />
-                    <span className="text-sm text-gray-600">
-                      Documentos vencidos
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm text-gray-600">
-                      Relatórios semanais
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setShowSettings(false)}
-                className="btn btn-secondary btn-sm"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  setShowSettings(false);
-                  toast.success("Configurações salvas!");
-                }}
-                className="btn btn-primary btn-sm"
-              >
-                Salvar
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
+      </div>
     </div>
   );
 }

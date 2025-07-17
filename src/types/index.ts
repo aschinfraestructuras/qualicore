@@ -988,3 +988,241 @@ export interface EventoRFI {
   detalhes?: string;
   anexo?: Anexo;
 }
+
+// Tipos para PPI (Pontos de Inspeção) - Sistema Flexível e Editável
+export interface PPI extends BaseEntity {
+  codigo: string; // ex: PPI-008 PPI-027
+  revisao: string; // ex: 01, 1
+  pagina: string; // ex: 01 de 01
+  
+  // Identificação da obra
+  obra_id: string;
+  obra_nome: string;
+  lote?: string;
+  tramo?: string;
+  pk?: string;
+  elemento?: string;
+  subelemento?: string;
+  
+  // Seções de controlo (CCG, CCE, CCM)
+  secoes: SecaoPPI;
+  
+  // Status e responsabilidades
+  status: "rascunho" | "em_revisao" | "aprovado" | "ativo" | "obsoleto";
+  aprovador?: string;
+  data_aprovacao?: string;
+  
+  // Conformidade final
+  conformidade_final?: "si" | "no";
+  data_conformidade?: string;
+  assinatura_conformidade?: string;
+  nao_conformidades_abertas?: number;
+  
+  // Campos customizados editáveis
+  campos_customizados: CampoCustomizado[];
+  
+  // Anexos e observações
+  anexos?: Anexo[];
+  observacoes?: string;
+}
+
+export interface SecaoPPI {
+  id: string;
+  codigo: "CCG" | "CCE" | "CCM"; // Controlo Geométrico, Execução, Materiais
+  nome: string;
+  descricao?: string;
+  ordem: number; // Para controlar sequência
+  pontos: PontoInspecaoPPI[];
+  
+  // Conformidade da seção
+  conformidade_final?: "si" | "no";
+  data_conformidade?: string;
+  assinatura_conformidade?: string;
+  nao_conformidades_abertas?: number;
+  
+  // Campos customizados por seção
+  campos_customizados: CampoCustomizado[];
+}
+
+export interface PontoInspecaoPPI {
+  id: string;
+  descricao: string;
+  tipo_inspecao: 
+    | "visual" 
+    | "topografica"
+    | "documental" 
+    | "laboratorio"
+    | "metrica"
+    | "ensayos" 
+    | "outro"; 
+  tipo_inspecao_outro?: string;
+  responsavel: string;
+  pc_pp: "PC" | "PP"; // Ponto de Controlo ou Ponto de Parada
+  
+  // Resultados da inspeção
+  data_inspecao?: string;
+  aceitacao?: "si" | "no" | "na";
+  assinatura?: string;
+  criterio_aceitacao: string;
+  
+  // Campos customizados por ponto
+  campos_customizados: CampoCustomizado
+  
+  // Campos adicionais
+  observacoes?: string;
+  anexos?: Anexo[];
+  nao_conformidade_id?: string;
+  
+  // Para ensaios específicos
+  ordem_ensaio?: string;
+  actas_resultados?: string;
+  
+  // Controle sequencial
+  ordem: number; // Para controlar sequência dentro da seção
+  depende_de?: string; // ID do ponto que deve ser aprovado primeiro
+  bloqueia_proximo?: boolean; // Se true, próxima atividade só inicia após aprovação
+}
+
+// Sistema de campos customizados editáveis
+export interface CampoCustomizado {
+  id: string;
+  nome: string;
+  tipo: "texto" | "numero" | "data" | "select" | "ckbox" | "textarea" | "arquivo" | "assinatura";
+  valor?: string | number | boolean;
+  obrigatorio: boolean;
+  opcoes?: string[]; // Para campos select
+  descricao?: string;
+  ordem: number;
+  visivel: boolean;
+  editavel: boolean;
+  
+  // Validações
+  validacao?: {
+    tipo: "min" | "max" | "regex" | "custom";
+    valor: string;
+    mensagem: string;
+  };
+}
+
+// Modelo de PPI (template reutilizável)
+export interface ModeloPPI extends BaseEntity {
+  nome: string;
+  descricao: string;
+  categoria: string; // ex: "Fundações,Estruturas, cabamentos"
+  versao: string;
+  
+  // Estrutura do modelo
+  secoes: ModeloSecaoPPI  // Campos customizados padrão
+  campos_customizados_padrao: CampoCustomizado[];
+  
+  // Configurações
+  permite_edicao: boolean;
+  obriga_sequencia: boolean;
+  permite_campos_customizados: boolean;
+  
+  // Metadados
+  criado_por: string;
+  aprovado_por?: string;
+  data_aprovacao?: string;
+  utilizacoes: number; // Quantas vezes foi usado
+  
+  // Tags para busca
+  tags: string[];
+  // Observações
+  observacoes?: string;
+}
+
+export interface ModeloSecaoPPI {
+  id: string;
+  codigo: "CCG" | "CCE" | "M";
+  nome: string;
+  descricao?: string;
+  ordem: number;
+  
+  // Pontos padrão da seção
+  pontos_padrao: ModeloPontoInspecaoPPI[]; // Campos customizados padrão da seção
+  campos_customizados_padrao: CampoCustomizado[];
+}
+
+export interface ModeloPontoInspecaoPPI {
+  id: string;
+  descricao: string;
+  tipo_inspecao: 
+    | "visual" 
+    | "topografica"
+    | "documental" 
+    | "laboratorio"
+    | "metrica"
+    | "ensayos" 
+    | "outro"; 
+  tipo_inspecao_outro?: string;
+  responsavel_padrao: string;
+  pc_pp: "PC" | "PP";
+  criterio_aceitacao: string;
+  
+  // Controle sequencial
+  ordem: number;
+  depende_de?: string;
+  bloqueia_proximo: boolean;
+  
+  // Campos customizados padrão do ponto
+  campos_customizados_padrao: CampoCustomizado;
+  // Observações
+  observacoes?: string;
+}
+
+// Execução de PPI (instância baseada em modelo)
+export interface ExecucaoPPI extends BaseEntity {
+  modelo_id?: string; // Se baseado em modelo
+  ppi_id: string; // Referência ao PPI criado
+  
+  // Informações da execução
+  titulo: string;
+  descricao?: string;
+  data_inicio: string;
+  data_fim?: string;
+  
+  // Status da execução
+  status: "nao_iniciada" | "em_execucao" | "pausada" | "concluida" | "celada";
+  percentual_conclusao: number;
+  
+  // Responsabilidades
+  responsavel_geral: string;
+  equipa: string[];
+  
+  // Controle de sequência
+  sequencia_ativa: boolean;
+  ponto_atual?: string;
+  
+  // Campos customizados da execução
+  campos_customizados: CampoCustomizado[];
+  // Observações
+  observacoes?: string;
+  anexos?: Anexo[];
+}
+
+// Histórico de execução
+export interface HistoricoExecucaoPPI {
+  id: string;
+  execucao_id: string;
+  ponto_id?: string;
+  acao: "iniciada" | "pausada" | "retomada" | "ponto_aprovado" | "ponto_reprovado" | "concluida" | "celada";
+  responsavel: string;
+  data: string;
+  observacoes?: string;
+  anexos?: Anexo[];
+}
+
+// Configurações do sistema PPI
+export interface ConfiguracaoPPI {
+  id: string;
+  nome: string;
+  valor: string | number | boolean;
+  tipo: "string" | "number" | "boolean" | "json";
+  categoria: "geral" | "validacao" | "notificacao" | "relatorio";
+  descricao?: string;
+  editavel: boolean;
+}
+
+// Tipos PIE (Pontos de Inspeção e Ensaios)
+export type { PIEInstancia, PIESecao, PIEPonto, PIEResposta } from "./pie";
