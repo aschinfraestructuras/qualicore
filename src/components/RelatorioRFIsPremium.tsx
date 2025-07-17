@@ -21,11 +21,12 @@ export default function RelatorioRFIsPremium({ rfis, onClose }: RelatorioRFIsPre
     dataFim: '',
   });
 
+  const pdfService = new PDFService();
+
   const handleGenerateReport = async (reportType: string) => {
     setLoading(true);
     try {
       const filteredRFIs = applyFilters(rfis);
-      const pdfService = new PDFService();
       
       switch (reportType) {
         case 'executivo':
