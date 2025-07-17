@@ -23,7 +23,6 @@ import { ensaiosAPI } from "@/lib/supabase-api";
 import { toast } from "react-hot-toast";
 import EnsaioForm from "@/components/forms/EnsaioForm";
 import Modal from "@/components/Modal";
-import { RelatorioEnsaios } from "@/components/RelatorioExport";
 import RelatorioEnsaiosPremium from "@/components/RelatorioEnsaiosPremium";
 import { AnimatePresence, motion } from "framer-motion";
 import { PDFService } from "@/services/pdfService";
@@ -33,7 +32,6 @@ export default function Ensaios() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingEnsaio, setEditingEnsaio] = useState<any>(null);
-  const [showRelatorio, setShowRelatorio] = useState(false);
   const [showRelatorioPremium, setShowRelatorioPremium] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -202,21 +200,20 @@ export default function Ensaios() {
       const ensaioData = {
         codigo: data.codigo,
         tipo: data.tipo,
-        material_id,
-        resultado: data.resultado,
-        valor_obtido: data.valor_obtido,
-        valor_esperado: data.valor_esperado,
-        unidade: data.unidade,
-        laboratorio: data.laboratorio,
+        descricao: data.descricao,
         data_ensaio: data.data_ensaio,
-        conforme: data.conforme,
+        laboratorio: data.laboratorio,
         responsavel: data.responsavel,
-        zona: data.zona,
+        valor_esperado: data.valor_esperado,
+        valor_obtido: data.valor_obtido,
+        unidade: data.unidade,
+        conforme: data.conforme,
         estado: data.estado,
+        zona: data.zona,
         observacoes: data.observacoes,
+        material_id: material_id,
+        resultado: data.resultado || `${data.valor_obtido} ${data.unidade}`,
       };
-
-      console.log("Dados corrigidos para envio:", ensaioData);
 
       if (editingEnsaio) {
         await ensaiosAPI.update(editingEnsaio.id, ensaioData);
@@ -225,16 +222,17 @@ export default function Ensaios() {
         await ensaiosAPI.create(ensaioData);
         toast.success("Ensaio criado com sucesso!");
       }
+
       setShowForm(false);
       loadEnsaios();
     } catch (error) {
-      console.error("Erro detalhado ao salvar ensaio:", error);
+      console.error("Erro ao salvar ensaio:", error);
       toast.error("Erro ao salvar ensaio");
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Tem certeza que deseja excluir este ensaio?")) {
+    if (window.confirm("Tem certeza que deseja excluir este ensaio?")) {
       try {
         await ensaiosAPI.delete(id);
         toast.success("Ensaio excluído com sucesso!");
@@ -251,8 +249,8 @@ export default function Ensaios() {
       const pdfService = new PDFService();
       await pdfService.generateEnsaiosIndividualReport([ensaio]);
     } catch (error) {
-      console.error('Erro ao gerar relatório individual:', error);
-      toast.error('Erro ao gerar relatório individual');
+      console.error("Erro ao gerar relatório individual:", error);
+      toast.error("Erro ao gerar relatório");
     }
   };
 
@@ -289,18 +287,11 @@ export default function Ensaios() {
         </div>
         <div className="flex items-center space-x-3">
           <button
-            className="btn btn-secondary btn-md"
-            onClick={() => setShowRelatorio(true)}
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Exportar Relatório
-          </button>
-          <button
             className="btn btn-primary btn-md"
             onClick={() => setShowRelatorioPremium(true)}
           >
             <FileText className="h-4 w-4 mr-2" />
-            Relatório Premium
+            Relatórios PDF
           </button>
           <button className="btn btn-primary btn-md" onClick={handleCreate}>
             <Plus className="h-4 w-4 mr-2" />
@@ -325,14 +316,6 @@ export default function Ensaios() {
         >
           <FileText className="h-4 w-4" />
           <span>Relatórios PDF</span>
-        </button>
-
-        <button
-          onClick={() => setShowRelatorio(true)}
-          className="btn btn-outline flex items-center space-x-2"
-        >
-          <Download className="h-4 w-4" />
-          <span>Exportar Dados</span>
         </button>
 
         <button
@@ -465,8 +448,6 @@ export default function Ensaios() {
         )}
       </AnimatePresence>
 
-
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card">
           <div className="card-content">
@@ -597,15 +578,6 @@ export default function Ensaios() {
           )}
         </div>
       </div>
-
-      {/* Modal de Relatório */}
-      {showRelatorio && (
-        <RelatorioEnsaios
-          ensaios={filteredEnsaios}
-          isOpen={showRelatorio}
-          onClose={() => setShowRelatorio(false)}
-        />
-      )}
 
       {/* Modal de Relatório Premium */}
       {showRelatorioPremium && (
