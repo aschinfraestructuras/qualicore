@@ -32,8 +32,18 @@ export default function EnsaiosCompactacao() {
       ]);
       setEnsaios(ensaiosData);
       setObras(obrasData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao carregar dados:', error);
+      
+      // Verificar se é erro de tabela não encontrada
+      if (error.message?.includes('404') || error.message?.includes('relation "ensaios_compactacao" does not exist')) {
+        toast.error('Tabela de ensaios de compactação não encontrada. Execute a migração no Supabase primeiro.');
+      } else {
+        toast.error('Erro ao carregar dados. Verifique sua conexão.');
+      }
+      
+      setEnsaios([]);
+      setObras([]);
     } finally {
       setLoading(false);
     }
@@ -113,9 +123,9 @@ export default function EnsaiosCompactacao() {
   };
 
   const filteredEnsaios = ensaios.filter(ensaio => {
-    const matchesSearch = ensaio.numeroEnsaio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ensaio.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ensaio.elemento.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (ensaio.numeroEnsaio?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                         (ensaio.codigo?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                         (ensaio.elemento?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     const matchesObra = !filterObra || ensaio.obra === filterObra;
     const matchesLocalizacao = !filterLocalizacao || ensaio.localizacao === filterLocalizacao;
     
