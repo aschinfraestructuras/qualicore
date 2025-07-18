@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { X, FileText } from "lucide-react";
 import { SeguimentoEnsaio, ContextoAdicional } from "@/types";
 import type { Ensaio } from "../../types";
+import DocumentUpload from "../DocumentUpload";
 
 interface EnsaioFormProps {
   onSubmit: (data: any) => void;
@@ -83,6 +84,7 @@ export default function EnsaioForm({
     (initialData as any)?.seguimento || [],
   );
   const [anexos, setAnexos] = useState<File[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Dropdowns dinâmicos
@@ -870,33 +872,17 @@ export default function EnsaioForm({
       {/* Anexos */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Anexos Gerais (Relatórios, PDFs, Imagens, etc.)
+          Documentos (Relatórios, PDFs, Imagens, etc.)
         </label>
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onChange={handleFileUpload}
+        <DocumentUpload
+          recordId={initialData?.id || 'new'}
+          recordType="ensaio"
+          onDocumentsChange={setDocuments}
+          existingDocuments={initialData?.documents || []}
+          maxFiles={10}
+          maxSizeMB={10}
+          allowedTypes={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']}
         />
-        <div className="flex flex-wrap gap-2 mt-2">
-          {anexos.map((file, idx) => (
-            <div
-              key={idx}
-              className="flex items-center gap-2 p-2 bg-gray-100 rounded-md"
-            >
-              <FileText className="h-4 w-4 text-gray-500" />
-              <span className="text-sm">{file.name}</span>
-              <button
-                type="button"
-                onClick={() => removeAnexo(idx)}
-                className="text-red-600 hover:text-red-800"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Resumo */}
