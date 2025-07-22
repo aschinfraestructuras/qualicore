@@ -7,8 +7,9 @@ import {
   NaoConformidade,
   Obra,
 } from "@/types";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useEffect } from "react";
 import { useAuthStore } from "./lib/auth";
 import Layout from "./components/Layout";
@@ -37,9 +38,11 @@ import RFIs from "./pages/RFIs";
 import PontosInspecaoEnsaiosPage from "./pages/PontosInspecaoEnsaios";
 import PontosInspecaoEnsaiosEditor from "./components/pie/PontosInspecaoEnsaiosEditor";
 import "./styles/globals.css";
+import { ensaioCompactacaoService } from "./services/ensaioCompactacaoService";
 
 function App() {
   const { user, loading } = useAuthStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Verificar autenticação ao carregar a app
@@ -288,9 +291,13 @@ function App() {
             user ? (
               <Layout>
                 <DocumentoForm
-                  isEditing={false}
-                  onSubmit={() => {}}
-                  onCancel={() => {}}
+                  onSubmit={() => {
+                    toast.success('Documento criado com sucesso!');
+                    navigate('/documentos');
+                  }}
+                  onCancel={() => {
+                    navigate('/documentos');
+                  }}
                 />
               </Layout>
             ) : (
@@ -305,9 +312,13 @@ function App() {
             user ? (
               <Layout>
                 <EnsaioForm
-                  isEditing={false}
-                  onSubmit={() => {}}
-                  onCancel={() => {}}
+                  onSubmit={() => {
+                    toast.success('Ensaio criado com sucesso!');
+                    navigate('/ensaios');
+                  }}
+                  onCancel={() => {
+                    navigate('/ensaios');
+                  }}
                 />
               </Layout>
             ) : (
@@ -322,9 +333,19 @@ function App() {
             user ? (
               <Layout>
                 <EnsaioCompactacaoForm
-                  isEditing={false}
-                  onSubmit={() => {}}
-                  onCancel={() => {}}
+                  onSubmit={async (ensaio) => {
+                    try {
+                      await ensaioCompactacaoService.create(ensaio);
+                      toast.success('Ensaio de compactação criado com sucesso!');
+                      navigate('/ensaios-compactacao');
+                    } catch (error) {
+                      console.error('Erro ao criar ensaio:', error);
+                      toast.error('Erro ao criar ensaio de compactação');
+                    }
+                  }}
+                  onCancel={() => {
+                    navigate('/ensaios-compactacao');
+                  }}
                 />
               </Layout>
             ) : (
@@ -338,7 +359,15 @@ function App() {
           element={
             user ? (
               <Layout>
-                <ChecklistForm onSubmit={() => {}} onCancel={() => {}} />
+                <ChecklistForm 
+                  onSubmit={() => {
+                    toast.success('Checklist criado com sucesso!');
+                    navigate('/checklists');
+                  }} 
+                  onCancel={() => {
+                    navigate('/checklists');
+                  }} 
+                />
               </Layout>
             ) : (
               <Navigate to="/login" replace />
@@ -351,7 +380,15 @@ function App() {
           element={
             user ? (
               <Layout>
-                <ObraForm onSubmit={() => {}} onCancel={() => {}} />
+                <ObraForm 
+                  onSubmit={() => {
+                    toast.success('Obra criada com sucesso!');
+                    navigate('/obras');
+                  }} 
+                  onCancel={() => {
+                    navigate('/obras');
+                  }} 
+                />
               </Layout>
             ) : (
               <Navigate to="/login" replace />
@@ -364,7 +401,15 @@ function App() {
           element={
             user ? (
               <Layout>
-                <MaterialForm onSubmit={() => {}} onCancel={() => {}} />
+                <MaterialForm 
+                  onSubmit={() => {
+                    toast.success('Material criado com sucesso!');
+                    navigate('/materiais');
+                  }} 
+                  onCancel={() => {
+                    navigate('/materiais');
+                  }} 
+                />
               </Layout>
             ) : (
               <Navigate to="/login" replace />
@@ -377,7 +422,15 @@ function App() {
           element={
             user ? (
               <Layout>
-                <FornecedorForm onSubmit={() => {}} onCancel={() => {}} />
+                <FornecedorForm 
+                  onSubmit={() => {
+                    toast.success('Fornecedor criado com sucesso!');
+                    navigate('/fornecedores');
+                  }} 
+                  onCancel={() => {
+                    navigate('/fornecedores');
+                  }} 
+                />
               </Layout>
             ) : (
               <Navigate to="/login" replace />
@@ -390,7 +443,15 @@ function App() {
           element={
             user ? (
               <Layout>
-                <NaoConformidadeForm onSubmit={() => {}} onCancel={() => {}} />
+                <NaoConformidadeForm 
+                  onSubmit={() => {
+                    toast.success('Não conformidade criada com sucesso!');
+                    navigate('/nao-conformidades');
+                  }} 
+                  onCancel={() => {
+                    navigate('/nao-conformidades');
+                  }} 
+                />
               </Layout>
             ) : (
               <Navigate to="/login" replace />
@@ -403,7 +464,15 @@ function App() {
           element={
             user ? (
               <Layout>
-                <RFIForm onSubmit={() => {}} onCancel={() => {}} />
+                <RFIForm 
+                  onSubmit={() => {
+                    toast.success('RFI criado com sucesso!');
+                    navigate('/rfis');
+                  }} 
+                  onCancel={() => {
+                    navigate('/rfis');
+                  }} 
+                />
               </Layout>
             ) : (
               <Navigate to="/login" replace />

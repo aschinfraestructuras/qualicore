@@ -41,6 +41,20 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
     loadObras();
   }, [ensaio]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        console.log('Tecla ESC pressionada - fechando modal');
+        onCancel();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onCancel]);
+
   const loadObras = async () => {
     try {
       setLoadingObras(true);
@@ -108,8 +122,36 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
     }));
   };
 
+  const handleCancel = (e?: React.MouseEvent) => {
+    console.log('handleCancel chamado');
+    console.log('Evento:', e);
+    console.log('Target:', e?.target);
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    console.log('Chamando onCancel...');
+    console.log('onCancel function:', onCancel);
+    console.log('onCancel type:', typeof onCancel);
+    
+    try {
+      onCancel();
+      console.log('onCancel chamado com sucesso');
+    } catch (error) {
+      console.error('Erro ao chamar onCancel:', error);
+    }
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      console.log('Overlay clicado - fechando modal');
+      onCancel();
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleSubmit chamado');
     calcularMedias();
     const dadosCompletos = {
       ...formData,
@@ -119,11 +161,19 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
+      onClick={handleOverlayClick}
+    >
+      <div className="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto relative">
+        <div className="flex justify-between items-center mb-6 sticky top-0 bg-white z-10">
           <h2 className="text-2xl font-bold">Ensaio de Compactação</h2>
-          <button onClick={onCancel} className="text-gray-500 hover:text-gray-700">
+          <button 
+            onClick={handleCancel} 
+            className="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-colors relative z-20"
+            type="button"
+            style={{ zIndex: 9999 }}
+          >
             <X className="h-6 w-6" />
           </button>
         </div>
@@ -438,17 +488,19 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
           </div>
 
           {/* Botões de ação */}
-          <div className="flex justify-end space-x-4 pt-6 border-t">
+          <div className="flex justify-end space-x-4 pt-6 border-t sticky bottom-0 bg-white z-10">
             <button
               type="button"
-              onClick={onCancel}
-              className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition-colors"
+              onClick={handleCancel}
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg transition-colors relative z-20"
+              style={{ zIndex: 9999 }}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors relative z-20"
+              style={{ zIndex: 9999 }}
             >
               {ensaio ? 'Atualizar' : 'Criar'} Ensaio
             </button>

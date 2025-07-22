@@ -198,8 +198,6 @@ export default function DocumentUpload({
       {/* Upload Area */}
       <div 
         className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors"
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
       >
         <input
           ref={fileInputRef}
@@ -207,7 +205,6 @@ export default function DocumentUpload({
           multiple
           accept={allowedTypes.join(',')}
           onChange={handleFileSelect}
-          onClick={(e) => e.stopPropagation()}
           className="hidden"
           disabled={uploading}
         />
@@ -289,7 +286,7 @@ export default function DocumentUpload({
 
       {/* Document Viewer Modal */}
       {viewingDocument && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9998]">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="text-lg font-medium">{viewingDocument.name}</h3>

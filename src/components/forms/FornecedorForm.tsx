@@ -27,6 +27,7 @@ import {
   Award,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import DocumentUpload from "../DocumentUpload";
 
 const fornecedorSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
@@ -43,7 +44,8 @@ const fornecedorSchema = z.object({
   certificacoes: z.string().optional(),
   produtos_servicos: z.string().optional(),
   observacoes: z.string().optional(),
-});
+  documents: z.array(z.any()).optional(),
+}).passthrough(); // Permite campos adicionais
 
 type FornecedorFormData = z.infer<typeof fornecedorSchema>;
 
@@ -69,6 +71,7 @@ export default function FornecedorForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAvaliacaoModal, setShowAvaliacaoModal] = useState(false);
   const [avaliacoes, setAvaliacoes] = useState<any[]>([]); // Mock data
+  const [documents, setDocuments] = useState<any[]>([]);
 
   const {
     register,
@@ -103,22 +106,30 @@ export default function FornecedorForm({
   };
 
   const onSubmitForm = async (data: FornecedorFormData) => {
+    console.log("🚀 onSubmitForm chamado!");
     setIsSubmitting(true);
     try {
+      console.log("📁 Dados do fornecedor:", data);
+      console.log("📁 Documents:", documents);
+
+      const processedData = {
+        ...data,
+        documents: documents, // Usar documents do DocumentUpload
+      };
+
+      console.log("📁 Dados processados:", processedData);
+      
       // Simular delay de submissão
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Aqui seria feita a chamada para a API
-      console.log("Dados do fornecedor:", data);
-      console.log("Ficheiros:", uploadedFiles);
-
-      onSubmit(data);
+      onSubmit(processedData);
       toast.success(
         isEditing
           ? "Fornecedor atualizado com sucesso!"
           : "Fornecedor registado com sucesso!",
       );
     } catch (error) {
+      console.error("❌ Erro no onSubmitForm:", error);
       toast.error("Erro ao salvar fornecedor");
     } finally {
       setIsSubmitting(false);
@@ -665,58 +676,17 @@ export default function FornecedorForm({
       {/* Upload de Ficheiros */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Anexos
+          Documentos (Relatórios, PDFs, Imagens, etc.)
         </label>
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-cyan-400 transition-colors">
-          <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-600 mb-2">
-            Arraste ficheiros para aqui ou clique para selecionar
-          </p>
-          <input
-            type="file"
-            multiple
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx"
-            onChange={handleFileUpload}
-            className="hidden"
-            id="file-upload"
-          />
-          <label
-            htmlFor="file-upload"
-            className="btn btn-outline btn-sm cursor-pointer"
-          >
-            Selecionar Ficheiros
-          </label>
-        </div>
-
-        {/* Lista de ficheiros */}
-        {uploadedFiles.length > 0 && (
-          <div className="mt-4 space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">
-              Ficheiros selecionados:
-            </h4>
-            {uploadedFiles.map((file, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-700">{file.name}</span>
-                  <span className="text-xs text-gray-500">
-                    ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeFile(index)}
-                  className="text-danger-600 hover:text-danger-800"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        <DocumentUpload
+          recordId={(initialData as any)?.id || 'new'}
+          recordType="fornecedor"
+          onDocumentsChange={setDocuments}
+          existingDocuments={(initialData as any)?.documents || []}
+          maxFiles={10}
+          maxSizeMB={10}
+          allowedTypes={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']}
+        />
       </div>
 
       {/* Preview do Resultado */}
@@ -786,6 +756,19 @@ export default function FornecedorForm({
           type="submit"
           className="btn btn-primary btn-md"
           disabled={isSubmitting || !isValid}
+          onClick={(e) => {
+            console.log("🚀 CLIQUE NO BOTÃO FORNECEDOR DETECTADO!");
+            console.log("📁 isValid:", isValid);
+            console.log("📁 isSubmitting:", isSubmitting);
+            console.log("📁 errors:", errors);
+            
+            // Forçar submissão se o formulário não estiver válido
+            if (!isValid) {
+              e.preventDefault();
+              console.log("🚀 Forçando submissão do formulário...");
+              handleSubmit(onSubmitForm)();
+            }
+          }}
         >
           {isSubmitting ? (
             <>

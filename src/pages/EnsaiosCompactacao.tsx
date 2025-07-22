@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit, Trash2, Download, Share2, Cloud, Building, FileText, BarChart3, Eye, X } from 'lucide-react';
 import { EnsaioCompactacao } from '../types';
 import { ensaioCompactacaoService } from '../services/ensaioCompactacaoService';
@@ -72,22 +72,51 @@ export default function EnsaiosCompactacao() {
   };
 
   const handleSubmit = async (ensaio: EnsaioCompactacao) => {
+    console.log('handleSubmit chamado - VERSÃO SIMPLIFICADA');
+    console.log('Dados do ensaio:', ensaio);
+    
     try {
       if (editingEnsaio) {
+        console.log('Atualizando ensaio existente...');
         await ensaioCompactacaoService.update(editingEnsaio.id!, ensaio);
+        console.log('Ensaio atualizado com sucesso');
       } else {
+        console.log('Criando novo ensaio...');
         await ensaioCompactacaoService.create(ensaio);
+        console.log('Ensaio criado com sucesso');
       }
-      setShowForm(false);
+      
+      console.log('Fechando modal...');
+      setShowForm((prev) => {
+        console.log('Fechando modal - showForm prev:', prev);
+        return false;
+      });
+      
+      console.log('Recarregando dados...');
       await loadData();
+      console.log('Operação concluída com sucesso');
     } catch (error) {
       console.error('Erro ao salvar ensaio:', error);
+      toast.error('Erro ao salvar ensaio de compactação');
     }
   };
 
   const handleCancel = () => {
-    setShowForm(false);
-    setEditingEnsaio(null);
+    console.log('handleCancel da página chamado - VERSÃO SIMPLIFICADA');
+    console.log('showForm antes:', showForm);
+    
+    // Forçar atualização do estado
+    setShowForm((prev) => {
+      console.log('showForm prev:', prev);
+      return false;
+    });
+    
+    setEditingEnsaio((prev) => {
+      console.log('editingEnsaio prev:', prev);
+      return null;
+    });
+    
+    console.log('Estado atualizado - modal deve fechar');
   };
 
   const handleExportEnsaio = async (ensaio: EnsaioCompactacao) => {
@@ -415,12 +444,16 @@ export default function EnsaiosCompactacao() {
 
       {/* Modal do Formulário */}
       {showForm && (
-        <EnsaioCompactacaoForm
-          ensaio={editingEnsaio || undefined}
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-        />
+        <>
+          {console.log('Renderizando modal - showForm:', showForm)}
+          <EnsaioCompactacaoForm
+            ensaio={editingEnsaio || undefined}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+          />
+        </>
       )}
+      {!showForm && console.log('Modal NÃO está sendo renderizado - showForm:', showForm)}
 
       {/* Modal de Relatórios */}
       {showRelatorio && (

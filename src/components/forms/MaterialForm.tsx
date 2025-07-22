@@ -26,6 +26,7 @@ import {
   Award,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import DocumentUpload from "../DocumentUpload";
 
 const materialSchema = z.object({
   codigo: z.string().min(1, "Código é obrigatório"),
@@ -47,7 +48,8 @@ const materialSchema = z.object({
     "concluido",
   ]),
   observacoes: z.string().optional(),
-});
+  documents: z.array(z.any()).optional(),
+}).passthrough(); // Permite campos adicionais
 
 type MaterialFormData = z.infer<typeof materialSchema>;
 
@@ -144,6 +146,7 @@ export default function MaterialForm({
   const [customTipo, setCustomTipo] = useState("");
   const [customFornecedor, setCustomFornecedor] = useState("");
   const [customZona, setCustomZona] = useState("");
+  const [documents, setDocuments] = useState<any[]>([]);
 
   const {
     register,
@@ -210,8 +213,12 @@ export default function MaterialForm({
   };
 
   const onSubmitForm = async (data: MaterialFormData) => {
+    console.log("🚀 onSubmitForm chamado!");
     setIsSubmitting(true);
     try {
+      console.log("📁 Dados do material:", data);
+      console.log("📁 Documents:", documents);
+
       await new Promise((resolve) => setTimeout(resolve, 1000));
       let processedData = { ...data };
       if (!processedData.codigo) {
@@ -236,9 +243,14 @@ export default function MaterialForm({
       if (data.zona === "outro" && customZona.trim()) {
         processedData.zona = customZona.trim();
       }
-      // Aqui seria feita a chamada para a API
-      console.log("Dados do material:", processedData);
-      console.log("Ficheiros:", uploadedFiles);
+
+      // Adicionar documentos aos dados processados
+      processedData = {
+        ...processedData,
+        documents: documents, // Usar documents do DocumentUpload
+      };
+
+      console.log("📁 Dados processados:", processedData);
       onSubmit(processedData);
       toast.success(
         isEditing
@@ -246,6 +258,7 @@ export default function MaterialForm({
           : "Material registado com sucesso!",
       );
     } catch (error) {
+      console.error("❌ Erro no onSubmitForm:", error);
       toast.error("Erro ao salvar material");
     } finally {
       setIsSubmitting(false);
@@ -663,58 +676,17 @@ export default function MaterialForm({
       {/* Upload de Ficheiros */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Anexos
+          Documentos (Relatórios, PDFs, Imagens, etc.)
         </label>
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-orange-400 transition-colors">
-          <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-600 mb-2">
-            Arraste ficheiros para aqui ou clique para selecionar
-          </p>
-          <input
-            type="file"
-            multiple
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx"
-            onChange={handleFileUpload}
-            className="hidden"
-            id="file-upload"
-          />
-          <label
-            htmlFor="file-upload"
-            className="btn btn-outline btn-sm cursor-pointer"
-          >
-            Selecionar Ficheiros
-          </label>
-        </div>
-
-        {/* Lista de ficheiros */}
-        {uploadedFiles.length > 0 && (
-          <div className="mt-4 space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">
-              Ficheiros selecionados:
-            </h4>
-            {uploadedFiles.map((file, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-700">{file.name}</span>
-                  <span className="text-xs text-gray-500">
-                    ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeFile(index)}
-                  className="text-danger-600 hover:text-danger-800"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        <DocumentUpload
+          recordId={(initialData as any)?.id || 'new'}
+          recordType="material"
+          onDocumentsChange={setDocuments}
+          existingDocuments={(initialData as any)?.documents || []}
+          maxFiles={10}
+          maxSizeMB={10}
+          allowedTypes={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']}
+        />
       </div>
 
       {/* Receção do Material */}
@@ -870,6 +842,19 @@ export default function MaterialForm({
           type="submit"
           className="btn btn-primary btn-md"
           disabled={isSubmitting || !isValid}
+          onClick={(e) => {
+            console.log("🚀 CLIQUE NO BOTÃO MATERIAL DETECTADO!");
+            console.log("📁 isValid:", isValid);
+            console.log("📁 isSubmitting:", isSubmitting);
+            console.log("📁 errors:", errors);
+            
+            // Forçar submissão se o formulário não estiver válido
+            if (!isValid) {
+              e.preventDefault();
+              console.log("🚀 Forçando submissão do formulário...");
+              handleSubmit(onSubmitForm)();
+            }
+          }}
         >
           {isSubmitting ? (
             <>

@@ -176,8 +176,15 @@ export default function Fornecedores() {
   };
 
   const handleViewDocuments = (fornecedor: Fornecedor) => {
-    // Verificar se há arquivo URL
-    const hasDocuments = fornecedor.arquivo_url;
+    console.log("👁️ Clicou no botão olho para Fornecedor:", fornecedor);
+    console.log("📁 Documents do Fornecedor:", (fornecedor as any).documents);
+    
+    // Verificar se há documentos no campo documents
+    const hasDocuments = 
+      ((fornecedor as any).documents && (fornecedor as any).documents.length > 0) ||
+      fornecedor.arquivo_url; // Manter compatibilidade com arquivo_url antigo
+
+    console.log("📁 Tem documentos?", hasDocuments);
 
     if (hasDocuments) {
       setSelectedFornecedor(fornecedor);
@@ -844,6 +851,55 @@ export default function Fornecedores() {
                   </p>
                 </div>
                 
+                {/* Documentos do campo documents */}
+                {(selectedFornecedor as any).documents && (selectedFornecedor as any).documents.length > 0 && (
+                  <div>
+                    <h4 className="text-md font-medium text-gray-900 mb-3">
+                      Documentos Anexados
+                    </h4>
+                    <div className="space-y-3">
+                      {(selectedFornecedor as any).documents.map((doc: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-blue-100 rounded-lg">
+                              <FileText className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {doc.name}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {(doc.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => window.open(doc.url, '_blank')}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Visualizar"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = doc.url;
+                                link.download = doc.name || `documento_${index + 1}`;
+                                link.click();
+                              }}
+                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Download"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Arquivo URL */}
                 {selectedFornecedor.arquivo_url && (
                   <div>
@@ -890,7 +946,7 @@ export default function Fornecedores() {
                 )}
 
                 {/* Mensagem se não houver documentos */}
-                {!selectedFornecedor.arquivo_url && (
+                {(!selectedFornecedor.arquivo_url && (!(selectedFornecedor as any).documents || (selectedFornecedor as any).documents.length === 0)) && (
                   <div className="text-center py-8">
                     <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500">Nenhum documento carregado para este fornecedor</p>

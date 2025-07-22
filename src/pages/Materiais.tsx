@@ -320,10 +320,16 @@ export default function Materiais() {
   };
 
   const handleViewDocuments = (material: Material) => {
-    // Verificar se há anexos ou arquivo URL
+    console.log("👁️ Clicou no botão olho para Material:", material);
+    console.log("📁 Documents do Material:", (material as any).documents);
+    
+    // Verificar se há documentos no campo documents
     const hasDocuments = 
+      ((material as any).documents && (material as any).documents.length > 0) ||
       (material.anexos && material.anexos.length > 0) ||
       material.arquivo_url;
+
+    console.log("📁 Tem documentos?", hasDocuments);
 
     if (hasDocuments) {
       setViewingMaterial(material);
@@ -1045,6 +1051,58 @@ export default function Materiais() {
                   </p>
                 </div>
                 
+                {/* Documentos do campo documents */}
+                {(viewingMaterial as any).documents && (viewingMaterial as any).documents.length > 0 && (
+                  <div>
+                    <h4 className="text-md font-medium text-gray-900 mb-3">
+                      Documentos Anexados ({(viewingMaterial as any).documents.length})
+                    </h4>
+                    <div className="space-y-3">
+                      {(viewingMaterial as any).documents.map((doc: any, index: number) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-blue-100 rounded-lg">
+                              <FileText className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {doc.name}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {(doc.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => window.open(doc.url, '_blank')}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Visualizar"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = doc.url;
+                                link.download = doc.name || `documento_${index + 1}`;
+                                link.click();
+                              }}
+                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Download"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Anexos */}
                 {viewingMaterial.anexos && viewingMaterial.anexos.length > 0 && (
                   <div>
@@ -1144,7 +1202,8 @@ export default function Materiais() {
 
                 {/* Mensagem se não houver documentos */}
                 {(!viewingMaterial.anexos || viewingMaterial.anexos.length === 0) && 
-                 !viewingMaterial.arquivo_url && (
+                 !viewingMaterial.arquivo_url &&
+                 (!(viewingMaterial as any).documents || (viewingMaterial as any).documents.length === 0) && (
                   <div className="text-center py-8">
                     <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500">Nenhum documento carregado para este material</p>
