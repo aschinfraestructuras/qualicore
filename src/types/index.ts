@@ -175,6 +175,7 @@ export interface Ensaio extends BaseEntity {
   conforme: boolean;
   seguimento?: SeguimentoEnsaio[];
   contextoAdicional?: ContextoAdicional[];
+  documents?: any[]; // Documentos carregados
 }
 
 export interface SeguimentoEnsaio {
@@ -1255,6 +1256,7 @@ export interface EnsaioCompactacao {
   grauCompactacaoMedio: number;
   referenciaLaboratorioExterno?: string; // Referência do relatório do laboratório externo
   observacoes?: string;
+  documents?: any[]; // Documentos carregados
   created?: string;
   updated?: string;
 }

@@ -31,14 +31,33 @@ export default function DocumentUpload({
   maxSizeMB = 10,
   allowedTypes = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']
 }: DocumentUploadProps) {
+
   const [documents, setDocuments] = useState<Document[]>(existingDocuments);
   const [uploading, setUploading] = useState(false);
   const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("📁 handleFileSelect chamado!");
+    console.log("📁 Files:", event.target.files);
+
     const files = event.target.files;
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) {
+      console.log("📁 Nenhum arquivo selecionado");
+      return;
+    }
+
+    // Verificar autenticação
+    console.log("🔐 Verificando autenticação...");
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log('🔐 User auth check:', user);
+    
+    if (!user) {
+      console.log("❌ Usuário não autenticado!");
+      toast.error('Precisa estar autenticado para fazer upload!');
+      return;
+    }
+    console.log("✅ Usuário autenticado:", user.email);
 
     // Verificar limite de arquivos
     if (documents.length + files.length > maxFiles) {
@@ -61,21 +80,37 @@ export default function DocumentUpload({
           throw new Error(`Tipo de arquivo ${fileExtension} não permitido`);
         }
 
-        // Gerar nome único
-        const fileName = `${Date.now()}_${file.name}`;
-        const filePath = `${recordType}/${recordId}/${fileName}`;
+        // Gerar nome único com caracteres seguros
+        const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const fileName = `${Date.now()}_${safeFileName}`;
+        const actualRecordId = recordId === 'new' ? `temp_${Date.now()}` : recordId;
+        const filePath = `${recordType}/${actualRecordId}/${fileName}`;
 
-        // Upload para Supabase Storage
+        console.log('📁 Uploading:', fileName, 'to path:', filePath);
+        console.log('📁 User:', user.email);
+
+        // Upload para Supabase Storage (igual ao teste)
         const { data, error } = await supabase.storage
           .from('documents')
           .upload(filePath, file);
 
-        if (error) throw error;
+        if (error) {
+          console.error('📁 Upload error:', error);
+          throw error;
+        }
 
-        // Gerar URL pública
+        console.log('📁 Upload success:', data);
+
+
+
+        // Gerar URL pública (igual ao teste)
         const { data: urlData } = supabase.storage
           .from('documents')
           .getPublicUrl(filePath);
+
+        console.log('📁 URL data:', urlData);
+
+
 
         const document: Document = {
           id: data.path,
@@ -86,18 +121,28 @@ export default function DocumentUpload({
           uploaded_at: new Date().toISOString()
         };
 
+
         return document;
       });
 
       const newDocuments = await Promise.all(uploadPromises);
+      console.log('📁 Novos documentos criados:', newDocuments);
+      
       const updatedDocuments = [...documents, ...newDocuments];
+      console.log('📁 Documentos atualizados:', updatedDocuments);
       
       setDocuments(updatedDocuments);
       onDocumentsChange?.(updatedDocuments);
       
       toast.success(`${newDocuments.length} documento(s) carregado(s) com sucesso!`);
     } catch (error: any) {
-      console.error('Erro no upload:', error);
+      console.error('📁 Erro no upload:', error);
+      console.error('📁 Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
       toast.error(error.message || 'Erro ao carregar documentos');
     } finally {
       setUploading(false);
@@ -151,19 +196,28 @@ export default function DocumentUpload({
   return (
     <div className="space-y-4">
       {/* Upload Area */}
-      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+      <div 
+        className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <input
           ref={fileInputRef}
           type="file"
           multiple
           accept={allowedTypes.join(',')}
           onChange={handleFileSelect}
+          onClick={(e) => e.stopPropagation()}
           className="hidden"
           disabled={uploading}
         />
         
         <button
-          onClick={() => fileInputRef.current?.click()}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            fileInputRef.current?.click();
+          }}
           disabled={uploading}
           className="flex flex-col items-center space-y-2 w-full"
         >
@@ -177,6 +231,8 @@ export default function DocumentUpload({
             </p>
           </div>
         </button>
+        
+
       </div>
 
       {/* Documents List */}

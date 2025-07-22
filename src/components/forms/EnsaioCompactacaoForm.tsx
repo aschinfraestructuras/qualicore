@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Calculator } from 'lucide-react';
 import { EnsaioCompactacao, PontoEnsaioCompactacao } from '../../types';
 import { obrasAPI } from '../../lib/supabase-api';
+import DocumentUpload from '../DocumentUpload';
 
 interface EnsaioCompactacaoFormProps {
   ensaio?: EnsaioCompactacao;
@@ -30,6 +31,7 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
   const [densidadeMaximaRef, setDensidadeMaximaRef] = useState(0);
   const [obras, setObras] = useState<any[]>([]);
   const [loadingObras, setLoadingObras] = useState(true);
+  const [documents, setDocuments] = useState<any[]>([]);
 
   useEffect(() => {
     if (ensaio) {
@@ -109,7 +111,11 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     calcularMedias();
-    onSubmit(formData);
+    const dadosCompletos = {
+      ...formData,
+      documents: documents
+    };
+    onSubmit(dadosCompletos);
   };
 
   return (
@@ -412,6 +418,22 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
               rows={3}
               className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Observações adicionais sobre o ensaio..."
+            />
+          </div>
+
+          {/* Documentos */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Documentos (Relatórios, PDFs, Imagens, etc.)
+            </label>
+            <DocumentUpload
+              recordId={ensaio?.id || 'new'}
+              recordType="ensaio_compactacao"
+              onDocumentsChange={setDocuments}
+              existingDocuments={ensaio?.documents || []}
+              maxFiles={10}
+              maxSizeMB={10}
+              allowedTypes={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']}
             />
           </div>
 

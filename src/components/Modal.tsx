@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 import { X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface ModalProps {
   isOpen: boolean;
@@ -24,34 +23,30 @@ export default function Modal({
     xl: "max-w-6xl",
   };
 
+  if (!isOpen) return null;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="modal-overlay z-[1000]" onClick={onClose}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ duration: 0.2 }}
-            className={`modal-content z-[1010] mt-24 ${sizeClasses[size]}`}
-            onClick={(e) => e.stopPropagation()}
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4">
+      <div 
+        className={`bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto ${sizeClasses[size]}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900">
+            {title}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
+            title="Fechar"
           >
-            <div className="modal-header">
-              <h2 className="text-xl font-bold text-gray-900 font-display">
-                {title}
-              </h2>
-              <button
-                onClick={onClose}
-                className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
-                title="Fechar"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            <div className="modal-body">{children}</div>
-          </motion.div>
+            <X className="h-6 w-6" />
+          </button>
         </div>
-      )}
-    </AnimatePresence>
+        <div className="p-6">
+          {children}
+        </div>
+      </div>
+    </div>
   );
 }

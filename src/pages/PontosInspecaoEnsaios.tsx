@@ -23,7 +23,8 @@ import {
   ChevronDown,
   ChevronUp,
   Grid,
-  List
+  List,
+  Cloud
 } from 'lucide-react';
 import { PIEInstancia } from '@/types/pie';
 import { PDFService } from '@/services/pdfService';
@@ -864,7 +865,10 @@ const PontosInspecaoEnsaios: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedPIE, setSelectedPIE] = useState<PIEInstancia | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showSavedPIE, setShowSavedPIE] = useState(false);
+  const [showDocumentsModal, setShowDocumentsModal] = useState(false);
+  const [selectedPIE, setSelectedPIE] = useState<any>(null);
 
   // Mock data for demonstration
   const mockPies: PIEInstancia[] = [

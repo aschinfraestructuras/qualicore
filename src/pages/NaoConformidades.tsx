@@ -6,7 +6,7 @@ import { ShareNaoConformidadeModal } from "@/components/ShareNaoConformidadeModa
 import { SavedNaoConformidadesViewer } from "@/components/SavedNaoConformidadesViewer";
 import toast from "react-hot-toast";
 import { sanitizeUUIDField } from "@/utils/uuid";
-import { Plus, Search, Filter, FileText, XCircle, Download, Share2, Cloud } from "lucide-react";
+import { Plus, Search, Filter, FileText, XCircle, Download, Share2, Cloud, Eye, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function NaoConformidades() {
@@ -29,6 +29,7 @@ export default function NaoConformidades() {
   const [tipoRelatorio, setTipoRelatorio] = useState<"executivo" | "individual" | "filtrado" | "comparativo">("executivo");
   const [showShareModal, setShowShareModal] = useState(false);
   const [showSavedNCs, setShowSavedNCs] = useState(false);
+  const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [selectedNC, setSelectedNC] = useState<any>(null);
 
   useEffect(() => {
@@ -75,9 +76,26 @@ export default function NaoConformidades() {
     setShowShareModal(true);
   };
 
+  const handleViewDocuments = (nc: any) => {
+    // Verificar se há anexos em qualquer categoria
+    const hasDocuments = 
+      (nc.anexos_evidencia && nc.anexos_evidencia.length > 0) ||
+      (nc.anexos_corretiva && nc.anexos_corretiva.length > 0) ||
+      (nc.anexos_verificacao && nc.anexos_verificacao.length > 0) ||
+      (nc.anexos && nc.anexos.length > 0);
+
+    if (hasDocuments) {
+      setSelectedNC(nc);
+      setShowDocumentsModal(true);
+    } else {
+      toast("Esta não conformidade não possui documentos carregados");
+    }
+  };
+
   const handleSubmitNC = async (data: any) => {
     try {
       console.log("Dados recebidos do formulário NC:", data);
+      console.log("Anexos evidência:", data.anexos_evidencia);
 
       // Filtrar apenas os campos válidos do schema Supabase e sanitizar UUIDs
       const validNCData = {
@@ -87,10 +105,10 @@ export default function NaoConformidades() {
         severidade: data.severidade,
         categoria: data.categoria,
         categoria_outro: data.categoria_outro,
-        data_deteccao: data.data_deteccao,
-        data_resolucao: data.data_resolucao,
-        data_limite_resolucao: data.data_limite_resolucao,
-        data_verificacao_eficacia: data.data_verificacao_eficacia,
+        data_deteccao: data.data_deteccao || new Date().toISOString().split('T')[0],
+        data_resolucao: data.data_resolucao || null,
+        data_limite_resolucao: data.data_limite_resolucao || null,
+        data_verificacao_eficacia: data.data_verificacao_eficacia || null,
         descricao: data.descricao,
         causa_raiz: data.causa_raiz,
         impacto: data.impacto,
@@ -105,10 +123,6 @@ export default function NaoConformidades() {
         custo_real: data.custo_real,
         custo_preventivo: data.custo_preventivo,
         observacoes: data.observacoes,
-        relacionado_obra_id: sanitizeUUIDField(data.relacionado_obra_id),
-        relacionado_obra_outro: data.relacionado_obra_outro,
-        relacionado_zona_id: sanitizeUUIDField(data.relacionado_zona_id),
-        relacionado_zona_outro: data.relacionado_zona_outro,
         relacionado_ensaio_id: sanitizeUUIDField(data.relacionado_ensaio_id),
         relacionado_ensaio_outro: data.relacionado_ensaio_outro,
         relacionado_material_id: sanitizeUUIDField(
@@ -126,8 +140,16 @@ export default function NaoConformidades() {
           data.relacionado_fornecedor_id,
         ),
         relacionado_fornecedor_outro: data.relacionado_fornecedor_outro,
+        relacionado_obra_id: sanitizeUUIDField(data.relacionado_obra_id),
+        relacionado_obra_outro: data.relacionado_obra_outro,
+        relacionado_zona_id: sanitizeUUIDField(data.relacionado_zona_id),
+        relacionado_zona_outro: data.relacionado_zona_outro,
         auditoria_id: sanitizeUUIDField(data.auditoria_id),
         auditoria_outro: data.auditoria_outro,
+        anexos_evidencia: data.anexos_evidencia || [],
+        anexos_corretiva: data.anexos_corretiva || [],
+        anexos_verificacao: data.anexos_verificacao || [],
+        timeline: data.timeline || [],
       };
 
       console.log("Dados corrigidos para envio:", validNCData);
@@ -523,6 +545,13 @@ export default function NaoConformidades() {
                       </div>
                       <div className="flex gap-2">
                         <button
+                          onClick={() => handleViewDocuments(nc)}
+                          className="btn btn-sm btn-outline"
+                          title="Ver Documentos"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
                           onClick={() => handleShare(nc)}
                           className="btn btn-sm btn-outline"
                           title="Partilhar NC"
@@ -541,7 +570,10 @@ export default function NaoConformidades() {
                           <FileText className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => setEditingNC(nc)}
+                          onClick={() => {
+                            setEditingNC(nc);
+                            setShowForm(true);
+                          }}
                           className="btn btn-sm btn-outline"
                         >
                           Editar
@@ -607,6 +639,249 @@ export default function NaoConformidades() {
           isOpen={showSavedNCs}
           onClose={() => setShowSavedNCs(false)}
         />
+      )}
+
+      {/* Modal de Visualização de Documentos */}
+      {showDocumentsModal && selectedNC && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Documentos da Não Conformidade: {selectedNC.codigo}
+                </h2>
+                <button
+                  onClick={() => setShowDocumentsModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="space-y-6">
+                {/* Anexos de Evidência */}
+                {selectedNC.anexos_evidencia && selectedNC.anexos_evidencia.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      Anexos de Evidência ({selectedNC.anexos_evidencia.length})
+                    </h3>
+                    <div className="space-y-3">
+                      {selectedNC.anexos_evidencia.map((doc: any, index: number) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-red-100 rounded-lg">
+                              <FileText className="h-5 w-5 text-red-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {doc.nome || `Evidência ${index + 1}`}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {(doc.tamanho / 1024).toFixed(2)} KB
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => window.open(doc.url, '_blank')}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Visualizar"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = doc.url;
+                                link.download = doc.nome || `evidencia_${index + 1}`;
+                                link.click();
+                              }}
+                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Download"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Anexos Corretivos */}
+                {selectedNC.anexos_corretiva && selectedNC.anexos_corretiva.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      Anexos Corretivos ({selectedNC.anexos_corretiva.length})
+                    </h3>
+                    <div className="space-y-3">
+                      {selectedNC.anexos_corretiva.map((doc: any, index: number) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-green-100 rounded-lg">
+                              <FileText className="h-5 w-5 text-green-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {doc.nome || `Corretivo ${index + 1}`}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {(doc.tamanho / 1024).toFixed(2)} KB
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => window.open(doc.url, '_blank')}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Visualizar"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = doc.url;
+                                link.download = doc.nome || `corretivo_${index + 1}`;
+                                link.click();
+                              }}
+                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Download"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Anexos de Verificação */}
+                {selectedNC.anexos_verificacao && selectedNC.anexos_verificacao.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      Anexos de Verificação ({selectedNC.anexos_verificacao.length})
+                    </h3>
+                    <div className="space-y-3">
+                      {selectedNC.anexos_verificacao.map((doc: any, index: number) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-blue-100 rounded-lg">
+                              <FileText className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {doc.nome || `Verificação ${index + 1}`}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {(doc.tamanho / 1024).toFixed(2)} KB
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => window.open(doc.url, '_blank')}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Visualizar"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = doc.url;
+                                link.download = doc.nome || `verificacao_${index + 1}`;
+                                link.click();
+                              }}
+                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Download"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Anexos Gerais */}
+                {selectedNC.anexos && selectedNC.anexos.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      Anexos Gerais ({selectedNC.anexos.length})
+                    </h3>
+                    <div className="space-y-3">
+                      {selectedNC.anexos.map((doc: any, index: number) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-gray-100 rounded-lg">
+                              <FileText className="h-5 w-5 text-gray-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {doc.nome || `Anexo ${index + 1}`}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {(doc.tamanho / 1024).toFixed(2)} KB
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => window.open(doc.url, '_blank')}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Visualizar"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = doc.url;
+                                link.download = doc.nome || `anexo_${index + 1}`;
+                                link.click();
+                              }}
+                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Download"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Mensagem se não houver documentos */}
+                {(!selectedNC.anexos_evidencia || selectedNC.anexos_evidencia.length === 0) &&
+                 (!selectedNC.anexos_corretiva || selectedNC.anexos_corretiva.length === 0) &&
+                 (!selectedNC.anexos_verificacao || selectedNC.anexos_verificacao.length === 0) &&
+                 (!selectedNC.anexos || selectedNC.anexos.length === 0) && (
+                  <div className="text-center py-8">
+                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Nenhum documento carregado para esta não conformidade</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

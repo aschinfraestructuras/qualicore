@@ -64,6 +64,7 @@ export default function Materiais() {
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showSavedMateriais, setShowSavedMateriais] = useState(false);
+  const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [sharingMaterial, setSharingMaterial] = useState<Material | null>(null);
 
 
@@ -316,6 +317,20 @@ export default function Materiais() {
   const handleShare = (material: Material) => {
     setSharingMaterial(material);
     setShowShareModal(true);
+  };
+
+  const handleViewDocuments = (material: Material) => {
+    // Verificar se há anexos ou arquivo URL
+    const hasDocuments = 
+      (material.anexos && material.anexos.length > 0) ||
+      material.arquivo_url;
+
+    if (hasDocuments) {
+      setViewingMaterial(material);
+      setShowDocumentsModal(true);
+    } else {
+      toast("Este material não possui documentos carregados");
+    }
   };
 
 
@@ -817,6 +832,13 @@ export default function Materiais() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
+                        className="p-2 text-gray-400 hover:text-cyan-600 transition-colors"
+                        onClick={() => handleViewDocuments(material)}
+                        title="Ver Documentos"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button
                         className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                         onClick={() => handleShare(material)}
                         title="Partilhar material"
@@ -995,7 +1017,144 @@ export default function Materiais() {
         />
       )}
 
+      {/* Modal de Visualização de Documentos */}
+      {showDocumentsModal && viewingMaterial && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Documentos do Material: {viewingMaterial.codigo}
+                </h2>
+                <button
+                  onClick={() => setShowDocumentsModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <div className="mb-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Documentos Carregados
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Visualize e faça download dos documentos associados a este material.
+                  </p>
+                </div>
+                
+                {/* Anexos */}
+                {viewingMaterial.anexos && viewingMaterial.anexos.length > 0 && (
+                  <div>
+                    <h4 className="text-md font-medium text-gray-900 mb-3">
+                      Anexos ({viewingMaterial.anexos.length})
+                    </h4>
+                    <div className="space-y-3">
+                      {viewingMaterial.anexos.map((doc: any, index: number) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-blue-100 rounded-lg">
+                              <FileText className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {doc.nome || `Anexo ${index + 1}`}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {(doc.tamanho / 1024).toFixed(2)} KB
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => window.open(doc.url, '_blank')}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Visualizar"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = doc.url;
+                                link.download = doc.nome || `anexo_${index + 1}`;
+                                link.click();
+                              }}
+                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Download"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
+                {/* Arquivo URL */}
+                {viewingMaterial.arquivo_url && (
+                  <div>
+                    <h4 className="text-md font-medium text-gray-900 mb-3">
+                      Arquivo Principal
+                    </h4>
+                    <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-green-100 rounded-lg">
+                          <FileText className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            Arquivo do Material
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Documento principal
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => window.open(viewingMaterial.arquivo_url, '_blank')}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Visualizar"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = viewingMaterial.arquivo_url!;
+                            link.download = `material_${viewingMaterial.codigo}`;
+                            link.click();
+                          }}
+                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          title="Download"
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mensagem se não houver documentos */}
+                {(!viewingMaterial.anexos || viewingMaterial.anexos.length === 0) && 
+                 !viewingMaterial.arquivo_url && (
+                  <div className="text-center py-8">
+                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Nenhum documento carregado para este material</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

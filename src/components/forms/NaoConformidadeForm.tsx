@@ -2,44 +2,19 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  X,
-  Upload,
-  Plus,
-  Trash2,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Building,
-} from "lucide-react";
-import { NaoConformidade } from "@/types";
-import toast from "react-hot-toast";
+import { X, Plus, Trash2 } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { naoConformidadesAPI } from "@/lib/supabase-api";
+import type { NaoConformidade } from "@/types";
+import DocumentUpload from "../DocumentUpload";
 
-// Schema expandido para todos os campos
+// Schema de validação
 const naoConformidadeSchema = z.object({
   codigo: z.string().min(1, "Código é obrigatório"),
-  tipo: z.enum([
-    "material",
-    "execucao",
-    "documentacao",
-    "seguranca",
-    "ambiente",
-    "qualidade",
-    "prazo",
-    "custo",
-    "outro",
-  ]),
+  tipo: z.string().min(1, "Tipo é obrigatório"),
   tipo_outro: z.string().optional(),
-  severidade: z.enum(["baixa", "media", "alta", "critica"]),
-  categoria: z.enum([
-    "auditoria",
-    "inspecao",
-    "reclamacao",
-    "acidente",
-    "incidente",
-    "desvio",
-    "outro",
-  ]),
+  severidade: z.string().min(1, "Severidade é obrigatória"),
+  categoria: z.string().min(1, "Categoria é obrigatória"),
   categoria_outro: z.string().optional(),
   data_deteccao: z.string().min(1, "Data de deteção é obrigatória"),
   data_resolucao: z.string().optional(),
@@ -47,56 +22,37 @@ const naoConformidadeSchema = z.object({
   data_verificacao_eficacia: z.string().optional(),
   descricao: z.string().min(1, "Descrição é obrigatória"),
   causa_raiz: z.string().optional(),
-  impacto: z.enum(["baixo", "medio", "alto", "critico"]),
+  impacto: z.string().min(1, "Impacto é obrigatório"),
   area_afetada: z.string().min(1, "Área afetada é obrigatória"),
-  responsavel_deteccao: z
-    .string()
-    .min(1, "Responsável pela deteção é obrigatório"),
+  responsavel_deteccao: z.string().min(1, "Responsável pela deteção é obrigatório"),
   responsavel_resolucao: z.string().optional(),
+  responsavel_verificacao: z.string().optional(),
+  acao_corretiva: z.string().optional(),
+  acao_preventiva: z.string().optional(),
+  medidas_implementadas: z.array(z.string()).optional(),
   custo_estimado: z.number().optional(),
   custo_real: z.number().optional(),
+  custo_preventivo: z.number().optional(),
   observacoes: z.string().optional(),
-  // Integrações
-  relacionado_obra_id: z.string().optional(),
-  relacionado_obra_outro: z.string().optional(),
-  relacionado_zona_id: z.string().optional(),
-  relacionado_zona_outro: z.string().optional(),
   relacionado_ensaio_id: z.string().optional(),
   relacionado_ensaio_outro: z.string().optional(),
   relacionado_material_id: z.string().optional(),
   relacionado_material_outro: z.string().optional(),
   relacionado_checklist_id: z.string().optional(),
   relacionado_checklist_outro: z.string().optional(),
+  relacionado_documento_id: z.string().optional(),
   relacionado_fornecedor_id: z.string().optional(),
   relacionado_fornecedor_outro: z.string().optional(),
+  relacionado_obra_id: z.string().optional(),
+  relacionado_obra_outro: z.string().optional(),
+  relacionado_zona_id: z.string().optional(),
+  relacionado_zona_outro: z.string().optional(),
   auditoria_id: z.string().optional(),
   auditoria_outro: z.string().optional(),
-  // Anexos
   anexos_evidencia: z.array(z.string()).optional(),
   anexos_corretiva: z.array(z.string()).optional(),
   anexos_verificacao: z.array(z.string()).optional(),
-  // Timeline
-  timeline: z
-    .array(
-      z.object({
-        id: z.string(),
-        data: z.string(),
-        tipo: z.enum([
-          "deteccao",
-          "analise",
-          "acao_corretiva",
-          "verificacao",
-          "resolucao",
-          "reabertura",
-          "comentario",
-          "anexo",
-        ]),
-        responsavel: z.string(),
-        descricao: z.string(),
-        anexos: z.array(z.string()).optional(),
-      }),
-    )
-    .optional(),
+  timeline: z.array(z.any()).optional(),
 });
 
 type NaoConformidadeFormData = z.infer<typeof naoConformidadeSchema>;
@@ -112,31 +68,19 @@ export default function NaoConformidadeForm({
   onSubmit,
   onCancel,
 }: NaoConformidadeFormProps) {
-  const [showIntegrations, setShowIntegrations] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: File[] }>(
-    {
-      evidencia: [],
-      corretiva: [],
-      verificacao: [],
-    },
-  );
   const [obras, setObras] = useState<any[]>([]);
-
-  // Carregar obras do localStorage
-  useEffect(() => {
-    const loadObras = () => {
-      try {
-        const stored = localStorage.getItem("qualicore_obras");
-        if (stored) {
-          const obrasData = JSON.parse(stored);
-          setObras(obrasData);
-        }
-      } catch (error) {
-        console.error("Erro ao carregar obras:", error);
-      }
-    };
-    loadObras();
-  }, []);
+  const [materiais, setMateriais] = useState<any[]>([]);
+  const [fornecedores, setFornecedores] = useState<any[]>([]);
+  const [ensaios, setEnsaios] = useState<any[]>([]);
+  const [checklists, setChecklists] = useState<any[]>([]);
+  const [documentos, setDocumentos] = useState<any[]>([]);
+  const [zonas, setZonas] = useState<any[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState({
+    evidencia: [] as File[],
+    corretiva: [] as File[],
+    verificacao: [] as File[],
+  });
+  const [documents, setDocuments] = useState<any[]>([]);
 
   const {
     register,
@@ -146,79 +90,103 @@ export default function NaoConformidadeForm({
   } = useForm<NaoConformidadeFormData>({
     resolver: zodResolver(naoConformidadeSchema),
     defaultValues: {
-      codigo: naoConformidade?.codigo || "",
-      tipo: naoConformidade?.tipo || "material",
+      codigo: naoConformidade?.codigo || `NC-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+      tipo: naoConformidade?.tipo || "",
       tipo_outro: naoConformidade?.tipo_outro || "",
-      severidade: naoConformidade?.severidade || "media",
-      categoria: naoConformidade?.categoria || "inspecao",
+      severidade: naoConformidade?.severidade || "",
+      categoria: naoConformidade?.categoria || "",
       categoria_outro: naoConformidade?.categoria_outro || "",
-      data_deteccao:
-        naoConformidade?.data_deteccao ||
-        new Date().toISOString().split("T")[0],
+      data_deteccao: naoConformidade?.data_deteccao || new Date().toISOString().split('T')[0],
       data_resolucao: naoConformidade?.data_resolucao || "",
       data_limite_resolucao: naoConformidade?.data_limite_resolucao || "",
-      data_verificacao_eficacia:
-        naoConformidade?.data_verificacao_eficacia || "",
+      data_verificacao_eficacia: naoConformidade?.data_verificacao_eficacia || "",
       descricao: naoConformidade?.descricao || "",
       causa_raiz: naoConformidade?.causa_raiz || "",
-      impacto: naoConformidade?.impacto || "medio",
+      impacto: naoConformidade?.impacto || "",
       area_afetada: naoConformidade?.area_afetada || "",
       responsavel_deteccao: naoConformidade?.responsavel_deteccao || "",
       responsavel_resolucao: naoConformidade?.responsavel_resolucao || "",
+      responsavel_verificacao: naoConformidade?.responsavel_verificacao || "",
+      acao_corretiva: naoConformidade?.acao_corretiva || "",
+      acao_preventiva: naoConformidade?.acao_preventiva || "",
+      medidas_implementadas: naoConformidade?.medidas_implementadas || [],
       custo_estimado: naoConformidade?.custo_estimado || 0,
       custo_real: naoConformidade?.custo_real || 0,
+      custo_preventivo: naoConformidade?.custo_preventivo || 0,
       observacoes: naoConformidade?.observacoes || "",
+      relacionado_ensaio_id: naoConformidade?.relacionado_ensaio_id || "",
+      relacionado_ensaio_outro: naoConformidade?.relacionado_ensaio_outro || "",
+      relacionado_material_id: naoConformidade?.relacionado_material_id || "",
+      relacionado_material_outro: naoConformidade?.relacionado_material_outro || "",
+      relacionado_checklist_id: naoConformidade?.relacionado_checklist_id || "",
+      relacionado_checklist_outro: naoConformidade?.relacionado_checklist_outro || "",
+      relacionado_documento_id: naoConformidade?.relacionado_documento_id || "",
+      relacionado_fornecedor_id: naoConformidade?.relacionado_fornecedor_id || "",
+      relacionado_fornecedor_outro: naoConformidade?.relacionado_fornecedor_outro || "",
       relacionado_obra_id: naoConformidade?.relacionado_obra_id || "",
       relacionado_obra_outro: naoConformidade?.relacionado_obra_outro || "",
       relacionado_zona_id: naoConformidade?.relacionado_zona_id || "",
       relacionado_zona_outro: naoConformidade?.relacionado_zona_outro || "",
-      relacionado_ensaio_id: naoConformidade?.relacionado_ensaio_id || "",
-      relacionado_ensaio_outro: naoConformidade?.relacionado_ensaio_outro || "",
-      relacionado_material_id: naoConformidade?.relacionado_material_id || "",
-      relacionado_material_outro:
-        naoConformidade?.relacionado_material_outro || "",
-      relacionado_checklist_id: naoConformidade?.relacionado_checklist_id || "",
-      relacionado_checklist_outro:
-        naoConformidade?.relacionado_checklist_outro || "",
-      relacionado_fornecedor_id:
-        naoConformidade?.relacionado_fornecedor_id || "",
-      relacionado_fornecedor_outro:
-        naoConformidade?.relacionado_fornecedor_outro || "",
       auditoria_id: naoConformidade?.auditoria_id || "",
       auditoria_outro: naoConformidade?.auditoria_outro || "",
-      anexos_evidencia:
-        naoConformidade?.anexos_evidencia?.map((a) => a.nome) || [],
-      anexos_corretiva:
-        naoConformidade?.anexos_corretiva?.map((a) => a.nome) || [],
-      anexos_verificacao:
-        naoConformidade?.anexos_verificacao?.map((a) => a.nome) || [],
+      anexos_evidencia: naoConformidade?.anexos_evidencia?.map((a) => typeof a === 'string' ? a : a.nome) || [],
+      anexos_corretiva: naoConformidade?.anexos_corretiva?.map((a) => typeof a === 'string' ? a : a.nome) || [],
+      anexos_verificacao: naoConformidade?.anexos_verificacao?.map((a) => typeof a === 'string' ? a : a.nome) || [],
       timeline: naoConformidade?.timeline || [],
     },
   });
 
-  // Watch para campos que controlam a exibição de campos "outro"
   const tipo = watch("tipo");
   const categoria = watch("categoria");
-  const relacionado_obra_id = watch("relacionado_obra_id");
-  const relacionado_zona_id = watch("relacionado_zona_id");
-  const relacionado_ensaio_id = watch("relacionado_ensaio_id");
-  const relacionado_material_id = watch("relacionado_material_id");
-  const relacionado_checklist_id = watch("relacionado_checklist_id");
-  const relacionado_fornecedor_id = watch("relacionado_fornecedor_id");
-  const auditoria_id = watch("auditoria_id");
+
+  useEffect(() => {
+    const loadObras = () => {
+      // Implementar carregamento de obras
+    };
+
+    const loadMateriais = () => {
+      // Implementar carregamento de materiais
+    };
+
+    const loadFornecedores = () => {
+      // Implementar carregamento de fornecedores
+    };
+
+    const loadEnsaios = () => {
+      // Implementar carregamento de ensaios
+    };
+
+    const loadChecklists = () => {
+      // Implementar carregamento de checklists
+    };
+
+    const loadDocumentos = () => {
+      // Implementar carregamento de documentos
+    };
+
+    const loadZonas = () => {
+      // Implementar carregamento de zonas
+    };
+
+    loadObras();
+    loadMateriais();
+    loadFornecedores();
+    loadEnsaios();
+    loadChecklists();
+    loadDocumentos();
+    loadZonas();
+  }, []);
 
   const handleFileUpload = (
     type: "evidencia" | "corretiva" | "verificacao",
     files: FileList | null,
   ) => {
-    if (files) {
-      const fileArray = Array.from(files);
-      setUploadedFiles((prev) => ({
-        ...prev,
-        [type]: [...prev[type], ...fileArray],
-      }));
-      toast.success(`${fileArray.length} ficheiro(s) adicionado(s)`);
-    }
+    if (!files) return;
+    const fileArray = Array.from(files);
+    setUploadedFiles((prev) => ({
+      ...prev,
+      [type]: [...prev[type], ...fileArray],
+    }));
   };
 
   const removeFile = (
@@ -233,13 +201,13 @@ export default function NaoConformidadeForm({
 
   const onFormSubmit = async (data: NaoConformidadeFormData) => {
     try {
-      // Processar ficheiros anexados
+      console.log("🚀 Formulário submetido!");
+      console.log("📁 Ficheiros carregados:", uploadedFiles);
+      console.log("📁 Documents do DocumentUpload:", documents);
+      
       const processedData = {
         ...data,
-        anexos_evidencia: [
-          ...(data.anexos_evidencia || []),
-          ...uploadedFiles.evidencia.map((f) => f.name),
-        ],
+        anexos_evidencia: documents, // Use documents from DocumentUpload
         anexos_corretiva: [
           ...(data.anexos_corretiva || []),
           ...uploadedFiles.corretiva.map((f) => f.name),
@@ -250,11 +218,14 @@ export default function NaoConformidadeForm({
         ],
       };
 
+      console.log("📁 Dados processados:", processedData);
+      console.log("📁 Anexos evidência:", processedData.anexos_evidencia);
+
       await onSubmit(processedData);
       toast.success("Não conformidade guardada com sucesso!");
     } catch (error) {
       toast.error("Erro ao guardar não conformidade");
-      console.error(error);
+      console.error("❌ Erro no formulário:", error);
     }
   };
 
@@ -369,11 +340,6 @@ export default function NaoConformidadeForm({
                   placeholder="Outra categoria"
                 />
               )}
-              {errors.categoria && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.categoria.message}
-                </p>
-              )}
             </div>
 
             <div>
@@ -385,9 +351,57 @@ export default function NaoConformidadeForm({
                 {...register("data_deteccao")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              {errors.data_deteccao && (
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Data de Resolução
+              </label>
+              <input
+                type="date"
+                {...register("data_resolucao")}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Data Limite de Resolução
+              </label>
+              <input
+                type="date"
+                {...register("data_limite_resolucao")}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Data de Verificação de Eficácia
+              </label>
+              <input
+                type="date"
+                {...register("data_verificacao_eficacia")}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Descrição e Impacto */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Descrição *
+              </label>
+              <textarea
+                {...register("descricao")}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Descreva a não conformidade..."
+              />
+              {errors.descricao && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.data_deteccao.message}
+                  {errors.descricao.message}
                 </p>
               )}
             </div>
@@ -408,40 +422,8 @@ export default function NaoConformidadeForm({
             </div>
           </div>
 
-          {/* Descrição e Causa Raiz */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Descrição *
-              </label>
-              <textarea
-                {...register("descricao")}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Descreva detalhadamente a não conformidade..."
-              />
-              {errors.descricao && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.descricao.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Causa Raiz
-              </label>
-              <textarea
-                {...register("causa_raiz")}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Identifique a causa raiz do problema..."
-              />
-            </div>
-          </div>
-
-          {/* Responsabilidades e Área */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Área Afetada e Responsáveis */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Área Afetada *
@@ -450,13 +432,8 @@ export default function NaoConformidadeForm({
                 type="text"
                 {...register("area_afetada")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Ex: Zona A - Fundações"
+                placeholder="Área afetada"
               />
-              {errors.area_afetada && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.area_afetada.message}
-                </p>
-              )}
             </div>
 
             <div>
@@ -467,13 +444,8 @@ export default function NaoConformidadeForm({
                 type="text"
                 {...register("responsavel_deteccao")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Nome do responsável"
+                placeholder="Responsável"
               />
-              {errors.responsavel_deteccao && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.responsavel_deteccao.message}
-                </p>
-              )}
             </div>
 
             <div>
@@ -484,72 +456,40 @@ export default function NaoConformidadeForm({
                 type="text"
                 {...register("responsavel_resolucao")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Nome do responsável"
+                placeholder="Responsável"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Auditoria Relacionada
-              </label>
-              <select
-                {...register("auditoria_id")}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Selecionar auditoria...</option>
-                <option value="aud-001">Auditoria Interna 2024</option>
-                <option value="aud-002">Auditoria Externa</option>
-                <option value="outro">Outro</option>
-              </select>
-              {auditoria_id === "outro" && (
-                <input
-                  type="text"
-                  {...register("auditoria_outro")}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
-                  placeholder="Descreva a auditoria..."
-                />
-              )}
             </div>
           </div>
 
-          {/* Datas Adicionais */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Ações */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Data Limite de Resolução
+                Ação Corretiva
               </label>
-              <input
-                type="date"
-                {...register("data_limite_resolucao")}
+              <textarea
+                {...register("acao_corretiva")}
+                rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Descreva a ação corretiva..."
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Data de Resolução
+                Ação Preventiva
               </label>
-              <input
-                type="date"
-                {...register("data_resolucao")}
+              <textarea
+                {...register("acao_preventiva")}
+                rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Data de Verificação de Eficácia
-              </label>
-              <input
-                type="date"
-                {...register("data_verificacao_eficacia")}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Descreva a ação preventiva..."
               />
             </div>
           </div>
 
           {/* Custos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Custo Estimado (€)
@@ -575,323 +515,25 @@ export default function NaoConformidadeForm({
                 placeholder="0.00"
               />
             </div>
-          </div>
 
-          {/* Integrações */}
-          <div className="border-t pt-6">
-            <button
-              type="button"
-              onClick={() => setShowIntegrations(!showIntegrations)}
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
-            >
-              <Plus size={16} />
-              Integrações com Outros Módulos
-            </button>
-
-            {showIntegrations && (
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Obra Relacionada
-                  </label>
-                  <select
-                    {...register("relacionado_obra_id")}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecionar obra...</option>
-                    {obras.map((obra) => (
-                      <option key={obra.id} value={obra.id}>
-                        {obra.codigo} - {obra.nome}
-                      </option>
-                    ))}
-                    <option value="outro">Outro</option>
-                  </select>
-                  {relacionado_obra_id === "outro" && (
-                    <input
-                      type="text"
-                      {...register("relacionado_obra_outro")}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
-                      placeholder="Descreva a obra..."
-                    />
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Zona Relacionada
-                  </label>
-                  <select
-                    {...register("relacionado_zona_id")}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecionar zona...</option>
-                    <option value="zona-001">Zona A - Fundações</option>
-                    <option value="zona-002">Zona B - Pilares</option>
-                    <option value="outro">Outro</option>
-                  </select>
-                  {relacionado_zona_id === "outro" && (
-                    <input
-                      type="text"
-                      {...register("relacionado_zona_outro")}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
-                      placeholder="Descreva a zona..."
-                    />
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ensaio Relacionado
-                  </label>
-                  <select
-                    {...register("relacionado_ensaio_id")}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecionar ensaio...</option>
-                    <option value="ensaio-001">Ensaio de Resistência</option>
-                    <option value="ensaio-002">Ensaio de Qualidade</option>
-                    <option value="outro">Outro</option>
-                  </select>
-                  {relacionado_ensaio_id === "outro" && (
-                    <input
-                      type="text"
-                      {...register("relacionado_ensaio_outro")}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
-                      placeholder="Descreva o ensaio..."
-                    />
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Material Relacionado
-                  </label>
-                  <select
-                    {...register("relacionado_material_id")}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecionar material...</option>
-                    <option value="mat-001">Cimento</option>
-                    <option value="mat-002">Aço</option>
-                    <option value="outro">Outro</option>
-                  </select>
-                  {relacionado_material_id === "outro" && (
-                    <input
-                      type="text"
-                      {...register("relacionado_material_outro")}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
-                      placeholder="Descreva o material..."
-                    />
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Checklist Relacionado
-                  </label>
-                  <select
-                    {...register("relacionado_checklist_id")}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecionar checklist...</option>
-                    <option value="chk-001">Checklist Fundações</option>
-                    <option value="chk-002">Checklist Estrutura</option>
-                    <option value="outro">Outro</option>
-                  </select>
-                  {relacionado_checklist_id === "outro" && (
-                    <input
-                      type="text"
-                      {...register("relacionado_checklist_outro")}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
-                      placeholder="Descreva o checklist..."
-                    />
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Fornecedor Relacionado
-                  </label>
-                  <select
-                    {...register("relacionado_fornecedor_id")}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecionar fornecedor...</option>
-                    <option value="for-001">Fornecedor A</option>
-                    <option value="for-002">Fornecedor B</option>
-                    <option value="outro">Outro</option>
-                  </select>
-                  {relacionado_fornecedor_id === "outro" && (
-                    <input
-                      type="text"
-                      {...register("relacionado_fornecedor_outro")}
-                      className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
-                      placeholder="Descreva o fornecedor..."
-                    />
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Anexos */}
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Anexos</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Evidência */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <AlertTriangle size={16} className="inline mr-1" />
-                  Evidência da NC
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                  <input
-                    type="file"
-                    multiple
-                    onChange={(e) =>
-                      handleFileUpload("evidencia", e.target.files)
-                    }
-                    className="hidden"
-                    id="evidencia-upload"
-                  />
-                  <label
-                    htmlFor="evidencia-upload"
-                    className="cursor-pointer flex flex-col items-center"
-                  >
-                    <Upload size={24} className="text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-600">
-                      Carregar ficheiros
-                    </span>
-                  </label>
-                </div>
-                {uploadedFiles.evidencia.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    {uploadedFiles.evidencia.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between bg-gray-50 p-2 rounded"
-                      >
-                        <span className="text-sm text-gray-700 truncate">
-                          {file.name}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeFile("evidencia", index)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Ação Corretiva */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <CheckCircle size={16} className="inline mr-1" />
-                  Ação Corretiva
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                  <input
-                    type="file"
-                    multiple
-                    onChange={(e) =>
-                      handleFileUpload("corretiva", e.target.files)
-                    }
-                    className="hidden"
-                    id="corretiva-upload"
-                  />
-                  <label
-                    htmlFor="corretiva-upload"
-                    className="cursor-pointer flex flex-col items-center"
-                  >
-                    <Upload size={24} className="text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-600">
-                      Carregar ficheiros
-                    </span>
-                  </label>
-                </div>
-                {uploadedFiles.corretiva.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    {uploadedFiles.corretiva.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between bg-gray-50 p-2 rounded"
-                      >
-                        <span className="text-sm text-gray-700 truncate">
-                          {file.name}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeFile("corretiva", index)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Verificação */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Clock size={16} className="inline mr-1" />
-                  Verificação
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                  <input
-                    type="file"
-                    multiple
-                    onChange={(e) =>
-                      handleFileUpload("verificacao", e.target.files)
-                    }
-                    className="hidden"
-                    id="verificacao-upload"
-                  />
-                  <label
-                    htmlFor="verificacao-upload"
-                    className="cursor-pointer flex flex-col items-center"
-                  >
-                    <Upload size={24} className="text-gray-400 mb-2" />
-                    <span className="text-sm text-gray-600">
-                      Carregar ficheiros
-                    </span>
-                  </label>
-                </div>
-                {uploadedFiles.verificacao.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    {uploadedFiles.verificacao.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between bg-gray-50 p-2 rounded"
-                      >
-                        <span className="text-sm text-gray-700 truncate">
-                          {file.name}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeFile("verificacao", index)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Custo Preventivo (€)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                {...register("custo_preventivo", { valueAsNumber: true })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0.00"
+              />
             </div>
           </div>
 
           {/* Observações */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Observações Adicionais
+              Observações
             </label>
             <textarea
               {...register("observacoes")}
@@ -901,25 +543,44 @@ export default function NaoConformidadeForm({
             />
           </div>
 
+          {/* Anexos - DocumentUpload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Evidência da NC (Documentos)
+            </label>
+            <DocumentUpload
+              recordId={naoConformidade?.id || 'new'}
+              recordType="nao_conformidade"
+              onDocumentsChange={setDocuments}
+              existingDocuments={naoConformidade?.anexos_evidencia?.map((anexo: any) => ({
+                id: typeof anexo === 'string' ? anexo : anexo.id || anexo.nome,
+                name: typeof anexo === 'string' ? anexo : anexo.nome || anexo.name,
+                url: typeof anexo === 'string' ? '' : anexo.url || '',
+                type: typeof anexo === 'string' ? 'application/octet-stream' : anexo.type || 'application/octet-stream',
+                size: typeof anexo === 'string' ? 0 : anexo.tamanho || anexo.size || 0,
+                uploaded_at: typeof anexo === 'string' ? new Date().toISOString() : anexo.uploaded_at || new Date().toISOString()
+              })) || []}
+              maxFiles={10}
+              maxSizeMB={10}
+              allowedTypes={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']}
+            />
+          </div>
+
           {/* Botões */}
-          <div className="flex justify-end gap-3 pt-6 border-t">
+          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              {isSubmitting
-                ? "A guardar..."
-                : naoConformidade
-                  ? "Atualizar"
-                  : "Criar"}
+              {isSubmitting ? "A guardar..." : "Registar Não Conformidade"}
             </button>
           </div>
         </form>

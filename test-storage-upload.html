@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Upload Storage</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .upload-area { border: 2px dashed #ccc; padding: 20px; text-align: center; margin: 20px 0; }
+        .upload-area:hover { border-color: #007bff; }
+        .log { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; }
+        .success { color: green; }
+        .error { color: red; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste Upload Storage Supabase</h1>
+        
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <p>Clique aqui para selecionar um ficheiro</p>
+            <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)">
+        </div>
+        
+        <button onclick="testStorageConnection()">Testar Conexão Storage</button>
+        <button onclick="clearLogs()">Limpar Logs</button>
+        
+        <div id="logs"></div>
+    </div>
+
+    <script>
+        // Configuração Supabase
+        const supabaseUrl = "https://mjgvjpqcdsmvervcxjig.supabase.co";
+        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qG3ZqcHFjZHNtdmVydmN4amlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDU1NDksImV4cCI6MjA2Nzk4MTU0OX0.dlsCn20Z9M71DGjnNeansnw--Kt8A3bdeIUbfYFpNqk";
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const logDiv = document.createElement('div');
+            logDiv.className = `log ${type}`;
+            logDiv.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+            logsDiv.appendChild(logDiv);
+            console.log(message);
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+
+        async function testStorageConnection() {
+            log('🔍 Testando conexão com Storage...');
+            
+            try {
+                // Verificar buckets
+                const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+                
+                if (bucketsError) {
+                    log(`❌ Erro ao listar buckets: ${bucketsError.message}`, 'error');
+                    return;
+                }
+                
+                log(`✅ Buckets encontrados: ${buckets.length}`);
+                buckets.forEach(bucket => {
+                    log(`   - ${bucket.name} (${bucket.public ? 'Público' : 'Privado'})`);
+                });
+                
+                // Verificar se bucket 'documents' existe
+                const documentsBucket = buckets.find(b => b.name === 'documents');
+                if (documentsBucket) {
+                    log(`✅ Bucket 'documents' encontrado (${documentsBucket.public ? 'Público' : 'Privado'})`);
+                    
+                    // Listar ficheiros no bucket
+                    const { data: files, error: filesError } = await supabase.storage
+                        .from('documents')
+                        .list();
+                    
+                    if (filesError) {
+                        log(`❌ Erro ao listar ficheiros: ${filesError.message}`, 'error');
+                    } else {
+                        log(`✅ Ficheiros no bucket: ${files.length}`);
+                        files.forEach(file => {
+                            log(`   - ${file.name} (${file.metadata?.size || 'N/A'} bytes)`);
+                        });
+                    }
+                } else {
+                    log('❌ Bucket "documents" não encontrado!', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Erro geral: ${error.message}`, 'error');
+            }
+        }
+
+        async function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            log(`📁 Ficheiro selecionado: ${file.name} (${file.size} bytes)`);
+            
+            try {
+                // Verificar autenticação
+                const { data: { user }, error: authError } = await supabase.auth.getUser();
+                
+                if (authError) {
+                    log(`❌ Erro de autenticação: ${authError.message}`, 'error');
+                    return;
+                }
+                
+                if (!user) {
+                    log('⚠️ Utilizador não autenticado, tentando upload anónimo...');
+                } else {
+                    log(`✅ Utilizador autenticado: ${user.email}`);
+                }
+                
+                // Gerar nome único
+                const fileName = `test_${Date.now()}_${file.name}`;
+                const filePath = `test/${fileName}`;
+                
+                log(`📤 Fazendo upload para: ${filePath}`);
+                
+                // Upload
+                const { data, error } = await supabase.storage
+                    .from('documents')
+                    .upload(filePath, file);
+                
+                if (error) {
+                    log(`❌ Erro no upload: ${error.message}`, 'error');
+                    return;
+                }
+                
+                log(`✅ Upload bem-sucedido: ${data.path}`);
+                
+                // Gerar URL pública
+                const { data: urlData } = supabase.storage
+                    .from('documents')
+                    .getPublicUrl(filePath);
+                
+                log(`🔗 URL pública: ${urlData.publicUrl}`);
+                
+                // Testar acesso à URL
+                try {
+                    const response = await fetch(urlData.publicUrl);
+                    if (response.ok) {
+                        log('✅ URL acessível - documento pode ser descarregado');
+                    } else {
+                        log(`⚠️ URL não acessível - status: ${response.status}`, 'error');
+                    }
+                } catch (fetchError) {
+                    log(`❌ Erro ao testar URL: ${fetchError.message}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Erro geral: ${error.message}`, 'error');
+            }
+        }
+
+        // Testar conexão ao carregar a página
+        window.onload = function() {
+            log('🚀 Página carregada - iniciando teste...');
+            testStorageConnection();
+        };
+    </script>
+</body>
+</html> 

@@ -41,6 +41,7 @@ export default function Fornecedores() {
   const [showRelatorioModal, setShowRelatorioModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showSavedFornecedores, setShowSavedFornecedores] = useState(false);
+  const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [editingFornecedor, setEditingFornecedor] = useState<Fornecedor | null>(
     null,
   );
@@ -172,6 +173,18 @@ export default function Fornecedores() {
   const handleShare = (fornecedor: Fornecedor) => {
     setSharingFornecedor(fornecedor);
     setShowShareModal(true);
+  };
+
+  const handleViewDocuments = (fornecedor: Fornecedor) => {
+    // Verificar se há arquivo URL
+    const hasDocuments = fornecedor.arquivo_url;
+
+    if (hasDocuments) {
+      setSelectedFornecedor(fornecedor);
+      setShowDocumentsModal(true);
+    } else {
+      toast("Este fornecedor não possui documentos carregados");
+    }
   };
 
   const handleIndividualReport = async (fornecedor: Fornecedor) => {
@@ -474,6 +487,13 @@ export default function Fornecedores() {
                       </td>
                       <td>
                         <div className="flex items-center space-x-2">
+                          <button
+                            className="p-1 text-gray-400 hover:text-cyan-600 transition-colors"
+                            onClick={() => handleViewDocuments(fornecedor)}
+                            title="Ver Documentos"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
                           <button
                             className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
                             onClick={() => handleShare(fornecedor)}
@@ -795,6 +815,92 @@ export default function Fornecedores() {
         isOpen={showSavedFornecedores}
         onClose={() => setShowSavedFornecedores(false)}
       />
+
+      {/* Modal de Visualização de Documentos */}
+      {showDocumentsModal && selectedFornecedor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Documentos do Fornecedor: {selectedFornecedor.nome}
+                </h2>
+                <button
+                  onClick={() => setShowDocumentsModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <div className="mb-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Documentos Carregados
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Visualize e faça download dos documentos associados a este fornecedor.
+                  </p>
+                </div>
+                
+                {/* Arquivo URL */}
+                {selectedFornecedor.arquivo_url && (
+                  <div>
+                    <h4 className="text-md font-medium text-gray-900 mb-3">
+                      Arquivo Principal
+                    </h4>
+                    <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <FileText className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            Arquivo do Fornecedor
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Documento principal
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => window.open(selectedFornecedor.arquivo_url, '_blank')}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Visualizar"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = selectedFornecedor.arquivo_url!;
+                            link.download = `fornecedor_${selectedFornecedor.nome}`;
+                            link.click();
+                          }}
+                          className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          title="Download"
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mensagem se não houver documentos */}
+                {!selectedFornecedor.arquivo_url && (
+                  <div className="text-center py-8">
+                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Nenhum documento carregado para este fornecedor</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

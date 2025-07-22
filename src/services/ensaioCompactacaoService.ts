@@ -7,13 +7,20 @@ export class EnsaioCompactacaoService {
   // Buscar todos os ensaios
   async getAll(): Promise<EnsaioCompactacao[]> {
     try {
+      // Obter usuário autenticado
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const { data, error } = await supabase
         .from(this.tableName)
         .select('*')
+        .eq('user_id', user.id) // Filtrar por user_id
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map(this.mapFromDatabase);
     } catch (error) {
       console.error('Erro ao buscar ensaios de compactação:', error);
       throw error;
@@ -23,14 +30,21 @@ export class EnsaioCompactacaoService {
   // Buscar ensaio por ID
   async getById(id: string): Promise<EnsaioCompactacao | null> {
     try {
+      // Obter usuário autenticado
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const { data, error } = await supabase
         .from(this.tableName)
         .select('*')
         .eq('id', id)
+        .eq('user_id', user.id) // Filtrar por user_id
         .single();
 
       if (error) throw error;
-      return data;
+      return this.mapFromDatabase(data);
     } catch (error) {
       console.error('Erro ao buscar ensaio de compactação:', error);
       throw error;
@@ -40,9 +54,16 @@ export class EnsaioCompactacaoService {
   // Criar novo ensaio
   async create(ensaio: Omit<EnsaioCompactacao, 'id' | 'created' | 'updated'>): Promise<EnsaioCompactacao> {
     try {
+      // Obter usuário autenticado
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const { data, error } = await supabase
         .from(this.tableName)
         .insert([{
+          user_id: user.id, // Adicionar user_id
           obra: ensaio.obra,
           localizacao: ensaio.localizacao,
           elemento: ensaio.elemento,
@@ -56,7 +77,8 @@ export class EnsaioCompactacaoService {
           humidade_media: ensaio.humidadeMedia,
           grau_compactacao_medio: ensaio.grauCompactacaoMedio,
           referencia_laboratorio_externo: ensaio.referenciaLaboratorioExterno,
-          observacoes: ensaio.observacoes
+          observacoes: ensaio.observacoes,
+          documents: ensaio.documents || []
         }])
         .select()
         .single();
@@ -72,6 +94,12 @@ export class EnsaioCompactacaoService {
   // Atualizar ensaio
   async update(id: string, ensaio: Partial<EnsaioCompactacao>): Promise<EnsaioCompactacao> {
     try {
+      // Obter usuário autenticado
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const updateData: any = {};
       
       if (ensaio.obra !== undefined) updateData.obra = ensaio.obra;
@@ -88,11 +116,13 @@ export class EnsaioCompactacaoService {
       if (ensaio.grauCompactacaoMedio !== undefined) updateData.grau_compactacao_medio = ensaio.grauCompactacaoMedio;
       if (ensaio.referenciaLaboratorioExterno !== undefined) updateData.referencia_laboratorio_externo = ensaio.referenciaLaboratorioExterno;
       if (ensaio.observacoes !== undefined) updateData.observacoes = ensaio.observacoes;
+      if (ensaio.documents !== undefined) updateData.documents = ensaio.documents;
 
       const { data, error } = await supabase
         .from(this.tableName)
         .update(updateData)
         .eq('id', id)
+        .eq('user_id', user.id) // Adicionar condição user_id
         .select()
         .single();
 
@@ -107,10 +137,17 @@ export class EnsaioCompactacaoService {
   // Deletar ensaio
   async delete(id: string): Promise<void> {
     try {
+      // Obter usuário autenticado
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const { error } = await supabase
         .from(this.tableName)
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id); // Adicionar condição user_id
 
       if (error) throw error;
     } catch (error) {
@@ -188,6 +225,7 @@ export class EnsaioCompactacaoService {
       grauCompactacaoMedio: data.grau_compactacao_medio,
       referenciaLaboratorioExterno: data.referencia_laboratorio_externo,
       observacoes: data.observacoes,
+      documents: data.documents || [],
       created: data.created_at,
       updated: data.updated_at
     };

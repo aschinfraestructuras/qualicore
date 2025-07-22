@@ -5,6 +5,7 @@ import { z } from "zod";
 import { HelpCircle, AlertCircle, Upload, X, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import DocumentUpload from "../DocumentUpload";
 
 const rfiSchema = z.object({
   codigo: z.string().min(1, "Código é obrigatório"),
@@ -17,15 +18,16 @@ const rfiSchema = z.object({
   prioridade: z.enum(["baixa", "media", "alta", "urgente"]),
   status: z.enum(["pendente", "em_analise", "respondido", "fechado"]),
   resposta: z.string().optional(),
-  impacto_custo: z.number().optional(),
-  impacto_prazo: z.number().optional(),
+  impacto_custo: z.number().default(0),
+  impacto_prazo: z.number().default(0),
   observacoes: z.string().optional(),
+  anexos: z.array(z.any()).optional(),
 });
 
 type RFIFormData = z.infer<typeof rfiSchema>;
 
 interface RFIFormProps {
-  initialData?: Partial<RFIFormData>;
+  initialData?: Partial<RFIFormData> & { id?: string; documents?: any[] };
   onSubmit: (data: RFIFormData) => void;
   onCancel: () => void;
 }
@@ -61,7 +63,7 @@ export default function RFIForm({
   onCancel,
 }: RFIFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [documents, setDocuments] = useState<any[]>(initialData?.documents || []);
   const {
     register,
     handleSubmit,
@@ -73,6 +75,8 @@ export default function RFIForm({
     defaultValues: {
       prioridade: "media",
       status: "pendente",
+      impacto_custo: 0,
+      impacto_prazo: 0,
       ...initialData,
       codigo: initialData?.codigo || generateCodigo(),
     },
@@ -85,36 +89,55 @@ export default function RFIForm({
     }
   }, []);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    setUploadedFiles((prev) => [...prev, ...files]);
-    toast.success(`${files.length} ficheiro(s) adicionado(s)`);
-  };
-
-  const removeFile = (index: number) => {
-    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
-  };
+  // Atualizar documentos quando initialData mudar
+  useEffect(() => {
+    if (initialData?.documents) {
+      setDocuments(initialData.documents);
+    }
+  }, [initialData?.documents]);
 
   const onSubmitForm = async (data: RFIFormData) => {
+    console.log("🚀 onSubmitForm chamado!");
     setIsSubmitting(true);
     try {
+      console.log("🚀 Formulário RFI submetido!");
+      console.log("📁 Documents do DocumentUpload:", documents);
+
+      const processedData = {
+        ...data,
+        documents: documents, // Usar documents do DocumentUpload
+      };
+
+      console.log("📁 Dados processados:", processedData);
+      console.log("📁 Documents:", processedData.documents);
+      console.log("📁 Documents length:", processedData.documents?.length);
+
       await new Promise((resolve) => setTimeout(resolve, 500));
       // Garante que o campo 'codigo' está presente
       if (!data.codigo) {
         setValue("codigo", generateCodigo());
         data.codigo = generateCodigo();
       }
-      onSubmit(data);
+      console.log("🚀 Chamando onSubmit com dados:", processedData);
+      onSubmit(processedData);
       toast.success("RFI salvo com sucesso!");
     } catch (error) {
+      console.error("❌ Erro no onSubmitForm:", error);
       toast.error("Erro ao salvar RFI");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+
+
   return (
-    <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
+    <form 
+      onSubmit={handleSubmit(onSubmitForm)} 
+      className="space-y-6"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       <div className="flex items-center gap-2 mb-2">
         <HelpCircle className="h-5 w-5 text-blue-500" />
         <h3 className="text-lg font-semibold text-blue-900">
@@ -318,60 +341,23 @@ export default function RFIForm({
           placeholder="Observações adicionais..."
         />
       </div>
-      {/* Upload de Ficheiros */}
+      
+      {/* Anexos - DocumentUpload */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Anexos
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Anexos (Documentos)
         </label>
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:border-primary-400 transition-colors">
-          <Upload className="h-6 w-6 text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-600 mb-2">
-            Arraste ficheiros para aqui ou clique para selecionar
-          </p>
-          <input
-            type="file"
-            multiple
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-            onChange={handleFileUpload}
-            className="hidden"
-            id="file-upload-rfi"
-          />
-          <label
-            htmlFor="file-upload-rfi"
-            className="btn btn-outline btn-sm cursor-pointer"
-          >
-            Selecionar Ficheiros
-          </label>
-        </div>
-        {uploadedFiles.length > 0 && (
-          <div className="mt-2 space-y-2">
-            <h4 className="text-sm font-medium text-gray-700">
-              Ficheiros selecionados:
-            </h4>
-            {uploadedFiles.map((file, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center space-x-2">
-                  <FileText className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-700">{file.name}</span>
-                  <span className="text-xs text-gray-500">
-                    ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeFile(index)}
-                  className="text-danger-600 hover:text-danger-800"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        <DocumentUpload
+          recordId={initialData?.id || 'new'}
+          recordType="ensaio"
+          onDocumentsChange={setDocuments}
+          existingDocuments={initialData?.documents || []}
+          maxFiles={10}
+          maxSizeMB={10}
+          allowedTypes={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']}
+        />
       </div>
+      
       <div className="flex items-center justify-end gap-3 pt-4">
         <button
           type="button"
@@ -385,9 +371,12 @@ export default function RFIForm({
           type="submit"
           className="btn btn-primary"
           disabled={!isValid || isSubmitting}
+
         >
           {isSubmitting ? "Guardando..." : "Salvar RFI"}
         </button>
+        
+
       </div>
     </form>
   );

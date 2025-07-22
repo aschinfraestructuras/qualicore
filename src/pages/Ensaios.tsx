@@ -41,6 +41,7 @@ export default function Ensaios() {
   const [showFilters, setShowFilters] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showSavedEnsaiosViewer, setShowSavedEnsaiosViewer] = useState(false);
+  const [showDocumentsModal, setShowDocumentsModal] = useState(false);
 
   // Filtros ativos
   const [filters, setFilters] = useState({
@@ -207,7 +208,6 @@ export default function Ensaios() {
       const ensaioData = {
         codigo: data.codigo,
         tipo: data.tipo,
-        descricao: data.descricao,
         data_ensaio: data.data_ensaio,
         laboratorio: data.laboratorio,
         responsavel: data.responsavel,
@@ -220,6 +220,9 @@ export default function Ensaios() {
         observacoes: data.observacoes,
         material_id: material_id,
         resultado: data.resultado || `${data.valor_obtido} ${data.unidade}`,
+        documents: data.documents || [], // Incluir documentos
+        seguimento: data.seguimento || [], // Incluir seguimento
+        contextoAdicional: data.contextoAdicional || [], // Incluir contexto adicional
       };
 
       if (editingEnsaio) {
@@ -268,6 +271,16 @@ export default function Ensaios() {
 
   const handleViewSavedEnsaios = () => {
     setShowSavedEnsaiosViewer(true);
+  };
+
+  const handleViewDocuments = (ensaio: any) => {
+    if (ensaio.documents && ensaio.documents.length > 0) {
+      // Abrir modal para visualizar documentos
+      setEditingEnsaio(ensaio);
+      setShowDocumentsModal(true);
+    } else {
+      toast("Este ensaio não possui documentos carregados");
+    }
   };
 
   const clearFilters = () => {
@@ -581,6 +594,13 @@ export default function Ensaios() {
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
+                        onClick={() => handleViewDocuments(ensaio)}
+                        className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
+                        title="Ver Documentos"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button
                         onClick={() => handleGenerateIndividualReport(ensaio)}
                         className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                         title="Relatório Individual"
@@ -662,6 +682,90 @@ export default function Ensaios() {
           isOpen={showSavedEnsaiosViewer}
           onClose={() => setShowSavedEnsaiosViewer(false)}
         />
+      )}
+
+      {/* Modal de Visualização de Documentos */}
+      {showDocumentsModal && editingEnsaio && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Documentos do Ensaio: {editingEnsaio.codigo}
+                </h2>
+                <button
+                  onClick={() => setShowDocumentsModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <div className="mb-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Documentos Carregados ({editingEnsaio.documents?.length || 0})
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Visualize e faça download dos documentos associados a este ensaio.
+                  </p>
+                </div>
+                
+                {editingEnsaio.documents && editingEnsaio.documents.length > 0 ? (
+                  <div className="space-y-3">
+                    {editingEnsaio.documents.map((doc: any, index: number) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <FileText className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {doc.name || `Documento ${index + 1}`}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {(doc.size / 1024).toFixed(2)} KB
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => window.open(doc.url, '_blank')}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Visualizar"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              const link = document.createElement('a');
+                              link.href = doc.url;
+                              link.download = doc.name || `documento_${index + 1}`;
+                              link.click();
+                            }}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            title="Download"
+                          >
+                            <Download className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Nenhum documento carregado para este ensaio</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

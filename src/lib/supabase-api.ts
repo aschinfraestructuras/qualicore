@@ -789,7 +789,13 @@ export const documentosAPI = {
     documento: UpdateDto<"documentos">,
   ): Promise<Documento | null> => {
     try {
+      console.log("🚀 documentosAPI.update chamado!");
+      console.log("📁 ID:", id);
+      console.log("📁 Dados:", documento);
+      
       const user = await getCurrentUser();
+      console.log("📁 User:", user.id);
+      
       const { data, error } = await supabase
         .from("documentos")
         .update(documento)
@@ -798,9 +804,15 @@ export const documentosAPI = {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.log("❌ Erro na API:", error);
+        throw error;
+      }
+      
+      console.log("✅ Documento atualizado com sucesso:", data);
       return data;
     } catch (error) {
+      console.log("❌ Erro capturado:", error);
       handleError(error, "atualizar documento");
       return null;
     }
@@ -911,6 +923,10 @@ export const naoConformidadesAPI = {
         "relacionado_zona_outro",
         "auditoria_id",
         "auditoria_outro",
+        "anexos_evidencia",
+        "anexos_corretiva",
+        "anexos_verificacao",
+        "timeline",
       ];
 
       const filteredNc = Object.keys(nc)
@@ -982,6 +998,10 @@ export const naoConformidadesAPI = {
         "relacionado_zona_outro",
         "auditoria_id",
         "auditoria_outro",
+        "anexos_evidencia",
+        "anexos_corretiva",
+        "anexos_verificacao",
+        "timeline",
       ];
 
       const filteredNc = Object.keys(nc)

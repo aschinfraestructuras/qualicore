@@ -19,6 +19,7 @@ import {
   XCircle,
   Share2,
   Cloud,
+  X,
 } from "lucide-react";
 
 import { documentosAPI } from "@/lib/supabase-api";
@@ -285,7 +286,9 @@ export default function Documentos() {
   const [showFilters, setShowFilters] = useState(false);
   const [showRelatorioPremiumModal, setShowRelatorioPremiumModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [showSavedDocumentsModal, setShowSavedDocumentsModal] = useState(false);
+  const [showSavedDocumentos, setShowSavedDocumentos] = useState(false);
+  const [showDocumentsModal, setShowDocumentsModal] = useState(false);
+  const [sharingDocumento, setSharingDocumento] = useState<Documento | null>(null);
   const [selectedDocumento, setSelectedDocumento] = useState<Documento | null>(null);
 
   useEffect(() => {
@@ -409,7 +412,38 @@ export default function Documentos() {
         }
       });
 
+      // Limpeza adicional para campos UUID inválidos
+      uuidFields.forEach((field) => {
+        if (typeof docData[field] === 'string' && !docData[field].match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          console.log(`🔧 Limpando campo UUID inválido: ${field} = "${docData[field]}"`);
+          docData[field] = null;
+        }
+      });
+
+      // Limpar campos de data vazios
+      const dateFields = [
+        "data_validade",
+        "data_aprovacao", 
+        "data_revisao",
+        "data_solicitacao",
+        "data_resposta"
+      ];
+      dateFields.forEach((field) => {
+        if (docData[field] === "" || docData[field] === undefined || docData[field] === null) {
+          console.log(`🔧 Limpando campo de data vazio: ${field} = "${docData[field]}"`);
+          docData[field] = null;
+        }
+      });
+
       console.log("Dados corrigidos para envio:", docData);
+      console.log("🔍 Verificando campos UUID:", {
+        relacionado_obra_id: docData.relacionado_obra_id,
+        relacionado_zona_id: docData.relacionado_zona_id,
+        relacionado_ensaio_id: docData.relacionado_ensaio_id,
+        relacionado_material_id: docData.relacionado_material_id,
+        relacionado_fornecedor_id: docData.relacionado_fornecedor_id,
+        relacionado_checklist_id: docData.relacionado_checklist_id,
+      });
 
       const newDocument = await documentosAPI.create(docData);
       setDocumentos((prev) => [newDocument, ...prev]);
@@ -422,9 +456,16 @@ export default function Documentos() {
   };
 
   const handleEditDocument = async (data: any) => {
-    if (!editingDocument) return;
+    if (!editingDocument) {
+      console.log("❌ editingDocument é null!");
+      return;
+    }
+    
     try {
-      console.log("Dados recebidos para edição:", data);
+      console.log("🚀 handleEditDocument chamado!");
+      console.log("📁 Dados recebidos para edição:", data);
+      console.log("📁 Documento sendo editado:", editingDocument);
+      console.log("📁 ID do documento:", editingDocument.id);
 
       // Corrigir campos UUID vazios para null
       const uuidFields = [
@@ -474,6 +515,22 @@ export default function Documentos() {
         }
       });
 
+      // Limpeza adicional para campos UUID inválidos
+      uuidFields.forEach((field) => {
+        if (typeof docData[field] === 'string' && !docData[field].match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          console.log(`🔧 Limpando campo UUID inválido: ${field} = "${docData[field]}"`);
+          docData[field] = null;
+        }
+      });
+
+      // Limpar campos de data vazios
+      ["data_validade", "data_aprovacao", "data_revisao", "data_solicitacao", "data_resposta"].forEach((field) => {
+        if (docData[field] === "" || docData[field] === undefined || docData[field] === null) {
+          console.log(`🔧 Limpando campo de data vazio: ${field} = "${docData[field]}"`);
+          docData[field] = null;
+        }
+      });
+
       console.log("Dados corrigidos para edição:", docData);
 
       const updatedDocument = await documentosAPI.update(
@@ -501,7 +558,7 @@ export default function Documentos() {
   };
 
   const handleEditClick = (document: any) => {
-    // Changed to any
+    console.log("🚀 Clicou no botão Editar documento:", document);
     setEditingDocument(document);
     setShowEditModal(true);
   };
@@ -509,10 +566,12 @@ export default function Documentos() {
   const handleDelete = async (id: string) => {
     if (confirm("Tem certeza que quer eliminar este documento?")) {
       try {
-        // await documentosAPI.delete(id)
+        console.log("🗑️ Eliminando documento:", id);
+        await documentosAPI.delete(id);
         setDocumentos((prev) => prev.filter((doc) => doc.id !== id));
         toast.success("Documento eliminado com sucesso");
       } catch (error) {
+        console.error("❌ Erro ao eliminar documento:", error);
         toast.error("Erro ao eliminar documento");
       }
     }
@@ -523,11 +582,29 @@ export default function Documentos() {
   };
 
   const handleShare = (documento: Documento) => {
-    setSelectedDocumento(documento);
+    setSharingDocumento(documento);
     setShowShareModal(true);
   };
 
-  const handleBulkAction = (action: string) => {
+  const handleViewDocuments = (documento: any) => {
+    console.log("👁️ Clicou no botão olho para Documento:", documento);
+    console.log("📁 Documents do Documento:", documento.documents);
+    
+    // Verificar se há documentos no campo documents
+    const hasDocuments = 
+      (documento.documents && documento.documents.length > 0);
+
+    console.log("📁 Tem documentos?", hasDocuments);
+
+    if (hasDocuments) {
+      setSelectedDocumento(documento);
+      setShowDocumentsModal(true);
+    } else {
+      toast("Este documento não possui anexos carregados");
+    }
+  };
+
+  const handleBulkAction = async (action: string) => {
     if (selectedDocuments.length === 0) {
       toast.error("Selecione pelo menos um documento");
       return;
@@ -536,10 +613,22 @@ export default function Documentos() {
     switch (action) {
       case "delete":
         if (confirm(`Eliminar ${selectedDocuments.length} documento(s)?`)) {
-          toast.success(
-            `${selectedDocuments.length} documento(s) eliminado(s)`,
-          );
-          setSelectedDocuments([]);
+          try {
+            console.log("🗑️ Eliminando documentos em massa:", selectedDocuments);
+            
+            // Eliminar cada documento da base de dados
+            for (const docId of selectedDocuments) {
+              await documentosAPI.delete(docId);
+            }
+            
+            // Remover do estado local
+            setDocumentos((prev) => prev.filter((doc) => !selectedDocuments.includes(doc.id)));
+            setSelectedDocuments([]);
+            toast.success(`${selectedDocuments.length} documento(s) eliminado(s) com sucesso`);
+          } catch (error) {
+            console.error("❌ Erro ao eliminar documentos em massa:", error);
+            toast.error("Erro ao eliminar documentos");
+          }
         }
         break;
       case "export":
@@ -662,7 +751,7 @@ export default function Documentos() {
 
         <div className="flex items-center space-x-3">
           <button
-            onClick={() => setShowSavedDocumentsModal(true)}
+            onClick={() => setShowSavedDocumentos(true)}
             className="btn btn-outline btn-md"
           >
             <Cloud className="h-4 w-4 mr-2" />
@@ -676,7 +765,10 @@ export default function Documentos() {
             Importar
           </button>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => {
+              console.log("🚀 Clicou no botão Novo Documento!");
+              setShowCreateModal(true);
+            }}
             className="btn btn-primary btn-md"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -1139,18 +1231,11 @@ export default function Documentos() {
                           <td>
                             <div className="flex items-center space-x-1">
                               <button
-                                onClick={() => handleViewDocument(doc)}
-                                className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
-                                title="Visualizar"
-                              >
-                                <Eye className="h-4 w-4 text-gray-600" />
-                              </button>
-                              <button
                                 onClick={() => handleEditClick(doc)}
-                                className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                                className="btn btn-xs btn-outline mr-2"
                                 title="Editar"
                               >
-                                <Edit className="h-4 w-4 text-gray-600" />
+                                <Edit className="h-4 w-4" />
                               </button>
                               <button
                                 onClick={() => {
@@ -1159,31 +1244,38 @@ export default function Documentos() {
                                     "Funcionalidade de impressão em desenvolvimento",
                                   );
                                 }}
-                                className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                                className="btn btn-xs btn-outline mr-2"
                                 title="Imprimir"
                               >
-                                <Printer className="h-4 w-4 text-gray-600" />
+                                <Printer className="h-4 w-4" />
                               </button>
                               <button
                                 onClick={() => handleGenerateRelatorioIndividual(doc)}
-                                className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                                className="btn btn-xs btn-outline mr-2"
                                 title="Gerar Relatório Individual"
                               >
-                                <FileText className="h-4 w-4 text-gray-600" />
+                                <FileText className="h-4 w-4" />
                               </button>
                               <button
                                 onClick={() => handleShare(doc)}
-                                className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                                className="btn btn-xs btn-outline mr-2"
                                 title="Compartilhar"
                               >
-                                <Share2 className="h-4 w-4 text-gray-600" />
+                                <Share2 className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleViewDocuments(doc)}
+                                className="btn btn-xs btn-primary mr-2"
+                                title="Ver Documentos"
+                              >
+                                <Eye className="h-4 w-4" />
                               </button>
                               <button
                                 onClick={() => handleDelete(doc.id)}
-                                className="p-1 rounded-lg hover:bg-red-100 transition-colors"
+                                className="btn btn-xs btn-danger"
                                 title="Eliminar"
                               >
-                                <Trash2 className="h-4 w-4 text-red-600" />
+                                <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
                           </td>
@@ -1201,40 +1293,64 @@ export default function Documentos() {
       {/* Modals */}
 
       {/* Create Modal */}
-      <Modal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        title="Novo Documento"
-        size="xl"
-      >
-        <DocumentoForm
-          onSubmit={handleCreateDocument}
-          onCancel={() => setShowCreateModal(false)}
-        />
-      </Modal>
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4">
+          <div className="bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto max-w-4xl w-full">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">
+                Novo Documento
+              </h2>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
+                title="Fechar"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <DocumentoForm
+                onSubmit={handleCreateDocument}
+                onCancel={() => setShowCreateModal(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
-      <Modal
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setEditingDocument(null);
-        }}
-        title="Editar Documento"
-        size="xl"
-      >
-        {editingDocument && (
-          <DocumentoForm
-            onSubmit={handleEditDocument}
-            onCancel={() => {
-              setShowEditModal(false);
-              setEditingDocument(null);
-            }}
-            initialData={editingDocument as any}
-            isEditing={true}
-          />
-        )}
-      </Modal>
+      {showEditModal && editingDocument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4">
+          <div className="bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto max-w-4xl w-full">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">
+                Editar Documento
+              </h2>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingDocument(null);
+                }}
+                className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
+                title="Fechar"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <DocumentoForm
+                onSubmit={handleEditDocument}
+                onCancel={() => {
+                  setShowEditModal(false);
+                  setEditingDocument(null);
+                }}
+                initialData={editingDocument as any}
+                isEditing={true}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* View Modal */}
       <Modal
@@ -1417,11 +1533,95 @@ export default function Documentos() {
        )}
 
         {/* Saved Documents Modal */}
-        {showSavedDocumentsModal && (
+        {showSavedDocumentos && (
           <SavedDocumentosViewer
-            isOpen={showSavedDocumentsModal}
-            onClose={() => setShowSavedDocumentsModal(false)}
+            isOpen={showSavedDocumentos}
+            onClose={() => setShowSavedDocumentos(false)}
           />
+        )}
+
+        {/* Modal de Visualização de Documentos */}
+        {showDocumentsModal && selectedDocumento && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Anexos do Documento: {(selectedDocumento as any).codigo}
+                  </h2>
+                  <button
+                    onClick={() => setShowDocumentsModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="space-y-6">
+                  {/* Documentos */}
+                  {(selectedDocumento as any).documents && (selectedDocumento as any).documents.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">
+                        Documentos ({(selectedDocumento as any).documents.length})
+                      </h3>
+                      <div className="space-y-3">
+                        {(selectedDocumento as any).documents.map((doc: any, index: number) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="p-2 bg-blue-100 rounded-lg">
+                                <FileText className="h-5 w-5 text-blue-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {doc.name || `Documento ${index + 1}`}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {(doc.size / 1024).toFixed(2)} KB
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => window.open(doc.url, '_blank')}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Visualizar"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const link = document.createElement('a');
+                                  link.href = doc.url;
+                                  link.download = doc.name || `documento_${index + 1}`;
+                                  link.click();
+                                }}
+                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                title="Download"
+                              >
+                                <Download className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Mensagem se não há documentos */}
+                  {(!(selectedDocumento as any).documents || (selectedDocumento as any).documents.length === 0) && (
+                    <div className="text-center py-8">
+                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">Este documento não possui anexos carregados.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         )}
     </div>
   );

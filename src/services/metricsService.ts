@@ -112,7 +112,10 @@ export interface KPIsGerais {
 // Função principal para calcular todas as métricas
 export const calcularMetricasReais = async (): Promise<MetricasReais> => {
   try {
+    console.log("🚀 Iniciando cálculo de métricas...");
+    
     // Buscar todos os dados
+    console.log("📊 Buscando dados de todos os módulos...");
     const [
       ensaios,
       checklists,
@@ -122,37 +125,54 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       fornecedores,
       obras,
     ] = await Promise.all([
-      ensaiosAPI.getAll(),
-      checklistsAPI.getAll(),
-      materiaisAPI.getAll(),
-      naoConformidadesAPI.getAll(),
-      documentosAPI.getAll(),
-      fornecedoresAPI.getAll(),
-      obrasAPI.getAll(),
+      ensaiosAPI.getAll().catch(e => { console.error("❌ Erro ao buscar ensaios:", e); return []; }),
+      checklistsAPI.getAll().catch(e => { console.error("❌ Erro ao buscar checklists:", e); return []; }),
+      materiaisAPI.getAll().catch(e => { console.error("❌ Erro ao buscar materiais:", e); return []; }),
+      naoConformidadesAPI.getAll().catch(e => { console.error("❌ Erro ao buscar não conformidades:", e); return []; }),
+      documentosAPI.getAll().catch(e => { console.error("❌ Erro ao buscar documentos:", e); return []; }),
+      fornecedoresAPI.getAll().catch(e => { console.error("❌ Erro ao buscar fornecedores:", e); return []; }),
+      obrasAPI.getAll().catch(e => { console.error("❌ Erro ao buscar obras:", e); return []; }),
     ]);
 
+    console.log("📊 Dados recebidos:");
+    console.log("  - Ensaios:", ensaios.length);
+    console.log("  - Checklists:", checklists.length);
+    console.log("  - Materiais:", materiais.length);
+    console.log("  - Não Conformidades:", naoConformidades.length);
+    console.log("  - Documentos:", documentos.length);
+    console.log("  - Fornecedores:", fornecedores.length);
+    console.log("  - Obras:", obras.length);
+
     // Calcular métricas de ensaios
+    console.log("🧪 Calculando métricas de ensaios...");
     const kpisEnsaios = calcularKPIsEnsaios(ensaios);
 
     // Calcular métricas de checklists
+    console.log("📋 Calculando métricas de checklists...");
     const kpisChecklists = calcularKPIsChecklists(checklists);
 
     // Calcular métricas de materiais
+    console.log("📦 Calculando métricas de materiais...");
     const kpisMateriais = calcularKPIsMateriais(materiais);
 
     // Calcular métricas de não conformidades
+    console.log("⚠️ Calculando métricas de não conformidades...");
     const kpisNCs = calcularKPIsNCs(naoConformidades);
 
     // Calcular métricas de documentos
+    console.log("📄 Calculando métricas de documentos...");
     const kpisDocumentos = calcularKPIsDocumentos(documentos);
 
     // Calcular métricas de fornecedores
+    console.log("🏢 Calculando métricas de fornecedores...");
     const kpisFornecedores = calcularKPIsFornecedores(fornecedores);
 
     // Calcular métricas de obras
+    console.log("🏗️ Calculando métricas de obras...");
     const kpisObras = calcularKPIsObras(obras);
 
     // Calcular métricas gerais
+    console.log("📈 Calculando métricas gerais...");
     const kpisGerais = calcularKPIsGerais({
       ensaios: kpisEnsaios,
       checklists: kpisChecklists,
@@ -162,6 +182,15 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       fornecedores: kpisFornecedores,
       obras: kpisObras,
     });
+
+    console.log("✅ Métricas calculadas com sucesso!");
+    console.log("📊 Resumo das métricas:");
+    console.log("  - Conformidade Geral:", kpisGerais.conformidade_geral + "%");
+    console.log("  - Total de Registos:", kpisGerais.total_registros);
+    console.log("  - Ensaios:", kpisEnsaios.total_ensaios);
+    console.log("  - Checklists:", kpisChecklists.total_checklists);
+    console.log("  - Materiais:", kpisMateriais.total_materiais);
+    console.log("  - NCs:", kpisNCs.total_ncs);
 
     return {
       ensaios: kpisEnsaios,
@@ -174,7 +203,7 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       geral: kpisGerais,
     };
   } catch (error) {
-    console.error("Erro ao calcular métricas:", error);
+    console.error("❌ Erro ao calcular métricas:", error);
     throw error;
   }
 };

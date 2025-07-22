@@ -320,6 +320,7 @@ export default function EnsaioForm({
       contextoAdicional: contextoAdicional.filter(
         (c) => c.campo.trim() && c.valor.trim(),
       ),
+      documents: documents, // Incluir os documentos carregados
     };
     onSubmit(dadosCompletos);
   };
@@ -869,7 +870,7 @@ export default function EnsaioForm({
         </div>
       </div>
 
-      {/* Anexos */}
+      {/* Anexos - TEMPORARIAMENTE DESABILITADO */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Documentos (Relatórios, PDFs, Imagens, etc.)
