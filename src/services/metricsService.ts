@@ -210,10 +210,17 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
 
 // Funções específicas para cada módulo
 const calcularKPIsEnsaios = (ensaios: any[]): KPIsEnsaios => {
+  console.log("🔍 Calculando KPIs Ensaios...");
+  console.log("  - Total de ensaios:", ensaios.length);
+  
   const total = ensaios.length;
   const conformes = ensaios.filter((e) => e.conforme).length;
   const naoConformes = total - conformes;
   const taxaConformidade = total > 0 ? (conformes / total) * 100 : 0;
+
+  console.log("  - Ensaios conformes:", conformes);
+  console.log("  - Ensaios não conformes:", naoConformes);
+  console.log("  - Taxa conformidade:", taxaConformidade);
 
   // Calcular desvio médio
   const desvios = ensaios.map((e) =>
@@ -246,7 +253,7 @@ const calcularKPIsEnsaios = (ensaios: any[]): KPIsEnsaios => {
   const zonasNC = ensaios.filter((e) => !e.conforme).map((e) => e.zona);
   const zonasProblema = contarFrequencias(zonasNC).slice(0, 5);
 
-  return {
+  const resultado = {
     taxa_conformidade: Math.round(taxaConformidade * 100) / 100,
     total_ensaios: total,
     ensaios_conformes: conformes,
@@ -257,18 +264,28 @@ const calcularKPIsEnsaios = (ensaios: any[]): KPIsEnsaios => {
     laboratorios_mais_eficientes: labEficientes,
     zonas_com_mais_problemas: zonasProblema,
   };
+
+  console.log("✅ KPIs Ensaios calculados:", resultado);
+  return resultado;
 };
 
 const calcularKPIsChecklists = (checklists: any[]): KPIsChecklists => {
+  console.log("🔍 Calculando KPIs Checklists...");
+  console.log("  - Total de checklists:", checklists.length);
+  
   const total = checklists.length;
   const concluidos = checklists.filter((c) => c.estado === "concluido").length;
   const pendentes = checklists.filter((c) => c.estado === "pendente").length;
 
   const conformidadeMedia =
     total > 0
-      ? checklists.reduce((acc, c) => acc + c.percentual_conformidade, 0) /
+      ? checklists.reduce((acc, c) => acc + (c.percentual_conformidade || 0), 0) /
         total
       : 0;
+
+  console.log("  - Checklists concluídos:", concluidos);
+  console.log("  - Checklists pendentes:", pendentes);
+  console.log("  - Conformidade média:", conformidadeMedia);
 
   // Tempo médio de inspeção (dias entre inspeções)
   const datasInspecao = checklists.map((c) => new Date(c.data_inspecao)).sort();
@@ -278,7 +295,7 @@ const calcularKPIsChecklists = (checklists: any[]): KPIsChecklists => {
   const inspetores = checklists.reduce(
     (acc, c) => {
       if (!acc[c.inspetor]) acc[c.inspetor] = [];
-      acc[c.inspetor].push(c.percentual_conformidade);
+      acc[c.inspetor].push(c.percentual_conformidade || 0);
       return acc;
     },
     {} as Record<string, number[]>,
@@ -297,11 +314,11 @@ const calcularKPIsChecklists = (checklists: any[]): KPIsChecklists => {
 
   // Zonas com mais falhas
   const zonasFalhas = checklists
-    .filter((c) => c.percentual_conformidade < 80)
+    .filter((c) => (c.percentual_conformidade || 0) < 80)
     .map((c) => c.zona);
   const zonasProblema = contarFrequencias(zonasFalhas).slice(0, 5);
 
-  return {
+  const resultado = {
     conformidade_media: Math.round(conformidadeMedia * 100) / 100,
     total_checklists: total,
     checklists_concluidos: concluidos,
@@ -310,6 +327,9 @@ const calcularKPIsChecklists = (checklists: any[]): KPIsChecklists => {
     inspetores_mais_eficientes: inspetoresEficientes,
     zonas_com_mais_falhas: zonasProblema,
   };
+
+  console.log("✅ KPIs Checklists calculados:", resultado);
+  return resultado;
 };
 
 const calcularKPIsMateriais = (materiais: any[]): KPIsMateriais => {
@@ -536,12 +556,30 @@ const calcularKPIsObras = (obras: any[]): KPIsObras => {
 const calcularKPIsGerais = (
   metricas: Omit<MetricasReais, "geral">,
 ): KPIsGerais => {
-  // Conformidade geral (média ponderada)
+  console.log("🔍 Calculando KPIs Gerais...");
+  console.log("  - Ensaios taxa_conformidade:", metricas.ensaios.taxa_conformidade);
+  console.log("  - Checklists conformidade_media:", metricas.checklists.conformidade_media);
+  console.log("  - Materiais taxa_aprovacao:", metricas.materiais.taxa_aprovacao);
+  console.log("  - NCs taxa_resolucao:", metricas.naoConformidades.taxa_resolucao);
+
+  // Conformidade geral (média ponderada) - com proteção contra NaN
+  const ensaiosConformidade = isNaN(metricas.ensaios.taxa_conformidade) ? 0 : metricas.ensaios.taxa_conformidade;
+  const checklistsConformidade = isNaN(metricas.checklists.conformidade_media) ? 0 : metricas.checklists.conformidade_media;
+  const materiaisAprovacao = isNaN(metricas.materiais.taxa_aprovacao) ? 0 : metricas.materiais.taxa_aprovacao;
+  const ncsResolucao = isNaN(metricas.naoConformidades.taxa_resolucao) ? 0 : metricas.naoConformidades.taxa_resolucao;
+
   const conformidadeGeral =
-    metricas.ensaios.taxa_conformidade * 0.4 +
-    metricas.checklists.conformidade_media * 0.3 +
-    metricas.materiais.taxa_aprovacao * 0.2 +
-    (100 - metricas.naoConformidades.taxa_resolucao) * 0.1;
+    ensaiosConformidade * 0.4 +
+    checklistsConformidade * 0.3 +
+    materiaisAprovacao * 0.2 +
+    (100 - ncsResolucao) * 0.1;
+
+  console.log("  - Valores calculados:");
+  console.log("    * Ensaios (40%):", ensaiosConformidade * 0.4);
+  console.log("    * Checklists (30%):", checklistsConformidade * 0.3);
+  console.log("    * Materiais (20%):", materiaisAprovacao * 0.2);
+  console.log("    * NCs (10%):", (100 - ncsResolucao) * 0.1);
+  console.log("  - Conformidade Geral Final:", conformidadeGeral);
 
   const totalRegistros =
     metricas.ensaios.total_ensaios +
@@ -561,12 +599,15 @@ const calcularKPIsGerais = (
   // Tendência (simulada - seria baseada em dados históricos)
   const tendencia: "melhorando" | "estavel" | "piorando" = "estavel";
 
-  return {
+  const resultado = {
     conformidade_geral: Math.round(conformidadeGeral * 100) / 100,
     total_registros: totalRegistros,
     alertas_criticos: alertasCriticos,
     tendencia_qualidade: tendencia,
   };
+
+  console.log("✅ KPIs Gerais calculados:", resultado);
+  return resultado;
 };
 
 // Funções auxiliares
