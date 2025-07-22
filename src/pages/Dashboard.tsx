@@ -269,13 +269,15 @@ export default function Dashboard() {
               {(() => {
                 const totalMateriais = metricas.materiais.materiais_aprovados + 
                                      metricas.materiais.materiais_pendentes + 
-                                     metricas.materiais.materiais_reprovados;
+                                     metricas.materiais.materiais_reprovados +
+                                     metricas.materiais.materiais_em_analise;
                 
                 console.log("📊 Renderizando gráfico de materiais:");
                 console.log("  - Total materiais:", totalMateriais);
                 console.log("  - Aprovados:", metricas.materiais.materiais_aprovados);
                 console.log("  - Pendentes:", metricas.materiais.materiais_pendentes);
                 console.log("  - Reprovados:", metricas.materiais.materiais_reprovados);
+                console.log("  - Em análise:", metricas.materiais.materiais_em_analise);
                 
                 if (totalMateriais === 0) {
                   return (
@@ -296,6 +298,7 @@ export default function Dashboard() {
                           { name: "Aprovados", value: metricas.materiais.materiais_aprovados, color: "#10B981" },
                           { name: "Pendentes", value: metricas.materiais.materiais_pendentes, color: "#F59E0B" },
                           { name: "Reprovados", value: metricas.materiais.materiais_reprovados, color: "#EF4444" },
+                          { name: "Em Análise", value: metricas.materiais.materiais_em_analise, color: "#3B82F6" },
                         ]}
                         cx="50%"
                         cy="50%"
@@ -307,6 +310,7 @@ export default function Dashboard() {
                         <Cell fill="#10B981" />
                         <Cell fill="#F59E0B" />
                         <Cell fill="#EF4444" />
+                        <Cell fill="#3B82F6" />
                       </Pie>
                       <Tooltip formatter={(value: any, name: any) => [value, name]} />
                     </PieChart>

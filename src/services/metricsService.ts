@@ -57,6 +57,7 @@ export interface KPIsMateriais {
   materiais_aprovados: number;
   materiais_pendentes: number;
   materiais_reprovados: number;
+  materiais_em_analise: number;
   materiais_recebidos_mes: number;
   fornecedores_mais_confiaveis: string[];
   volume_por_tipo: Record<string, number>;
@@ -342,10 +343,12 @@ const calcularKPIsMateriais = (materiais: any[]): KPIsMateriais => {
     const aprovados = materiais.filter((m) => m.estado === "aprovado").length;
     const pendentes = materiais.filter((m) => m.estado === "pendente").length;
     const reprovados = materiais.filter((m) => m.estado === "reprovado").length;
+    const emAnalise = materiais.filter((m) => m.estado === "em analise").length;
 
     console.log("  - Materiais aprovados:", aprovados);
     console.log("  - Materiais pendentes:", pendentes);
     console.log("  - Materiais reprovados:", reprovados);
+    console.log("  - Materiais em análise:", emAnalise);
 
     const taxaAprovacao = total > 0 ? (aprovados / total) * 100 : 0;
 
@@ -397,6 +400,7 @@ const calcularKPIsMateriais = (materiais: any[]): KPIsMateriais => {
       materiais_aprovados: aprovados,
       materiais_pendentes: pendentes,
       materiais_reprovados: reprovados,
+      materiais_em_analise: emAnalise,
       materiais_recebidos_mes: materiaisMes,
       fornecedores_mais_confiaveis: fornecedoresConfiaveis,
       volume_por_tipo: volumePorTipo,
@@ -413,6 +417,7 @@ const calcularKPIsMateriais = (materiais: any[]): KPIsMateriais => {
       materiais_aprovados: 0,
       materiais_pendentes: 0,
       materiais_reprovados: 0,
+      materiais_em_analise: 0,
       materiais_recebidos_mes: 0,
       fornecedores_mais_confiaveis: [],
       volume_por_tipo: {},
