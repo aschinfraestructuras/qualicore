@@ -349,6 +349,10 @@ const calcularKPIsMateriais = (materiais: any[]): KPIsMateriais => {
         tipo: material.tipo,
         descricao: material.descricao
       });
+      console.log(`  - Material ${index + 1} - Estado exato:`, JSON.stringify(material.estado));
+      console.log(`  - Material ${index + 1} - Estado length:`, material.estado?.length);
+      console.log(`  - Material ${index + 1} - Estado === "em analise":`, material.estado === "em analise");
+      console.log(`  - Material ${index + 1} - Estado === "em_analise":`, material.estado === "em_analise");
     });
     
     const total = materiais.length;
