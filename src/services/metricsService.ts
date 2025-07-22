@@ -333,76 +333,91 @@ const calcularKPIsChecklists = (checklists: any[]): KPIsChecklists => {
 };
 
 const calcularKPIsMateriais = (materiais: any[]): KPIsMateriais => {
-  console.log("🔍 Calculando KPIs Materiais...");
-  console.log("  - Total de materiais:", materiais.length);
-  console.log("  - Materiais brutos:", materiais);
-  
-  const total = materiais.length;
-  const aprovados = materiais.filter((m) => m.estado === "aprovado").length;
-  const pendentes = materiais.filter((m) => m.estado === "pendente").length;
-  const reprovados = materiais.filter((m) => m.estado === "reprovado").length;
+  try {
+    console.log("🔍 Calculando KPIs Materiais...");
+    console.log("  - Total de materiais:", materiais.length);
+    console.log("  - Materiais brutos:", materiais);
+    
+    const total = materiais.length;
+    const aprovados = materiais.filter((m) => m.estado === "aprovado").length;
+    const pendentes = materiais.filter((m) => m.estado === "pendente").length;
+    const reprovados = materiais.filter((m) => m.estado === "reprovado").length;
 
-  console.log("  - Materiais aprovados:", aprovados);
-  console.log("  - Materiais pendentes:", pendentes);
-  console.log("  - Materiais reprovados:", reprovados);
+    console.log("  - Materiais aprovados:", aprovados);
+    console.log("  - Materiais pendentes:", pendentes);
+    console.log("  - Materiais reprovados:", reprovados);
 
-  const taxaAprovacao = total > 0 ? (aprovados / total) * 100 : 0;
+    const taxaAprovacao = total > 0 ? (aprovados / total) * 100 : 0;
 
-  console.log("  - Taxa de aprovação:", taxaAprovacao);
+    console.log("  - Taxa de aprovação:", taxaAprovacao);
 
-  // Materiais recebidos no mês atual
-  const agora = new Date();
-  const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
-  const materiaisMes = materiais.filter(
-    (m) => new Date(m.data_rececao) >= inicioMes,
-  ).length;
+    // Materiais recebidos no mês atual
+    const agora = new Date();
+    const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+    const materiaisMes = materiais.filter(
+      (m) => new Date(m.data_rececao) >= inicioMes,
+    ).length;
 
-  // Volume por tipo
-  const volumePorTipo = materiais.reduce(
-    (acc, m) => {
-      acc[m.tipo] = (acc[m.tipo] || 0) + m.quantidade;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
+    // Volume por tipo
+    const volumePorTipo = materiais.reduce(
+      (acc, m) => {
+        acc[m.tipo] = (acc[m.tipo] || 0) + m.quantidade;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
-  // Fornecedores mais confiáveis (maior % aprovação)
-  const fornecedores = materiais.reduce(
-    (acc, m) => {
-      if (!acc[m.fornecedor_id])
-        acc[m.fornecedor_id] = { total: 0, aprovados: 0 };
-      acc[m.fornecedor_id].total++;
-      if (m.estado === "aprovado") acc[m.fornecedor_id].aprovados++;
-      return acc;
-    },
-    {} as Record<string, { total: number; aprovados: number }>,
-  );
+    // Fornecedores mais confiáveis (maior % aprovação)
+    const fornecedores = materiais.reduce(
+      (acc, m) => {
+        if (!acc[m.fornecedor_id])
+          acc[m.fornecedor_id] = { total: 0, aprovados: 0 };
+        acc[m.fornecedor_id].total++;
+        if (m.estado === "aprovado") acc[m.fornecedor_id].aprovados++;
+        return acc;
+      },
+      {} as Record<string, { total: number; aprovados: number }>,
+    );
 
-  const fornecedoresConfiaveis = Object.entries(fornecedores)
-    .map(([id, stats]) => ({
-      id,
-      taxa:
-        ((stats as { total: number; aprovados: number }).aprovados /
-          (stats as { total: number; aprovados: number }).total) *
-        100,
-    }))
-    .sort((a, b) => b.taxa - a.taxa)
-    .slice(0, 5)
-    .map((f) => f.id);
+    const fornecedoresConfiaveis = Object.entries(fornecedores)
+      .map(([id, stats]) => ({
+        id,
+        taxa:
+          ((stats as { total: number; aprovados: number }).aprovados /
+            (stats as { total: number; aprovados: number }).total) *
+          100,
+      }))
+      .sort((a, b) => b.taxa - a.taxa)
+      .slice(0, 5)
+      .map((f) => f.id);
 
-  const resultado = {
-    taxa_aprovacao: Math.round(taxaAprovacao * 100) / 100,
-    total_materiais: total,
-    materiais_aprovados: aprovados,
-    materiais_pendentes: pendentes,
-    materiais_reprovados: reprovados,
-    materiais_recebidos_mes: materiaisMes,
-    fornecedores_mais_confiaveis: fornecedoresConfiaveis,
-    volume_por_tipo: volumePorTipo,
-  };
+    const resultado = {
+      taxa_aprovacao: Math.round(taxaAprovacao * 100) / 100,
+      total_materiais: total,
+      materiais_aprovados: aprovados,
+      materiais_pendentes: pendentes,
+      materiais_reprovados: reprovados,
+      materiais_recebidos_mes: materiaisMes,
+      fornecedores_mais_confiaveis: fornecedoresConfiaveis,
+      volume_por_tipo: volumePorTipo,
+    };
 
-  console.log("✅ KPIs Materiais calculados:", resultado);
-  return resultado;
+    console.log("✅ KPIs Materiais calculados:", resultado);
+    return resultado;
+  } catch (error) {
+    console.error("❌ Erro ao calcular KPIs Materiais:", error);
+    // Retornar valores padrão em caso de erro
+    return {
+      taxa_aprovacao: 0,
+      total_materiais: materiais.length,
+      materiais_aprovados: 0,
+      materiais_pendentes: 0,
+      materiais_reprovados: 0,
+      materiais_recebidos_mes: 0,
+      fornecedores_mais_confiaveis: [],
+      volume_por_tipo: {},
+    };
+  }
 };
 
 const calcularKPIsNCs = (naoConformidades: any[]): KPIsNCs => {
