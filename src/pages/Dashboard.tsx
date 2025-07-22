@@ -266,28 +266,53 @@ export default function Dashboard() {
           </div>
           <div className="card-content">
             <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={[
-                      { name: "Aprovados", value: metricas.materiais.materiais_aprovados, color: "#10B981" },
-                      { name: "Pendentes", value: metricas.materiais.materiais_pendentes, color: "#F59E0B" },
-                      { name: "Reprovados", value: metricas.materiais.materiais_reprovados, color: "#EF4444" },
-                    ]}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={30}
-                    outerRadius={60}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    <Cell fill="#10B981" />
-                    <Cell fill="#F59E0B" />
-                    <Cell fill="#EF4444" />
-                  </Pie>
-                  <Tooltip formatter={(value: any, name: any) => [value, name]} />
-                </PieChart>
-              </ResponsiveContainer>
+              {(() => {
+                const totalMateriais = metricas.materiais.materiais_aprovados + 
+                                     metricas.materiais.materiais_pendentes + 
+                                     metricas.materiais.materiais_reprovados;
+                
+                console.log("📊 Renderizando gráfico de materiais:");
+                console.log("  - Total materiais:", totalMateriais);
+                console.log("  - Aprovados:", metricas.materiais.materiais_aprovados);
+                console.log("  - Pendentes:", metricas.materiais.materiais_pendentes);
+                console.log("  - Reprovados:", metricas.materiais.materiais_reprovados);
+                
+                if (totalMateriais === 0) {
+                  return (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center text-gray-500">
+                        <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>Nenhum material registado</p>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: "Aprovados", value: metricas.materiais.materiais_aprovados, color: "#10B981" },
+                          { name: "Pendentes", value: metricas.materiais.materiais_pendentes, color: "#F59E0B" },
+                          { name: "Reprovados", value: metricas.materiais.materiais_reprovados, color: "#EF4444" },
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={30}
+                        outerRadius={60}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        <Cell fill="#10B981" />
+                        <Cell fill="#F59E0B" />
+                        <Cell fill="#EF4444" />
+                      </Pie>
+                      <Tooltip formatter={(value: any, name: any) => [value, name]} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                );
+              })()}
             </div>
           </div>
         </div>

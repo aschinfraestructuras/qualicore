@@ -333,12 +333,22 @@ const calcularKPIsChecklists = (checklists: any[]): KPIsChecklists => {
 };
 
 const calcularKPIsMateriais = (materiais: any[]): KPIsMateriais => {
+  console.log("🔍 Calculando KPIs Materiais...");
+  console.log("  - Total de materiais:", materiais.length);
+  console.log("  - Materiais brutos:", materiais);
+  
   const total = materiais.length;
   const aprovados = materiais.filter((m) => m.estado === "aprovado").length;
   const pendentes = materiais.filter((m) => m.estado === "pendente").length;
   const reprovados = materiais.filter((m) => m.estado === "reprovado").length;
 
+  console.log("  - Materiais aprovados:", aprovados);
+  console.log("  - Materiais pendentes:", pendentes);
+  console.log("  - Materiais reprovados:", reprovados);
+
   const taxaAprovacao = total > 0 ? (aprovados / total) * 100 : 0;
+
+  console.log("  - Taxa de aprovação:", taxaAprovacao);
 
   // Materiais recebidos no mês atual
   const agora = new Date();
@@ -380,7 +390,7 @@ const calcularKPIsMateriais = (materiais: any[]): KPIsMateriais => {
     .slice(0, 5)
     .map((f) => f.id);
 
-  return {
+  const resultado = {
     taxa_aprovacao: Math.round(taxaAprovacao * 100) / 100,
     total_materiais: total,
     materiais_aprovados: aprovados,
@@ -390,6 +400,9 @@ const calcularKPIsMateriais = (materiais: any[]): KPIsMateriais => {
     fornecedores_mais_confiaveis: fornecedoresConfiaveis,
     volume_por_tipo: volumePorTipo,
   };
+
+  console.log("✅ KPIs Materiais calculados:", resultado);
+  return resultado;
 };
 
 const calcularKPIsNCs = (naoConformidades: any[]): KPIsNCs => {
