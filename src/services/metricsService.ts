@@ -154,7 +154,9 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
 
     // Calcular métricas de materiais
     console.log("📦 Calculando métricas de materiais...");
+    console.log("📦 Dados brutos dos materiais:", materiais);
     const kpisMateriais = calcularKPIsMateriais(materiais);
+    console.log("📦 KPIs Materiais calculados:", kpisMateriais);
 
     // Calcular métricas de não conformidades
     console.log("⚠️ Calculando métricas de não conformidades...");
@@ -338,6 +340,16 @@ const calcularKPIsMateriais = (materiais: any[]): KPIsMateriais => {
     console.log("🔍 Calculando KPIs Materiais...");
     console.log("  - Total de materiais:", materiais.length);
     console.log("  - Materiais brutos:", materiais);
+    
+    // Log detalhado de cada material
+    materiais.forEach((material, index) => {
+      console.log(`  - Material ${index + 1}:`, {
+        id: material.id,
+        estado: material.estado,
+        tipo: material.tipo,
+        descricao: material.descricao
+      });
+    });
     
     const total = materiais.length;
     const aprovados = materiais.filter((m) => m.estado === "aprovado").length;
