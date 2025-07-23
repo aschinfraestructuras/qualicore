@@ -30,9 +30,9 @@ const naoConformidadeSchema = z.object({
   acao_corretiva: z.string().optional(),
   acao_preventiva: z.string().optional(),
   medidas_implementadas: z.array(z.string()).optional(),
-  custo_estimado: z.number().optional(),
-  custo_real: z.number().optional(),
-  custo_preventivo: z.number().optional(),
+  custo_estimado: z.string().optional().or(z.number().optional()),
+  custo_real: z.string().optional().or(z.number().optional()),
+  custo_preventivo: z.string().optional().or(z.number().optional()),
   observacoes: z.string().optional(),
   relacionado_ensaio_id: z.string().optional(),
   relacionado_ensaio_outro: z.string().optional(),
@@ -205,6 +205,9 @@ export default function NaoConformidadeForm({
     try {
       const processedData = {
         ...data,
+        custo_estimado: data.custo_estimado === '' ? undefined : Number(data.custo_estimado),
+        custo_real: data.custo_real === '' ? undefined : Number(data.custo_real),
+        custo_preventivo: data.custo_preventivo === '' ? undefined : Number(data.custo_preventivo),
         anexos_evidencia: documents, // Use documents from DocumentUpload
         anexos_corretiva: [
           ...(data.anexos_corretiva || []),
@@ -492,7 +495,7 @@ export default function NaoConformidadeForm({
               <input
                 type="number"
                 step="0.01"
-                {...register("custo_estimado", { valueAsNumber: true })}
+                {...register("custo_estimado")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0.00"
               />
@@ -505,7 +508,7 @@ export default function NaoConformidadeForm({
               <input
                 type="number"
                 step="0.01"
-                {...register("custo_real", { valueAsNumber: true })}
+                {...register("custo_real")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0.00"
               />
@@ -518,7 +521,7 @@ export default function NaoConformidadeForm({
               <input
                 type="number"
                 step="0.01"
-                {...register("custo_preventivo", { valueAsNumber: true })}
+                {...register("custo_preventivo")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0.00"
               />
