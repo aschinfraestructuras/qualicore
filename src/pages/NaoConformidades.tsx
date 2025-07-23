@@ -38,13 +38,17 @@ export default function NaoConformidades() {
 
   const loadNaoConformidades = async () => {
     try {
+      console.log("🔄 Iniciando carregamento de NCs...");
       setLoading(true);
       const data = await naoConformidadesAPI.getAll();
+      console.log("📊 Dados carregados:", data);
       setNaoConformidades(data as any[]);
+      console.log("✅ NCs carregadas com sucesso");
     } catch (error) {
-      console.error("Erro ao carregar não conformidades:", error);
+      console.error("❌ Erro ao carregar não conformidades:", error);
       toast.error("Erro ao carregar não conformidades");
     } finally {
+      console.log("🏁 Finalizando carregamento, setLoading(false)");
       setLoading(false);
     }
   };
@@ -269,12 +273,16 @@ export default function NaoConformidades() {
   };
 
   if (loading) {
+    console.log("🔄 Estado loading: true - mostrando spinner");
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>
     );
   }
+
+  console.log("📊 Estado loading: false - renderizando conteúdo");
+  console.log("📊 Total de NCs:", naoConformidades.length);
 
   return (
     <div className="min-h-screen bg-gray-50">
