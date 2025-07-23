@@ -283,6 +283,15 @@ export default function NaoConformidades() {
 
   console.log("📊 Estado loading: false - renderizando conteúdo");
   console.log("📊 Total de NCs:", naoConformidades.length);
+  console.log("📊 NCs detalhadas:", naoConformidades.map((nc, index) => ({
+    index,
+    id: nc.id,
+    codigo: nc.codigo,
+    descricao: nc.descricao?.substring(0, 50),
+    anexos_evidencia: nc.anexos_evidencia?.length || 0,
+    anexos_corretiva: nc.anexos_corretiva?.length || 0,
+    anexos_verificacao: nc.anexos_verificacao?.length || 0
+  })));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -518,7 +527,9 @@ export default function NaoConformidades() {
               </div>
             ) : (
               <div className="space-y-4">
-                {filteredNCs.map((nc) => (
+                {filteredNCs.map((nc) => {
+                  console.log("🎯 Renderizando NC:", nc.id, nc.codigo, nc.descricao?.substring(0, 30));
+                  return (
                   <div
                     key={nc.id}
                     className="border rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -602,7 +613,8 @@ export default function NaoConformidades() {
                       </div>
                     </div>
                   </div>
-                ))}
+                );
+                })}
               </div>
             )}
           </div>
