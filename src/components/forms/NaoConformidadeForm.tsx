@@ -49,9 +49,9 @@ const naoConformidadeSchema = z.object({
   relacionado_zona_outro: z.string().optional(),
   auditoria_id: z.string().optional(),
   auditoria_outro: z.string().optional(),
-  anexos_evidencia: z.array(z.union([z.string(), z.object({})])).optional(),
-  anexos_corretiva: z.array(z.union([z.string(), z.object({})])).optional(),
-  anexos_verificacao: z.array(z.union([z.string(), z.object({})])).optional(),
+  anexos_evidencia: z.any().optional(),
+  anexos_corretiva: z.any().optional(),
+  anexos_verificacao: z.any().optional(),
   timeline: z.array(z.any()).optional(),
 });
 
@@ -257,6 +257,10 @@ export default function NaoConformidadeForm({
         <form onSubmit={handleSubmit(onFormSubmit, (errors) => {
           console.log("❌ Erros de validação detectados:", errors);
           console.log("📝 Dados do formulário:", watch());
+          console.log("🔍 Detalhes dos erros:");
+          Object.keys(errors).forEach(key => {
+            console.log(`  - ${key}:`, errors[key]);
+          });
           toast.error("Por favor, corrija os erros no formulário");
         })} className="p-6 space-y-6">
           {/* Informações Básicas */}
