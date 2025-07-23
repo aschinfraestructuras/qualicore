@@ -203,6 +203,10 @@ export default function NaoConformidadeForm({
 
   const onFormSubmit = async (data: NaoConformidadeFormData) => {
     try {
+      console.log("🚀 onFormSubmit iniciado");
+      console.log("📝 Dados recebidos:", data);
+      console.log("📝 Erros de validação:", errors);
+      
       const processedData = {
         ...data,
         custo_estimado: data.custo_estimado === '' ? undefined : Number(data.custo_estimado),
@@ -219,7 +223,11 @@ export default function NaoConformidadeForm({
         ],
       };
 
+      console.log("📝 Dados processados:", processedData);
+      console.log("📝 Chamando onSubmit...");
+
       await onSubmit(processedData);
+      console.log("✅ onSubmit concluído com sucesso");
       toast.success("Não conformidade guardada com sucesso!");
     } catch (error) {
       console.error("❌ Erro no formulário:", error);
@@ -246,7 +254,11 @@ export default function NaoConformidadeForm({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit(onFormSubmit)} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit(onFormSubmit, (errors) => {
+          console.log("❌ Erros de validação detectados:", errors);
+          console.log("📝 Dados do formulário:", watch());
+          toast.error("Por favor, corrija os erros no formulário");
+        })} className="p-6 space-y-6">
           {/* Informações Básicas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
