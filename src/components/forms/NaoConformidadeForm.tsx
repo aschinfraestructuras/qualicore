@@ -49,9 +49,9 @@ const naoConformidadeSchema = z.object({
   relacionado_zona_outro: z.string().optional(),
   auditoria_id: z.string().optional(),
   auditoria_outro: z.string().optional(),
-  anexos_evidencia: z.array(z.string()).optional(),
-  anexos_corretiva: z.array(z.string()).optional(),
-  anexos_verificacao: z.array(z.string()).optional(),
+  anexos_evidencia: z.array(z.union([z.string(), z.object({})])).optional(),
+  anexos_corretiva: z.array(z.union([z.string(), z.object({})])).optional(),
+  anexos_verificacao: z.array(z.union([z.string(), z.object({})])).optional(),
   timeline: z.array(z.any()).optional(),
 });
 
@@ -212,7 +212,7 @@ export default function NaoConformidadeForm({
         custo_estimado: data.custo_estimado === '' ? undefined : Number(data.custo_estimado),
         custo_real: data.custo_real === '' ? undefined : Number(data.custo_real),
         custo_preventivo: data.custo_preventivo === '' ? undefined : Number(data.custo_preventivo),
-        anexos_evidencia: documents, // Use documents from DocumentUpload
+        anexos_evidencia: documents.map((doc: any) => doc.name || doc.nome || doc), // Extrair apenas nomes
         anexos_corretiva: [
           ...(data.anexos_corretiva || []),
           ...uploadedFiles.corretiva.map((f) => f.name),
