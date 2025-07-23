@@ -110,9 +110,9 @@ export default function NaoConformidadeForm({
       acao_corretiva: naoConformidade?.acao_corretiva || "",
       acao_preventiva: naoConformidade?.acao_preventiva || "",
       medidas_implementadas: naoConformidade?.medidas_implementadas || [],
-      custo_estimado: naoConformidade?.custo_estimado || 0,
-      custo_real: naoConformidade?.custo_real || 0,
-      custo_preventivo: naoConformidade?.custo_preventivo || 0,
+      custo_estimado: naoConformidade?.custo_estimado || undefined,
+      custo_real: naoConformidade?.custo_real || undefined,
+      custo_preventivo: naoConformidade?.custo_preventivo || undefined,
       observacoes: naoConformidade?.observacoes || "",
       relacionado_ensaio_id: naoConformidade?.relacionado_ensaio_id || "",
       relacionado_ensaio_outro: naoConformidade?.relacionado_ensaio_outro || "",
@@ -129,12 +129,28 @@ export default function NaoConformidadeForm({
       relacionado_zona_outro: naoConformidade?.relacionado_zona_outro || "",
       auditoria_id: naoConformidade?.auditoria_id || "",
       auditoria_outro: naoConformidade?.auditoria_outro || "",
-      anexos_evidencia: naoConformidade?.anexos_evidencia?.map((a) => typeof a === 'string' ? a : a.nome) || [],
-      anexos_corretiva: naoConformidade?.anexos_corretiva?.map((a) => typeof a === 'string' ? a : a.nome) || [],
-      anexos_verificacao: naoConformidade?.anexos_verificacao?.map((a) => typeof a === 'string' ? a : a.nome) || [],
+      anexos_evidencia: naoConformidade?.anexos_evidencia?.map((a: any) => typeof a === 'string' ? a : a.nome) || [],
+      anexos_corretiva: naoConformidade?.anexos_corretiva?.map((a: any) => typeof a === 'string' ? a : a.nome) || [],
+      anexos_verificacao: naoConformidade?.anexos_verificacao?.map((a: any) => typeof a === 'string' ? a : a.nome) || [],
       timeline: naoConformidade?.timeline || [],
     },
   });
+
+  // Monitorar valores dos campos obrigatórios
+  const watchedValues = watch();
+  useEffect(() => {
+    console.log("📝 Valores observados:", watchedValues);
+    console.log("📝 Campos obrigatórios:");
+    console.log("  - codigo:", watchedValues.codigo);
+    console.log("  - tipo:", watchedValues.tipo);
+    console.log("  - severidade:", watchedValues.severidade);
+    console.log("  - categoria:", watchedValues.categoria);
+    console.log("  - data_deteccao:", watchedValues.data_deteccao);
+    console.log("  - descricao:", watchedValues.descricao);
+    console.log("  - impacto:", watchedValues.impacto);
+    console.log("  - area_afetada:", watchedValues.area_afetada);
+    console.log("  - responsavel_deteccao:", watchedValues.responsavel_deteccao);
+  }, [watchedValues]);
 
   const tipo = watch("tipo");
   const categoria = watch("categoria");
@@ -205,6 +221,7 @@ export default function NaoConformidadeForm({
       console.log("📝 Dados do formulário:", data);
       console.log("📝 Documents:", documents);
       console.log("📝 UploadedFiles:", uploadedFiles);
+      console.log("📝 Erros de validação:", errors);
       
       const processedData = {
         ...data,
@@ -250,7 +267,10 @@ export default function NaoConformidadeForm({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit(onFormSubmit)} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit(onFormSubmit, (errors) => {
+          console.log("❌ Erros de validação:", errors);
+          console.log("📝 Dados do formulário com erros:", watch());
+        })} className="p-6 space-y-6">
           {/* Informações Básicas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
