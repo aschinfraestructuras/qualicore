@@ -201,10 +201,6 @@ export default function NaoConformidadeForm({
 
   const onFormSubmit = async (data: NaoConformidadeFormData) => {
     try {
-      console.log("🚀 Formulário submetido!");
-      console.log("📁 Ficheiros carregados:", uploadedFiles);
-      console.log("📁 Documents do DocumentUpload:", documents);
-      
       const processedData = {
         ...data,
         anexos_evidencia: documents, // Use documents from DocumentUpload
@@ -217,9 +213,6 @@ export default function NaoConformidadeForm({
           ...uploadedFiles.verificacao.map((f) => f.name),
         ],
       };
-
-      console.log("📁 Dados processados:", processedData);
-      console.log("📁 Anexos evidência:", processedData.anexos_evidencia);
 
       await onSubmit(processedData);
       toast.success("Não conformidade guardada com sucesso!");

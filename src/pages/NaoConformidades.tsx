@@ -94,9 +94,6 @@ export default function NaoConformidades() {
 
   const handleSubmitNC = async (data: any) => {
     try {
-      console.log("Dados recebidos do formulário NC:", data);
-      console.log("Anexos evidência:", data.anexos_evidencia);
-
       // Filtrar apenas os campos válidos do schema Supabase e sanitizar UUIDs
       const validNCData = {
         codigo: data.codigo,
@@ -152,8 +149,6 @@ export default function NaoConformidades() {
         timeline: data.timeline || [],
       };
 
-      console.log("Dados corrigidos para envio:", validNCData);
-
       if (editingNC) {
         await naoConformidadesAPI.update(editingNC.id, validNCData);
         toast.success("Não conformidade atualizada com sucesso!");
@@ -163,6 +158,7 @@ export default function NaoConformidades() {
       }
       await loadNaoConformidades();
       setShowForm(false);
+      setEditingNC(null);
     } catch (error) {
       console.error("Erro detalhado ao salvar NC:", error);
       toast.error("Erro ao salvar não conformidade");
