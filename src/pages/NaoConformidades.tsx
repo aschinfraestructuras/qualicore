@@ -592,22 +592,11 @@ export default function NaoConformidades() {
 
       {/* MODAL DO FORMULÁRIO */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold mb-4">
-                {editingNC
-                  ? "Editar Não Conformidade"
-                  : "Nova Não Conformidade"}
-              </h2>
-              <NaoConformidadeForm
-                naoConformidade={editingNC || undefined}
-                onSubmit={handleSubmitNC}
-                onCancel={handleCancelForm}
-              />
-            </div>
-          </div>
-        </div>
+        <NaoConformidadeForm
+          naoConformidade={editingNC || undefined}
+          onSubmit={handleSubmitNC}
+          onCancel={handleCancelForm}
+        />
       )}
 
       {/* MODAL DE RELATÓRIOS */}
