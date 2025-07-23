@@ -22,9 +22,9 @@ const naoConformidadeSchema = z.object({
   data_verificacao_eficacia: z.string().optional(),
   descricao: z.string().min(1, "Descrição é obrigatória"),
   causa_raiz: z.string().optional(),
-  impacto: z.string().min(1, "Impacto é obrigatório"),
-  area_afetada: z.string().min(1, "Área afetada é obrigatória"),
-  responsavel_deteccao: z.string().min(1, "Responsável pela deteção é obrigatório"),
+  impacto: z.string().optional(), // Tornar opcional
+  area_afetada: z.string().optional(), // Tornar opcional
+  responsavel_deteccao: z.string().optional(), // Tornar opcional
   responsavel_resolucao: z.string().optional(),
   responsavel_verificacao: z.string().optional(),
   acao_corretiva: z.string().optional(),
@@ -91,10 +91,10 @@ export default function NaoConformidadeForm({
     resolver: zodResolver(naoConformidadeSchema),
     defaultValues: {
       codigo: naoConformidade?.codigo || `NC-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-      tipo: naoConformidade?.tipo || "",
+      tipo: naoConformidade?.tipo || "material",
       tipo_outro: naoConformidade?.tipo_outro || "",
-      severidade: naoConformidade?.severidade || "",
-      categoria: naoConformidade?.categoria || "",
+      severidade: naoConformidade?.severidade || "media",
+      categoria: naoConformidade?.categoria || "qualidade",
       categoria_outro: naoConformidade?.categoria_outro || "",
       data_deteccao: naoConformidade?.data_deteccao || new Date().toISOString().split('T')[0],
       data_resolucao: naoConformidade?.data_resolucao || "",
@@ -102,9 +102,9 @@ export default function NaoConformidadeForm({
       data_verificacao_eficacia: naoConformidade?.data_verificacao_eficacia || "",
       descricao: naoConformidade?.descricao || "",
       causa_raiz: naoConformidade?.causa_raiz || "",
-      impacto: naoConformidade?.impacto || "",
-      area_afetada: naoConformidade?.area_afetada || "",
-      responsavel_deteccao: naoConformidade?.responsavel_deteccao || "",
+      impacto: naoConformidade?.impacto || "A definir",
+      area_afetada: naoConformidade?.area_afetada || "A definir",
+      responsavel_deteccao: naoConformidade?.responsavel_deteccao || "A definir",
       responsavel_resolucao: naoConformidade?.responsavel_resolucao || "",
       responsavel_verificacao: naoConformidade?.responsavel_verificacao || "",
       acao_corretiva: naoConformidade?.acao_corretiva || "",
@@ -136,21 +136,7 @@ export default function NaoConformidadeForm({
     },
   });
 
-  // Monitorar valores dos campos obrigatórios
-  const watchedValues = watch();
-  useEffect(() => {
-    console.log("📝 Valores observados:", watchedValues);
-    console.log("📝 Campos obrigatórios:");
-    console.log("  - codigo:", watchedValues.codigo);
-    console.log("  - tipo:", watchedValues.tipo);
-    console.log("  - severidade:", watchedValues.severidade);
-    console.log("  - categoria:", watchedValues.categoria);
-    console.log("  - data_deteccao:", watchedValues.data_deteccao);
-    console.log("  - descricao:", watchedValues.descricao);
-    console.log("  - impacto:", watchedValues.impacto);
-    console.log("  - area_afetada:", watchedValues.area_afetada);
-    console.log("  - responsavel_deteccao:", watchedValues.responsavel_deteccao);
-  }, [watchedValues]);
+
 
   const tipo = watch("tipo");
   const categoria = watch("categoria");
@@ -217,12 +203,6 @@ export default function NaoConformidadeForm({
 
   const onFormSubmit = async (data: NaoConformidadeFormData) => {
     try {
-      console.log("🚀 NaoConformidadeForm onFormSubmit iniciado");
-      console.log("📝 Dados do formulário:", data);
-      console.log("📝 Documents:", documents);
-      console.log("📝 UploadedFiles:", uploadedFiles);
-      console.log("📝 Erros de validação:", errors);
-      
       const processedData = {
         ...data,
         anexos_evidencia: documents, // Use documents from DocumentUpload
@@ -236,11 +216,7 @@ export default function NaoConformidadeForm({
         ],
       };
 
-      console.log("📝 Dados processados:", processedData);
-      console.log("📝 Chamando onSubmit...");
-
       await onSubmit(processedData);
-      console.log("📝 onSubmit concluído com sucesso");
       toast.success("Não conformidade guardada com sucesso!");
     } catch (error) {
       console.error("❌ Erro no formulário:", error);
@@ -267,10 +243,7 @@ export default function NaoConformidadeForm({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit(onFormSubmit, (errors) => {
-          console.log("❌ Erros de validação:", errors);
-          console.log("📝 Dados do formulário com erros:", watch());
-        })} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit(onFormSubmit)} className="p-6 space-y-6">
           {/* Informações Básicas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
