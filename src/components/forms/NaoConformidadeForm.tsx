@@ -201,6 +201,11 @@ export default function NaoConformidadeForm({
 
   const onFormSubmit = async (data: NaoConformidadeFormData) => {
     try {
+      console.log("🚀 NaoConformidadeForm onFormSubmit iniciado");
+      console.log("📝 Dados do formulário:", data);
+      console.log("📝 Documents:", documents);
+      console.log("📝 UploadedFiles:", uploadedFiles);
+      
       const processedData = {
         ...data,
         anexos_evidencia: documents, // Use documents from DocumentUpload
@@ -214,11 +219,15 @@ export default function NaoConformidadeForm({
         ],
       };
 
+      console.log("📝 Dados processados:", processedData);
+      console.log("📝 Chamando onSubmit...");
+
       await onSubmit(processedData);
+      console.log("📝 onSubmit concluído com sucesso");
       toast.success("Não conformidade guardada com sucesso!");
     } catch (error) {
-      toast.error("Erro ao guardar não conformidade");
       console.error("❌ Erro no formulário:", error);
+      toast.error("Erro ao guardar não conformidade");
     }
   };
 

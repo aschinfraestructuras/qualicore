@@ -94,6 +94,9 @@ export default function NaoConformidades() {
 
   const handleSubmitNC = async (data: any) => {
     try {
+      console.log("🚀 handleSubmitNC iniciado");
+      console.log("📝 editingNC:", editingNC);
+      
       // Filtrar apenas os campos válidos do schema Supabase e sanitizar UUIDs
       const validNCData = {
         codigo: data.codigo,
@@ -149,25 +152,43 @@ export default function NaoConformidades() {
         timeline: data.timeline || [],
       };
 
+      console.log("📝 showForm antes:", showForm);
+
       if (editingNC) {
+        console.log("📝 Atualizando NC:", editingNC.id);
         await naoConformidadesAPI.update(editingNC.id, validNCData);
         toast.success("Não conformidade atualizada com sucesso!");
       } else {
+        console.log("📝 Criando nova NC");
         await naoConformidadesAPI.create(validNCData);
         toast.success("Não conformidade criada com sucesso!");
       }
+      
+      console.log("📝 Carregando NCs...");
       await loadNaoConformidades();
+      
+      console.log("📝 Fechando formulário...");
       setShowForm(false);
       setEditingNC(null);
+      
+      console.log("📝 showForm depois:", false);
+      console.log("📝 editingNC depois:", null);
     } catch (error) {
-      console.error("Erro detalhado ao salvar NC:", error);
+      console.error("❌ Erro detalhado ao salvar NC:", error);
       toast.error("Erro ao salvar não conformidade");
     }
   };
 
   const handleCancelForm = () => {
+    console.log("🚀 handleCancelForm chamado");
+    console.log("📝 showForm antes:", showForm);
+    console.log("📝 editingNC antes:", editingNC);
+    
     setShowForm(false);
     setEditingNC(null);
+    
+    console.log("📝 showForm depois:", false);
+    console.log("📝 editingNC depois:", null);
   };
 
   const handleDelete = async (id: string) => {
