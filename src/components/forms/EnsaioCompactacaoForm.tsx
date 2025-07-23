@@ -122,36 +122,22 @@ export default function EnsaioCompactacaoForm({ ensaio, onSubmit, onCancel }: En
     }));
   };
 
-  const handleCancel = (e?: React.MouseEvent) => {
-    console.log('handleCancel chamado');
-    console.log('Evento:', e);
-    console.log('Target:', e?.target);
+    const handleCancel = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    console.log('Chamando onCancel...');
-    console.log('onCancel function:', onCancel);
-    console.log('onCancel type:', typeof onCancel);
-    
-    try {
-      onCancel();
-      console.log('onCancel chamado com sucesso');
-    } catch (error) {
-      console.error('Erro ao chamar onCancel:', error);
-    }
+    onCancel();
   };
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
-      console.log('Overlay clicado - fechando modal');
       onCancel();
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('handleSubmit chamado');
     calcularMedias();
     const dadosCompletos = {
       ...formData,

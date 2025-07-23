@@ -621,10 +621,7 @@ const RelatorioIndividualModal: React.FC<RelatorioIndividualModalProps> = ({ pie
             </div>
           </div>
           <button
-            onClick={() => {
-              console.log('Fechando modal de relatórios individuais');
-              onClose();
-            }}
+            onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X className="h-5 w-5 text-gray-500" />
@@ -733,10 +730,7 @@ const RelatorioIndividualModal: React.FC<RelatorioIndividualModalProps> = ({ pie
                 </div>
               </div>
               <button
-                onClick={() => {
-                  console.log('Fechando modal de filtros');
-                  setShowFilters(false);
-                }}
+                onClick={() => setShowFilters(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <X className="h-5 w-5 text-gray-500" />
