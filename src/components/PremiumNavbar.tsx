@@ -409,6 +409,7 @@ ${searchResults.join('\n\n')}
         { name: "Eletrificação", icon: "⚡", category: "Ferroviário", path: "/eletrificacao", shortcut: "⌘E" },
         { name: "Pontes & Túneis", icon: "🌉", category: "Ferroviário", path: "/pontes-tuneis", shortcut: "⌘P" },
         { name: "Estações", icon: "🏢", category: "Ferroviário", path: "/estacoes", shortcut: "⌘T" },
+        { name: "Segurança", icon: "🛡️", category: "Ferroviário", path: "/seguranca-ferroviaria", shortcut: "⌘G" },
         { name: "RFIs", icon: "❓", category: "Gestão", path: "/rfis", shortcut: "⌘I" },
     { name: "Ensaios Compactação", icon: "🔧", category: "Especializado", path: "/ensaios-compactacao", shortcut: "⌘A" },
     { name: "PIE", icon: "🎯", category: "Especializado", path: "/pie", shortcut: "⌘P" },

@@ -29,6 +29,7 @@ import Sinalizacao from "./pages/Sinalizacao";
 import Eletrificacao from "./pages/Eletrificacao";
 import PontesTuneis from "./pages/PontesTuneis";
 import Estacoes from "./pages/Estacoes";
+import SegurancaFerroviaria from "./pages/SegurancaFerroviaria";
 import Obras from "./pages/Obras";
 import Landing from "./pages/Landing";
 import SupabaseTest from "./components/SupabaseTest";
@@ -274,6 +275,19 @@ function App() {
           }
         >
           <Route index element={<Estacoes />} />
+        </Route>
+
+        <Route
+          path="/seguranca-ferroviaria"
+          element={
+            user ? (
+              <PremiumLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<SegurancaFerroviaria />} />
         </Route>
         
         <Route

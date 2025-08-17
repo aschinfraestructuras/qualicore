@@ -29,6 +29,11 @@ export interface FilterState {
   numViasMin: number | '';
   areaTotalMin: number | '';
   capacidadePassageirosMin: number | '';
+  // Parâmetros técnicos (Segurança)
+  nivelSegurancaMin: number | '';
+  raioCoberturaMin: number | '';
+  tempoRespostaMax: number | '';
+  capacidadeDeteccaoMin: number | '';
   ultimaInspecaoInicio: string;
   ultimaInspecaoFim: string;
 }
@@ -112,6 +117,12 @@ export function applyFilters(data: any[], filters: FilterState): any[] {
     if (filters.numViasMin !== '' && (item.parametros?.num_vias || 0) < filters.numViasMin) return false;
     if (filters.areaTotalMin !== '' && (item.parametros?.area_total || 0) < filters.areaTotalMin) return false;
     if (filters.capacidadePassageirosMin !== '' && (item.parametros?.capacidade_passageiros || 0) < filters.capacidadePassageirosMin) return false;
+
+    // Filtros de parâmetros técnicos (Segurança)
+    if (filters.nivelSegurancaMin !== '' && (item.parametros?.nivel_seguranca || 0) < filters.nivelSegurancaMin) return false;
+    if (filters.raioCoberturaMin !== '' && (item.parametros?.raio_cobertura || 0) < filters.raioCoberturaMin) return false;
+    if (filters.tempoRespostaMax !== '' && (item.parametros?.tempo_resposta || 0) > filters.tempoRespostaMax) return false;
+    if (filters.capacidadeDeteccaoMin !== '' && (item.parametros?.capacidade_deteccao || 0) < filters.capacidadeDeteccaoMin) return false;
   
     // Filtros de inspeção
     if (filters.ultimaInspecaoInicio && item.ultima_inspecao < filters.ultimaInspecaoInicio) return false;
@@ -294,6 +305,12 @@ export function getActiveFiltersCount(filters: FilterState | TravessaFilterState
   if ('numViasMin' in filters && filters.numViasMin !== '') count++;
   if ('areaTotalMin' in filters && filters.areaTotalMin !== '') count++;
   if ('capacidadePassageirosMin' in filters && filters.capacidadePassageirosMin !== '') count++;
+
+  // Filtros de parâmetros técnicos (Segurança)
+  if ('nivelSegurancaMin' in filters && filters.nivelSegurancaMin !== '') count++;
+  if ('raioCoberturaMin' in filters && filters.raioCoberturaMin !== '') count++;
+  if ('tempoRespostaMax' in filters && filters.tempoRespostaMax !== '') count++;
+  if ('capacidadeDeteccaoMin' in filters && filters.capacidadeDeteccaoMin !== '') count++;
     
   // Filtros de inspeção
   if ('ultimaInspecaoInicio' in filters && filters.ultimaInspecaoInicio) count++;
@@ -342,6 +359,10 @@ export function getDefaultFilters(): FilterState {
   numViasMin: '',
   areaTotalMin: '',
   capacidadePassageirosMin: '',
+  nivelSegurancaMin: '',
+  raioCoberturaMin: '',
+  tempoRespostaMax: '',
+  capacidadeDeteccaoMin: '',
   ultimaInspecaoInicio: '',
   ultimaInspecaoFim: ''
   };
