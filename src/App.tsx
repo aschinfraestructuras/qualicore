@@ -25,6 +25,7 @@ import NaoConformidades from "./pages/NaoConformidades";
 import Documentos from "./pages/Documentos";
 import Relatorios from "./pages/Relatorios";
 import ViaFerrea from "./pages/ViaFerrea";
+import Sinalizacao from "./pages/Sinalizacao";
 import Obras from "./pages/Obras";
 import Landing from "./pages/Landing";
 import SupabaseTest from "./components/SupabaseTest";
@@ -218,6 +219,19 @@ function App() {
           }
         >
           <Route index element={<ViaFerrea />} />
+        </Route>
+
+        <Route
+          path="/sinalizacao"
+          element={
+            user ? (
+              <PremiumLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<Sinalizacao />} />
         </Route>
 
         <Route

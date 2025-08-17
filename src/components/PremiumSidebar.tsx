@@ -199,7 +199,7 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
       title: "FERROVIÁRIO",
       items: [
         { name: "Via Férrea", href: "/via-ferrea", icon: TrendingUp, badge: "0" },
-        { name: "Sinalização", href: "/sinalizacao", icon: Activity, badge: "0" },
+        { name: "Sinalização", href: "/sinalizacao", icon: Activity, badge: "🆕" },
         { name: "Eletrificação", href: "/eletrificacao", icon: Zap, badge: "0" },
         { name: "Pontes & Túneis", href: "/pontes-tuneis", icon: Archive, badge: "0" },
         { name: "Estações", href: "/estacoes", icon: Building, badge: "0" },

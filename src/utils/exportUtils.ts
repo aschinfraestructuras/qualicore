@@ -266,6 +266,57 @@ export function formatInspecoesForExport(inspecoes: any[]): ExportData {
   };
 }
 
+// Função para formatar dados de sinalização para exportação
+export function formatSinalizacaoForExport(sinalizacoes: any[]): ExportData {
+  const headers = [
+    'Código',
+    'Tipo',
+    'Categoria',
+    'Localização',
+    'KM Inicial',
+    'KM Final',
+    'Estado',
+    'Fabricante',
+    'Modelo',
+    'Data Instalação',
+    'Status Operacional',
+    'Alcance (m)',
+    'Frequência',
+    'Potência (W)',
+    'Sensibilidade (dBm)',
+    'Última Inspeção',
+    'Próxima Inspeção',
+    'Observações'
+  ];
+
+  const data = sinalizacoes.map(sinalizacao => [
+    sinalizacao.codigo,
+    sinalizacao.tipo,
+    sinalizacao.categoria,
+    sinalizacao.localizacao,
+    sinalizacao.km_inicial,
+    sinalizacao.km_final,
+    sinalizacao.estado,
+    sinalizacao.fabricante,
+    sinalizacao.modelo,
+    sinalizacao.data_instalacao,
+    sinalizacao.status_operacional,
+    sinalizacao.parametros?.alcance || '',
+    sinalizacao.parametros?.frequencia || '',
+    sinalizacao.parametros?.potencia || '',
+    sinalizacao.parametros?.sensibilidade || '',
+    sinalizacao.ultima_inspecao,
+    sinalizacao.proxima_inspecao,
+    sinalizacao.observacoes
+  ]);
+
+  return {
+    headers,
+    data,
+    title: 'Relatório de Sinalização - Via Férrea'
+  };
+}
+
 // Função para gerar nome de arquivo com timestamp
 export function generateFilename(prefix: string, type: string): string {
   const now = new Date();
