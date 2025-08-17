@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
   Search,
@@ -20,6 +21,8 @@ import {
   Building2,
   DollarSign,
   Edit3,
+  ArrowUpRight,
+  BarChart3,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ObraForm from "@/components/forms/ObraForm";
@@ -29,7 +32,6 @@ import { SavedObrasViewer } from "@/components/SavedObrasViewer";
 import { obrasAPI } from "@/lib/supabase-api";
 import { PDFService } from "@/services/pdfService";
 import { ShareService } from "@/services/shareService";
-import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 // Dados mock iniciais para demonstração
@@ -467,208 +469,359 @@ export default function Obras() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando obras...</p>
+          <div className="relative">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-2xl animate-pulse">
+              <Building2 className="h-8 w-8 text-white" />
+            </div>
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full animate-bounce"></div>
+          </div>
+          <p className="text-gray-600 mt-4 font-medium">Carregando obras...</p>
         </div>
       </div>
     );
   }
 
-      return (
-      <div className="space-y-6 w-full py-6 px-6 overflow-visible">
-        <div className="flex items-center justify-between pt-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestão de Obras</h1>
-          <p className="text-gray-600 text-lg">Controlo completo de projetos e obras</p>
-          {usingRealData ? (
-            <div className="flex items-center mt-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-              <span className="text-sm text-green-600 font-medium">Dados Reais da Supabase</span>
-            </div>
-          ) : (
-            <div className="flex items-center mt-2">
-              <div className="w-2 h-2 bg-orange-500 rounded-full mr-2 animate-pulse"></div>
-              <span className="text-sm text-orange-600 font-medium">Dados de Demonstração</span>
-            </div>
-          )}
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8 pt-16">
+      {/* Header Premium */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent mb-2">
+              Gestão de Obras
+            </h1>
+            <p className="text-xl text-gray-600 flex items-center">
+              <Building2 className="h-5 w-5 mr-2 text-blue-500" />
+              Controlo completo de projetos e obras em tempo real
+            </p>
+            {usingRealData ? (
+              <div className="flex items-center mt-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                <span className="text-sm text-green-600 font-medium">Dados Reais da Supabase</span>
+              </div>
+            ) : (
+              <div className="flex items-center mt-2">
+                <div className="w-2 h-2 bg-orange-500 rounded-full mr-2 animate-pulse"></div>
+                <span className="text-sm text-orange-600 font-medium">Dados de Demonstração</span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center space-x-4">
+            <Link
+              to="/obras/nova"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
+            >
+              <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
+              Nova Obra
+            </Link>
+          </div>
         </div>
-                  <Link
-            to="/obras/nova"
-            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-          >
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Obra
-        </Link>
-      </div>
+      </motion.div>
+
+      {/* Stats Cards - Ultra Premium */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8"
+      >
+        {/* Total de Obras */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-t-3xl"></div>
+            <div className="absolute top-4 right-4 w-2 h-2 bg-blue-400 rounded-full opacity-0 group-hover:opacity-100 animate-ping"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Building2 className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  <ArrowUpRight className="h-3 w-3" />
+                  <span>+1</span>
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Total de Obras</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.total}</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.total / 10) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Em Execução */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-t-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <TrendingUp className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Em Execução</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.em_execucao}</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.em_execucao / stats.total) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Concluídas */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-emerald-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-emerald-500 rounded-t-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <CheckCircle className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Concluídas</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.concluidas}</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.concluidas / stats.total) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Valor Total */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-rose-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-t-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <DollarSign className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Valor Total</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.valor_total.toLocaleString('pt-PT')} €</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.valor_executado / stats.valor_total) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Valor Executado */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-red-500/5 to-rose-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-t-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <BarChart3 className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Executado</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.valor_executado.toLocaleString('pt-PT')} €</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.valor_executado / stats.valor_total) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
 
       {/* Filtros e Ações */}
-      <div className="flex items-center space-x-2">
-        <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-          <Filter className="h-4 w-4" />
-        </button>
-        <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-          <FileText className="h-4 w-4" />
-        </button>
-        <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-          <Cloud className="h-4 w-4" />
-        </button>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8 }}
+        className="mb-6"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="flex bg-white/80 backdrop-blur-sm rounded-xl p-1 shadow-lg">
+              <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                <Filter className="h-4 w-4" />
+              </button>
+              <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                <FileText className="h-4 w-4" />
+              </button>
+              <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                <Cloud className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div className="text-sm text-gray-600">
+            {filteredObras.length} obra(s) encontrada(s)
+          </div>
+        </div>
+      </motion.div>
 
-      {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 w-full">
-        <div className="bg-gradient-to-br from-white to-blue-50/30 p-6 rounded-2xl shadow-lg border border-blue-200/50 hover:shadow-xl hover:scale-105 transition-all duration-300 backdrop-blur-sm hover-lift relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          <div className="absolute top-0 left-0 w-20 h-20 bg-gradient-to-br from-blue-400/10 to-transparent rounded-full blur-xl group-hover:scale-150 transition-transform duration-700"></div>
-                      <div className="flex items-center justify-between relative z-10">
-              <div>
-                <p className="text-sm font-semibold text-blue-600/80 uppercase tracking-wider">Total de Obras</p>
-                <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300">1</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-                <Building2 className="h-6 w-6 text-white group-hover:rotate-12 transition-transform duration-300" />
-              </div>
-            </div>
-        </div>
-        <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Em Execução</p>
-              <p className="text-2xl font-bold text-blue-600">0</p>
-            </div>
-            <TrendingUp className="h-8 w-8 text-blue-600" />
-          </div>
-        </div>
-        <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Concluídas</p>
-              <p className="text-2xl font-bold text-green-600">0</p>
-            </div>
-            <CheckCircle className="h-8 w-8 text-green-600" />
-          </div>
-        </div>
-        <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Valor Total</p>
-              <p className="text-2xl font-bold text-gray-900">17 500 000,00 €</p>
-            </div>
-            <DollarSign className="h-8 w-8 text-gray-600" />
-          </div>
-        </div>
-        <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Executado</p>
-              <p className="text-2xl font-bold text-purple-600">0,00 €</p>
-            </div>
-            <DollarSign className="h-8 w-8 text-purple-600" />
-          </div>
-        </div>
-      </div>
-
-      {/* Lista de Obras */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 w-full">
-        <div className="px-3 py-2 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Lista de Obras</h2>
-          <p className="text-sm text-gray-600 mt-1">1 obra(s) encontrada(s)</p>
-        </div>
-        <div className="p-3 w-full overflow-visible">
-          <div className="bg-gradient-to-br from-white to-blue-50/20 rounded-2xl p-6 border border-blue-200/50 shadow-lg backdrop-blur-sm w-full hover-lift relative overflow-visible group">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/3 via-purple-500/3 to-indigo-500/3 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/5 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
-                          <div className="flex items-start space-x-3 w-full relative z-10">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
-                  <Building2 className="h-6 w-6 text-white group-hover:rotate-12 transition-transform duration-300" />
-                </div>
-              <div className="flex-1 w-full">
-                <div className="flex items-center space-x-2 mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900">Linha do Sado - Setubal</h3>
-                  <span className="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full shadow-lg border border-blue-400/30">
-                    Planeamento
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-2 text-sm text-gray-600 w-full">
-                  <div>
-                    <span className="font-medium">Código:</span> T000
+      {/* Lista de Obras - Ultra Premium */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.9 }}
+        className="space-y-6"
+      >
+        {filteredObras.map((obra, index) => (
+          <motion.div
+            key={obra.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.0 + index * 0.1 }}
+            className="group cursor-pointer"
+          >
+            <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] relative overflow-hidden">
+              {/* Animated background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/3 via-purple-500/3 to-indigo-500/3 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/5 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
+                    <Building2 className="h-6 w-6 text-white group-hover:rotate-12 transition-transform duration-300" />
                   </div>
-                  <div>
-                    <span className="font-medium">Cliente:</span> Infraestruturas de Portugal
-                  </div>
-                  <div>
-                    <span className="font-medium">Localização:</span> Setubal
-                  </div>
-                  <div>
-                    <span className="font-medium">Início:</span> 01/10/2025
-                  </div>
-                  <div>
-                    <span className="font-medium">Progresso:</span> 0%
-                  </div>
-                  <div>
-                    <span className="font-medium">Responsável:</span> Mario Cristiano
-                  </div>
-                  <div>
-                    <span className="font-medium">Contrato:</span> 17 500 000,00 €
-                  </div>
-                  <div>
-                    <span className="font-medium">Tipo:</span> Infraestrutura - Grande
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Progresso</span>
-                    <span className="text-sm font-bold text-blue-600">0%</span>
-                  </div>
-                  <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-3 shadow-inner">
-                    <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-1000 ease-out shadow-lg relative overflow-hidden" style={{ width: '0%' }}>
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 animate-pulse"></div>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <h3 className="text-xl font-bold text-gray-900">{obra.nome}</h3>
+                      <span className="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full shadow-lg border border-blue-400/30">
+                        {getStatusText(obra.status)}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600 mb-4">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-semibold text-gray-700">Código:</span>
+                        <span>{obra.codigo}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-semibold text-gray-700">Cliente:</span>
+                        <span>{obra.cliente}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-semibold text-gray-700">Localização:</span>
+                        <span>{obra.localizacao}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-semibold text-gray-700">Responsável:</span>
+                        <span>{obra.responsavel_tecnico}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-semibold text-gray-700">Progresso</span>
+                        <span className="text-sm font-bold text-blue-600">{obra.percentual_execucao}%</span>
+                      </div>
+                      <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-3 shadow-inner">
+                        <div 
+                          className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-1000 ease-out shadow-lg relative overflow-hidden" 
+                          style={{ width: `${obra.percentual_execucao}%` }}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap gap-3">
+                      <button 
+                        onClick={() => handleEditObra(obra)}
+                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                      >
+                        <Edit3 className="h-4 w-4 mr-2" />
+                        EDITAR
+                      </button>
+                      <button 
+                        onClick={() => handleRelatorioObra(obra)}
+                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        RELATÓRIO
+                      </button>
+                      <button 
+                        onClick={() => handleExportObra(obra)}
+                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        EXPORTAR
+                      </button>
+                      <button 
+                        onClick={() => handleShareObra(obra)}
+                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                      >
+                        <Share2 className="h-4 w-4 mr-2" />
+                        PARTILHAR
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteObra(obra)}
+                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        EXCLUIR
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-3 relative z-10 pointer-events-auto">
-              <button 
-                onClick={() => handleEditObra(mockObras[0])}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 relative z-20 pointer-events-auto"
-              >
-                <Edit3 className="h-4 w-4 mr-2" />
-                EDITAR
-              </button>
-              <button 
-                onClick={() => handleRelatorioObra(mockObras[0])}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 relative z-20 pointer-events-auto"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                RELATÓRIO
-              </button>
-              <button 
-                onClick={() => handleExportObra(mockObras[0])}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 relative z-20 pointer-events-auto"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                EXPORTAR
-              </button>
-              <button 
-                onClick={() => handleShareObra(mockObras[0])}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 relative z-20 pointer-events-auto"
-              >
-                <Share2 className="h-4 w-4 mr-2" />
-                PARTILHAR
-              </button>
-              <button 
-                onClick={() => handleDeleteObra(mockObras[0])}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 relative z-20 pointer-events-auto"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                EXCLUIR
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        ))}
+      </motion.div>
 
       {/* Modais e Componentes */}
       <AnimatePresence>
