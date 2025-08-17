@@ -12,6 +12,10 @@ import {
   Cloud,
   X,
   CheckCircle,
+  ArrowUpRight,
+  Clock,
+  TrendingUp,
+  Award,
 } from "lucide-react";
 import { checklistsAPI } from "@/lib/supabase-api";
 import toast from "react-hot-toast";
@@ -263,42 +267,216 @@ export default function Checklists() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-green-500 rounded-2xl flex items-center justify-center shadow-2xl animate-pulse">
+              <CheckCircle className="h-8 w-8 text-white" />
+            </div>
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full animate-bounce"></div>
+          </div>
+          <p className="text-gray-600 mt-4 font-medium">Carregando checklists...</p>
+        </div>
       </div>
     );
   }
 
+  // Calcular estatísticas
+  const stats = {
+    total: filteredChecklists.length,
+    pendentes: filteredChecklists.filter((c) => c.status === "pendente").length,
+    em_andamento: filteredChecklists.filter((c) => c.status === "em_andamento").length,
+    concluidos: filteredChecklists.filter((c) => c.status === "concluido").length,
+    aprovados: filteredChecklists.filter((c) => c.estado === "aprovado").length,
+  };
+
   return (
-    <div className="space-y-6 pt-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Checklists de Inspeção
-          </h1>
-          <p className="text-gray-600">Gestão de checklists e inspeções</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8 pt-16">
+      {/* Header Premium */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-emerald-800 to-green-900 bg-clip-text text-transparent mb-2">
+              Gestão de Checklists
+            </h1>
+            <p className="text-xl text-gray-600 flex items-center">
+              <CheckCircle className="h-5 w-5 mr-2 text-emerald-500" />
+              Controlo de inspeções e verificações de qualidade em tempo real
+            </p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-xl hover:from-emerald-600 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
+            >
+              <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
+              Novo Checklist
+            </button>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <button
-            className="btn btn-outline btn-md"
-            onClick={() => setShowSavedViewer(true)}
-          >
-            <Cloud className="h-4 w-4 mr-2" />
-            Ver Guardados
-          </button>
-          <button
-            className="btn btn-secondary btn-md"
-            onClick={() => setShowRelatorios(true)}
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Relatórios
-          </button>
-          <button className="btn btn-primary btn-md" onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Checklist
-          </button>
-        </div>
-      </div>
+      </motion.div>
+
+      {/* Stats Cards - Ultra Premium */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8"
+      >
+        {/* Total de Checklists */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-t-3xl"></div>
+            <div className="absolute top-4 right-4 w-2 h-2 bg-emerald-400 rounded-full opacity-0 group-hover:opacity-100 animate-ping"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <CheckCircle className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  <ArrowUpRight className="h-3 w-3" />
+                  <span>+{stats.total}</span>
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Total de Checklists</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.total}</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.total / 100) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Pendentes */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-amber-500/5 to-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-amber-500 rounded-t-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Clock className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Pendentes</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.pendentes}</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.pendentes / stats.total) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Em Andamento */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-t-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <TrendingUp className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Em Andamento</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.em_andamento}</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.em_andamento / stats.total) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Concluídos */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-emerald-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-emerald-500 rounded-t-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <CheckCircle className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Concluídos</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.concluidos}</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.concluidos / stats.total) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Aprovados */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-t-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Award className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Aprovados</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.aprovados}</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.aprovados / stats.total) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
 
       {/* Botão de Filtros */}
       <div className="flex items-center space-x-4">
