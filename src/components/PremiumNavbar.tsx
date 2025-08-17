@@ -523,17 +523,18 @@ export default function PremiumNavbar({ onToggleSidebar, sidebarOpen }: PremiumN
                  <kbd className="hidden sm:block px-2 py-1 text-sm bg-blue-600/30 rounded border border-blue-400/50 text-blue-200">⌘P</kbd>
               </button>
 
-              {/* Quick Actions */}
-              <div className="relative">
-                <button
-                  onClick={() => setQuickActionsOpen(!quickActionsOpen)}
-                  className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 shadow-sm hover:shadow-md"
-                >
-                  <Zap className="h-5 w-5" />
-                </button>
+                             {/* Quick Actions */}
+               <div className="relative">
+                 <button
+                   onClick={() => setQuickActionsOpen(!quickActionsOpen)}
+                   className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 relative overflow-hidden group"
+                 >
+                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                   <Zap className="h-5 w-5 relative z-10 group-hover:rotate-12 transition-transform duration-300" />
+                 </button>
                 
-                {quickActionsOpen && (
-                  <div className="absolute right-0 top-12 w-72 bg-white rounded-xl shadow-2xl border border-gray-200 p-3">
+                                 {quickActionsOpen && (
+                   <div className="absolute right-0 top-12 w-80 bg-gradient-to-br from-white/95 via-blue-50/90 to-indigo-50/90 rounded-2xl shadow-2xl border border-white/30 p-4 backdrop-blur-xl animate-slide-up">
                     <div className="flex items-center justify-between px-2 py-2 mb-3">
                       <div className="text-sm font-medium text-gray-500">Ações Rápidas</div>
                       <button 
@@ -722,66 +723,74 @@ export default function PremiumNavbar({ onToggleSidebar, sidebarOpen }: PremiumN
         </div>
       </nav>
 
-      {/* Command Palette */}
-      {commandPaletteOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-20">
-          <div className="w-full max-w-2xl mx-4">
-            <div className="bg-white rounded-2xl shadow-2xl border border-gray-200/60 overflow-hidden backdrop-blur-xl">
-              <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-blue-50/30">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3 flex-1">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-sm">
-                      <Command className="h-4 w-4 text-white" />
-                    </div>
-                                         <input
+             {/* Command Palette */}
+       {commandPaletteOpen && (
+         <div className="fixed inset-0 bg-gradient-to-br from-black/60 via-blue-900/40 to-indigo-900/40 backdrop-blur-xl z-[9999] flex items-start justify-center pt-20 animate-fade-in">
+           <div className="w-full max-w-3xl mx-4 animate-slide-up">
+             <div className="bg-gradient-to-br from-white/95 via-blue-50/90 to-indigo-50/90 rounded-3xl shadow-2xl border border-white/30 overflow-hidden backdrop-blur-2xl relative">
+               {/* Animated background elements */}
+               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-indigo-500/5 animate-pulse"></div>
+               <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-transparent rounded-full blur-3xl animate-float"></div>
+               <div className="absolute bottom-0 right-0 w-40 h-40 bg-gradient-to-br from-indigo-400/20 to-transparent rounded-full blur-3xl animate-float-delayed"></div>
+                             <div className="p-6 border-b border-white/20 bg-gradient-to-r from-white/80 via-blue-50/60 to-indigo-50/60 relative">
+                 <div className="flex items-center justify-between">
+                   <div className="flex items-center space-x-4 flex-1">
+                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110">
+                       <Command className="h-6 w-6 text-white" />
+                     </div>
+                     <input
                        type="text"
                        placeholder="Pesquisar módulos..."
-                       className="flex-1 text-base outline-none bg-transparent placeholder-gray-500"
+                       className="flex-1 text-lg outline-none bg-transparent placeholder-gray-500/70 font-medium"
                        value={searchQuery}
                        onChange={(e) => setSearchQuery(e.target.value)}
                        autoFocus
                      />
-                    <kbd className="px-2 py-1 text-xs bg-white border border-gray-200 rounded-md text-gray-600 font-medium shadow-sm">ESC</kbd>
-                  </div>
-                  <button 
-                    onClick={() => setCommandPaletteOpen(false)}
-                    className="p-2 rounded-lg text-gray-400 hover:bg-white hover:text-gray-600 transition-all duration-200 shadow-sm"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-              <div className="max-h-80 overflow-y-auto p-2">
-                {filteredCommands.length > 0 ? (
-                  filteredCommands.map((item, index) => (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 border border-transparent hover:border-blue-200/60 transition-all duration-200 group"
-                      onClick={() => setCommandPaletteOpen(false)}
-                    >
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg flex items-center justify-center group-hover:from-blue-200 group-hover:to-indigo-200 transition-all duration-200 shadow-sm">
-                        <item.icon className="h-4 w-4 text-blue-600 group-hover:text-blue-700" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-900">{item.name}</p>
-                        <p className="text-xs text-gray-500 group-hover:text-blue-600">{item.category}</p>
-                      </div>
-                      <div className="w-6 h-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-md flex items-center justify-center group-hover:from-blue-100 group-hover:to-indigo-100 transition-all duration-200">
-                        <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-blue-600" />
-                      </div>
-                    </Link>
-                  ))
-                ) : (
-                  <div className="px-3 py-8 text-center">
-                    <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center mx-auto mb-3">
-                      <Search className="h-6 w-6 text-gray-400" />
-                    </div>
-                                         <p className="text-gray-500 font-medium">Nenhum módulo encontrado</p>
-                     <p className="text-xs text-gray-400 mt-1">Tente uma pesquisa diferente</p>
-                  </div>
-                )}
-              </div>
+                     <kbd className="px-3 py-2 text-sm bg-gradient-to-r from-gray-100 to-white border border-gray-200/50 rounded-lg text-gray-600 font-bold shadow-lg hover:shadow-xl transition-all duration-200">ESC</kbd>
+                   </div>
+                   <button
+                     onClick={() => setCommandPaletteOpen(false)}
+                     className="p-3 rounded-xl text-gray-400 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-110"
+                   >
+                     <X className="h-5 w-5" />
+                   </button>
+                 </div>
+               </div>
+                             <div className="max-h-96 overflow-y-auto p-4">
+                 {filteredCommands.length > 0 ? (
+                   filteredCommands.map((item, index) => (
+                     <Link
+                       key={item.name}
+                       to={item.href}
+                       className="flex items-center space-x-4 px-6 py-4 rounded-2xl hover:bg-gradient-to-r hover:from-blue-50/80 hover:to-indigo-50/80 border border-transparent hover:border-blue-300/40 transition-all duration-300 group hover:scale-[1.02] hover:shadow-lg relative z-10 pointer-events-auto"
+                       onClick={() => {
+                         console.log("🔗 Navegando para:", item.href);
+                         setCommandPaletteOpen(false);
+                       }}
+                       style={{ animationDelay: `${index * 50}ms` }}
+                     >
+                       <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center group-hover:from-blue-200 group-hover:to-indigo-200 transition-all duration-300 shadow-lg group-hover:shadow-xl group-hover:scale-110">
+                         <item.icon className="h-5 w-5 text-blue-600 group-hover:text-blue-700" />
+                       </div>
+                       <div className="flex-1">
+                         <p className="text-base font-bold text-gray-900 group-hover:text-blue-900">{item.name}</p>
+                         <p className="text-sm text-gray-500 group-hover:text-blue-600 font-medium">{item.category}</p>
+                       </div>
+                       <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center group-hover:from-blue-100 group-hover:to-indigo-100 transition-all duration-300 group-hover:scale-110">
+                         <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-blue-600" />
+                       </div>
+                     </Link>
+                   ))
+                 ) : (
+                   <div className="px-6 py-12 text-center">
+                     <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                       <Search className="h-8 w-8 text-gray-400" />
+                     </div>
+                     <p className="text-gray-500 font-bold text-lg">Nenhum módulo encontrado</p>
+                     <p className="text-sm text-gray-400 mt-2">Tente uma pesquisa diferente</p>
+                   </div>
+                 )}
+               </div>
             </div>
           </div>
         </div>

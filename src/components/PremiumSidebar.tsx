@@ -200,20 +200,20 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className={`hidden lg:block w-96 bg-gradient-to-b from-slate-100 via-blue-50 to-indigo-50 backdrop-blur-xl border-r border-blue-300/60 shadow-2xl transition-all duration-300`}>
+      <div className={`hidden lg:block w-96 bg-gradient-to-b from-slate-800/95 via-blue-800/95 to-indigo-800/95 backdrop-blur-xl border-r border-blue-600/60 shadow-2xl transition-all duration-300`}>
         <div className="h-full flex flex-col">
           {/* Header */}
-          <div className="p-4 border-b border-blue-300/40">
+          <div className="p-4 border-b border-blue-600/40">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-400 via-purple-400 to-indigo-400 rounded-lg flex items-center justify-center shadow-lg">
                   <Shield className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  <h1 className="text-lg font-bold bg-gradient-to-r from-blue-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent">
                     Qualicore
                   </h1>
-                  <p className="text-xs text-blue-600/70 flex items-center">
+                  <p className="text-xs text-blue-200/70 flex items-center">
                     <Sparkles className="h-3 w-3 mr-1" />
                     Premium
                   </p>
@@ -221,7 +221,7 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
               </div>
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-blue-600/70 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-600 transition-all duration-200"
+                className="p-1.5 rounded-lg text-blue-200/70 hover:bg-gradient-to-r hover:from-red-500/20 hover:to-pink-500/20 hover:text-red-300 transition-all duration-200"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -229,32 +229,32 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
           </div>
 
           {/* Search */}
-          <div className="p-4 border-b border-blue-300/40">
+          <div className="p-4 border-b border-blue-600/40">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-300" />
               <input
                 type="text"
                 placeholder="Pesquisar módulos..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 text-sm bg-white/70 border border-blue-200/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-300 transition-all duration-200"
+                className="w-full pl-10 pr-4 py-2 text-sm bg-white/10 backdrop-blur-sm border border-blue-500/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-blue-200 placeholder-blue-300/70 transition-all duration-200"
               />
             </div>
           </div>
 
           {/* Quick Stats */}
-          <div className="p-4 border-b border-blue-300/40">
-            <h3 className="text-xs font-semibold text-blue-700/80 uppercase tracking-wider mb-3">Estatísticas Rápidas</h3>
+          <div className="p-4 border-b border-blue-600/40">
+            <h3 className="text-xs font-semibold text-blue-200/80 uppercase tracking-wider mb-3">Estatísticas Rápidas</h3>
             <div className="grid grid-cols-2 gap-2">
               {quickStats.map((stat) => (
-                <div key={stat.label} className="p-2 bg-gradient-to-br from-white/80 to-blue-50/60 rounded-lg border border-blue-200/40 shadow-sm">
+                <div key={stat.label} className="p-2 bg-gradient-to-br from-white/10 to-blue-500/20 rounded-lg border border-blue-500/30 shadow-sm backdrop-blur-sm">
                   <div className="flex items-center space-x-2">
-                    <div className={`w-6 h-6 rounded-lg bg-gradient-to-br from-${stat.color}-100 to-${stat.color}-200 flex items-center justify-center shadow-sm`}>
-                      <stat.icon className={`h-3 w-3 text-${stat.color}-600`} />
+                    <div className={`w-6 h-6 rounded-lg bg-gradient-to-br from-${stat.color}-500/30 to-${stat.color}-600/30 flex items-center justify-center shadow-sm`}>
+                      <stat.icon className={`h-3 w-3 text-${stat.color}-300`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-blue-700/70 truncate">{stat.label}</p>
-                      <p className="text-sm font-semibold text-blue-900">{stat.value}</p>
+                      <p className="text-xs text-blue-200/70 truncate">{stat.label}</p>
+                      <p className="text-sm font-semibold text-blue-100">{stat.value}</p>
                     </div>
                   </div>
                 </div>
@@ -269,13 +269,13 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
                 <div key={section.section} className="space-y-2">
                   <button
                     onClick={() => toggleSection(section.section)}
-                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gradient-to-r hover:from-blue-50/80 hover:to-indigo-50/80 transition-all duration-200 group"
+                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gradient-to-r hover:from-blue-600/30 hover:to-indigo-600/30 transition-all duration-200 group"
                   >
-                    <span className="text-xs font-semibold text-blue-700/80 uppercase tracking-wider group-hover:text-blue-800">
+                    <span className="text-xs font-semibold text-blue-200/80 uppercase tracking-wider group-hover:text-blue-100">
                       {section.title}
                     </span>
                     <ChevronRight
-                      className={`h-4 w-4 text-blue-500/70 transition-transform duration-200 ${
+                      className={`h-4 w-4 text-blue-300/70 transition-transform duration-200 ${
                         expandedSections.includes(section.section) ? 'rotate-90' : ''
                       }`}
                     />
@@ -289,22 +289,22 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
                           to={item.href}
                           className={`flex items-center justify-between p-2 rounded-lg transition-all duration-200 group ${
                             location.pathname === item.href
-                              ? "bg-gradient-to-r from-blue-100/80 to-indigo-100/80 border border-blue-300/60 shadow-sm"
-                              : "hover:bg-gradient-to-r hover:from-blue-50/60 hover:to-indigo-50/60"
+                              ? "bg-gradient-to-r from-blue-600/40 to-indigo-600/40 border border-blue-500/50 shadow-sm"
+                              : "hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-indigo-600/20"
                           }`}
                         >
                           <div className="flex items-center space-x-2">
-                            <div className={`w-5 h-5 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center shadow-sm`}>
-                              <item.icon className="h-3 w-3 text-blue-600" />
+                            <div className={`w-5 h-5 rounded-lg bg-gradient-to-br from-blue-500/30 to-indigo-500/30 flex items-center justify-center shadow-sm`}>
+                              <item.icon className="h-3 w-3 text-blue-300" />
                             </div>
                             <span className={`text-sm font-medium ${
-                              location.pathname === item.href ? "text-blue-800" : "text-blue-700"
+                              location.pathname === item.href ? "text-blue-100" : "text-blue-200"
                             }`}>
                               {item.name}
                             </span>
                           </div>
                           {item.badge !== "0" && (
-                            <span className="px-2 py-0.5 text-xs bg-blue-200/80 text-blue-800 rounded-full font-medium">
+                            <span className="px-2 py-0.5 text-xs bg-blue-500/40 text-blue-100 rounded-full font-medium">
                               {item.badge}
                             </span>
                           )}
@@ -318,12 +318,12 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-blue-200/40">
+          <div className="p-4 border-t border-blue-600/40">
             <div className="text-center">
-              <p className="text-xs text-blue-600/70">
+              <p className="text-xs text-blue-200/70">
                 Qualicore Premium v1.0.0
               </p>
-              <p className="text-xs text-blue-500/60 mt-1">
+              <p className="text-xs text-blue-300/60 mt-1">
                 Desenvolvido com ❤️
               </p>
             </div>
@@ -332,22 +332,22 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
       </div>
 
       {/* Mobile Sidebar */}
-      <div className={`lg:hidden fixed left-0 top-0 h-full w-80 bg-gradient-to-b from-blue-50/90 to-indigo-50/90 backdrop-blur-xl border-r border-blue-200/60 shadow-2xl z-50 overflow-hidden transform transition-transform duration-300 ease-in-out ${
+      <div className={`lg:hidden fixed left-0 top-0 h-full w-80 bg-gradient-to-b from-slate-800/95 via-blue-800/95 to-indigo-800/95 backdrop-blur-xl border-r border-blue-600/60 shadow-2xl z-50 overflow-hidden transform transition-transform duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="h-full flex flex-col">
           {/* Header */}
-          <div className="p-4 border-b border-blue-200/40">
+          <div className="p-4 border-b border-blue-600/40">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-400 via-purple-400 to-indigo-400 rounded-lg flex items-center justify-center shadow-lg">
                   <Shield className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  <h1 className="text-lg font-bold bg-gradient-to-r from-blue-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent">
                     Qualicore
                   </h1>
-                  <p className="text-xs text-blue-600/70 flex items-center">
+                  <p className="text-xs text-blue-200/70 flex items-center">
                     <Sparkles className="h-3 w-3 mr-1" />
                     Premium
                   </p>
@@ -355,7 +355,7 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
               </div>
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-blue-600/70 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-600 transition-all duration-200"
+                className="p-1.5 rounded-lg text-blue-200/70 hover:bg-gradient-to-r hover:from-red-500/20 hover:to-pink-500/20 hover:text-red-300 transition-all duration-200"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -363,32 +363,32 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
           </div>
 
           {/* Search */}
-          <div className="p-4 border-b border-blue-200/40">
+          <div className="p-4 border-b border-blue-600/40">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-300" />
               <input
                 type="text"
                 placeholder="Pesquisar módulos..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 text-sm bg-white/70 border border-blue-200/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-300 transition-all duration-200"
+                className="w-full pl-10 pr-4 py-2 text-sm bg-white/10 backdrop-blur-sm border border-blue-500/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-blue-200 placeholder-blue-300/70 transition-all duration-200"
               />
             </div>
           </div>
 
           {/* Quick Stats */}
-          <div className="p-4 border-b border-blue-200/40">
-            <h3 className="text-xs font-semibold text-blue-700/80 uppercase tracking-wider mb-3">Estatísticas Rápidas</h3>
+          <div className="p-4 border-b border-blue-600/40">
+            <h3 className="text-xs font-semibold text-blue-200/80 uppercase tracking-wider mb-3">Estatísticas Rápidas</h3>
             <div className="grid grid-cols-2 gap-2">
               {quickStats.map((stat) => (
-                <div key={stat.label} className="p-2 bg-gradient-to-br from-white/80 to-blue-50/60 rounded-lg border border-blue-200/40 shadow-sm">
+                <div key={stat.label} className="p-2 bg-gradient-to-br from-white/10 to-blue-500/20 rounded-lg border border-blue-500/30 shadow-sm backdrop-blur-sm">
                   <div className="flex items-center space-x-2">
-                    <div className={`w-6 h-6 rounded-lg bg-gradient-to-br from-${stat.color}-100 to-${stat.color}-200 flex items-center justify-center shadow-sm`}>
-                      <stat.icon className={`h-3 w-3 text-${stat.color}-600`} />
+                    <div className={`w-6 h-6 rounded-lg bg-gradient-to-br from-${stat.color}-500/30 to-${stat.color}-600/30 flex items-center justify-center shadow-sm`}>
+                      <stat.icon className={`h-3 w-3 text-${stat.color}-300`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-blue-700/70 truncate">{stat.label}</p>
-                      <p className="text-sm font-semibold text-blue-900">{stat.value}</p>
+                      <p className="text-xs text-blue-200/70 truncate">{stat.label}</p>
+                      <p className="text-sm font-semibold text-blue-100">{stat.value}</p>
                     </div>
                   </div>
                 </div>
@@ -403,13 +403,13 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
                 <div key={section.section} className="space-y-2">
                   <button
                     onClick={() => toggleSection(section.section)}
-                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gradient-to-r hover:from-blue-50/80 hover:to-indigo-50/80 transition-all duration-200 group"
+                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gradient-to-r hover:from-blue-600/30 hover:to-indigo-600/30 transition-all duration-200 group"
                   >
-                    <span className="text-xs font-semibold text-blue-700/80 uppercase tracking-wider group-hover:text-blue-800">
+                    <span className="text-xs font-semibold text-blue-200/80 uppercase tracking-wider group-hover:text-blue-100">
                       {section.title}
                     </span>
                     <ChevronRight
-                      className={`h-4 w-4 text-blue-500/70 transition-transform duration-200 ${
+                      className={`h-4 w-4 text-blue-300/70 transition-transform duration-200 ${
                         expandedSections.includes(section.section) ? 'rotate-90' : ''
                       }`}
                     />
@@ -423,23 +423,23 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
                           to={item.href}
                           className={`flex items-center justify-between p-2 rounded-lg transition-all duration-200 group ${
                             location.pathname === item.href
-                              ? "bg-gradient-to-r from-blue-100/80 to-indigo-100/80 border border-blue-300/60 shadow-sm"
-                              : "hover:bg-gradient-to-r hover:from-blue-50/60 hover:to-indigo-50/60"
+                              ? "bg-gradient-to-r from-blue-600/40 to-indigo-600/40 border border-blue-500/50 shadow-sm"
+                              : "hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-indigo-600/20"
                           }`}
                           onClick={onClose}
                         >
                           <div className="flex items-center space-x-2">
-                            <div className={`w-5 h-5 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center shadow-sm`}>
-                              <item.icon className="h-3 w-3 text-blue-600" />
+                            <div className={`w-5 h-5 rounded-lg bg-gradient-to-br from-blue-500/30 to-indigo-500/30 flex items-center justify-center shadow-sm`}>
+                              <item.icon className="h-3 w-3 text-blue-300" />
                             </div>
                             <span className={`text-sm font-medium ${
-                              location.pathname === item.href ? "text-blue-800" : "text-blue-700"
+                              location.pathname === item.href ? "text-blue-100" : "text-blue-200"
                             }`}>
                               {item.name}
                             </span>
                           </div>
                           {item.badge !== "0" && (
-                            <span className="px-2 py-0.5 text-xs bg-blue-200/80 text-blue-800 rounded-full font-medium">
+                            <span className="px-2 py-0.5 text-xs bg-blue-500/40 text-blue-100 rounded-full font-medium">
                               {item.badge}
                             </span>
                           )}
@@ -453,12 +453,12 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-blue-200/40">
+          <div className="p-4 border-t border-blue-600/40">
             <div className="text-center">
-              <p className="text-xs text-blue-600/70">
+              <p className="text-xs text-blue-200/70">
                 Qualicore Premium v1.0.0
               </p>
-              <p className="text-xs text-blue-500/60 mt-1">
+              <p className="text-xs text-blue-300/60 mt-1">
                 Desenvolvido com ❤️
               </p>
             </div>

@@ -323,17 +323,7 @@ export default function Obras() {
     }
   };
 
-  const handleExportObra = async (obra: any) => {
-    try {
-      console.log("Exportando obra:", obra);
-      const pdfService = new PDFService();
-      await pdfService.generateObrasIndividualReport([obra]);
-      toast.success(`Obra ${obra.nome} exportada com sucesso!`);
-    } catch (error) {
-      console.error("Erro ao exportar obra:", error);
-      toast.error("Erro ao exportar obra");
-    }
-  };
+
 
   // Aplicar filtros
   const filteredObras = obras.filter((obra) => {
@@ -408,15 +398,56 @@ export default function Obras() {
     });
   };
 
-  const handleShareObra = async (obra: any) => {
+  const handleViewSavedObras = () => {
+    setShowSavedObrasViewer(true);
+  };
+
+  // Funções de ação para os botões
+  const handleEditObra = (obra: any) => {
+    console.log("Editando obra:", obra);
+    setEditingObra(obra);
+    setShowModal(true);
+    toast.success(`Editando obra: ${obra.nome}`);
+  };
+
+  const handleRelatorioObra = (obra: any) => {
+    console.log("Gerando relatório para obra:", obra);
+    setEditingObra(obra);
+    setShowRelatorios(true);
+    toast.success(`Gerando relatório para: ${obra.nome}`);
+  };
+
+  const handleExportObra = async (obra: any) => {
+    console.log("Exportando obra:", obra);
+    try {
+      const pdfService = new PDFService();
+      await pdfService.generateObrasIndividualReport([obra]);
+      toast.success(`Obra ${obra.nome} exportada com sucesso!`);
+    } catch (error) {
+      console.error("Erro ao exportar obra:", error);
+      toast.error("Erro ao exportar obra");
+    }
+  };
+
+  const handleShareObra = (obra: any) => {
     console.log("Partilhando obra:", obra);
     setEditingObra(obra);
     setShowShareModal(true);
     toast.success(`Abrindo modal de partilha para ${obra.nome}`);
   };
 
-  const handleViewSavedObras = () => {
-    setShowSavedObrasViewer(true);
+  const handleDeleteObra = async (obra: any) => {
+    console.log("Excluindo obra:", obra);
+    if (confirm(`Tem certeza que deseja excluir a obra "${obra.nome}"?`)) {
+      try {
+        await obrasAPI.delete(obra.id);
+        toast.success(`Obra ${obra.nome} excluída com sucesso!`);
+        setObras(obras.filter((o) => o.id !== obra.id));
+      } catch (error) {
+        console.error("Erro ao excluir obra:", error);
+        toast.error("Erro ao excluir obra");
+      }
+    }
   };
 
   const stats = {
@@ -439,7 +470,7 @@ export default function Obras() {
   }
 
       return (
-      <div className="space-y-6 w-full py-6 px-6">
+      <div className="space-y-6 w-full py-6 px-6 overflow-visible">
         <div className="flex items-center justify-between pt-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestão de Obras</h1>
@@ -469,14 +500,18 @@ export default function Obras() {
 
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 w-full">
-        <div className="bg-white p-4 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total de Obras</p>
-              <p className="text-2xl font-bold text-gray-900">1</p>
+        <div className="bg-gradient-to-br from-white to-blue-50/30 p-6 rounded-2xl shadow-lg border border-blue-200/50 hover:shadow-xl hover:scale-105 transition-all duration-300 backdrop-blur-sm hover-lift relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <div className="absolute top-0 left-0 w-20 h-20 bg-gradient-to-br from-blue-400/10 to-transparent rounded-full blur-xl group-hover:scale-150 transition-transform duration-700"></div>
+                      <div className="flex items-center justify-between relative z-10">
+              <div>
+                <p className="text-sm font-semibold text-blue-600/80 uppercase tracking-wider">Total de Obras</p>
+                <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300">1</p>
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
+                <Building2 className="h-6 w-6 text-white group-hover:rotate-12 transition-transform duration-300" />
+              </div>
             </div>
-            <Building2 className="h-8 w-8 text-blue-600" />
-          </div>
         </div>
         <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
@@ -522,14 +557,18 @@ export default function Obras() {
           <h2 className="text-lg font-semibold text-gray-900">Lista de Obras</h2>
           <p className="text-sm text-gray-600 mt-1">1 obra(s) encontrada(s)</p>
         </div>
-        <div className="p-3 w-full">
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 w-full">
-            <div className="flex items-start space-x-3 w-full">
-              <Building2 className="h-8 w-8 text-blue-600 mt-1 flex-shrink-0" />
+        <div className="p-3 w-full overflow-visible">
+          <div className="bg-gradient-to-br from-white to-blue-50/20 rounded-2xl p-6 border border-blue-200/50 shadow-lg backdrop-blur-sm w-full hover-lift relative overflow-visible group">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/3 via-purple-500/3 to-indigo-500/3 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/5 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
+                          <div className="flex items-start space-x-3 w-full relative z-10">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
+                  <Building2 className="h-6 w-6 text-white group-hover:rotate-12 transition-transform duration-300" />
+                </div>
               <div className="flex-1 w-full">
                 <div className="flex items-center space-x-2 mb-2">
                   <h3 className="text-lg font-semibold text-gray-900">Linha do Sado - Setubal</h3>
-                  <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                  <span className="px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full shadow-lg border border-blue-400/30">
                     Planeamento
                   </span>
                 </div>
@@ -559,38 +598,177 @@ export default function Obras() {
                     <span className="font-medium">Tipo:</span> Infraestrutura - Grande
                   </div>
                 </div>
-                <div className="mt-3">
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: '0%' }}></div>
+                <div className="mt-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">Progresso</span>
+                    <span className="text-sm font-bold text-blue-600">0%</span>
+                  </div>
+                  <div className="w-full bg-gradient-to-r from-gray-100 to-gray-200 rounded-full h-3 shadow-inner">
+                    <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-1000 ease-out shadow-lg relative overflow-hidden" style={{ width: '0%' }}>
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 animate-pulse"></div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
-                <Edit3 className="h-4 w-4 mr-1" />
+            <div className="mt-4 flex flex-wrap gap-3 relative z-10 pointer-events-auto">
+              <button 
+                onClick={() => handleEditObra(mockObras[0])}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 relative z-20 pointer-events-auto"
+              >
+                <Edit3 className="h-4 w-4 mr-2" />
                 EDITAR
               </button>
-              <button className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors">
-                <FileText className="h-4 w-4 mr-1" />
+              <button 
+                onClick={() => handleRelatorioObra(mockObras[0])}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 relative z-20 pointer-events-auto"
+              >
+                <FileText className="h-4 w-4 mr-2" />
                 RELATÓRIO
               </button>
-              <button className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
-                <Download className="h-4 w-4 mr-1" />
+              <button 
+                onClick={() => handleExportObra(mockObras[0])}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 relative z-20 pointer-events-auto"
+              >
+                <Download className="h-4 w-4 mr-2" />
                 EXPORTAR
               </button>
-              <button className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors">
-                <Share2 className="h-4 w-4 mr-1" />
+              <button 
+                onClick={() => handleShareObra(mockObras[0])}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 relative z-20 pointer-events-auto"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
                 PARTILHAR
               </button>
-              <button className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-pink-600 rounded-lg hover:bg-pink-700 transition-colors">
-                <Trash2 className="h-4 w-4 mr-1" />
+              <button 
+                onClick={() => handleDeleteObra(mockObras[0])}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 relative z-20 pointer-events-auto"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
                 EXCLUIR
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Modais e Componentes */}
+      <AnimatePresence>
+        {/* Modal de Edição */}
+        {showModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ObraForm
+                initialData={editingObra}
+                onSubmit={async (data) => {
+                  try {
+                    if (editingObra) {
+                      await obrasAPI.update(editingObra.id, data);
+                      toast.success('Obra atualizada com sucesso!');
+                    } else {
+                      await obrasAPI.create(data);
+                      toast.success('Obra criada com sucesso!');
+                    }
+                    setShowModal(false);
+                    // Recarregar obras
+                    const loadedObras = await obrasAPI.getAll();
+                    setObras(loadedObras || mockObras);
+                  } catch (error) {
+                    console.error('Erro ao salvar obra:', error);
+                    toast.error('Erro ao salvar obra');
+                  }
+                }}
+                onCancel={() => setShowModal(false)}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Modal de Relatórios */}
+        {showRelatorios && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowRelatorios(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <RelatorioObrasPremium
+                obras={editingObra ? [editingObra] : obras}
+                onClose={() => setShowRelatorios(false)}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Modal de Partilha */}
+        {showShareModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowShareModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ShareObraModal
+                obra={editingObra}
+                isOpen={showShareModal}
+                onClose={() => setShowShareModal(false)}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Modal de Obras Guardadas */}
+        {showSavedObrasViewer && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowSavedObrasViewer(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SavedObrasViewer
+                isOpen={showSavedObrasViewer}
+                onClose={() => setShowSavedObrasViewer(false)}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
