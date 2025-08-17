@@ -1,14 +1,20 @@
 export interface FilterState {
   searchTerm: string;
   tipo: string;
+  categoria: string;
   estado: string;
   fabricante: string;
   kmInicial: number | '';
   kmFinal: number | '';
   dataInstalacaoInicio: string;
   dataInstalacaoFim: string;
-  tensaoMin: number | '';
-  tensaoMax: number | '';
+  statusOperacional: string;
+  alcanceMin: number | '';
+  potenciaMin: number | '';
+  sensibilidadeMin: number | '';
+  frequencia: string;
+  ultimaInspecaoInicio: string;
+  ultimaInspecaoFim: string;
 }
 
 export interface TravessaFilterState {
@@ -35,74 +41,47 @@ export interface InspecaoFilterState {
 
 export function applyFilters(data: any[], filters: FilterState): any[] {
   return data.filter(item => {
-    // Busca por texto
+    // Busca por termo
     if (filters.searchTerm) {
       const searchLower = filters.searchTerm.toLowerCase();
-      const searchableFields = [
+      const searchFields = [
         item.codigo,
+        item.localizacao,
+        item.modelo,
         item.fabricante,
         item.tipo,
-        item.estado,
-        item.material
+        item.categoria
       ].map(field => String(field || '').toLowerCase());
-
-      if (!searchableFields.some(field => field.includes(searchLower))) {
+      
+      if (!searchFields.some(field => field.includes(searchLower))) {
         return false;
       }
     }
 
-    // Filtro por tipo
-    if (filters.tipo && item.tipo !== filters.tipo) {
-      return false;
-    }
+    // Filtros específicos
+    if (filters.tipo && item.tipo !== filters.tipo) return false;
+    if (filters.categoria && item.categoria !== filters.categoria) return false;
+    if (filters.estado && item.estado !== filters.estado) return false;
+    if (filters.fabricante && item.fabricante !== filters.fabricante) return false;
+    if (filters.statusOperacional && item.status_operacional !== filters.statusOperacional) return false;
 
-    // Filtro por estado
-    if (filters.estado && item.estado !== filters.estado) {
-      return false;
-    }
+    // Filtros de KM
+    if (filters.kmInicial !== '' && item.km_inicial < filters.kmInicial) return false;
+    if (filters.kmFinal !== '' && item.km_final > filters.kmFinal) return false;
 
-    // Filtro por fabricante
-    if (filters.fabricante && item.fabricante !== filters.fabricante) {
-      return false;
-    }
+    // Filtros de data de instalação
+    if (filters.dataInstalacaoInicio && item.data_instalacao < filters.dataInstalacaoInicio) return false;
+    if (filters.dataInstalacaoFim && item.data_instalacao > filters.dataInstalacaoFim) return false;
 
-    // Filtro por KM inicial
-    if (filters.kmInicial !== '' && item.km_inicial < filters.kmInicial) {
-      return false;
-    }
+    // Filtros de parâmetros técnicos
+    if (filters.alcanceMin !== '' && (item.parametros?.alcance || 0) < filters.alcanceMin) return false;
+    if (filters.potenciaMin !== '' && (item.parametros?.potencia || 0) < filters.potenciaMin) return false;
+    if (filters.sensibilidadeMin !== '' && (item.parametros?.sensibilidade || 0) < filters.sensibilidadeMin) return false;
+    if (filters.frequencia && item.parametros?.frequencia !== filters.frequencia) return false;
 
-    // Filtro por KM final
-    if (filters.kmFinal !== '' && item.km_final > filters.kmFinal) {
-      return false;
-    }
-
-    // Filtro por data de instalação (início)
-    if (filters.dataInstalacaoInicio && item.data_instalacao) {
-      const itemDate = new Date(item.data_instalacao);
-      const filterDate = new Date(filters.dataInstalacaoInicio);
-      if (itemDate < filterDate) {
-        return false;
-      }
-    }
-
-    // Filtro por data de instalação (fim)
-    if (filters.dataInstalacaoFim && item.data_instalacao) {
-      const itemDate = new Date(item.data_instalacao);
-      const filterDate = new Date(filters.dataInstalacaoFim);
-      if (itemDate > filterDate) {
-        return false;
-      }
-    }
-
-    // Filtro por tensão mínima
-    if (filters.tensaoMin !== '' && item.tensao < filters.tensaoMin) {
-      return false;
-    }
-
-    // Filtro por tensão máxima
-    if (filters.tensaoMax !== '' && item.tensao > filters.tensaoMax) {
-      return false;
-    }
+    // Filtros de inspeção
+    if (filters.ultimaInspecaoInicio && item.ultima_inspecao < filters.ultimaInspecaoInicio) return false;
+    if (filters.ultimaInspecaoFim && item.ultima_inspecao > filters.ultimaInspecaoFim) return false;
 
     return true;
   });
@@ -275,14 +254,20 @@ export function getDefaultFilters(): FilterState {
   return {
     searchTerm: '',
     tipo: '',
+    categoria: '',
     estado: '',
     fabricante: '',
     kmInicial: '',
     kmFinal: '',
     dataInstalacaoInicio: '',
     dataInstalacaoFim: '',
-    tensaoMin: '',
-    tensaoMax: ''
+    statusOperacional: '',
+    alcanceMin: '',
+    potenciaMin: '',
+    sensibilidadeMin: '',
+    frequencia: '',
+    ultimaInspecaoInicio: '',
+    ultimaInspecaoFim: ''
   };
 }
 
