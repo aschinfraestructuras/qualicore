@@ -100,7 +100,6 @@ import {
   Hash as HashIcon9,
   Hash as HashIcon10,
   Zap,
-  Bridge,
   Building,
 } from "lucide-react";
 import { obrasAPI, ensaiosAPI, checklistsAPI, documentosAPI, naoConformidadesAPI } from "@/lib/supabase-api";
@@ -112,10 +111,12 @@ interface PremiumSidebarProps {
 
 export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps) {
   const location = useLocation();
-  const [expandedSections, setExpandedSections] = useState<string[]>(['qualidade']);
+  const [expandedSections, setExpandedSections] = useState<string[]>(['qualidade', 'ferroviario']);
   const [searchQuery, setSearchQuery] = useState("");
   const [stats, setStats] = useState({ obras: 0, ensaios: 0, ncs: 0, documentos: 0 });
   const [loading, setLoading] = useState(true);
+
+  console.log("🔍 PremiumSidebar renderizando...", { isOpen, location: location.pathname });
 
   // Fetch real data from Supabase
   useEffect(() => {
@@ -198,7 +199,7 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
         { name: "Via Férrea", href: "/via-ferrea", icon: TrendingUp, badge: "0" },
         { name: "Sinalização", href: "/sinalizacao", icon: Activity, badge: "0" },
         { name: "Eletrificação", href: "/eletrificacao", icon: Zap, badge: "0" },
-        { name: "Pontes & Túneis", href: "/pontes-tuneis", icon: Bridge, badge: "0" },
+        { name: "Pontes & Túneis", href: "/pontes-tuneis", icon: Archive, badge: "0" },
         { name: "Estações", href: "/estacoes", icon: Building, badge: "0" },
         { name: "Segurança", href: "/seguranca-ferroviaria", icon: Shield, badge: "0" },
       ]
