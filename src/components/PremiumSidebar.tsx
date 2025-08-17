@@ -99,6 +99,9 @@ import {
   Hash as HashIcon8,
   Hash as HashIcon9,
   Hash as HashIcon10,
+  Zap,
+  Bridge,
+  Building,
 } from "lucide-react";
 import { obrasAPI, ensaiosAPI, checklistsAPI, documentosAPI, naoConformidadesAPI } from "@/lib/supabase-api";
 
@@ -186,6 +189,18 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
         { name: "PIE", href: "/pie", icon: Shield, badge: "0" },
         { name: "Relatórios", href: "/relatorios", icon: BarChart3, badge: "0" },
         { name: "Documentos", href: "/documentos", icon: Folder, badge: stats.documentos.toString() },
+      ]
+    },
+    {
+      section: "ferroviario",
+      title: "FERROVIÁRIO",
+      items: [
+        { name: "Via Férrea", href: "/via-ferrea", icon: TrendingUp, badge: "0" },
+        { name: "Sinalização", href: "/sinalizacao", icon: Activity, badge: "0" },
+        { name: "Eletrificação", href: "/eletrificacao", icon: Zap, badge: "0" },
+        { name: "Pontes & Túneis", href: "/pontes-tuneis", icon: Bridge, badge: "0" },
+        { name: "Estações", href: "/estacoes", icon: Building, badge: "0" },
+        { name: "Segurança", href: "/seguranca-ferroviaria", icon: Shield, badge: "0" },
       ]
     }
   ];
