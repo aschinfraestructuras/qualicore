@@ -1,719 +1,400 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  Home,
-  Building2,
-  Shield,
+  Menu,
   Search,
   Bell,
   User,
   Settings,
-  Menu,
-  X,
-  ChevronDown,
+  LogOut,
   Plus,
   FileText,
-  ClipboardList,
-  AlertTriangle,
-  FolderOpen,
-  HelpCircle,
+  Download,
+  Crown,
+  X,
+  Command,
   Sun,
   Moon,
-  Zap,
-  Grid3X3,
-  BarChart3,
-  Users,
-  Calendar,
-  MessageSquare,
-  Download,
-  Upload,
-  Star,
-  Heart,
-  Eye,
-  EyeOff,
-  Command,
-  Sparkles,
-  TrendingUp,
-  Activity,
-  Database,
-  Archive,
-  BookOpen,
-  Target,
-  Award,
-  CheckCircle,
-  XCircle,
-  Minus,
-  Filter,
-  SortAsc,
-  MoreHorizontal,
-  ExternalLink,
-  Copy,
-  Share2,
-  Lock,
-  Unlock,
-  RefreshCw,
-  Clock,
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  CreditCard,
-  Crown,
-  Gift,
-  Rocket,
-  Infinity,
-  Layers,
-  Palette,
   Monitor,
-  Smartphone,
-  Tablet,
-  Wifi,
-  WifiOff,
-  Battery,
-  BatteryCharging,
-  Volume2,
-  VolumeX,
-  Mic,
-  MicOff,
-  Camera,
-  Video,
-  VideoOff,
-  Image,
-  File,
-  Folder,
-  Trash2,
-  Edit3,
-  Save,
-  RotateCcw,
-  RotateCw,
-  ZoomIn,
-  ZoomOut,
-  Maximize,
-  Minimize,
-  Move,
-  Type,
-  Bold,
-  Italic,
-  Underline,
-  List,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Link as LinkIcon,
-  Unlink,
-  Code,
-  Quote,
-  Hash,
-  AtSign,
-  DollarSign,
-  Percent,
-  Hash as HashIcon,
-  Hash as HashIcon2,
-  Hash as HashIcon3,
-  Hash as HashIcon4,
-  Hash as HashIcon5,
-  Hash as HashIcon6,
-  Hash as HashIcon7,
-  Hash as HashIcon8,
-  Hash as HashIcon9,
-  Hash as HashIcon10,
 } from "lucide-react";
+import { useAppStore } from "@/stores/appStore";
+import toast from "react-hot-toast";
 
-interface PremiumNavbarProps {
-  onToggleSidebar: () => void;
-  sidebarOpen: boolean;
-}
-
-export default function PremiumNavbar({ onToggleSidebar, sidebarOpen }: PremiumNavbarProps) {
-  const location = useLocation();
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [quickActionsOpen, setQuickActionsOpen] = useState(false);
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+export default function PremiumNavbar() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showQuickActions, setShowQuickActions] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [commandSearch, setCommandSearch] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState("");
   
-  // Modal states
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [showSearchResultsModal, setShowSearchResultsModal] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const { theme, isDark, setTheme, toggleTheme } = useAppStore();
+  const location = useLocation();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // User menu actions
-  const handleProfile = () => {
-    console.log("Abrir perfil do usuário");
-    window.location.href = '/profile';
-    setUserMenuOpen(false);
-  };
-
-  const handleSettings = () => {
-    console.log("Abrir configurações");
-    setShowSettingsModal(true);
-    setUserMenuOpen(false);
-  };
-
-  const handleExportData = () => {
-    console.log("Exportar dados");
-    const data = {
-      obras: 1,
-      ensaios: 1,
-      ncs: 2,
-      documentos: 1,
-      data: new Date().toLocaleDateString('pt-BR')
-    };
-    
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `qualicore-export-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    alert("Exportação concluída! Ficheiro baixado.");
-    setUserMenuOpen(false);
-  };
-
-  const handleUpgradePremium = () => {
-    console.log("Upgrade para Premium");
-    setShowUpgradeModal(true);
-    setUserMenuOpen(false);
-  };
-
-  const handleLogout = () => {
-    console.log("Fazer logout");
-    if (confirm("Tem certeza que deseja sair?")) {
-      localStorage.removeItem('user');
-      sessionStorage.clear();
-      alert("Logout realizado com sucesso");
-      window.location.href = '/login';
-    }
-    setUserMenuOpen(false);
-  };
-
-  const handleDarkModeToggle = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle('dark');
-    localStorage.setItem('darkMode', (!darkMode).toString());
-    
-    const toast = document.createElement('div');
-    toast.innerHTML = `
-      <div style="position: fixed; top: 20px; right: 20px; background: ${darkMode ? '#fbbf24' : '#1f2937'}; color: ${darkMode ? '#1f2937' : 'white'}; padding: 1rem; border-radius: 8px; z-index: 10000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <span>${darkMode ? '☀️' : '🌙'}</span>
-          <span>Modo ${darkMode ? 'claro' : 'escuro'} ativado</span>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-  };
-
-  // Notificações premium
-  const notifications = [
-    { 
-      id: 1, 
-      title: "Nova obra criada", 
-      message: "Linha do Sado foi adicionada com sucesso", 
-      time: "2 min", 
-      type: "success",
-      icon: Building2,
-      action: "Ver obra"
-    },
-    { 
-      id: 2, 
-      title: "Ensaio pendente", 
-      message: "3 ensaios aguardam aprovação técnica", 
-      time: "15 min", 
-      type: "warning",
-      icon: ClipboardList,
-      action: "Revisar"
-    },
-    { 
-      id: 3, 
-      title: "Relatório pronto", 
-      message: "Relatório mensal de qualidade disponível", 
-      time: "1 hora", 
-      type: "info",
-      icon: FileText,
-      action: "Download"
-    },
-    { 
-      id: 4, 
-      title: "NC registada", 
-      message: "Nova não conformidade registada", 
-      time: "2 horas", 
-      type: "error",
-      icon: AlertTriangle,
-      action: "Ver detalhes"
-    },
-  ];
-
-  const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: Home, current: location.pathname === "/dashboard" },
-    { name: "Obras", href: "/obras", icon: Building2, current: location.pathname === "/obras" },
-  ];
-
-  const quickActions = [
-    { name: "Nova Obra", icon: Building2, href: "/obras/nova", color: "blue", shortcut: "⌘+O" },
-    { name: "Registar Ensaio", icon: ClipboardList, href: "/ensaios/novo", color: "green", shortcut: "⌘+E" },
-    { name: "Criar Checklist", icon: FileText, href: "/checklists/novo", color: "orange", shortcut: "⌘+C" },
-    { name: "Novo Documento", icon: FolderOpen, href: "/documentos/novo", color: "indigo", shortcut: "⌘+D" },
-    { name: "Nova NC", icon: AlertTriangle, href: "/nao-conformidades/nova", color: "red", shortcut: "⌘+N" },
-  ];
-
-  const commandPaletteItems = [
-    { name: "Dashboard", icon: Home, href: "/dashboard", category: "Navegação" },
-    { name: "Obras", icon: Building2, href: "/obras", category: "Navegação" },
-    { name: "Ensaios", icon: ClipboardList, href: "/ensaios", category: "Módulos" },
-    { name: "Checklists", icon: FileText, href: "/checklists", category: "Módulos" },
-    { name: "Documentos", icon: FolderOpen, href: "/documentos", category: "Módulos" },
-    { name: "Não Conformidades", icon: AlertTriangle, href: "/nao-conformidades", category: "Módulos" },
-    { name: "RFIs", icon: HelpCircle, href: "/rfis", category: "Módulos" },
-    { name: "Materiais", icon: Grid3X3, href: "/materiais", category: "Módulos" },
-    { name: "Fornecedores", icon: Users, href: "/fornecedores", category: "Módulos" },
-    { name: "PIE", icon: Shield, href: "/pie", category: "Módulos" },
-    { name: "Nova Obra", icon: Plus, href: "/obras/nova", category: "Ações" },
-    { name: "Novo Ensaio", icon: Plus, href: "/ensaios/novo", category: "Ações" },
-    { name: "Configurações", icon: Settings, href: "/settings", category: "Sistema" },
-    { name: "Relatórios", icon: BarChart3, href: "/relatorios", category: "Sistema" },
-  ];
-
-  // Keyboard shortcuts
+  // Inicializar tema
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey) {
-        switch (e.key) {
-          case 'k':
-            e.preventDefault();
-            setSearchOpen(!searchOpen);
-            break;
-          case 'p':
-            e.preventDefault();
-            setCommandPaletteOpen(!commandPaletteOpen);
-            break;
-          case 'o':
-            e.preventDefault();
-            window.location.href = '/obras/nova';
-            break;
-          case 'e':
-            e.preventDefault();
-            window.location.href = '/ensaios/novo';
-            break;
-        }
-      }
-      
-      // ESC para fechar menus
-      if (e.key === 'Escape') {
-        setSearchOpen(false);
-        setNotificationsOpen(false);
-        setUserMenuOpen(false);
-        setQuickActionsOpen(false);
-        setCommandPaletteOpen(false);
-        setShowSettingsModal(false);
-        setShowUpgradeModal(false);
-        setShowSearchResultsModal(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [searchOpen, commandPaletteOpen]);
-
-  // Load dark mode state from localStorage
-  useEffect(() => {
-    const savedDarkMode = localStorage.getItem('darkMode');
-    if (savedDarkMode === 'true') {
-      setDarkMode(true);
-      document.documentElement.classList.add('dark');
-    }
+    useAppStore.getState().initializeTheme();
   }, []);
 
-  const filteredCommands = commandPaletteItems.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Fechar todos os menus quando clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        closeAllMenus();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Fechar menus com Escape
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeAllMenus();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, []);
 
   const closeAllMenus = () => {
-    setSearchOpen(false);
-    setNotificationsOpen(false);
-    setUserMenuOpen(false);
-    setQuickActionsOpen(false);
-    setCommandPaletteOpen(false);
+    setShowQuickActions(false);
+    setShowNotifications(false);
+    setShowUserMenu(false);
+    setShowCommandPalette(false);
+    setShowSettings(false);
+    setShowUpgrade(false);
+    setShowGlobalSearch(false);
   };
 
-  // Global search functionality
-  const handleGlobalSearch = () => {
-    if (globalSearchQuery.trim()) {
-      console.log("Buscando globalmente:", globalSearchQuery);
-      
-      const results = [
-        { type: 'obra', name: 'Linha do Sado', match: globalSearchQuery.toLowerCase().includes('sado') },
-        { type: 'ensaio', name: 'Ensaio de Compactação', match: globalSearchQuery.toLowerCase().includes('ensaio') },
-        { type: 'documento', name: 'Relatório Mensal', match: globalSearchQuery.toLowerCase().includes('relatório') },
-        { type: 'nc', name: 'Não Conformidade #001', match: globalSearchQuery.toLowerCase().includes('conformidade') }
-      ].filter(result => result.match);
-      
-      if (results.length > 0) {
-        setSearchResults(results);
-        setShowSearchResultsModal(true);
-      } else {
-        alert(`Nenhum resultado encontrado para "${globalSearchQuery}"`);
-      }
-      
-      setGlobalSearchQuery("");
-    } else {
-      alert("Por favor, insira um termo de busca");
-    }
+  const handleThemeToggle = () => {
+    toggleTheme();
+    toast.success(`Tema alterado para ${isDark ? 'claro' : 'escuro'}`);
   };
 
-  // Notification actions
-  const handleMarkAllAsRead = () => {
-    console.log("Marcar todas as notificações como lidas");
-    const notificationBadge = document.querySelector('.animate-pulse');
-    if (notificationBadge) {
-      notificationBadge.remove();
-    }
-    
-    const toast = document.createElement('div');
-    toast.innerHTML = `
-      <div style="position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 1rem; border-radius: 8px; z-index: 10000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <span>✅</span>
-          <span>Todas as notificações marcadas como lidas</span>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-    
-    setNotificationsOpen(false);
+  const handleThemeChange = (newTheme: 'light' | 'dark' | 'auto') => {
+    setTheme(newTheme);
+    const themeNames = { light: 'claro', dark: 'escuro', auto: 'automático' };
+    toast.success(`Tema alterado para ${themeNames[newTheme]}`);
   };
 
-  const handleNotificationAction = (notification: any) => {
-    console.log("Ação da notificação:", notification.action);
-    
-    switch (notification.action) {
-      case "Ver obra":
-        window.location.href = '/obras';
-        break;
-      case "Revisar":
-        window.location.href = '/ensaios';
-        break;
-      case "Download":
-        const blob = new Blob(['Relatório mensal de qualidade'], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'relatorio-mensal.txt';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        alert("Download iniciado!");
-        break;
-      case "Ver detalhes":
-        window.location.href = '/nao-conformidades';
-        break;
-      default:
-        alert(`Executando: ${notification.action}`);
-    }
-    
-    setNotificationsOpen(false);
-  };
+  const commands = [
+    { name: "Dashboard", icon: "📊", category: "Navegação", path: "/dashboard" },
+    { name: "Obras", icon: "🏗️", category: "Gestão", path: "/obras" },
+    { name: "Ensaios", icon: "🧪", category: "Laboratório", path: "/ensaios" },
+    { name: "Checklists", icon: "✅", category: "Inspeção", path: "/checklists" },
+    { name: "Materiais", icon: "📦", category: "Gestão", path: "/materiais" },
+    { name: "Fornecedores", icon: "🏢", category: "Gestão", path: "/fornecedores" },
+    { name: "Não Conformidades", icon: "⚠️", category: "Qualidade", path: "/nao-conformidades" },
+    { name: "Documentos", icon: "📄", category: "Gestão", path: "/documentos" },
+    { name: "Relatórios", icon: "📈", category: "Análise", path: "/relatorios" },
+    { name: "RFIs", icon: "❓", category: "Gestão", path: "/rfis" },
+    { name: "Ensaios Compactação", icon: "🔧", category: "Especializado", path: "/ensaios-compactacao" },
+    { name: "PIE", icon: "🎯", category: "Especializado", path: "/pie" },
+  ];
+
+  const filteredCommands = commands.filter((command) =>
+    command.name.toLowerCase().includes(commandSearch.toLowerCase()) ||
+    command.category.toLowerCase().includes(commandSearch.toLowerCase())
+  );
 
   return (
     <>
-      {/* Navbar Principal */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-800 via-blue-800 to-indigo-800 backdrop-blur-xl border-b border-blue-600/60 shadow-xl">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-800 via-blue-800 to-indigo-800 border-b border-blue-600/60 shadow-xl">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
-            
-            {/* Logo e Navegação Principal */}
+            {/* Logo e Toggle Sidebar */}
             <div className="flex items-center space-x-4">
-              {/* Botão Sidebar */}
-                              <button
-                  onClick={onToggleSidebar}
-                  className="p-3 rounded-xl text-blue-200 hover:bg-blue-700/50 hover:text-white transition-all duration-200 group"
-                >
-                <Menu className="h-6 w-6 group-hover:scale-110 transition-transform" />
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 text-blue-200 hover:bg-blue-700/50 hover:text-white rounded-xl transition-all duration-200"
+              >
+                <Menu className="h-6 w-6" />
               </button>
+              
+              <Link to="/" className="flex items-center space-x-3 group">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
+                  <span className="text-white font-bold text-lg">Q</span>
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent">
+                    Qualicore
+                  </h1>
+                  <p className="text-xs text-blue-200/80">Premium</p>
+                </div>
+              </Link>
+            </div>
 
-                             {/* Logo Premium */}
-               <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-                 <div className="relative">
-                   <div className="w-12 h-12 bg-gradient-to-br from-blue-400 via-purple-400 to-indigo-400 rounded-xl flex items-center justify-center shadow-lg">
-                     <Shield className="h-7 w-7 text-white" />
-                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
-                   </div>
-                 </div>
-                 <div className="hidden sm:block">
-                   <h1 className="text-xl font-bold bg-gradient-to-r from-blue-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent">
-                     Qualicore
-                   </h1>
-                   <p className="text-sm text-blue-200/80 flex items-center">
-                     <Sparkles className="h-4 w-4 mr-1" />
-                     Premium
-                   </p>
-                 </div>
-               </Link>
-
-              {/* Navegação Principal */}
-              <div className="hidden md:flex items-center space-x-2 ml-8">
-                {navigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                                         className={`px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 relative group ${
-                       item.current
-                         ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
-                         : "text-blue-200 hover:bg-blue-700/50 hover:text-white"
-                     }`}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.name}</span>
-                    </div>
-                    {item.current && (
-                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full"></div>
-                    )}
-                  </Link>
-                ))}
-              </div>
+            {/* Navegação Central */}
+            <div className="hidden md:flex items-center space-x-1">
+              {[
+                { name: "Dashboard", path: "/dashboard" },
+                { name: "Obras", path: "/obras" },
+                { name: "Ensaios", path: "/ensaios" },
+                { name: "Checklists", path: "/checklists" },
+              ].map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    location.pathname === item.path
+                      ? "text-white bg-blue-700/50 shadow-lg"
+                      : "text-blue-200 hover:bg-blue-700/50 hover:text-white"
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              ))}
             </div>
 
             {/* Ações da Direita */}
-            <div className="flex items-center space-x-2">
-              
+            <div className="flex items-center space-x-3">
               {/* Global Search */}
               <div className="relative">
-                                 <div className="flex items-center space-x-3 px-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-blue-400/30 text-blue-200 hover:bg-white/20 transition-all duration-200 shadow-sm">
-                  <Search 
-                    className="h-5 w-5 cursor-pointer" 
-                    onClick={handleGlobalSearch}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Busca Global..."
-                                         className="bg-transparent outline-none text-base placeholder-blue-300/70 w-40 sm:w-48"
-                    value={globalSearchQuery}
-                    onChange={(e) => setGlobalSearchQuery(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleGlobalSearch()}
-                  />
-                                     <kbd 
-                     className="hidden sm:block px-2 py-1 text-sm bg-blue-600/30 rounded border border-blue-400/50 cursor-pointer hover:bg-blue-500/50 text-blue-200"
-                     onClick={handleGlobalSearch}
-                   >
+                <button
+                  onClick={() => setShowGlobalSearch(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-blue-400/30 rounded-xl text-blue-200 hover:bg-white/20 hover:text-white transition-all duration-200 shadow-sm"
+                >
+                  <Search className="h-4 w-4" />
+                  <span className="hidden sm:inline text-sm">Pesquisar...</span>
+                  <kbd className="hidden lg:inline-flex items-center px-2 py-1 text-xs bg-blue-600/30 rounded border border-blue-400/50 text-blue-200">
                     ⌘K
                   </kbd>
-                </div>
+                </button>
               </div>
 
               {/* Command Palette */}
               <button
-                onClick={() => setCommandPaletteOpen(!commandPaletteOpen)}
-                                 className="flex items-center space-x-2 px-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm text-blue-200 hover:bg-white/20 hover:text-white transition-all duration-200 border border-blue-400/30 text-sm shadow-sm hover:shadow-md"
+                onClick={() => setShowCommandPalette(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-blue-400/30 rounded-xl text-blue-200 hover:bg-white/20 hover:text-white transition-all duration-200 shadow-sm"
               >
-                                 <Command className="h-5 w-5" />
-                 <span className="hidden sm:block">Módulos</span>
-                 <kbd className="hidden sm:block px-2 py-1 text-sm bg-blue-600/30 rounded border border-blue-400/50 text-blue-200">⌘P</kbd>
+                <Command className="h-4 w-4" />
+                <span className="hidden sm:inline text-sm">Módulos</span>
+                <kbd className="hidden lg:inline-flex items-center px-2 py-1 text-xs bg-blue-600/30 rounded border border-blue-400/50 text-blue-200">
+                  ⌘M
+                </kbd>
               </button>
 
-                             {/* Quick Actions */}
-               <div className="relative">
-                 <button
-                   onClick={() => setQuickActionsOpen(!quickActionsOpen)}
-                   className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 relative overflow-hidden group"
-                 >
-                   <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                   <Zap className="h-5 w-5 relative z-10 group-hover:rotate-12 transition-transform duration-300" />
-                 </button>
-                
-                                 {quickActionsOpen && (
-                   <div className="absolute right-0 top-12 w-80 bg-gradient-to-br from-white/95 via-blue-50/90 to-indigo-50/90 rounded-2xl shadow-2xl border border-white/30 p-4 backdrop-blur-xl animate-slide-up">
-                    <div className="flex items-center justify-between px-2 py-2 mb-3">
-                      <div className="text-sm font-medium text-gray-500">Ações Rápidas</div>
-                      <button 
-                        onClick={() => setQuickActionsOpen(false)}
-                        className="p-1 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all duration-200"
+              {/* Quick Actions */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setShowQuickActions(!showQuickActions)}
+                  className="p-2 text-blue-200 hover:bg-blue-700/50 hover:text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 relative overflow-hidden group"
+                >
+                  <Plus className="h-5 w-5 group-hover:rotate-90 transition-transform duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+                </button>
+
+                {showQuickActions && (
+                  <div className="absolute right-0 mt-2 w-80 bg-gradient-to-br from-white/95 via-blue-50/90 to-indigo-50/90 rounded-2xl shadow-2xl border border-white/30 p-4 backdrop-blur-xl animate-slide-up">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Ações Rápidas</h3>
+                      <button
+                        onClick={() => setShowQuickActions(false)}
+                        className="p-1 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
                       >
                         <X className="h-4 w-4" />
                       </button>
                     </div>
-                    {quickActions.map((action) => (
-                      <Link
-                        key={action.name}
-                        to={action.href}
-                        className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 transition-all duration-200"
-                        onClick={() => setQuickActionsOpen(false)}
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => {
+                          // Ação: Nova Obra
+                          toast.success("Nova Obra criada!");
+                          setShowQuickActions(false);
+                        }}
+                        className="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-blue-50 transition-colors"
                       >
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br from-${action.color}-100 to-${action.color}-200 flex items-center justify-center shadow-sm`}>
-                            <action.icon className={`h-4 w-4 text-${action.color}-600`} />
-                          </div>
-                          <span className="text-sm font-medium text-gray-700">{action.name}</span>
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <span className="text-blue-600 text-sm">🏗️</span>
                         </div>
-                        <kbd className="px-2 py-1 text-xs bg-gray-100 rounded border">{action.shortcut}</kbd>
-                      </Link>
-                    ))}
+                        <div className="text-left">
+                          <p className="text-sm font-medium text-gray-900">Nova Obra</p>
+                          <p className="text-xs text-gray-500">Criar nova obra</p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => {
+                          // Ação: Novo Ensaio
+                          toast.success("Novo Ensaio criado!");
+                          setShowQuickActions(false);
+                        }}
+                        className="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-50 transition-colors"
+                      >
+                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <span className="text-purple-600 text-sm">🧪</span>
+                        </div>
+                        <div className="text-left">
+                          <p className="text-sm font-medium text-gray-900">Novo Ensaio</p>
+                          <p className="text-xs text-gray-500">Criar novo ensaio</p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => {
+                          // Ação: Novo Checklist
+                          toast.success("Novo Checklist criado!");
+                          setShowQuickActions(false);
+                        }}
+                        className="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-green-50 transition-colors"
+                      >
+                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                          <span className="text-green-600 text-sm">✅</span>
+                        </div>
+                        <div className="text-left">
+                          <p className="text-sm font-medium text-gray-900">Novo Checklist</p>
+                          <p className="text-xs text-gray-500">Criar novo checklist</p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Theme Toggle */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-2 p-2 text-blue-200 hover:bg-blue-700/50 hover:text-white rounded-xl transition-all duration-200"
+                >
+                  <User className="h-5 w-5" />
+                  <span className="hidden sm:inline text-sm">José Antunes</span>
+                </button>
+
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-64 bg-gradient-to-br from-white/95 via-blue-50/90 to-indigo-50/90 rounded-2xl shadow-2xl border border-white/30 p-4 backdrop-blur-xl animate-slide-up">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-semibold">JA</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">José Antunes</p>
+                        <p className="text-xs text-gray-500">jose.antunes@qualicore.pt</p>
+                      </div>
+                    </div>
+                    
+                    {/* Theme Options */}
+                    <div className="mb-4">
+                      <p className="text-xs font-medium text-gray-700 mb-2">TEMA</p>
+                      <div className="space-y-1">
+                        <button
+                          onClick={() => handleThemeChange('light')}
+                          className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                            theme === 'light' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
+                          }`}
+                        >
+                          <Sun className="h-4 w-4" />
+                          <span>Claro</span>
+                        </button>
+                        <button
+                          onClick={() => handleThemeChange('dark')}
+                          className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                            theme === 'dark' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
+                          }`}
+                        >
+                          <Moon className="h-4 w-4" />
+                          <span>Escuro</span>
+                        </button>
+                        <button
+                          onClick={() => handleThemeChange('auto')}
+                          className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                            theme === 'auto' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
+                          }`}
+                        >
+                          <Monitor className="h-4 w-4" />
+                          <span>Automático</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => {
+                          setShowSettings(true);
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 transition-colors"
+                      >
+                        <Settings className="h-4 w-4" />
+                        <span>Configurações</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowUpgrade(true);
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 transition-colors"
+                      >
+                        <Crown className="h-4 w-4" />
+                        <span>Upgrade Premium</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          toast.success("Logout realizado com sucesso!");
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-sm hover:bg-red-50 hover:text-red-600 transition-colors"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Sair</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* Notifications */}
-              <div className="relative">
+              <div className="relative" ref={dropdownRef}>
                 <button
-                  onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className="p-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 transition-all duration-200 relative shadow-sm hover:shadow-md"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="p-2 text-blue-200 hover:bg-blue-700/50 hover:text-white rounded-xl transition-all duration-200 relative"
                 >
                   <Bell className="h-5 w-5" />
-                  {notifications.length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-white text-red-600 text-xs rounded-full flex items-center justify-center animate-pulse shadow-sm font-bold">
-                      {notifications.length}
-                    </span>
-                  )}
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
                 </button>
-                
-                {notificationsOpen && (
-                  <div className="absolute right-0 top-12 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 p-4">
+
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 bg-gradient-to-br from-white/95 via-blue-50/90 to-indigo-50/90 rounded-2xl shadow-2xl border border-white/30 p-4 backdrop-blur-xl animate-slide-up">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-base font-semibold text-gray-900">Notificações</h3>
-                      <div className="flex items-center space-x-3">
-                        <button 
-                          onClick={handleMarkAllAsRead}
-                          className="text-sm text-blue-600 hover:text-blue-700"
-                        >
-                          Marcar todas como lidas
-                        </button>
-                        <button 
-                          onClick={() => setNotificationsOpen(false)}
-                          className="p-1 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all duration-200"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900">Notificações</h3>
+                      <button
+                        onClick={() => {
+                          toast.success("Todas as notificações marcadas como lidas!");
+                          setShowNotifications(false);
+                        }}
+                        className="text-sm text-blue-600 hover:text-blue-700"
+                      >
+                        Marcar todas como lidas
+                      </button>
                     </div>
-                    <div className="space-y-3 max-h-80 overflow-y-auto">
-                      {notifications.map((notification) => (
-                        <div key={notification.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 border border-gray-100 transition-all duration-200">
-                          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br from-${notification.type === 'success' ? 'green' : notification.type === 'warning' ? 'yellow' : notification.type === 'error' ? 'red' : 'blue'}-100 to-${notification.type === 'success' ? 'green' : notification.type === 'warning' ? 'yellow' : notification.type === 'error' ? 'red' : 'blue'}-200 flex items-center justify-center flex-shrink-0 shadow-sm`}>
-                            <notification.icon className={`h-4 w-4 text-${notification.type === 'success' ? 'green' : notification.type === 'warning' ? 'yellow' : notification.type === 'error' ? 'red' : 'blue'}-600`} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900">{notification.title}</p>
-                            <p className="text-xs text-gray-500 mt-1">{notification.message}</p>
-                            <div className="flex items-center justify-between mt-2">
-                              <p className="text-xs text-gray-400">{notification.time}</p>
-                              <button 
-                                onClick={() => handleNotificationAction(notification)}
-                                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                              >
-                                {notification.action}
-                              </button>
-                            </div>
-                          </div>
+                    <div className="space-y-3">
+                      <div className="flex items-start space-x-3 p-3 bg-red-50 rounded-xl">
+                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                          <span className="text-red-600 text-sm">⚠️</span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Dark Mode Toggle */}
-              <button
-                onClick={handleDarkModeToggle}
-                className="p-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transition-all duration-200 shadow-sm hover:shadow-md"
-              >
-                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
-
-              {/* Nova Obra Button */}
-              <Link
-                to="/obras/nova"
-                className="flex items-center space-x-2 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 shadow-sm hover:shadow-md"
-              >
-                <Plus className="h-5 w-5" />
-                <span className="hidden sm:block text-sm font-medium">Nova Obra</span>
-              </Link>
-
-              {/* User Menu Premium */}
-              <div className="relative">
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center space-x-3 p-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 shadow-sm hover:shadow-md"
-                >
-                  <div className="relative">
-                    <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shadow-sm">
-                      <User className="h-4 w-4 text-white" />
-                    </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white"></div>
-                  </div>
-                  <div className="hidden sm:block text-left">
-                    <p className="text-sm font-medium text-white">José Antunes</p>
-                    <p className="text-xs text-blue-200">Premium</p>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-white" />
-                </button>
-                
-                {userMenuOpen && (
-                  <div className="absolute right-0 top-12 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 p-3">
-                    <div className="px-3 py-3 border-b border-gray-100">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-sm">
-                          <User className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">José Antunes</p>
-                          <p className="text-xs text-gray-500">jose.antunes@qualicore.pt</p>
-                          <div className="flex items-center mt-1">
-                            <Crown className="h-3 w-3 text-yellow-500 mr-1" />
-                            <span className="text-xs text-yellow-600 font-medium">Premium</span>
-                          </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">Ensaio Não Conforme</p>
+                          <p className="text-xs text-gray-500">Ensaio de resistência do betão não atingiu valores esperados</p>
+                          <p className="text-xs text-gray-400 mt-1">Há 2 minutos</p>
                         </div>
                       </div>
-                    </div>
-                    <div className="py-2">
-                      <button 
-                        onClick={handleProfile}
-                        className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 rounded-lg transition-all duration-200"
-                      >
-                        <User className="h-4 w-4" />
-                        <span>Perfil</span>
-                      </button>
-                      <button 
-                        onClick={handleSettings}
-                        className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 rounded-lg transition-all duration-200"
-                      >
-                        <Settings className="h-4 w-4" />
-                        <span>Configurações</span>
-                      </button>
-                      <button 
-                        onClick={handleExportData}
-                        className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 rounded-lg transition-all duration-200"
-                      >
-                        <Download className="h-4 w-4" />
-                        <span>Exportar Dados</span>
-                      </button>
-                      <button 
-                        onClick={handleUpgradePremium}
-                        className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 rounded-lg transition-all duration-200"
-                      >
-                        <Crown className="h-4 w-4" />
-                        <span>Upgrade Premium</span>
-                      </button>
-                    </div>
-                    <div className="px-3 py-3 border-t border-gray-100">
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 rounded-lg transition-all duration-200"
-                      >
-                        <X className="h-4 w-4" />
-                        <span>Sair</span>
-                      </button>
+                      <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-xl">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <span className="text-blue-600 text-sm">ℹ️</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">Nova Não Conformidade</p>
+                          <p className="text-xs text-gray-500">Nova NC registada na zona A - Fundações</p>
+                          <p className="text-xs text-gray-400 mt-1">Há 1 hora</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -722,211 +403,6 @@ export default function PremiumNavbar({ onToggleSidebar, sidebarOpen }: PremiumN
           </div>
         </div>
       </nav>
-
-             {/* Command Palette */}
-       {commandPaletteOpen && (
-         <div className="fixed inset-0 bg-gradient-to-br from-black/60 via-blue-900/40 to-indigo-900/40 backdrop-blur-xl z-[9999] flex items-start justify-center pt-20 animate-fade-in">
-           <div className="w-full max-w-3xl mx-4 animate-slide-up">
-             <div className="bg-gradient-to-br from-white/95 via-blue-50/90 to-indigo-50/90 rounded-3xl shadow-2xl border border-white/30 overflow-hidden backdrop-blur-2xl relative">
-               {/* Animated background elements */}
-               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-indigo-500/5 animate-pulse"></div>
-               <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-transparent rounded-full blur-3xl animate-float"></div>
-               <div className="absolute bottom-0 right-0 w-40 h-40 bg-gradient-to-br from-indigo-400/20 to-transparent rounded-full blur-3xl animate-float-delayed"></div>
-                             <div className="p-6 border-b border-white/20 bg-gradient-to-r from-white/80 via-blue-50/60 to-indigo-50/60 relative">
-                 <div className="flex items-center justify-between">
-                   <div className="flex items-center space-x-4 flex-1">
-                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110">
-                       <Command className="h-6 w-6 text-white" />
-                     </div>
-                     <input
-                       type="text"
-                       placeholder="Pesquisar módulos..."
-                       className="flex-1 text-lg outline-none bg-transparent placeholder-gray-500/70 font-medium"
-                       value={searchQuery}
-                       onChange={(e) => setSearchQuery(e.target.value)}
-                       autoFocus
-                     />
-                     <kbd className="px-3 py-2 text-sm bg-gradient-to-r from-gray-100 to-white border border-gray-200/50 rounded-lg text-gray-600 font-bold shadow-lg hover:shadow-xl transition-all duration-200">ESC</kbd>
-                   </div>
-                   <button
-                     onClick={() => setCommandPaletteOpen(false)}
-                     className="p-3 rounded-xl text-gray-400 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-110"
-                   >
-                     <X className="h-5 w-5" />
-                   </button>
-                 </div>
-               </div>
-                             <div className="max-h-96 overflow-y-auto p-4">
-                 {filteredCommands.length > 0 ? (
-                   filteredCommands.map((item, index) => (
-                     <Link
-                       key={item.name}
-                       to={item.href}
-                       className="flex items-center space-x-4 px-6 py-4 rounded-2xl hover:bg-gradient-to-r hover:from-blue-50/80 hover:to-indigo-50/80 border border-transparent hover:border-blue-300/40 transition-all duration-300 group hover:scale-[1.02] hover:shadow-lg relative z-10 pointer-events-auto"
-                       onClick={() => {
-                         console.log("🔗 Navegando para:", item.href);
-                         setCommandPaletteOpen(false);
-                       }}
-                       style={{ animationDelay: `${index * 50}ms` }}
-                     >
-                       <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center group-hover:from-blue-200 group-hover:to-indigo-200 transition-all duration-300 shadow-lg group-hover:shadow-xl group-hover:scale-110">
-                         <item.icon className="h-5 w-5 text-blue-600 group-hover:text-blue-700" />
-                       </div>
-                       <div className="flex-1">
-                         <p className="text-base font-bold text-gray-900 group-hover:text-blue-900">{item.name}</p>
-                         <p className="text-sm text-gray-500 group-hover:text-blue-600 font-medium">{item.category}</p>
-                       </div>
-                       <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center group-hover:from-blue-100 group-hover:to-indigo-100 transition-all duration-300 group-hover:scale-110">
-                         <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-blue-600" />
-                       </div>
-                     </Link>
-                   ))
-                 ) : (
-                   <div className="px-6 py-12 text-center">
-                     <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                       <Search className="h-8 w-8 text-gray-400" />
-                     </div>
-                     <p className="text-gray-500 font-bold text-lg">Nenhum módulo encontrado</p>
-                     <p className="text-sm text-gray-400 mt-2">Tente uma pesquisa diferente</p>
-                   </div>
-                 )}
-               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Settings Modal */}
-      {showSettingsModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setShowSettingsModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Configurações</h2>
-              <button 
-                onClick={() => setShowSettingsModal(false)}
-                className="p-1 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all duration-200"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="flex items-center space-x-2">
-                  <input type="checkbox" defaultChecked className="rounded" />
-                  <span className="text-sm text-gray-700">Notificações por email</span>
-                </label>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Idioma</label>
-                <select className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                  <option>Português</option>
-                  <option>English</option>
-                  <option>Español</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-end space-x-3 mt-6">
-              <button 
-                onClick={() => setShowSettingsModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button 
-                onClick={() => {
-                  alert('Configurações salvas!');
-                  setShowSettingsModal(false);
-                }}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Salvar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Upgrade Modal */}
-      {showUpgradeModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setShowUpgradeModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 text-center" onClick={(e) => e.stopPropagation()}>
-            <div className="text-4xl mb-4">👑</div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Upgrade para Premium</h2>
-            <p className="text-gray-600 mb-6">Desbloqueie todas as funcionalidades avançadas</p>
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <ul className="text-left space-y-2 text-sm text-gray-700">
-                <li>• Relatórios ilimitados</li>
-                <li>• Exportação avançada</li>
-                <li>• Suporte prioritário</li>
-                <li>• Backup automático</li>
-              </ul>
-            </div>
-            <div className="flex justify-center space-x-3">
-              <button 
-                onClick={() => setShowUpgradeModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Mais tarde
-              </button>
-              <button 
-                onClick={() => {
-                  alert('Contacte-nos: premium@qualicore.pt');
-                  setShowUpgradeModal(false);
-                }}
-                className="px-4 py-2 text-sm font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors"
-              >
-                Contactar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Search Results Modal */}
-      {showSearchResultsModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setShowSearchResultsModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Resultados da busca</h2>
-              <button 
-                onClick={() => setShowSearchResultsModal(false)}
-                className="p-1 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all duration-200"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-3">
-              {searchResults.map((result, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
-                      {result.type.toUpperCase()}
-                    </span>
-                    <span className="text-gray-900">{result.name}</span>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      alert(`Navegando para ${result.name}`);
-                      setShowSearchResultsModal(false);
-                    }}
-                    className="px-3 py-1 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 transition-colors"
-                  >
-                    Ver
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Overlay para fechar menus */}
-      {(searchOpen || notificationsOpen || userMenuOpen || quickActionsOpen || commandPaletteOpen) && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={closeAllMenus}
-        />
-      )}
     </>
   );
 }
