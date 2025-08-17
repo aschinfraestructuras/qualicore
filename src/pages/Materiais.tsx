@@ -22,6 +22,7 @@ import {
   XCircle,
   Share2,
   Cloud,
+  ArrowUpRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import MaterialForm from "@/components/forms/MaterialForm";
@@ -492,26 +493,219 @@ export default function Materiais() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-2xl animate-pulse">
+              <Package className="h-8 w-8 text-white" />
+            </div>
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full animate-bounce"></div>
+          </div>
+          <p className="text-gray-600 mt-4 font-medium">Carregando materiais...</p>
+        </div>
       </div>
     );
   }
 
+  // Calcular estatísticas
+  const stats = {
+    total: materiaisFiltrados.length,
+    aprovados: materiaisFiltrados.filter((m) => m.estado === "aprovado").length,
+    pendentes: materiaisFiltrados.filter((m) => m.estado === "pendente").length,
+    reprovados: materiaisFiltrados.filter((m) => m.estado === "reprovado").length,
+    em_analise: materiaisFiltrados.filter((m) => m.estado === "em_analise").length,
+  };
+
   return (
-    <div className="space-y-6 pt-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Gestão de Materiais
-          </h1>
-          <p className="text-gray-600">Controlo de materiais e stocks</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8 pt-16">
+      {/* Header Premium */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-orange-800 to-red-900 bg-clip-text text-transparent mb-2">
+              Gestão de Materiais
+            </h1>
+            <p className="text-xl text-gray-600 flex items-center">
+              <Package className="h-5 w-5 mr-2 text-orange-500" />
+              Controlo de materiais e recursos em tempo real
+            </p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
+            >
+              <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
+              Novo Material
+            </button>
+          </div>
         </div>
-      </div>
+      </motion.div>
+
+      {/* Stats Cards - Ultra Premium */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8"
+      >
+        {/* Total de Materiais */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-red-500/5 to-rose-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-t-3xl"></div>
+            <div className="absolute top-4 right-4 w-2 h-2 bg-orange-400 rounded-full opacity-0 group-hover:opacity-100 animate-ping"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Package className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  <ArrowUpRight className="h-3 w-3" />
+                  <span>+{stats.total}</span>
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Total de Materiais</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.total}</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.total / 100) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Aprovados */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-t-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <CheckCircle className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Aprovados</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.aprovados}</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.aprovados / stats.total) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Pendentes */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-amber-500/5 to-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-amber-500 rounded-t-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Clock className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Pendentes</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.pendentes}</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.pendentes / stats.total) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Rejeitados */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-rose-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-rose-500 rounded-t-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-rose-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <XCircle className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Rejeitados</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.reprovados}</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-red-500 to-rose-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.reprovados / stats.total) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Em Uso */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="group cursor-pointer relative"
+        >
+          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-t-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Eye className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Em Uso</h3>
+              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.em_analise}</p>
+              
+              <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-1000 ease-out" 
+                     style={{ width: `${(stats.em_analise / stats.total) * 100}%` }}></div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
 
       {/* Botão de Filtros */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-4 mb-6">
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`p-2 rounded-lg shadow-soft hover:shadow-md transition-all ${
@@ -678,86 +872,6 @@ export default function Materiais() {
           <Plus className="h-4 w-4 mr-2" />
           Novo Material
         </button>
-      </div>
-
-      {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="card">
-          <div className="card-content">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.total}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {stats.totalQuantidade} unidades
-                </p>
-              </div>
-              <Package className="h-8 w-8 text-blue-500" />
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-content">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Aprovados</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {stats.aprovados}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {stats.total > 0
-                    ? ((stats.aprovados / stats.total) * 100).toFixed(1)
-                    : 0}
-                  %
-                </p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-content">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Pendentes</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  {stats.pendentes}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {stats.total > 0
-                    ? ((stats.pendentes / stats.total) * 100).toFixed(1)
-                    : 0}
-                  %
-                </p>
-              </div>
-              <Clock className="h-8 w-8 text-yellow-500" />
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-content">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Em Análise</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {stats.emAnalise}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {stats.total > 0
-                    ? ((stats.emAnalise / stats.total) * 100).toFixed(1)
-                    : 0}
-                  %
-                </p>
-              </div>
-              <AlertCircle className="h-8 w-8 text-blue-500" />
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Lista de Materiais */}
