@@ -29,6 +29,8 @@ import {
   XCircle,
   ChevronDown,
   ChevronUp,
+  Building,
+  Zap,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -38,6 +40,7 @@ import {
 import { printService } from "@/services/printService";
 import UniversalPrintModal from "@/components/UniversalPrintModal";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 interface FiltrosRelatorio {
   periodo: "semana" | "mes" | "trimestre" | "ano" | "personalizado";
@@ -67,6 +70,7 @@ export default function Relatorios() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [printModulo, setPrintModulo] = useState<string>("geral");
+  const navigate = useNavigate();
 
   useEffect(() => {
     carregarMetricas();
@@ -240,6 +244,54 @@ export default function Relatorios() {
   const handleViewRelatorio = (tipo: string) => {
     setRelatorioAtivo(relatorioAtivo === tipo ? null : tipo);
     toast.success(`Visualizando relatório ${tipo}`);
+  };
+
+  const handleVerDetalhes = (modulo: string) => {
+    // Navegar para módulos específicos
+    console.log(`Navegando para módulo: ${modulo}`);
+    switch (modulo) {
+      case "ensaios":
+        navigate("/ensaios");
+        break;
+      case "checklists":
+        navigate("/checklists");
+        break;
+      case "materiais":
+        navigate("/materiais");
+        break;
+      case "fornecedores":
+        navigate("/fornecedores");
+        break;
+      case "nao-conformidades":
+        navigate("/nao-conformidades");
+        break;
+      case "documentos":
+        navigate("/documentos");
+        break;
+      case "obras":
+        navigate("/obras");
+        break;
+      case "relatorios":
+        navigate("/relatorios");
+        break;
+      case "controlo-betonagens":
+        navigate("/controlo-betonagens");
+        break;
+      case "via-ferrea":
+        navigate("/via-ferrea");
+        break;
+      case "pontes-tuneis":
+        navigate("/pontes-tuneis");
+        break;
+      case "sinalizacao":
+        navigate("/sinalizacao");
+        break;
+      case "eletrificacao":
+        navigate("/eletrificacao");
+        break;
+      default:
+        console.log(`Módulo ${modulo} não mapeado`);
+    }
   };
 
   // Função auxiliar para obter título do módulo
@@ -627,6 +679,91 @@ export default function Relatorios() {
                 </p>
               </div>
               <Activity className="h-8 w-8 text-blue-500" />
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="card card-hover cursor-pointer"
+          onClick={() => handleViewRelatorio("controlo-betonagens")}
+        >
+          <div className="card-content">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Betonagens</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {metricas.betonagens?.total_betonagens || 0}
+                </p>
+              </div>
+              <Building className="h-8 w-8 text-red-500" />
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="card card-hover cursor-pointer"
+          onClick={() => handleViewRelatorio("via-ferrea")}
+        >
+          <div className="card-content">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Via Férrea</p>
+                <p className="text-2xl font-bold text-cyan-600">
+                  {metricas.ferroviario?.via_ferrea?.total_trilhos || 0}
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-cyan-500" />
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="card card-hover cursor-pointer"
+          onClick={() => handleViewRelatorio("pontes-tuneis")}
+        >
+          <div className="card-content">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pontes & Túneis</p>
+                <p className="text-2xl font-bold text-indigo-600">
+                  {metricas.ferroviario?.pontes_tuneis?.total_pontes_tuneis || 0}
+                </p>
+              </div>
+              <Building className="h-8 w-8 text-indigo-500" />
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="card card-hover cursor-pointer"
+          onClick={() => handleViewRelatorio("sinalizacao")}
+        >
+          <div className="card-content">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Sinalização</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {metricas.ferroviario?.sinalizacao?.total_sinalizacoes || 0}
+                </p>
+              </div>
+              <Activity className="h-8 w-8 text-yellow-500" />
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="card card-hover cursor-pointer"
+          onClick={() => handleViewRelatorio("eletrificacao")}
+        >
+          <div className="card-content">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Eletrificação</p>
+                <p className="text-2xl font-bold text-amber-600">
+                  {metricas.ferroviario?.eletrificacao?.total_eletrificacoes || 0}
+                </p>
+              </div>
+              <Zap className="h-8 w-8 text-amber-500" />
             </div>
           </div>
         </div>

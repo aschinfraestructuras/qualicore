@@ -36,6 +36,23 @@ export interface FilterState {
   capacidadeDeteccaoMin: number | '';
   ultimaInspecaoInicio: string;
   ultimaInspecaoFim: string;
+  // Parâmetros técnicos (Betonagens)
+  elementoEstrutural: string;
+  localizacao: string;
+  fornecedor: string;
+  statusConformidade: string;
+  dataBetonagemInicio: string;
+  dataBetonagemFim: string;
+  dataEnsaio7dInicio: string;
+  dataEnsaio7dFim: string;
+  dataEnsaio28dInicio: string;
+  dataEnsaio28dFim: string;
+  slumpMin: number | '';
+  temperaturaMin: number | '';
+  temperaturaMax: number | '';
+  resistencia7dMin: number | '';
+  resistencia28dMin: number | '';
+  resistenciaRoturaMin: number | '';
 }
 
 export interface TravessaFilterState {
@@ -123,6 +140,24 @@ export function applyFilters(data: any[], filters: FilterState): any[] {
     if (filters.raioCoberturaMin !== '' && (item.parametros?.raio_cobertura || 0) < filters.raioCoberturaMin) return false;
     if (filters.tempoRespostaMax !== '' && (item.parametros?.tempo_resposta || 0) > filters.tempoRespostaMax) return false;
     if (filters.capacidadeDeteccaoMin !== '' && (item.parametros?.capacidade_deteccao || 0) < filters.capacidadeDeteccaoMin) return false;
+  
+    // Filtros de parâmetros técnicos (Betonagens)
+    if (filters.elementoEstrutural && item.elemento_estrutural !== filters.elementoEstrutural) return false;
+    if (filters.localizacao && !item.localizacao?.toLowerCase().includes(filters.localizacao.toLowerCase())) return false;
+    if (filters.fornecedor && !item.fornecedor?.toLowerCase().includes(filters.fornecedor.toLowerCase())) return false;
+    if (filters.statusConformidade && item.status_conformidade !== filters.statusConformidade) return false;
+    if (filters.dataBetonagemInicio && item.data_betonagem < filters.dataBetonagemInicio) return false;
+    if (filters.dataBetonagemFim && item.data_betonagem > filters.dataBetonagemFim) return false;
+    if (filters.dataEnsaio7dInicio && item.data_ensaio_7d < filters.dataEnsaio7dInicio) return false;
+    if (filters.dataEnsaio7dFim && item.data_ensaio_7d > filters.dataEnsaio7dFim) return false;
+    if (filters.dataEnsaio28dInicio && item.data_ensaio_28d < filters.dataEnsaio28dInicio) return false;
+    if (filters.dataEnsaio28dFim && item.data_ensaio_28d > filters.dataEnsaio28dFim) return false;
+    if (filters.slumpMin !== '' && (item.slump || 0) < filters.slumpMin) return false;
+    if (filters.temperaturaMin !== '' && (item.temperatura || 0) < filters.temperaturaMin) return false;
+    if (filters.temperaturaMax !== '' && (item.temperatura || 0) > filters.temperaturaMax) return false;
+    if (filters.resistencia7dMin !== '' && ((item.resistencia_7d_1 + item.resistencia_7d_2) / 2 || 0) < filters.resistencia7dMin) return false;
+    if (filters.resistencia28dMin !== '' && ((item.resistencia_28d_1 + item.resistencia_28d_2 + item.resistencia_28d_3) / 3 || 0) < filters.resistencia28dMin) return false;
+    if (filters.resistenciaRoturaMin !== '' && (item.resistencia_rotura || 0) < filters.resistenciaRoturaMin) return false;
   
     // Filtros de inspeção
     if (filters.ultimaInspecaoInicio && item.ultima_inspecao < filters.ultimaInspecaoInicio) return false;
@@ -312,6 +347,24 @@ export function getActiveFiltersCount(filters: FilterState | TravessaFilterState
   if ('tempoRespostaMax' in filters && filters.tempoRespostaMax !== '') count++;
   if ('capacidadeDeteccaoMin' in filters && filters.capacidadeDeteccaoMin !== '') count++;
     
+  // Filtros de parâmetros técnicos (Betonagens)
+  if ('elementoEstrutural' in filters && filters.elementoEstrutural !== '') count++;
+  if ('localizacao' in filters && filters.localizacao !== '') count++;
+  if ('fornecedor' in filters && filters.fornecedor !== '') count++;
+  if ('statusConformidade' in filters && filters.statusConformidade !== '') count++;
+  if ('dataBetonagemInicio' in filters && filters.dataBetonagemInicio !== '') count++;
+  if ('dataBetonagemFim' in filters && filters.dataBetonagemFim !== '') count++;
+  if ('dataEnsaio7dInicio' in filters && filters.dataEnsaio7dInicio !== '') count++;
+  if ('dataEnsaio7dFim' in filters && filters.dataEnsaio7dFim !== '') count++;
+  if ('dataEnsaio28dInicio' in filters && filters.dataEnsaio28dInicio !== '') count++;
+  if ('dataEnsaio28dFim' in filters && filters.dataEnsaio28dFim !== '') count++;
+  if ('slumpMin' in filters && filters.slumpMin !== '') count++;
+  if ('temperaturaMin' in filters && filters.temperaturaMin !== '') count++;
+  if ('temperaturaMax' in filters && filters.temperaturaMax !== '') count++;
+  if ('resistencia7dMin' in filters && filters.resistencia7dMin !== '') count++;
+  if ('resistencia28dMin' in filters && filters.resistencia28dMin !== '') count++;
+  if ('resistenciaRoturaMin' in filters && filters.resistenciaRoturaMin !== '') count++;
+    
   // Filtros de inspeção
   if ('ultimaInspecaoInicio' in filters && filters.ultimaInspecaoInicio) count++;
   if ('ultimaInspecaoFim' in filters && filters.ultimaInspecaoFim) count++;
@@ -364,7 +417,24 @@ export function getDefaultFilters(): FilterState {
   tempoRespostaMax: '',
   capacidadeDeteccaoMin: '',
   ultimaInspecaoInicio: '',
-  ultimaInspecaoFim: ''
+  ultimaInspecaoFim: '',
+  // Parâmetros técnicos (Betonagens)
+  elementoEstrutural: '',
+  localizacao: '',
+  fornecedor: '',
+  statusConformidade: '',
+  dataBetonagemInicio: '',
+  dataBetonagemFim: '',
+  dataEnsaio7dInicio: '',
+  dataEnsaio7dFim: '',
+  dataEnsaio28dInicio: '',
+  dataEnsaio28dFim: '',
+  slumpMin: '',
+  temperaturaMin: '',
+  temperaturaMax: '',
+  resistencia7dMin: '',
+  resistencia28dMin: '',
+  resistenciaRoturaMin: ''
   };
 }
 

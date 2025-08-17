@@ -16,6 +16,9 @@ import {
   naoConformidadesAPI,
   obrasAPI,
 } from "@/lib/supabase-api";
+import { betonagensAPI } from "@/lib/supabase-api/betonagensAPI";
+import { pontesTuneisAPI } from "@/lib/supabase-api/pontesTuneisAPI";
+import { viaFerreaAPI } from "@/lib/supabase-api/viaFerreaAPI";
 
 // Tipos para métricas reais
 export interface MetricasReais {
@@ -26,6 +29,8 @@ export interface MetricasReais {
   documentos: KPIsDocumentos;
   fornecedores: KPIsFornecedores;
   obras: KPIsObras;
+  betonagens: KPIsBetonagens;
+  ferroviario: KPIsFerroviario;
   geral: KPIsGerais;
 }
 
@@ -110,6 +115,52 @@ export interface KPIsGerais {
   tendencia_qualidade: "melhorando" | "estavel" | "piorando";
 }
 
+export interface KPIsBetonagens {
+  total_betonagens: number;
+  conformes: number;
+  nao_conformes: number;
+  pendentes: number;
+  resistencia_media_7d: number;
+  resistencia_media_28d: number;
+  resistencia_media_rotura: number;
+  ensaios_7d_pendentes: number;
+  ensaios_28d_pendentes: number;
+  tipos_betao_distribuicao: Record<string, number>;
+  obras_distribuicao: Record<string, number>;
+}
+
+export interface KPIsFerroviario {
+  via_ferrea: {
+    total_trilhos: number;
+    total_travessas: number;
+    inspecoes_pendentes: number;
+    alertas_criticos: number;
+    conformidade: number;
+    km_cobertos: number;
+  };
+  pontes_tuneis: {
+    total_pontes_tuneis: number;
+    ativas: number;
+    em_manutencao: number;
+    com_avaria: number;
+    inspecoes_pendentes: number;
+    proximas_inspecoes_7d: number;
+    proximas_inspecoes_30d: number;
+  };
+  sinalizacao: {
+    total_sinalizacoes: number;
+    operacionais: number;
+    em_manutencao: number;
+    com_avaria: number;
+  };
+  eletrificacao: {
+    total_eletrificacoes: number;
+    operacionais: number;
+    em_manutencao: number;
+    com_avaria: number;
+  };
+}
+
 // Função principal para calcular todas as métricas
 export const calcularMetricasReais = async (): Promise<MetricasReais> => {
   try {
@@ -125,6 +176,9 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       documentos,
       fornecedores,
       obras,
+      betonagens,
+      viaFerreaStats,
+      pontesTuneisStats,
     ] = await Promise.all([
       ensaiosAPI.getAll().catch(e => { console.error("❌ Erro ao buscar ensaios:", e); return []; }),
       checklistsAPI.getAll().catch(e => { console.error("❌ Erro ao buscar checklists:", e); return []; }),
@@ -133,6 +187,9 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       documentosAPI.getAll().catch(e => { console.error("❌ Erro ao buscar documentos:", e); return []; }),
       fornecedoresAPI.getAll().catch(e => { console.error("❌ Erro ao buscar fornecedores:", e); return []; }),
       obrasAPI.getAll().catch(e => { console.error("❌ Erro ao buscar obras:", e); return []; }),
+      betonagensAPI.betonagens.getAll().catch(e => { console.error("❌ Erro ao buscar betonagens:", e); return []; }),
+      viaFerreaAPI.stats.getStats().catch(e => { console.error("❌ Erro ao buscar stats via férrea:", e); return null; }),
+      pontesTuneisAPI.stats.getStats().catch(e => { console.error("❌ Erro ao buscar stats pontes/túneis:", e); return null; }),
     ]);
 
     console.log("📊 Dados recebidos:");
@@ -143,6 +200,9 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
     console.log("  - Documentos:", documentos.length);
     console.log("  - Fornecedores:", fornecedores.length);
     console.log("  - Obras:", obras.length);
+    console.log("  - Betonagens:", betonagens.length);
+    console.log("  - Via Férrea Stats:", viaFerreaStats);
+    console.log("  - Pontes/Túneis Stats:", pontesTuneisStats);
 
     // Calcular métricas de ensaios
     console.log("🧪 Calculando métricas de ensaios...");
@@ -154,9 +214,7 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
 
     // Calcular métricas de materiais
     console.log("📦 Calculando métricas de materiais...");
-    console.log("📦 Dados brutos dos materiais:", materiais);
     const kpisMateriais = calcularKPIsMateriais(materiais);
-    console.log("📦 KPIs Materiais calculados:", kpisMateriais);
 
     // Calcular métricas de não conformidades
     console.log("⚠️ Calculando métricas de não conformidades...");
@@ -174,6 +232,14 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
     console.log("🏗️ Calculando métricas de obras...");
     const kpisObras = calcularKPIsObras(obras);
 
+    // Calcular métricas de betonagens
+    console.log("🏗️ Calculando métricas de betonagens...");
+    const kpisBetonagens = calcularKPIsBetonagens(betonagens);
+
+    // Calcular métricas ferroviárias
+    console.log("🚂 Calculando métricas ferroviárias...");
+    const kpisFerroviario = calcularKPIsFerroviario(viaFerreaStats, pontesTuneisStats);
+
     // Calcular métricas gerais
     console.log("📈 Calculando métricas gerais...");
     const kpisGerais = calcularKPIsGerais({
@@ -184,6 +250,8 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       documentos: kpisDocumentos,
       fornecedores: kpisFornecedores,
       obras: kpisObras,
+      betonagens: kpisBetonagens,
+      ferroviario: kpisFerroviario,
     });
 
     console.log("✅ Métricas calculadas com sucesso!");
@@ -194,6 +262,8 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
     console.log("  - Checklists:", kpisChecklists.total_checklists);
     console.log("  - Materiais:", kpisMateriais.total_materiais);
     console.log("  - NCs:", kpisNCs.total_ncs);
+    console.log("  - Betonagens:", kpisBetonagens.total_betonagens);
+    console.log("  - Via Férrea:", kpisFerroviario.via_ferrea.total_trilhos);
 
     return {
       ensaios: kpisEnsaios,
@@ -203,6 +273,8 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       documentos: kpisDocumentos,
       fornecedores: kpisFornecedores,
       obras: kpisObras,
+      betonagens: kpisBetonagens,
+      ferroviario: kpisFerroviario,
       geral: kpisGerais,
     };
   } catch (error) {
@@ -688,14 +760,17 @@ const calcularKPIsGerais = (
     metricas.materiais.total_materiais +
     metricas.naoConformidades.total_ncs +
     metricas.documentos.total_documentos +
-    metricas.obras.total_obras;
+    metricas.obras.total_obras +
+    metricas.betonagens.total_betonagens;
 
-  // Alertas críticos
-  const alertasCriticos =
-    metricas.naoConformidades.ncs_pendentes +
-    metricas.documentos.documentos_vencidos +
-    metricas.materiais.materiais_pendentes +
-    metricas.obras.obras_paralisadas;
+      // Alertas críticos
+    const alertasCriticos = 
+      metricas.naoConformidades.ncs_pendentes +
+      metricas.documentos.documentos_vencidos +
+      metricas.materiais.materiais_pendentes +
+      metricas.obras.obras_paralisadas +
+      metricas.ferroviario.via_ferrea.inspecoes_pendentes +
+      metricas.ferroviario.pontes_tuneis.inspecoes_pendentes;
 
   // Tendência (simulada - seria baseada em dados históricos)
   const tendencia: "melhorando" | "estavel" | "piorando" = "estavel";
@@ -739,4 +814,124 @@ const calcularTempoMedioEntreDatas = (datas: Date[]): number => {
   return intervalos.length > 0
     ? intervalos.reduce((a, b) => a + b, 0) / intervalos.length
     : 0;
+};
+
+// Função para calcular métricas de betonagens
+const calcularKPIsBetonagens = (betonagens: any[]): KPIsBetonagens => {
+  console.log("🔍 Calculando KPIs Betonagens...");
+  console.log("  - Total de betonagens:", betonagens.length);
+  
+  if (betonagens.length === 0) {
+    console.log("⚠️ Nenhuma betonagem encontrada, usando dados de teste...");
+    return {
+      total_betonagens: 0,
+      conformes: 0,
+      nao_conformes: 0,
+      pendentes: 0,
+      resistencia_media_7d: 0,
+      resistencia_media_28d: 0,
+      resistencia_media_rotura: 0,
+      ensaios_7d_pendentes: 0,
+      ensaios_28d_pendentes: 0,
+      tipos_betao_distribuicao: {},
+      obras_distribuicao: {},
+    };
+  }
+
+  const total = betonagens.length;
+  const conformes = betonagens.filter(b => b.status_conformidade === 'Conforme').length;
+  const naoConformes = betonagens.filter(b => b.status_conformidade === 'Não Conforme').length;
+  const pendentes = betonagens.filter(b => b.status_conformidade === 'Pendente').length;
+
+  // Calcular resistências médias
+  const resistencia7d = betonagens
+    .filter(b => b.resistencia_7d_1 > 0 && b.resistencia_7d_2 > 0)
+    .map(b => (b.resistencia_7d_1 + b.resistencia_7d_2) / 2);
+  
+  const resistencia28d = betonagens
+    .filter(b => b.resistencia_28d_1 > 0 && b.resistencia_28d_2 > 0 && b.resistencia_28d_3 > 0)
+    .map(b => (b.resistencia_28d_1 + b.resistencia_28d_2 + b.resistencia_28d_3) / 3);
+  
+  const resistenciaRotura = betonagens
+    .filter(b => b.resistencia_rotura > 0)
+    .map(b => b.resistencia_rotura);
+
+  // Ensaios pendentes
+  const hoje = new Date();
+  const ensaios7dPendentes = betonagens.filter(b => 
+    !b.data_ensaio_7d || new Date(b.data_ensaio_7d) > hoje
+  ).length;
+  
+  const ensaios28dPendentes = betonagens.filter(b => 
+    !b.data_ensaio_28d || new Date(b.data_ensaio_28d) > hoje
+  ).length;
+
+  // Distribuições
+  const tiposBetao = contarFrequencias(betonagens.map(b => b.tipo_betao).filter(Boolean));
+  const obras = contarFrequencias(betonagens.map(b => b.obra).filter(Boolean));
+
+  return {
+    total_betonagens: total,
+    conformes,
+    nao_conformes: naoConformes,
+    pendentes,
+    resistencia_media_7d: resistencia7d.length > 0 ? resistencia7d.reduce((a, b) => a + b, 0) / resistencia7d.length : 0,
+    resistencia_media_28d: resistencia28d.length > 0 ? resistencia28d.reduce((a, b) => a + b, 0) / resistencia28d.length : 0,
+    resistencia_media_rotura: resistenciaRotura.length > 0 ? resistenciaRotura.reduce((a, b) => a + b, 0) / resistenciaRotura.length : 0,
+    ensaios_7d_pendentes: ensaios7dPendentes,
+    ensaios_28d_pendentes: ensaios28dPendentes,
+    tipos_betao_distribuicao: Object.fromEntries(tiposBetao.slice(0, 5).map(([key, value]) => [key, value])),
+    obras_distribuicao: Object.fromEntries(obras.slice(0, 5).map(([key, value]) => [key, value])),
+  };
+
+  return {
+    total_betonagens: total,
+    conformes,
+    nao_conformes,
+    pendentes,
+    resistencia_media_7d: resistencia7d.length > 0 ? resistencia7d.reduce((a, b) => a + b, 0) / resistencia7d.length : 0,
+    resistencia_media_28d: resistencia28d.length > 0 ? resistencia28d.reduce((a, b) => a + b, 0) / resistencia28d.length : 0,
+    resistencia_media_rotura: resistenciaRotura.length > 0 ? resistenciaRotura.reduce((a, b) => a + b, 0) / resistenciaRotura.length : 0,
+    ensaios_7d_pendentes: ensaios7dPendentes,
+    ensaios_28d_pendentes: ensaios28dPendentes,
+    tipos_betao_distribuicao: Object.fromEntries(tiposBetao.slice(0, 5)),
+    obras_distribuicao: Object.fromEntries(obras.slice(0, 5)),
+  };
+};
+
+// Função para calcular métricas ferroviárias
+const calcularKPIsFerroviario = (viaFerreaStats: any, pontesTuneisStats: any): KPIsFerroviario => {
+  console.log("🔍 Calculando KPIs Ferroviário...");
+  
+  return {
+    via_ferrea: {
+      total_trilhos: viaFerreaStats?.total_trilhos || 0,
+      total_travessas: viaFerreaStats?.total_travessas || 0,
+      inspecoes_pendentes: viaFerreaStats?.inspecoes_pendentes || 0,
+      alertas_criticos: viaFerreaStats?.alertas_criticos || 0,
+      conformidade: viaFerreaStats?.conformidade || 0,
+      km_cobertos: viaFerreaStats?.km_cobertos || 0,
+    },
+    pontes_tuneis: {
+      total_pontes_tuneis: pontesTuneisStats?.total_pontes_tuneis || 0,
+      ativas: pontesTuneisStats?.ativas || 0,
+      em_manutencao: pontesTuneisStats?.em_manutencao || 0,
+      com_avaria: pontesTuneisStats?.com_avaria || 0,
+      inspecoes_pendentes: pontesTuneisStats?.inspecoes_pendentes || 0,
+      proximas_inspecoes_7d: pontesTuneisStats?.proximas_inspecoes_7d || 0,
+      proximas_inspecoes_30d: pontesTuneisStats?.proximas_inspecoes_30d || 0,
+    },
+    sinalizacao: {
+      total_sinalizacoes: 0, // TODO: Implementar quando API estiver disponível
+      operacionais: 0,
+      em_manutencao: 0,
+      com_avaria: 0,
+    },
+    eletrificacao: {
+      total_eletrificacoes: 0, // TODO: Implementar quando API estiver disponível
+      operacionais: 0,
+      em_manutencao: 0,
+      com_avaria: 0,
+    },
+  };
 };

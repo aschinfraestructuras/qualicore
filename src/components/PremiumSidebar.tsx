@@ -170,6 +170,7 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
       items: [
         { name: "Ensaios", href: "/ensaios", icon: ClipboardList, badge: stats.ensaios.toString() },
         { name: "Ensaios Compactação", href: "/ensaios-compactacao", icon: Database, badge: "0" },
+        { name: "Controlo Betonagens", href: "/controlo-betonagens", icon: Building, badge: "🆕" },
         { name: "Checklists", href: "/checklists", icon: FileText, badge: "0" },
         { name: "Não Conformidades", href: "/nao-conformidades", icon: AlertTriangle, badge: stats.ncs.toString() },
       ]
