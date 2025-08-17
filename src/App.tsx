@@ -26,6 +26,7 @@ import Documentos from "./pages/Documentos";
 import Relatorios from "./pages/Relatorios";
 import ViaFerrea from "./pages/ViaFerrea";
 import Sinalizacao from "./pages/Sinalizacao";
+import Eletrificacao from "./pages/Eletrificacao";
 import Obras from "./pages/Obras";
 import Landing from "./pages/Landing";
 import SupabaseTest from "./components/SupabaseTest";
@@ -232,6 +233,19 @@ function App() {
           }
         >
           <Route index element={<Sinalizacao />} />
+        </Route>
+
+        <Route
+          path="/eletrificacao"
+          element={
+            user ? (
+              <PremiumLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<Eletrificacao />} />
         </Route>
 
         <Route

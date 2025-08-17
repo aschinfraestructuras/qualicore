@@ -9,10 +9,16 @@ export interface FilterState {
   dataInstalacaoInicio: string;
   dataInstalacaoFim: string;
   statusOperacional: string;
+  // Parâmetros técnicos (Sinalização)
   alcanceMin: number | '';
   potenciaMin: number | '';
   sensibilidadeMin: number | '';
   frequencia: string;
+  // Parâmetros técnicos (Eletrificação)
+  tensaoMin: number | '';
+  correnteMin: number | '';
+  potenciaEletricaMin: number | '';
+  frequenciaEletrica: string;
   ultimaInspecaoInicio: string;
   ultimaInspecaoFim: string;
 }
@@ -73,11 +79,17 @@ export function applyFilters(data: any[], filters: FilterState): any[] {
     if (filters.dataInstalacaoInicio && item.data_instalacao < filters.dataInstalacaoInicio) return false;
     if (filters.dataInstalacaoFim && item.data_instalacao > filters.dataInstalacaoFim) return false;
 
-    // Filtros de parâmetros técnicos
+    // Filtros de parâmetros técnicos (Sinalização)
     if (filters.alcanceMin !== '' && (item.parametros?.alcance || 0) < filters.alcanceMin) return false;
     if (filters.potenciaMin !== '' && (item.parametros?.potencia || 0) < filters.potenciaMin) return false;
     if (filters.sensibilidadeMin !== '' && (item.parametros?.sensibilidade || 0) < filters.sensibilidadeMin) return false;
     if (filters.frequencia && item.parametros?.frequencia !== filters.frequencia) return false;
+
+    // Filtros de parâmetros técnicos (Eletrificação)
+    if (filters.tensaoMin !== '' && (item.parametros?.tensao || 0) < filters.tensaoMin) return false;
+    if (filters.correnteMin !== '' && (item.parametros?.corrente || 0) < filters.correnteMin) return false;
+    if (filters.potenciaEletricaMin !== '' && (item.parametros?.potencia || 0) < filters.potenciaEletricaMin) return false;
+    if (filters.frequenciaEletrica && item.parametros?.frequencia !== filters.frequenciaEletrica) return false;
 
     // Filtros de inspeção
     if (filters.ultimaInspecaoInicio && item.ultima_inspecao < filters.ultimaInspecaoInicio) return false;
@@ -234,8 +246,24 @@ export function getActiveFiltersCount(filters: FilterState | TravessaFilterState
   if ('kmFinal' in filters && filters.kmFinal !== '') count++;
   if ('dataInstalacaoInicio' in filters && filters.dataInstalacaoInicio) count++;
   if ('dataInstalacaoFim' in filters && filters.dataInstalacaoFim) count++;
+  if ('statusOperacional' in filters && filters.statusOperacional) count++;
+  if ('categoria' in filters && filters.categoria) count++;
+  
+  // Filtros de parâmetros técnicos (Sinalização)
+  if ('alcanceMin' in filters && filters.alcanceMin !== '') count++;
+  if ('potenciaMin' in filters && filters.potenciaMin !== '') count++;
+  if ('sensibilidadeMin' in filters && filters.sensibilidadeMin !== '') count++;
+  if ('frequencia' in filters && filters.frequencia) count++;
+  
+  // Filtros de parâmetros técnicos (Eletrificação)
   if ('tensaoMin' in filters && filters.tensaoMin !== '') count++;
-  if ('tensaoMax' in filters && filters.tensaoMax !== '') count++;
+  if ('correnteMin' in filters && filters.correnteMin !== '') count++;
+  if ('potenciaEletricaMin' in filters && filters.potenciaEletricaMin !== '') count++;
+  if ('frequenciaEletrica' in filters && filters.frequenciaEletrica) count++;
+  
+  // Filtros de inspeção
+  if ('ultimaInspecaoInicio' in filters && filters.ultimaInspecaoInicio) count++;
+  if ('ultimaInspecaoFim' in filters && filters.ultimaInspecaoFim) count++;
 
   // Filtros específicos de Travessas
   if ('material' in filters && filters.material) count++;
@@ -262,10 +290,16 @@ export function getDefaultFilters(): FilterState {
     dataInstalacaoInicio: '',
     dataInstalacaoFim: '',
     statusOperacional: '',
+    // Parâmetros técnicos (Sinalização)
     alcanceMin: '',
     potenciaMin: '',
     sensibilidadeMin: '',
     frequencia: '',
+    // Parâmetros técnicos (Eletrificação)
+    tensaoMin: '',
+    correnteMin: '',
+    potenciaEletricaMin: '',
+    frequenciaEletrica: '',
     ultimaInspecaoInicio: '',
     ultimaInspecaoFim: ''
   };
