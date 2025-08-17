@@ -24,6 +24,7 @@ import Fornecedores from "./pages/Fornecedores";
 import NaoConformidades from "./pages/NaoConformidades";
 import Documentos from "./pages/Documentos";
 import Relatorios from "./pages/Relatorios";
+import ViaFerrea from "./pages/ViaFerrea";
 import Obras from "./pages/Obras";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -203,6 +204,19 @@ function App() {
           }
         >
           <Route index element={<Relatorios />} />
+        </Route>
+
+        <Route
+          path="/via-ferrea"
+          element={
+            user ? (
+              <PremiumLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<ViaFerrea />} />
         </Route>
 
         <Route

@@ -99,9 +99,10 @@ import {
   Hash as HashIcon8,
   Hash as HashIcon9,
   Hash as HashIcon10,
-  Zap,
-  Building,
-} from "lucide-react";
+     Zap,
+   Building,
+   Train,
+ } from "lucide-react";
 import { obrasAPI, ensaiosAPI, checklistsAPI, documentosAPI, naoConformidadesAPI } from "@/lib/supabase-api";
 
 interface PremiumSidebarProps {
@@ -189,6 +190,7 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
       items: [
         { name: "PIE", href: "/pie", icon: Shield, badge: "0" },
         { name: "Relatórios", href: "/relatorios", icon: BarChart3, badge: "0" },
+        { name: "Via Férrea", href: "/via-ferrea", icon: Train, badge: "🆕" },
         { name: "Documentos", href: "/documentos", icon: Folder, badge: stats.documentos.toString() },
       ]
     },
