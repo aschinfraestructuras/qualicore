@@ -200,10 +200,10 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className={`hidden lg:block w-96 bg-gradient-to-b from-blue-50/90 to-indigo-50/90 backdrop-blur-xl border-r border-blue-200/60 shadow-2xl transition-all duration-300`}>
+      <div className={`hidden lg:block w-96 bg-gradient-to-b from-slate-100 via-blue-50 to-indigo-50 backdrop-blur-xl border-r border-blue-300/60 shadow-2xl transition-all duration-300`}>
         <div className="h-full flex flex-col">
           {/* Header */}
-          <div className="p-4 border-b border-blue-200/40">
+          <div className="p-4 border-b border-blue-300/40">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-400 via-purple-400 to-indigo-400 rounded-lg flex items-center justify-center shadow-lg">
@@ -229,7 +229,7 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
           </div>
 
           {/* Search */}
-          <div className="p-4 border-b border-blue-200/40">
+          <div className="p-4 border-b border-blue-300/40">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-400" />
               <input
@@ -243,7 +243,7 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
           </div>
 
           {/* Quick Stats */}
-          <div className="p-4 border-b border-blue-200/40">
+          <div className="p-4 border-b border-blue-300/40">
             <h3 className="text-xs font-semibold text-blue-700/80 uppercase tracking-wider mb-3">Estatísticas Rápidas</h3>
             <div className="grid grid-cols-2 gap-2">
               {quickStats.map((stat) => (

@@ -429,17 +429,17 @@ export default function PremiumNavbar({ onToggleSidebar, sidebarOpen }: PremiumN
   return (
     <>
       {/* Navbar Principal */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-200 via-blue-300 to-indigo-300 backdrop-blur-xl border-b border-blue-400/60 shadow-lg">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-800 via-blue-800 to-indigo-800 backdrop-blur-xl border-b border-blue-600/60 shadow-xl">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             
             {/* Logo e Navegação Principal */}
             <div className="flex items-center space-x-4">
               {/* Botão Sidebar */}
-              <button
-                onClick={onToggleSidebar}
-                className="p-3 rounded-xl text-blue-600 hover:bg-blue-100 hover:text-blue-800 transition-all duration-200 group"
-              >
+                              <button
+                  onClick={onToggleSidebar}
+                  className="p-3 rounded-xl text-blue-200 hover:bg-blue-700/50 hover:text-white transition-all duration-200 group"
+                >
                 <Menu className="h-6 w-6 group-hover:scale-110 transition-transform" />
               </button>
 
@@ -452,10 +452,10 @@ export default function PremiumNavbar({ onToggleSidebar, sidebarOpen }: PremiumN
                    </div>
                  </div>
                  <div className="hidden sm:block">
-                   <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                   <h1 className="text-xl font-bold bg-gradient-to-r from-blue-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent">
                      Qualicore
                    </h1>
-                   <p className="text-sm text-blue-600/80 flex items-center">
+                   <p className="text-sm text-blue-200/80 flex items-center">
                      <Sparkles className="h-4 w-4 mr-1" />
                      Premium
                    </p>
@@ -468,11 +468,11 @@ export default function PremiumNavbar({ onToggleSidebar, sidebarOpen }: PremiumN
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 relative group ${
-                      item.current
-                        ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
-                        : "text-blue-700 hover:bg-blue-100 hover:text-blue-800"
-                    }`}
+                                         className={`px-4 py-3 rounded-xl text-base font-medium transition-all duration-200 relative group ${
+                       item.current
+                         ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
+                         : "text-blue-200 hover:bg-blue-700/50 hover:text-white"
+                     }`}
                   >
                     <div className="flex items-center space-x-2">
                       <item.icon className="h-5 w-5" />
@@ -491,7 +491,7 @@ export default function PremiumNavbar({ onToggleSidebar, sidebarOpen }: PremiumN
               
               {/* Global Search */}
               <div className="relative">
-                <div className="flex items-center space-x-3 px-4 py-3 rounded-xl bg-white/80 border border-blue-200/60 text-blue-700 hover:bg-blue-50 transition-all duration-200 shadow-sm">
+                                 <div className="flex items-center space-x-3 px-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-blue-400/30 text-blue-200 hover:bg-white/20 transition-all duration-200 shadow-sm">
                   <Search 
                     className="h-5 w-5 cursor-pointer" 
                     onClick={handleGlobalSearch}
@@ -499,15 +499,15 @@ export default function PremiumNavbar({ onToggleSidebar, sidebarOpen }: PremiumN
                   <input
                     type="text"
                     placeholder="Busca Global..."
-                    className="bg-transparent outline-none text-base placeholder-blue-500/70 w-40 sm:w-48"
+                                         className="bg-transparent outline-none text-base placeholder-blue-300/70 w-40 sm:w-48"
                     value={globalSearchQuery}
                     onChange={(e) => setGlobalSearchQuery(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleGlobalSearch()}
                   />
-                  <kbd 
-                    className="hidden sm:block px-2 py-1 text-sm bg-blue-100 rounded border border-blue-200 cursor-pointer hover:bg-blue-200 text-blue-700"
-                    onClick={handleGlobalSearch}
-                  >
+                                     <kbd 
+                     className="hidden sm:block px-2 py-1 text-sm bg-blue-600/30 rounded border border-blue-400/50 cursor-pointer hover:bg-blue-500/50 text-blue-200"
+                     onClick={handleGlobalSearch}
+                   >
                     ⌘K
                   </kbd>
                 </div>
@@ -516,11 +516,11 @@ export default function PremiumNavbar({ onToggleSidebar, sidebarOpen }: PremiumN
               {/* Command Palette */}
               <button
                 onClick={() => setCommandPaletteOpen(!commandPaletteOpen)}
-                className="flex items-center space-x-2 px-4 py-3 rounded-xl bg-white/80 text-blue-700 hover:bg-blue-50 hover:text-blue-800 transition-all duration-200 border border-blue-200/60 text-sm shadow-sm hover:shadow-md"
+                                 className="flex items-center space-x-2 px-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm text-blue-200 hover:bg-white/20 hover:text-white transition-all duration-200 border border-blue-400/30 text-sm shadow-sm hover:shadow-md"
               >
                                  <Command className="h-5 w-5" />
                  <span className="hidden sm:block">Módulos</span>
-                 <kbd className="hidden sm:block px-2 py-1 text-sm bg-blue-100 rounded border border-blue-200 text-blue-700">⌘P</kbd>
+                 <kbd className="hidden sm:block px-2 py-1 text-sm bg-blue-600/30 rounded border border-blue-400/50 text-blue-200">⌘P</kbd>
               </button>
 
               {/* Quick Actions */}

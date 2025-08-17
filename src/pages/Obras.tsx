@@ -439,16 +439,16 @@ export default function Obras() {
   }
 
       return (
-      <div className="space-y-2 w-full py-2 px-4">
+      <div className="space-y-6 w-full py-6 px-6">
         <div className="flex items-center justify-between pt-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestão de Obras</h1>
-          <p className="text-gray-600 mt-1">Controlo completo de projetos e obras</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestão de Obras</h1>
+          <p className="text-gray-600 text-lg">Controlo completo de projetos e obras</p>
         </div>
-        <Link
-          to="/obras/nova"
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
+                  <Link
+            to="/obras/nova"
+            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+          >
           <Plus className="h-4 w-4 mr-2" />
           Nova Obra
         </Link>
@@ -468,8 +468,8 @@ export default function Obras() {
       </div>
 
       {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2 w-full">
-        <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 w-full">
+        <div className="bg-white p-4 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total de Obras</p>
