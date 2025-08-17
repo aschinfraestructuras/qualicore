@@ -202,7 +202,7 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
         { name: "Sinalização", href: "/sinalizacao", icon: Activity, badge: "🆕" },
         { name: "Eletrificação", href: "/eletrificacao", icon: Zap, badge: "0" },
         { name: "Pontes & Túneis", href: "/pontes-tuneis", icon: Archive, badge: "🆕" },
-        { name: "Estações", href: "/estacoes", icon: Building, badge: "0" },
+        { name: "Estações", href: "/estacoes", icon: Building, badge: "🆕" },
         { name: "Segurança", href: "/seguranca-ferroviaria", icon: Shield, badge: "0" },
       ]
     }

@@ -28,6 +28,7 @@ import ViaFerrea from "./pages/ViaFerrea";
 import Sinalizacao from "./pages/Sinalizacao";
 import Eletrificacao from "./pages/Eletrificacao";
 import PontesTuneis from "./pages/PontesTuneis";
+import Estacoes from "./pages/Estacoes";
 import Obras from "./pages/Obras";
 import Landing from "./pages/Landing";
 import SupabaseTest from "./components/SupabaseTest";
@@ -249,7 +250,7 @@ function App() {
           <Route index element={<Eletrificacao />} />
         </Route>
 
-        <Route
+                <Route
           path="/pontes-tuneis"
           element={
             user ? (
@@ -262,6 +263,19 @@ function App() {
           <Route index element={<PontesTuneis />} />
         </Route>
 
+        <Route
+          path="/estacoes"
+          element={
+            user ? (
+              <PremiumLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<Estacoes />} />
+        </Route>
+        
         <Route
           path="/test-supabase"
           element={<SupabaseTest />}
