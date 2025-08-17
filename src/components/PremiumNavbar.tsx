@@ -403,8 +403,9 @@ ${searchResults.join('\n\n')}
     { name: "Fornecedores", icon: "🏢", category: "Gestão", path: "/fornecedores", shortcut: "⌘F" },
     { name: "Não Conformidades", icon: "⚠️", category: "Qualidade", path: "/nao-conformidades", shortcut: "⌘N" },
     { name: "Documentos", icon: "📄", category: "Gestão", path: "/documentos", shortcut: "⌘D" },
-            { name: "Relatórios", icon: "📈", category: "Análise", path: "/relatorios", shortcut: "⌘R" },
-        { name: "Via Férrea", icon: "🛤️", category: "Ferroviário", path: "/via-ferrea", shortcut: "⌘V" },
+    { name: "Relatórios", icon: "📈", category: "Análise", path: "/relatorios", shortcut: "⌘R" },
+    { name: "Via Férrea", icon: "🛤️", category: "Ferroviário", path: "/via-ferrea", shortcut: "⌘V" },
+    { name: "Sinalização", icon: "🚦", category: "Ferroviário", path: "/sinalizacao", shortcut: "⌘S" },
     { name: "RFIs", icon: "❓", category: "Gestão", path: "/rfis", shortcut: "⌘I" },
     { name: "Ensaios Compactação", icon: "🔧", category: "Especializado", path: "/ensaios-compactacao", shortcut: "⌘A" },
     { name: "PIE", icon: "🎯", category: "Especializado", path: "/pie", shortcut: "⌘P" },
@@ -431,6 +432,7 @@ ${searchResults.join('\n\n')}
     "Inspeção": "green",
     "Qualidade": "red",
     "Análise": "indigo",
+    "Ferroviário": "brown",
     "Especializado": "orange"
   };
 
