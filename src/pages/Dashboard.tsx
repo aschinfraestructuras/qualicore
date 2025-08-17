@@ -67,6 +67,7 @@ export default function Dashboard() {
   const [metricas, setMetricas] = useState<MetricasReais | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState<"overview" | "detailed">("overview");
+  const [selectedPeriod, setSelectedPeriod] = useState<"7d" | "30d" | "90d">("30d");
 
   useEffect(() => {
     carregarMetricas();
@@ -124,7 +125,19 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    return <LoadingSpinner message="Carregando métricas..." variant="dots" />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-2xl animate-pulse">
+              <Shield className="h-8 w-8 text-white" />
+            </div>
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full animate-bounce"></div>
+          </div>
+          <p className="text-gray-600 mt-4 font-medium">Carregando centro de comando...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!metricas) {
@@ -137,6 +150,23 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  // Dados para gráficos animados
+  const chartData = [
+    { name: 'Ensaios', value: metricas.ensaios.total_ensaios, color: '#8b5cf6' },
+    { name: 'Checklists', value: metricas.checklists.total_checklists, color: '#10b981' },
+    { name: 'Materiais', value: metricas.materiais.total_materiais, color: '#f59e0b' },
+    { name: 'Documentos', value: metricas.documentos.total_documentos, color: '#3b82f6' },
+  ];
+
+  const trendData = [
+    { name: 'Jan', ensaios: 65, checklists: 28, materiais: 45 },
+    { name: 'Fev', ensaios: 59, checklists: 48, materiais: 52 },
+    { name: 'Mar', ensaios: 80, checklists: 40, materiais: 61 },
+    { name: 'Abr', ensaios: 81, checklists: 19, materiais: 55 },
+    { name: 'Mai', ensaios: 56, checklists: 96, materiais: 48 },
+    { name: 'Jun', ensaios: 55, checklists: 27, materiais: 67 },
+  ];
 
   const kpiCards = [
     {
@@ -218,7 +248,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8 pt-16">
-      {/* Header */}
+      {/* Header Premium */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -226,26 +256,42 @@ export default function Dashboard() {
       >
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-2">
-              Dashboard Qualicore
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent mb-2">
+              Centro de Comando Qualicore
             </h1>
-            <p className="text-xl text-gray-600">
-              Visão geral da qualidade e conformidade
+            <p className="text-xl text-gray-600 flex items-center">
+              <Sparkles className="h-5 w-5 mr-2 text-blue-500" />
+              Visão geral da qualidade e conformidade em tempo real
             </p>
           </div>
           <div className="flex items-center space-x-4">
+            {/* Period Selector */}
+            <div className="flex bg-white/80 backdrop-blur-sm rounded-xl p-1 shadow-lg">
+              {(["7d", "30d", "90d"] as const).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setSelectedPeriod(period)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    selectedPeriod === period
+                      ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                >
+                  {period === "7d" ? "7 dias" : period === "30d" ? "30 dias" : "90 dias"}
+                </button>
+              ))}
+            </div>
             <button 
               onClick={handleRefresh} 
-              className="btn btn-outline btn-md group"
+              className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
             >
-              <RefreshCw className="h-4 w-4 mr-2 group-hover:rotate-180 transition-transform duration-500" />
-              Atualizar
+              <RefreshCw className="h-5 w-5 group-hover:rotate-180 transition-transform duration-500" />
             </button>
           </div>
         </div>
       </motion.div>
 
-      {/* KPIs Principais */}
+      {/* KPIs Principais - Ultra Premium */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -258,168 +304,137 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 + index * 0.1 }}
-            className="glass-card p-8 rounded-3xl cursor-pointer group hover:scale-105 transition-all duration-500 relative overflow-hidden"
+            className="group cursor-pointer relative"
             onClick={card.onClick}
           >
-            {/* Background gradient overlay */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${card.bgColor} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
-            
-            {/* Top accent line */}
-            <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${card.color}`}></div>
-            
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-6">
-                <div className={`p-4 rounded-2xl bg-gradient-to-br ${card.color} shadow-xl group-hover:scale-110 transition-transform duration-300`}>
-                  <card.icon className="h-6 w-6 text-white" />
+            <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+              {/* Animated background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              {/* Top accent line */}
+              <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${card.color} rounded-t-3xl`}></div>
+              
+              {/* Floating particles */}
+              <div className="absolute top-4 right-4 w-2 h-2 bg-blue-400 rounded-full opacity-0 group-hover:opacity-100 animate-ping"></div>
+              <div className="absolute bottom-4 right-4 w-1 h-1 bg-purple-400 rounded-full opacity-0 group-hover:opacity-100 animate-pulse"></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`w-12 h-12 bg-gradient-to-r ${card.color} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                    <card.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
+                    card.changeType === "positive" 
+                      ? "bg-green-100 text-green-700" 
+                      : "bg-red-100 text-red-700"
+                  }`}>
+                    {card.changeType === "positive" ? (
+                      <ArrowUpRight className="h-3 w-3" />
+                    ) : (
+                      <ArrowDownRight className="h-3 w-3" />
+                    )}
+                    <span>{card.change}</span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-1">
-                  {card.changeType === "positive" ? (
-                    <ArrowUpRight className="h-4 w-4 text-emerald-600" />
-                  ) : (
-                    <ArrowDownRight className="h-4 w-4 text-red-600" />
-                  )}
+                
+                <h3 className="text-sm font-medium text-gray-600 mb-2">{card.title}</h3>
+                <p className="text-2xl font-bold text-gray-900 mb-1">{card.value}</p>
+                
+                {/* Progress bar */}
+                <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                  <div className={`h-1 bg-gradient-to-r ${card.color} rounded-full transition-all duration-1000 ease-out`} 
+                       style={{ width: `${Math.random() * 100}%` }}></div>
                 </div>
-              </div>
-              
-              <div className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-2">
-                {card.value}
-              </div>
-              
-              <div className="text-sm font-semibold text-gray-600 mb-1">
-                {card.title}
-              </div>
-              
-              <div className={`text-sm font-bold ${
-                card.changeType === "positive" 
-                  ? "text-emerald-600 bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent"
-                  : "text-red-600 bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent"
-              }`}>
-                {card.change}
               </div>
             </div>
           </motion.div>
         ))}
       </motion.div>
 
-      {/* Quick Actions */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="mb-8"
-      >
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-800 bg-clip-text text-transparent mb-6">
-          Ações Rápidas
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {quickActions.map((action, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 + index * 0.1 }}
-              className="glass-card p-6 rounded-3xl cursor-pointer group hover:scale-105 transition-all duration-500 relative overflow-hidden"
-              onClick={action.onClick}
-            >
-              <div className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
-              
-              <div className="relative z-10 text-center">
-                <div className={`w-16 h-16 bg-gradient-to-br ${action.color} rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-xl`}>
-                  <action.icon className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  {action.title}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {action.description}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
       {/* Charts Section */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
-      >
-        {/* Conformidade Chart */}
-        <div className="glass-card p-8 rounded-3xl">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Pie Chart - Distribution */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20"
+        >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-800 bg-clip-text text-transparent">
-              Conformidade por Módulo
-            </h3>
-            <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-100 to-green-100">
-              <CheckCircle className="h-5 w-5 text-emerald-600" />
+            <h3 className="text-xl font-bold text-gray-900">Distribuição por Módulo</h3>
+            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+              <PieChartIcon className="h-4 w-4 text-white" />
             </div>
           </div>
-          <div className="h-80">
+          
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <RechartsBarChart data={[
-                { name: "Ensaios", conformidade: metricas.ensaios.taxa_conformidade },
-                { name: "Checklists", conformidade: metricas.checklists.conformidade_media },
-                { name: "Materiais", conformidade: metricas.materiais.taxa_aprovacao },
-                { name: "Documentos", conformidade: 85 },
-              ]}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                  animationDuration={2000}
+                  animationBegin={0}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
                 <Tooltip 
                   contentStyle={{
-                    backgroundColor: "rgba(255, 255, 255, 0.9)",
-                    border: "1px solid rgba(255, 255, 255, 0.2)",
-                    borderRadius: "12px",
-                    backdropFilter: "blur(10px)",
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
                   }}
                 />
-                <Bar 
-                  dataKey="conformidade" 
-                  fill="url(#conformidadeGradient)"
-                  radius={[4, 4, 0, 0]}
-                />
-                <defs>
-                  <linearGradient id="conformidadeGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10b981" />
-                    <stop offset="100%" stopColor="#059669" />
-                  </linearGradient>
-                </defs>
-              </RechartsBarChart>
+              </PieChart>
             </ResponsiveContainer>
           </div>
-        </div>
+          
+          {/* Legend */}
+          <div className="grid grid-cols-2 gap-4 mt-6">
+            {chartData.map((item, index) => (
+              <div key={index} className="flex items-center space-x-3">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                <span className="text-sm text-gray-600">{item.name}</span>
+                <span className="text-sm font-semibold text-gray-900">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
 
-        {/* Activity Chart */}
-        <div className="glass-card p-8 rounded-3xl">
+        {/* Line Chart - Trends */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20"
+        >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-800 bg-clip-text text-transparent">
-              Atividade Recente
-            </h3>
-            <div className="p-2 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100">
-              <Activity className="h-5 w-5 text-blue-600" />
+            <h3 className="text-xl font-bold text-gray-900">Tendências dos Últimos 6 Meses</h3>
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-white" />
             </div>
           </div>
-          <div className="h-80">
+          
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <RechartsLineChart data={[
-                { name: "Jan", ensaios: 12, checklists: 8, materiais: 15 },
-                { name: "Fev", ensaios: 18, checklists: 12, materiais: 22 },
-                { name: "Mar", ensaios: 15, checklists: 10, materiais: 18 },
-                { name: "Abr", ensaios: 25, checklists: 16, materiais: 28 },
-                { name: "Mai", ensaios: 22, checklists: 14, materiais: 24 },
-                { name: "Jun", ensaios: 30, checklists: 20, materiais: 32 },
-              ]}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <RechartsLineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="name" stroke="#6b7280" />
                 <YAxis stroke="#6b7280" />
                 <Tooltip 
                   contentStyle={{
-                    backgroundColor: "rgba(255, 255, 255, 0.9)",
-                    border: "1px solid rgba(255, 255, 255, 0.2)",
-                    borderRadius: "12px",
-                    backdropFilter: "blur(10px)",
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
                   }}
                 />
                 <Line 
@@ -427,67 +442,114 @@ export default function Dashboard() {
                   dataKey="ensaios" 
                   stroke="#8b5cf6" 
                   strokeWidth={3}
-                  dot={{ fill: "#8b5cf6", strokeWidth: 2, r: 4 }}
+                  dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: '#8b5cf6', strokeWidth: 2 }}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="checklists" 
                   stroke="#10b981" 
                   strokeWidth={3}
-                  dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }}
+                  dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="materiais" 
-                  stroke="#f97316" 
+                  stroke="#f59e0b" 
                   strokeWidth={3}
-                  dot={{ fill: "#f97316", strokeWidth: 2, r: 4 }}
+                  dot={{ fill: '#f59e0b', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: '#f59e0b', strokeWidth: 2 }}
                 />
               </RechartsLineChart>
             </ResponsiveContainer>
           </div>
+        </motion.div>
+      </div>
+
+      {/* Quick Actions */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="mb-8"
+      >
+        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+          <Zap className="h-6 w-6 mr-3 text-blue-500" />
+          Ações Rápidas
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {quickActions.map((action, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 + index * 0.1 }}
+              className="group cursor-pointer"
+              onClick={action.onClick}
+            >
+              <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+                {/* Animated background */}
+                <div className={`absolute inset-0 bg-gradient-to-r ${action.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
+                
+                <div className="relative z-10">
+                  <div className={`w-12 h-12 bg-gradient-to-r ${action.color} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 mb-4`}>
+                    <action.icon className="h-6 w-6 text-white" />
+                  </div>
+                  
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">{action.title}</h4>
+                  <p className="text-gray-600 text-sm">{action.description}</p>
+                  
+                  {/* Arrow indicator */}
+                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <ArrowUpRight className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors duration-300" />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </motion.div>
 
       {/* Recent Activity */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.0 }}
-        className="glass-card p-8 rounded-3xl"
+        transition={{ delay: 0.8 }}
+        className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-800 bg-clip-text text-transparent">
+          <h3 className="text-2xl font-bold text-gray-900 flex items-center">
+            <Activity className="h-6 w-6 mr-3 text-blue-500" />
             Atividade Recente
           </h3>
-          <button className="btn btn-ghost btn-sm">
-            <Eye className="h-4 w-4 mr-2" />
-            Ver Tudo
+          <button className="text-blue-500 hover:text-blue-700 font-medium transition-colors duration-200">
+            Ver tudo
           </button>
         </div>
         
         <div className="space-y-4">
           {[
-            { type: "Ensaio", action: "Novo ensaio criado", time: "2 min atrás", icon: TestTube, color: "from-purple-500 to-pink-500" },
-            { type: "Checklist", action: "Inspeção concluída", time: "15 min atrás", icon: ClipboardCheck, color: "from-emerald-500 to-green-500" },
-            { type: "Material", action: "Material aprovado", time: "1 hora atrás", icon: Package, color: "from-orange-500 to-red-500" },
-            { type: "Documento", action: "Relatório gerado", time: "2 horas atrás", icon: FileText, color: "from-blue-500 to-indigo-500" },
+            { icon: TestTube, text: "Novo ensaio de compactação criado", time: "2 min atrás", color: "text-purple-500" },
+            { icon: ClipboardCheck, text: "Checklist de segurança concluído", time: "15 min atrás", color: "text-green-500" },
+            { icon: Package, text: "Material aprovado para uso", time: "1 hora atrás", color: "text-orange-500" },
+            { icon: FileText, text: "Relatório mensal gerado", time: "2 horas atrás", color: "text-blue-500" },
           ].map((activity, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1.1 + index * 0.1 }}
-              className="flex items-center space-x-4 p-4 rounded-2xl hover:bg-white/50 transition-colors duration-300"
+              transition={{ delay: 0.9 + index * 0.1 }}
+              className="flex items-center space-x-4 p-4 bg-white/50 rounded-xl hover:bg-white/70 transition-colors duration-200"
             >
-              <div className={`w-10 h-10 bg-gradient-to-br ${activity.color} rounded-xl flex items-center justify-center shadow-lg`}>
-                <activity.icon className="h-5 w-5 text-white" />
+              <div className={`w-10 h-10 bg-gradient-to-r from-gray-100 to-gray-200 rounded-lg flex items-center justify-center`}>
+                <activity.icon className={`h-5 w-5 ${activity.color}`} />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-gray-900">{activity.action}</p>
-                <p className="text-sm text-gray-600">{activity.type}</p>
+                <p className="text-gray-900 font-medium">{activity.text}</p>
+                <p className="text-gray-500 text-sm">{activity.time}</p>
               </div>
-              <span className="text-sm text-gray-500">{activity.time}</span>
             </motion.div>
           ))}
         </div>
