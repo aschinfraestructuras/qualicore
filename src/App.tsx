@@ -27,6 +27,7 @@ import Relatorios from "./pages/Relatorios";
 import ViaFerrea from "./pages/ViaFerrea";
 import Obras from "./pages/Obras";
 import Landing from "./pages/Landing";
+import SupabaseTest from "./components/SupabaseTest";
 import Login from "./pages/Login";
 import DocumentoForm from "./components/forms/DocumentoForm";
 import EnsaioForm from "./components/forms/EnsaioForm";
@@ -218,6 +219,17 @@ function App() {
         >
           <Route index element={<ViaFerrea />} />
         </Route>
+
+        <Route
+          path="/test-supabase"
+          element={
+            user ? (
+              <SupabaseTest />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
 
         <Route
           path="/obras"
