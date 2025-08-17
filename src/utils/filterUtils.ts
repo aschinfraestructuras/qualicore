@@ -19,6 +19,11 @@ export interface FilterState {
   correnteMin: number | '';
   potenciaEletricaMin: number | '';
   frequenciaEletrica: string;
+  // Parâmetros técnicos (Pontes & Túneis)
+  comprimentoMin: number | '';
+  larguraMin: number | '';
+  alturaMin: number | '';
+  capacidadeCargaMin: number | '';
   ultimaInspecaoInicio: string;
   ultimaInspecaoFim: string;
 }
@@ -90,6 +95,12 @@ export function applyFilters(data: any[], filters: FilterState): any[] {
     if (filters.correnteMin !== '' && (item.parametros?.corrente || 0) < filters.correnteMin) return false;
     if (filters.potenciaEletricaMin !== '' && (item.parametros?.potencia || 0) < filters.potenciaEletricaMin) return false;
     if (filters.frequenciaEletrica && item.parametros?.frequencia !== filters.frequenciaEletrica) return false;
+
+    // Filtros de parâmetros técnicos (Pontes & Túneis)
+    if (filters.comprimentoMin !== '' && (item.parametros?.comprimento || 0) < filters.comprimentoMin) return false;
+    if (filters.larguraMin !== '' && (item.parametros?.largura || 0) < filters.larguraMin) return false;
+    if (filters.alturaMin !== '' && (item.parametros?.altura || 0) < filters.alturaMin) return false;
+    if (filters.capacidadeCargaMin !== '' && (item.parametros?.capacidade_carga || 0) < filters.capacidadeCargaMin) return false;
 
     // Filtros de inspeção
     if (filters.ultimaInspecaoInicio && item.ultima_inspecao < filters.ultimaInspecaoInicio) return false;
@@ -261,6 +272,12 @@ export function getActiveFiltersCount(filters: FilterState | TravessaFilterState
   if ('potenciaEletricaMin' in filters && filters.potenciaEletricaMin !== '') count++;
   if ('frequenciaEletrica' in filters && filters.frequenciaEletrica) count++;
   
+  // Filtros de parâmetros técnicos (Pontes & Túneis)
+  if ('comprimentoMin' in filters && filters.comprimentoMin !== '') count++;
+  if ('larguraMin' in filters && filters.larguraMin !== '') count++;
+  if ('alturaMin' in filters && filters.alturaMin !== '') count++;
+  if ('capacidadeCargaMin' in filters && filters.capacidadeCargaMin !== '') count++;
+  
   // Filtros de inspeção
   if ('ultimaInspecaoInicio' in filters && filters.ultimaInspecaoInicio) count++;
   if ('ultimaInspecaoFim' in filters && filters.ultimaInspecaoFim) count++;
@@ -296,10 +313,14 @@ export function getDefaultFilters(): FilterState {
     sensibilidadeMin: '',
     frequencia: '',
     // Parâmetros técnicos (Eletrificação)
-    tensaoMin: '',
-    correnteMin: '',
-    potenciaEletricaMin: '',
-    frequenciaEletrica: '',
+      tensaoMin: '',
+  correnteMin: '',
+  potenciaEletricaMin: '',
+  frequenciaEletrica: '',
+  comprimentoMin: '',
+  larguraMin: '',
+  alturaMin: '',
+  capacidadeCargaMin: '',
     ultimaInspecaoInicio: '',
     ultimaInspecaoFim: ''
   };

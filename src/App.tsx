@@ -27,6 +27,7 @@ import Relatorios from "./pages/Relatorios";
 import ViaFerrea from "./pages/ViaFerrea";
 import Sinalizacao from "./pages/Sinalizacao";
 import Eletrificacao from "./pages/Eletrificacao";
+import PontesTuneis from "./pages/PontesTuneis";
 import Obras from "./pages/Obras";
 import Landing from "./pages/Landing";
 import SupabaseTest from "./components/SupabaseTest";
@@ -246,6 +247,19 @@ function App() {
           }
         >
           <Route index element={<Eletrificacao />} />
+        </Route>
+
+        <Route
+          path="/pontes-tuneis"
+          element={
+            user ? (
+              <PremiumLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<PontesTuneis />} />
         </Route>
 
         <Route
