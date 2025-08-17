@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, MapPin, Calendar, Gauge, Zap, Settings, FileText, AlertTriangle, CheckCircle, Clock, Activity,
-  Battery, Power, Cable, Transformer, Download, Edit, Trash
+  Battery, Power, Cable, Download, Edit, Trash
 } from 'lucide-react';
 
 interface EletrificacaoDetailsProps {
@@ -74,7 +74,7 @@ export function EletrificacaoDetails({ isOpen, onClose, data, type, onEdit, onDe
       case 'Subestação':
         return <Power className="h-6 w-6" />;
       case 'Transformador':
-        return <Transformer className="h-6 w-6" />;
+        return <Battery className="h-6 w-6" />;
       case 'Poste':
         return <Settings className="h-6 w-6" />;
       case 'Cabo':
