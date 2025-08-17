@@ -1,14 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Variáveis de ambiente do Supabase não configuradas!')
-  console.error('Crie um arquivo .env.local com:')
-  console.error('VITE_SUPABASE_URL=sua_url_do_supabase')
-  console.error('VITE_SUPABASE_ANON_KEY=sua_chave_anonima')
-}
+// Usar as mesmas credenciais do arquivo supabase.ts existente
+const supabaseUrl = "https://mjgvjpqcdsmvervcxjig.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qZ3ZqcHFjZHNtdmVydmN4amlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI0MDU1NDksImV4cCI6MjA2Nzk4MTU0OX0.dlsCn20Z9M71DGjnNeansnw--Kt8A3bdeIUbfYFpNqk";
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 

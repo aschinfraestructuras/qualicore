@@ -222,13 +222,7 @@ function App() {
 
         <Route
           path="/test-supabase"
-          element={
-            user ? (
-              <SupabaseTest />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
+          element={<SupabaseTest />}
         />
 
         <Route
