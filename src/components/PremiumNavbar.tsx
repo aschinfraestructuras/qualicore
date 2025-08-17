@@ -444,7 +444,7 @@ export default function PremiumNavbar({ onToggleSidebar, sidebarOpen }: PremiumN
               </button>
 
                              {/* Logo Premium */}
-               <Link to="/dashboard" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+               <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
                  <div className="relative">
                    <div className="w-12 h-12 bg-gradient-to-br from-blue-400 via-purple-400 to-indigo-400 rounded-xl flex items-center justify-center shadow-lg">
                      <Shield className="h-7 w-7 text-white" />

@@ -132,6 +132,7 @@ const mockObras: any[] = [
 export default function Obras() {
   const [obras, setObras] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [usingRealData, setUsingRealData] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingObra, setEditingObra] = useState<any | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -156,20 +157,26 @@ export default function Obras() {
     const loadObras = async () => {
       try {
         setLoading(true);
-        const loadedObras = await obrasAPI.getAll();
-        console.log("Obras carregadas:", loadedObras);
+        console.log("🔄 Carregando obras da Supabase...");
         
-        // Se não há obras na API, usar dados mock para demonstração
-        if (!loadedObras || loadedObras.length === 0) {
-          console.log("Usando dados mock para demonstração");
-          setObras(mockObras);
-        } else {
+        const loadedObras = await obrasAPI.getAll();
+        console.log("📊 Obras carregadas da Supabase:", loadedObras);
+        
+        if (loadedObras && loadedObras.length > 0) {
+          console.log("✅ Usando dados reais da Supabase");
           setObras(loadedObras);
+          setUsingRealData(true);
+        } else {
+          console.log("⚠️ Nenhuma obra encontrada na Supabase, usando dados mock para demonstração");
+          setObras(mockObras);
+          setUsingRealData(false);
+          toast.success("Usando dados de demonstração - conecte-se à Supabase para dados reais");
         }
       } catch (error) {
-        console.error("Erro ao carregar obras:", error);
-        console.log("Usando dados mock devido ao erro");
+        console.error("❌ Erro ao carregar obras da Supabase:", error);
+        console.log("🔄 Usando dados mock devido ao erro");
         setObras(mockObras);
+        setUsingRealData(false);
         toast.error("Erro ao carregar obras - usando dados de demonstração");
       } finally {
         setLoading(false);
@@ -475,6 +482,17 @@ export default function Obras() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestão de Obras</h1>
           <p className="text-gray-600 text-lg">Controlo completo de projetos e obras</p>
+          {usingRealData ? (
+            <div className="flex items-center mt-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+              <span className="text-sm text-green-600 font-medium">Dados Reais da Supabase</span>
+            </div>
+          ) : (
+            <div className="flex items-center mt-2">
+              <div className="w-2 h-2 bg-orange-500 rounded-full mr-2 animate-pulse"></div>
+              <span className="text-sm text-orange-600 font-medium">Dados de Demonstração</span>
+            </div>
+          )}
         </div>
                   <Link
             to="/obras/nova"
