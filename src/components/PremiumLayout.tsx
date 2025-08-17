@@ -24,10 +24,10 @@ const PremiumLayout = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [sidebarOpen]);
 
-  // Close sidebar when navigating
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [location]);
+  // Remover o fechamento automático da sidebar ao navegar
+  // useEffect(() => {
+  //   setSidebarOpen(false);
+  // }, [location]);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -54,50 +54,52 @@ const PremiumLayout = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 flex flex-col">
-      {/* Navbar */}
-      <PremiumNavbar onToggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
-
-      {/* Main Layout Container */}
-      <div className="flex flex-1 pt-20"> {/* pt-20 to account for taller navbar height */}
-        {/* Sidebar - Fixed width when open */}
-        {sidebarOpen && !isMobile && (
-          <div className="w-96 flex-shrink-0">
-            <PremiumSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          </div>
-        )}
-
-        {/* Overlay for mobile sidebar */}
-        {sidebarOpen && isMobile && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* Mobile Sidebar */}
-        {sidebarOpen && isMobile && (
-          <div className="fixed left-0 top-20 z-50 lg:hidden">
-            <PremiumSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          </div>
-        )}
-
-        {/* Main Content */}
-        <motion.main
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="flex-1 transition-all duration-300"
-        >
-          <div className="min-h-screen w-full">
-            <Outlet />
-          </div>
-        </motion.main>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50 flex">
+      {/* Navbar - Fixed at top */}
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <PremiumNavbar onToggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
       </div>
+
+      {/* Sidebar - Fixed height, full screen */}
+      {sidebarOpen && !isMobile && (
+        <div className="fixed left-0 top-20 bottom-0 w-96 z-40 pointer-events-auto">
+          <PremiumSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        </div>
+      )}
+
+      {/* Overlay for mobile sidebar */}
+      {sidebarOpen && isMobile && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Mobile Sidebar */}
+      {sidebarOpen && isMobile && (
+        <div className="fixed left-0 top-20 bottom-0 z-50 lg:hidden pointer-events-auto">
+          <PremiumSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        </div>
+      )}
+
+      {/* Main Content - Full height with proper spacing */}
+      <motion.main
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className={`flex-1 transition-all duration-300 ${
+          sidebarOpen && !isMobile ? 'ml-96' : 'ml-0'
+        }`}
+        style={{ marginTop: '80px' }} // Account for navbar height
+      >
+        <div className="min-h-screen w-full">
+          <Outlet />
+        </div>
+      </motion.main>
 
       {/* Scroll to Top Button */}
       {showScrollToTop && (
@@ -113,11 +115,6 @@ const PremiumLayout = () => {
           <ChevronUp className="h-5 w-5" />
         </motion.button>
       )}
-
-      {/* Status Bar (Optional - can be added here or in specific pages) */}
-      {/* <div className="fixed bottom-0 left-0 right-0 bg-gray-800 text-white text-xs p-2 text-center z-50">
-        Status: Online | Last Sync: Just now
-      </div> */}
     </div>
   );
 };

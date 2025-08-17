@@ -6,7 +6,29 @@ import { ShareNaoConformidadeModal } from "@/components/ShareNaoConformidadeModa
 import { SavedNaoConformidadesViewer } from "@/components/SavedNaoConformidadesViewer";
 import toast from "react-hot-toast";
 import { sanitizeUUIDField } from "@/utils/uuid";
-import { Plus, Search, Filter, FileText, XCircle, Download, Share2, Cloud, Eye, X } from "lucide-react";
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  FileText, 
+  XCircle, 
+  Download, 
+  Share2, 
+  Cloud, 
+  Eye, 
+  X,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  ArrowUpRight,
+  Calendar,
+  MapPin,
+  User,
+  Shield,
+  Edit,
+  Trash2
+} from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function NaoConformidades() {

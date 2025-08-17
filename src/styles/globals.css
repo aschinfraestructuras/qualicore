@@ -23,6 +23,25 @@
   --error-secondary: #dc2626;
 }
 
+.light {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  --accent-primary: #3b82f6;
+  --accent-secondary: #1d4ed8;
+  --success-primary: #10b981;
+  --success-secondary: #059669;
+  --warning-primary: #f59e0b;
+  --warning-secondary: #d97706;
+  --error-primary: #ef4444;
+  --error-secondary: #dc2626;
+}
+
 .dark {
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;

@@ -507,14 +507,7 @@ export default function Materiais() {
     );
   }
 
-  // Calcular estatísticas
-  const stats = {
-    total: materiaisFiltrados.length,
-    aprovados: materiaisFiltrados.filter((m) => m.estado === "aprovado").length,
-    pendentes: materiaisFiltrados.filter((m) => m.estado === "pendente").length,
-    reprovados: materiaisFiltrados.filter((m) => m.estado === "reprovado").length,
-    em_analise: materiaisFiltrados.filter((m) => m.estado === "em_analise").length,
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8 pt-16">

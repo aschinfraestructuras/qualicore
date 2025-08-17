@@ -216,7 +216,7 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className={`hidden lg:block w-96 bg-gradient-to-b from-slate-800/95 via-blue-800/95 to-indigo-800/95 backdrop-blur-xl border-r border-blue-600/60 shadow-2xl transition-all duration-300`}>
+      <div className={`hidden lg:block w-96 h-full bg-gradient-to-b from-slate-800/95 via-blue-800/95 to-indigo-800/95 backdrop-blur-xl border-r border-blue-600/60 shadow-2xl transition-all duration-300 pointer-events-auto`}>
         <div className="h-full flex flex-col">
           {/* Header */}
           <div className="p-4 border-b border-blue-600/40">
@@ -303,11 +303,15 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
                         <Link
                           key={item.name}
                           to={item.href}
-                          className={`flex items-center justify-between p-2 rounded-lg transition-all duration-200 group ${
+                          className={`flex items-center justify-between p-2 rounded-lg transition-all duration-200 group relative z-10 pointer-events-auto ${
                             location.pathname === item.href
                               ? "bg-gradient-to-r from-blue-600/40 to-indigo-600/40 border border-blue-500/50 shadow-sm"
                               : "hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-indigo-600/20"
                           }`}
+                          onClick={() => {
+                            console.log(`🔗 Navegando para: ${item.href}`);
+                            onClose();
+                          }}
                         >
                           <div className="flex items-center space-x-2">
                             <div className={`w-5 h-5 rounded-lg bg-gradient-to-br from-blue-500/30 to-indigo-500/30 flex items-center justify-center shadow-sm`}>
@@ -348,7 +352,7 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
       </div>
 
       {/* Mobile Sidebar */}
-      <div className={`lg:hidden fixed left-0 top-0 h-full w-80 bg-gradient-to-b from-slate-800/95 via-blue-800/95 to-indigo-800/95 backdrop-blur-xl border-r border-blue-600/60 shadow-2xl z-50 overflow-hidden transform transition-transform duration-300 ease-in-out ${
+      <div className={`lg:hidden fixed left-0 top-0 h-full w-80 bg-gradient-to-b from-slate-800/95 via-blue-800/95 to-indigo-800/95 backdrop-blur-xl border-r border-blue-600/60 shadow-2xl z-50 overflow-hidden transform transition-transform duration-300 ease-in-out pointer-events-auto ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="h-full flex flex-col">
@@ -434,16 +438,19 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
                   {expandedSections.includes(section.section) && (
                     <div className="ml-4 space-y-1">
                       {section.items.map((item) => (
-                        <Link
-                          key={item.name}
-                          to={item.href}
-                          className={`flex items-center justify-between p-2 rounded-lg transition-all duration-200 group ${
-                            location.pathname === item.href
-                              ? "bg-gradient-to-r from-blue-600/40 to-indigo-600/40 border border-blue-500/50 shadow-sm"
-                              : "hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-indigo-600/20"
-                          }`}
-                          onClick={onClose}
-                        >
+                                                 <Link
+                           key={item.name}
+                           to={item.href}
+                           className={`flex items-center justify-between p-2 rounded-lg transition-all duration-200 group relative z-10 pointer-events-auto ${
+                             location.pathname === item.href
+                               ? "bg-gradient-to-r from-blue-600/40 to-indigo-600/40 border border-blue-500/50 shadow-sm"
+                               : "hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-indigo-600/20"
+                           }`}
+                           onClick={() => {
+                             console.log(`🔗 Navegando para: ${item.href}`);
+                             onClose();
+                           }}
+                         >
                           <div className="flex items-center space-x-2">
                             <div className={`w-5 h-5 rounded-lg bg-gradient-to-br from-blue-500/30 to-indigo-500/30 flex items-center justify-center shadow-sm`}>
                               <item.icon className="h-3 w-3 text-blue-300" />
