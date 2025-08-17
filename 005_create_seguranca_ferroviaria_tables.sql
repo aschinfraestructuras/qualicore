@@ -107,11 +107,11 @@ CREATE INDEX IF NOT EXISTS idx_inspecoes_seguranca_resultado ON inspecoes_segura
 CREATE INDEX IF NOT EXISTS idx_inspecoes_seguranca_responsavel ON inspecoes_seguranca(responsavel);
 CREATE INDEX IF NOT EXISTS idx_inspecoes_seguranca_proxima_inspecao ON inspecoes_seguranca(proxima_inspecao);
 
--- Índices para JSONB (parâmetros)
-CREATE INDEX IF NOT EXISTS idx_seguranca_parametros_nivel_seguranca ON seguranca_ferroviaria USING GIN ((parametros->>'nivel_seguranca'));
-CREATE INDEX IF NOT EXISTS idx_seguranca_parametros_raio_cobertura ON seguranca_ferroviaria USING GIN ((parametros->>'raio_cobertura'));
-CREATE INDEX IF NOT EXISTS idx_seguranca_parametros_tempo_resposta ON seguranca_ferroviaria USING GIN ((parametros->>'tempo_resposta'));
-CREATE INDEX IF NOT EXISTS idx_seguranca_parametros_capacidade_deteccao ON seguranca_ferroviaria USING GIN ((parametros->>'capacidade_deteccao'));
+-- Índices para JSONB (parâmetros numéricos)
+CREATE INDEX IF NOT EXISTS idx_seguranca_parametros_nivel_seguranca ON seguranca_ferroviaria ((parametros->>'nivel_seguranca'));
+CREATE INDEX IF NOT EXISTS idx_seguranca_parametros_raio_cobertura ON seguranca_ferroviaria ((parametros->>'raio_cobertura'));
+CREATE INDEX IF NOT EXISTS idx_seguranca_parametros_tempo_resposta ON seguranca_ferroviaria ((parametros->>'tempo_resposta'));
+CREATE INDEX IF NOT EXISTS idx_seguranca_parametros_capacidade_deteccao ON seguranca_ferroviaria ((parametros->>'capacidade_deteccao'));
 
 -- =====================================================
 -- TRIGGERS PARA ATUALIZAÇÃO AUTOMÁTICA
