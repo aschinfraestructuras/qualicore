@@ -159,7 +159,7 @@ export default function EnsaiosCompactacao() {
   return (
     <div className="h-full w-full flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white border-b border-gray-200 px-6 py-4 pt-12">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-900">Ensaios de Compactação</h1>
           <div className="flex gap-3">

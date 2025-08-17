@@ -21,10 +21,16 @@ export function ShareObraModal({ obra, isOpen, onClose }: ShareObraModalProps) {
 
     setLoading(true);
     try {
-      await ShareService.shareObraByEmail(obra, email);
-      toast.success('Obra partilhada com sucesso!');
-      setEmail('');
-      onClose();
+      console.log('Partilhando obra:', obra, 'para email:', email);
+      const result = await ShareService.shareObraByEmail(obra, email);
+      
+      if (result.success) {
+        toast.success(result.message || 'Obra partilhada com sucesso!');
+        setEmail('');
+        onClose();
+      } else {
+        toast.error(result.message || 'Erro ao partilhar obra');
+      }
     } catch (error) {
       console.error('Erro ao partilhar obra:', error);
       toast.error('Erro ao partilhar obra');
@@ -33,7 +39,10 @@ export function ShareObraModal({ obra, isOpen, onClose }: ShareObraModalProps) {
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !obra) {
+    console.log('Modal não deve ser renderizado:', { isOpen, obra });
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

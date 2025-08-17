@@ -13,6 +13,8 @@ import toast from "react-hot-toast";
 import { useEffect } from "react";
 import { useAuthStore } from "./lib/auth";
 import Layout from "./components/Layout";
+import ModernLayout from "./components/ModernLayout";
+import PremiumLayout from "./components/PremiumLayout";
 import Dashboard from "./pages/Dashboard";
 import Ensaios from "./pages/Ensaios";
 import EnsaiosCompactacao from "./pages/EnsaiosCompactacao";
@@ -39,6 +41,7 @@ import PontosInspecaoEnsaiosPage from "./pages/PontosInspecaoEnsaios";
 import PontosInspecaoEnsaiosEditor from "./components/pie/PontosInspecaoEnsaiosEditor";
 import "./styles/globals.css";
 import { ensaioCompactacaoService } from "./services/ensaioCompactacaoService";
+import LoadingSpinner from "./components/LoadingSpinner";
 
 function App() {
   const { user, loading } = useAuthStore();
@@ -50,11 +53,7 @@ function App() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-      </div>
-    );
+    return <LoadingSpinner message="Inicializando Qualicore..." variant="logo" />;
   }
 
   return (
@@ -93,392 +92,410 @@ function App() {
           path="/dashboard"
           element={
             user ? (
-              <Layout>
-                <Dashboard />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<Dashboard />} />
+        </Route>
 
         <Route
           path="/ensaios"
           element={
             user ? (
-              <Layout>
-                <Ensaios />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<Ensaios />} />
+        </Route>
 
         <Route
           path="/ensaios-compactacao"
           element={
             user ? (
-              <Layout>
-                <EnsaiosCompactacao />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<EnsaiosCompactacao />} />
+        </Route>
 
         <Route
           path="/checklists"
           element={
             user ? (
-              <Layout>
-                <Checklists />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<Checklists />} />
+        </Route>
 
         <Route
           path="/materiais"
           element={
             user ? (
-              <Layout>
-                <Materiais />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<Materiais />} />
+        </Route>
 
         <Route
           path="/fornecedores"
           element={
             user ? (
-              <Layout>
-                <Fornecedores />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<Fornecedores />} />
+        </Route>
 
         <Route
           path="/nao-conformidades"
           element={
             user ? (
-              <Layout>
-                <NaoConformidades />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<NaoConformidades />} />
+        </Route>
 
         <Route
           path="/documentos"
           element={
             user ? (
-              <Layout>
-                <Documentos />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<Documentos />} />
+        </Route>
 
         <Route
           path="/relatorios"
           element={
             user ? (
-              <Layout>
-                <Relatorios />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<Relatorios />} />
+        </Route>
 
         <Route
           path="/obras"
           element={
             user ? (
-              <Layout>
-                <Obras />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<Obras />} />
+        </Route>
 
         <Route
           path="/rfis"
           element={
             user ? (
-              <Layout>
-                <RFIs />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<RFIs />} />
+        </Route>
 
         <Route
           path="/pie"
           element={
             user ? (
-              <Layout>
-                <PontosInspecaoEnsaiosPage />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<PontosInspecaoEnsaiosPage />} />
+        </Route>
 
         <Route
           path="/pie/editor"
           element={
             user ? (
-              <Layout>
-                <PontosInspecaoEnsaiosEditor />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<PontosInspecaoEnsaiosEditor />} />
+        </Route>
 
         <Route
           path="/pie/editor/:id"
           element={
             user ? (
-              <Layout>
-                <PontosInspecaoEnsaiosEditor />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<PontosInspecaoEnsaiosEditor />} />
+        </Route>
 
         <Route
           path="/pie/view/:id"
           element={
             user ? (
-              <Layout>
-                <PontosInspecaoEnsaiosEditor />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={<PontosInspecaoEnsaiosEditor />} />
+        </Route>
 
         {/* Rotas para ações rápidas */}
         <Route
           path="/documentos/novo"
           element={
             user ? (
-              <Layout>
-                <DocumentoForm
-                  onSubmit={() => {
-                    toast.success('Documento criado com sucesso!');
-                    navigate('/documentos');
-                  }}
-                  onCancel={() => {
-                    navigate('/documentos');
-                  }}
-                />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={
+            <DocumentoForm
+              onSubmit={() => {
+                toast.success('Documento criado com sucesso!');
+                navigate('/documentos');
+              }}
+              onCancel={() => {
+                navigate('/documentos');
+              }}
+            />
+          } />
+        </Route>
 
         <Route
           path="/ensaios/novo"
           element={
             user ? (
-              <Layout>
-                <EnsaioForm
-                  onSubmit={() => {
-                    toast.success('Ensaio criado com sucesso!');
-                    navigate('/ensaios');
-                  }}
-                  onCancel={() => {
-                    navigate('/ensaios');
-                  }}
-                />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={
+            <EnsaioForm
+              onSubmit={() => {
+                toast.success('Ensaio criado com sucesso!');
+                navigate('/ensaios');
+              }}
+              onCancel={() => {
+                navigate('/ensaios');
+              }}
+            />
+          } />
+        </Route>
 
         <Route
           path="/ensaios-compactacao/novo"
           element={
             user ? (
-              <Layout>
-                <EnsaioCompactacaoForm
-                  onSubmit={async (ensaio) => {
-                    try {
-                      await ensaioCompactacaoService.create(ensaio);
-                      toast.success('Ensaio de compactação criado com sucesso!');
-                      navigate('/ensaios-compactacao');
-                    } catch (error) {
-                      console.error('Erro ao criar ensaio:', error);
-                      toast.error('Erro ao criar ensaio de compactação');
-                    }
-                  }}
-                  onCancel={() => {
-                    navigate('/ensaios-compactacao');
-                  }}
-                />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={
+            <EnsaioCompactacaoForm
+              onSubmit={async (ensaio) => {
+                try {
+                  await ensaioCompactacaoService.create(ensaio);
+                  toast.success('Ensaio de compactação criado com sucesso!');
+                  navigate('/ensaios-compactacao');
+                } catch (error) {
+                  console.error('Erro ao criar ensaio:', error);
+                  toast.error('Erro ao criar ensaio de compactação');
+                }
+              }}
+              onCancel={() => {
+                navigate('/ensaios-compactacao');
+              }}
+            />
+          } />
+        </Route>
 
         <Route
           path="/checklists/novo"
           element={
             user ? (
-              <Layout>
-                <ChecklistForm 
-                  onSubmit={() => {
-                    toast.success('Checklist criado com sucesso!');
-                    navigate('/checklists');
-                  }} 
-                  onCancel={() => {
-                    navigate('/checklists');
-                  }} 
-                />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={
+            <ChecklistForm 
+              onSubmit={() => {
+                toast.success('Checklist criado com sucesso!');
+                navigate('/checklists');
+              }} 
+              onCancel={() => {
+                navigate('/checklists');
+              }} 
+            />
+          } />
+        </Route>
 
         <Route
           path="/obras/nova"
           element={
             user ? (
-              <Layout>
-                <ObraForm 
-                  onSubmit={() => {
-                    toast.success('Obra criada com sucesso!');
-                    navigate('/obras');
-                  }} 
-                  onCancel={() => {
-                    navigate('/obras');
-                  }} 
-                />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={
+            <ObraForm 
+              onSubmit={() => {
+                toast.success('Obra criada com sucesso!');
+                navigate('/obras');
+              }} 
+              onCancel={() => {
+                navigate('/obras');
+              }} 
+            />
+          } />
+        </Route>
 
         <Route
           path="/materiais/novo"
           element={
             user ? (
-              <Layout>
-                <MaterialForm 
-                  onSubmit={() => {
-                    toast.success('Material criado com sucesso!');
-                    navigate('/materiais');
-                  }} 
-                  onCancel={() => {
-                    navigate('/materiais');
-                  }} 
-                />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={
+            <MaterialForm 
+              onSubmit={() => {
+                toast.success('Material criado com sucesso!');
+                navigate('/materiais');
+              }} 
+              onCancel={() => {
+                navigate('/materiais');
+              }} 
+            />
+          } />
+        </Route>
 
         <Route
           path="/fornecedores/novo"
           element={
             user ? (
-              <Layout>
-                <FornecedorForm 
-                  onSubmit={() => {
-                    toast.success('Fornecedor criado com sucesso!');
-                    navigate('/fornecedores');
-                  }} 
-                  onCancel={() => {
-                    navigate('/fornecedores');
-                  }} 
-                />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={
+            <FornecedorForm 
+              onSubmit={() => {
+                toast.success('Fornecedor criado com sucesso!');
+                navigate('/fornecedores');
+              }} 
+              onCancel={() => {
+                navigate('/fornecedores');
+              }} 
+            />
+          } />
+        </Route>
 
         <Route
           path="/nao-conformidades/nova"
           element={
             user ? (
-              <Layout>
-                <NaoConformidadeForm 
-                  onSubmit={() => {
-                    toast.success('Não conformidade criada com sucesso!');
-                    navigate('/nao-conformidades');
-                  }} 
-                  onCancel={() => {
-                    navigate('/nao-conformidades');
-                  }} 
-                />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={
+            <NaoConformidadeForm 
+              onSubmit={() => {
+                toast.success('Não conformidade criada com sucesso!');
+                navigate('/nao-conformidades');
+              }} 
+              onCancel={() => {
+                navigate('/nao-conformidades');
+              }} 
+            />
+          } />
+        </Route>
 
         <Route
           path="/rfis/novo"
           element={
             user ? (
-              <Layout>
-                <RFIForm 
-                  onSubmit={() => {
-                    toast.success('RFI criado com sucesso!');
-                    navigate('/rfis');
-                  }} 
-                  onCancel={() => {
-                    navigate('/rfis');
-                  }} 
-                />
-              </Layout>
+              <PremiumLayout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
-        />
+        >
+          <Route index element={
+            <RFIForm 
+              onSubmit={() => {
+                toast.success('RFI criado com sucesso!');
+                navigate('/rfis');
+              }} 
+              onCancel={() => {
+                navigate('/rfis');
+              }} 
+            />
+          } />
+        </Route>
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

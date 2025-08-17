@@ -727,7 +727,7 @@ export default function Documentos() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pt-8">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

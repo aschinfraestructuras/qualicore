@@ -296,7 +296,7 @@ export default function NaoConformidades() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* HEADER E AÇÕES RÁPIDAS */}
-      <div className="p-6">
+      <div className="p-6 pt-14">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold">Não Conformidades</h1>
