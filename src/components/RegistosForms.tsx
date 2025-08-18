@@ -739,7 +739,7 @@ const RegistosForms: React.FC<RegistosFormsProps> = ({
 
             {/* Lista de fotografias */}
             {formData.fotografias && formData.fotografias.length > 0 && (
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {formData.fotografias.map((foto, index) => (
                   <div key={index} className="relative bg-gray-50 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">

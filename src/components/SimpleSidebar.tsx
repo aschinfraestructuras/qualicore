@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
   Building2,
@@ -26,6 +26,7 @@ interface SimpleSidebarProps {
 
 export default function SimpleSidebar({ isOpen, onClose }: SimpleSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [expandedSections, setExpandedSections] = useState<string[]>(['QUALIDADE']);
 
   const toggleSection = (section: string) => {
@@ -76,7 +77,10 @@ export default function SimpleSidebar({ isOpen, onClose }: SimpleSidebarProps) {
         
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
+          <div 
+            onClick={() => navigate("/dashboard")}
+            className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+          >
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <Shield className="h-5 w-5 text-white" />
             </div>

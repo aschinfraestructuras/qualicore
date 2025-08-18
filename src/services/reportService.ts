@@ -53,7 +53,9 @@ export type TipoRelatorio =
   | "sinalizacoes"
   | "inspecoesSinalizacao"
   | "segurancaFerroviaria"
-  | "inspecoesSeguranca";
+  | "inspecoesSeguranca"
+  | "pontesTuneis"
+  | "inspecoesPontesTuneis";
 
 // Interface para dados do relatório
 export interface DadosRelatorio {
@@ -142,8 +144,12 @@ export class ReportService {
         return this.templateInspecoesSinalizacao.bind(this);
       case "segurancaFerroviaria":
         return this.templateSegurancaFerroviaria.bind(this);
-      case "inspecoesSeguranca":
-        return this.templateInspecoesSeguranca.bind(this);
+              case "inspecoesSeguranca":
+          return this.templateInspecoesSeguranca.bind(this);
+        case "pontesTuneis":
+          return this.templatePontesTuneis.bind(this);
+        case "inspecoesPontesTuneis":
+          return this.templateInspecoesPontesTuneis.bind(this);
       default:
         return this.templateGenerico.bind(this);
     }
@@ -1916,6 +1922,228 @@ export class ReportService {
                         <td class="prioridade-${inspecao.prioridade.toLowerCase()}">${inspecao.prioridade}</td>
                         <td>${new Date(inspecao.data_inspecao).toLocaleDateString('pt-PT')}</td>
                         <td>${inspecao.responsavel}</td>
+                        <td>${inspecao.observacoes ? inspecao.observacoes.substring(0, 50) + '...' : 'N/A'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        ${this.getRodape(dados)}
+      </body>
+      </html>
+    `;
+  }
+
+  private templatePontesTuneis(dados: DadosRelatorio): string {
+    const pontesTuneis = dados.dados || [];
+    const stats = {
+      total: pontesTuneis.length,
+      pontes: pontesTuneis.filter((pt: any) => pt.tipo === 'PONTE').length,
+      tuneis: pontesTuneis.filter((pt: any) => pt.tipo === 'TUNEL').length,
+      operacionais: pontesTuneis.filter((pt: any) => pt.status_operacional === 'OPERACIONAL').length,
+      manutencao: pontesTuneis.filter((pt: any) => pt.status_operacional === 'MANUTENCAO').length,
+      avaria: pontesTuneis.filter((pt: any) => pt.status_operacional === 'AVARIA').length,
+      ativos: pontesTuneis.filter((pt: any) => pt.estado === 'ATIVO').length,
+      inativos: pontesTuneis.filter((pt: any) => pt.estado === 'INATIVO').length
+    };
+
+    return `
+      <!DOCTYPE html>
+      <html lang="pt-PT">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Relatório de Pontes e Túneis</title>
+        <style>
+          ${this.getEstilosCSS()}
+          .tipo-ponte { background-color: #dbeafe; color: #1e40af; }
+          .tipo-tunel { background-color: #e9d5ff; color: #7c3aed; }
+          .tipo-viaduto { background-color: #dcfce7; color: #16a34a; }
+          .estado-ativo { background-color: #dcfce7; color: #16a34a; }
+          .estado-manutencao { background-color: #fef3c7; color: #d97706; }
+          .estado-avaria { background-color: #fee2e2; color: #dc2626; }
+          .estado-construcao { background-color: #dbeafe; color: #1e40af; }
+          .status-operacional { background-color: #dcfce7; color: #16a34a; }
+          .status-manutencao { background-color: #fef3c7; color: #d97706; }
+          .status-avaria { background-color: #fee2e2; color: #dc2626; }
+          .status-emergencia { background-color: #fecaca; color: #991b1b; }
+        </style>
+      </head>
+      <body>
+        ${this.getCabecalho(dados)}
+        
+        <div class="container">
+          <h1 class="titulo-principal">Relatório de Pontes e Túneis</h1>
+          
+          <div class="resumo-executivo">
+            <h2>Resumo Executivo</h2>
+            <p>Este relatório apresenta uma visão geral das pontes e túneis do período ${dados.periodo}.</p>
+          </div>
+
+          <div class="metricas-principais">
+            <h2>Estatísticas Gerais</h2>
+            <div class="grid-metricas">
+              <div class="metrica">
+                <h3>Total</h3>
+                <div class="valor">${stats.total}</div>
+              </div>
+              <div class="metrica">
+                <h3>Pontes</h3>
+                <div class="valor">${stats.pontes}</div>
+              </div>
+              <div class="metrica">
+                <h3>Túneis</h3>
+                <div class="valor">${stats.tuneis}</div>
+              </div>
+              <div class="metrica">
+                <h3>Operacionais</h3>
+                <div class="valor conforme">${stats.operacionais}</div>
+              </div>
+              <div class="metrica">
+                <h3>Manutenção</h3>
+                <div class="valor">${stats.manutencao}</div>
+              </div>
+              <div class="metrica">
+                <h3>Avaria</h3>
+                <div class="valor nao-conforme">${stats.avaria}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="secoes-modulos">
+            <div class="secao">
+              <h2>Detalhes das Pontes e Túneis</h2>
+              <div class="tabela-container">
+                <table class="tabela-dados">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Tipo</th>
+                      <th>Categoria</th>
+                      <th>Localização</th>
+                      <th>Estado</th>
+                      <th>Status</th>
+                      <th>Fabricante</th>
+                      <th>Responsável</th>
+                      <th>Última Inspeção</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${pontesTuneis.map((ponteTunel: any) => `
+                      <tr>
+                        <td>${ponteTunel.codigo}</td>
+                        <td class="tipo-${ponteTunel.tipo.toLowerCase()}">${ponteTunel.tipo}</td>
+                        <td>${ponteTunel.categoria}</td>
+                        <td>${ponteTunel.localizacao}</td>
+                        <td class="estado-${ponteTunel.estado.toLowerCase()}">${ponteTunel.estado}</td>
+                        <td class="status-${ponteTunel.status_operacional.toLowerCase()}">${ponteTunel.status_operacional}</td>
+                        <td>${ponteTunel.fabricante}</td>
+                        <td>${ponteTunel.responsavel}</td>
+                        <td>${new Date(ponteTunel.ultima_inspecao).toLocaleDateString('pt-PT')}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        ${this.getRodape(dados)}
+      </body>
+      </html>
+    `;
+  }
+
+  private templateInspecoesPontesTuneis(dados: DadosRelatorio): string {
+    const inspecoes = dados.dados || [];
+    const stats = {
+      total: inspecoes.length,
+      conformes: inspecoes.filter((ins: any) => ins.resultado === 'CONFORME').length,
+      naoConformes: inspecoes.filter((ins: any) => ins.resultado === 'NAO_CONFORME').length,
+      pendentes: inspecoes.filter((ins: any) => ins.resultado === 'PENDENTE').length,
+      criticas: inspecoes.filter((ins: any) => ins.resultado === 'CRITICO').length
+    };
+
+    return `
+      <!DOCTYPE html>
+      <html lang="pt-PT">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Relatório de Inspeções - Pontes e Túneis</title>
+        <style>
+          ${this.getEstilosCSS()}
+          .resultado-conforme { background-color: #dcfce7; color: #16a34a; }
+          .resultado-nao_conforme { background-color: #fee2e2; color: #dc2626; }
+          .resultado-pendente { background-color: #fef3c7; color: #d97706; }
+          .resultado-critico { background-color: #fecaca; color: #991b1b; }
+        </style>
+      </head>
+      <body>
+        ${this.getCabecalho(dados)}
+        
+        <div class="container">
+          <h1 class="titulo-principal">Relatório de Inspeções - Pontes e Túneis</h1>
+          
+          <div class="resumo-executivo">
+            <h2>Resumo Executivo</h2>
+            <p>Este relatório apresenta uma visão geral das inspeções de pontes e túneis do período ${dados.periodo}.</p>
+          </div>
+
+          <div class="metricas-principais">
+            <h2>Estatísticas Gerais</h2>
+            <div class="grid-metricas">
+              <div class="metrica">
+                <h3>Total de Inspeções</h3>
+                <div class="valor">${stats.total}</div>
+              </div>
+              <div class="metrica">
+                <h3>Conformes</h3>
+                <div class="valor conforme">${stats.conformes}</div>
+              </div>
+              <div class="metrica">
+                <h3>Não Conformes</h3>
+                <div class="valor nao-conforme">${stats.naoConformes}</div>
+              </div>
+              <div class="metrica">
+                <h3>Pendentes</h3>
+                <div class="valor">${stats.pendentes}</div>
+              </div>
+              <div class="metrica">
+                <h3>Críticas</h3>
+                <div class="valor critico">${stats.criticas}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="secoes-modulos">
+            <div class="secao">
+              <h2>Detalhes das Inspeções</h2>
+              <div class="tabela-container">
+                <table class="tabela-dados">
+                  <thead>
+                    <tr>
+                      <th>Data Inspeção</th>
+                      <th>Tipo Inspeção</th>
+                      <th>Resultado</th>
+                      <th>Responsável</th>
+                      <th>Próxima Inspeção</th>
+                      <th>Observações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${inspecoes.map((inspecao: any) => `
+                      <tr>
+                        <td>${new Date(inspecao.data_inspecao).toLocaleDateString('pt-PT')}</td>
+                        <td>${inspecao.tipo_inspecao}</td>
+                        <td class="resultado-${inspecao.resultado.toLowerCase()}">${inspecao.resultado}</td>
+                        <td>${inspecao.responsavel}</td>
+                        <td>${new Date(inspecao.proxima_inspecao).toLocaleDateString('pt-PT')}</td>
                         <td>${inspecao.observacoes ? inspecao.observacoes.substring(0, 50) + '...' : 'N/A'}</td>
                       </tr>
                     `).join('')}

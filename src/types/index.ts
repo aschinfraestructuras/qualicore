@@ -1274,6 +1274,28 @@ export type {
   InspecaoSegurancaExportData
 } from "./segurancaFerroviaria";
 
+// Tipos para Pontes e Túneis
+export type {
+  PonteTunel,
+  InspecaoPontesTuneis,
+  PontesTuneisStats,
+  PontesTuneisFormData,
+  InspecaoPontesTuneisFormData,
+  TIPOS_PONTE_TUNEL,
+  CATEGORIAS_PONTE_TUNEL,
+  ESTADOS_PONTE_TUNEL,
+  STATUS_OPERACIONAL as STATUS_OPERACIONAL_PONTES_TUNEIS,
+  TIPOS_INSPECAO_PONTES_TUNEIS,
+  RESULTADOS_INSPECAO as RESULTADOS_INSPECAO_PONTES_TUNEIS,
+  PRIORIDADES as PRIORIDADES_PONTES_TUNEIS,
+  FiltrosPontesTuneis,
+  FiltrosInspecaoPontesTuneis,
+  RelatorioPontesTuneisOptions,
+  RelatorioInspecaoPontesTuneisOptions,
+  PontesTuneisExportData,
+  InspecaoPontesTuneisExportData
+} from "./pontesTuneis";
+
 // Tipos para Ensaios de Compactação
 export interface PontoEnsaioCompactacao {
   numero: number;

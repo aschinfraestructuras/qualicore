@@ -289,7 +289,7 @@ export default function ArmaduraForm({ onSubmit, onCancel, initialData, isEditin
               Informações Básicas
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {/* Código */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -432,7 +432,7 @@ export default function ArmaduraForm({ onSubmit, onCancel, initialData, isEditin
               Identificação e Rastreamento
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {/* Número de Colada */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -552,7 +552,7 @@ export default function ArmaduraForm({ onSubmit, onCancel, initialData, isEditin
               Localização e Estado
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {/* Zona */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -724,7 +724,7 @@ export default function ArmaduraForm({ onSubmit, onCancel, initialData, isEditin
 
             {/* Lista de Fotos */}
             {fotos.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {fotos.map((foto, index) => (
                   <div key={foto.id} className="relative group">
                     <img

@@ -237,38 +237,40 @@ export default function RFIs() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in pt-8">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-blue-900 flex items-center gap-2">
-            <HelpCircle className="h-7 w-7 text-blue-500" /> RFIs (Pedidos de
-            Informação)
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Gestão centralizada de todos os pedidos de informação da obra.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowSavedRFIs(true)}
-            className="btn btn-outline flex items-center gap-2"
-          >
-            <Cloud className="h-5 w-5" /> RFIs Salvos
-          </button>
-          <button
-            onClick={() => setShowRelatorios(true)}
-            className="btn btn-outline flex items-center gap-2"
-          >
-            <BarChart3 className="h-5 w-5" /> Relatórios
-          </button>
-          <button
-            onClick={handleCreate}
-            className="btn btn-primary flex items-center gap-2"
-          >
-            <Plus className="h-5 w-5" /> Novo RFI
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8 pt-16">
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="space-y-8 animate-fade-in">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-blue-900 flex items-center gap-2">
+                <HelpCircle className="h-7 w-7 text-blue-500" /> RFIs (Pedidos de
+                Informação)
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Gestão centralizada de todos os pedidos de informação da obra.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowSavedRFIs(true)}
+                className="btn btn-outline flex items-center gap-2"
+              >
+                <Cloud className="h-5 w-5" /> RFIs Salvos
+              </button>
+              <button
+                onClick={() => setShowRelatorios(true)}
+                className="btn btn-outline flex items-center gap-2"
+              >
+                <BarChart3 className="h-5 w-5" /> Relatórios
+              </button>
+              <button
+                onClick={handleCreate}
+                className="btn btn-primary flex items-center gap-2"
+              >
+                <Plus className="h-5 w-5" /> Novo RFI
+              </button>
+            </div>
+          </div>
 
       {/* Botão de Filtros */}
       <div className="flex items-center space-x-4">
@@ -682,6 +684,8 @@ export default function RFIs() {
           </div>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }

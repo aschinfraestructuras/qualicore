@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
   Building2,
@@ -31,6 +31,7 @@ import {
   Heart,
   Eye,
   EyeOff,
+  LogOut,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -41,6 +42,7 @@ interface ModernNavbarProps {
 
 export default function ModernNavbar({ onToggleSidebar, sidebarOpen }: ModernNavbarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -108,7 +110,10 @@ export default function ModernNavbar({ onToggleSidebar, sidebarOpen }: ModernNav
               </button>
 
               {/* Logo */}
-              <div className="flex items-center space-x-3">
+              <div 
+                onClick={() => navigate("/dashboard")}
+                className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+              >
                 <div className="relative">
                   <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                     <Shield className="h-5 w-5 text-white" />
@@ -310,8 +315,11 @@ export default function ModernNavbar({ onToggleSidebar, sidebarOpen }: ModernNav
                         </button>
                       </div>
                       <div className="px-3 py-2 border-t border-gray-100">
-                        <button className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">
-                          <X className="h-4 w-4" />
+                        <button 
+                          onClick={() => navigate("/")}
+                          className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+                        >
+                          <LogOut className="h-4 w-4" />
                           <span>Sair</span>
                         </button>
                       </div>

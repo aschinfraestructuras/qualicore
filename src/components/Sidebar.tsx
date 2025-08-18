@@ -1,10 +1,11 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Shield, X, Settings } from "lucide-react";
 import { useAppStore } from "../stores/appStore";
 import { menuItems } from "./Navbar";
 
 export default function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { sidebarOpen, toggleSidebar } = useAppStore();
 
   return (
@@ -22,7 +23,10 @@ export default function Sidebar() {
         <div className="flex h-full flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
           {/* Header */}
           <div className="flex h-20 items-center justify-between border-b border-slate-700/50 px-6">
-            <div className="flex items-center space-x-3">
+            <div 
+              onClick={() => navigate("/dashboard")}
+              className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+            >
               <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-glow">
                 <Shield className="h-7 w-7 text-white" />
               </div>

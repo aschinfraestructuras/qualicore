@@ -8,6 +8,7 @@ import { Norma } from '@/types/normas';
 import { SubmissaoMaterial } from '@/types/submissaoMateriais';
 import { Sinalizacao, InspecaoSinalizacao } from '@/types/sinalizacao';
 import { SistemaSeguranca, InspecaoSeguranca } from '@/types/segurancaFerroviaria';
+import { PonteTunel, InspecaoPontesTuneis } from '@/types/pontesTuneis';
 import { PIEInstancia, PIESecao, PIEPonto, PIEResposta } from './pieService';
 
 interface PIEReportData {
@@ -7086,168 +7087,7 @@ class PDFService {
     return currentY + 10;
   }
 
-  private addFiltrosArmaduras(filtros: any, startY: number): number {
-    this.doc.setFillColor(243, 244, 246);
-    this.doc.rect(15, startY - 5, 180, 25, 'F');
-    
-    this.doc.setFontSize(10);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(31, 41, 55);
-    this.doc.text('Filtros Aplicados:', 20, startY);
 
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setFontSize(8);
-    this.doc.setTextColor(75, 85, 99);
-
-    let currentY = startY + 8;
-    let x = 20;
-    let maxX = 180;
-
-    Object.entries(filtros).forEach(([key, value]) => {
-      if (value && value !== '') {
-        const text = `${key}: ${value}`;
-        if (x + this.doc.getTextWidth(text) > maxX) {
-          x = 20;
-          currentY += 5;
-        }
-        this.doc.text(text, x, currentY);
-        x += this.doc.getTextWidth(text) + 10;
-      }
-    });
-
-    return currentY + 10;
-  }
-
-  private addRelatorioExecutivoArmaduras(options: RelatorioArmadurasOptions, startY: number): number {
-    const armaduras = options.armaduras;
-    
-    // Estatísticas gerais
-    const stats = {
-      total: armaduras.length,
-      pesoTotal: armaduras.reduce((sum, a) => sum + a.peso_total, 0),
-      aprovadas: armaduras.filter(a => a.estado === 'aprovado').length,
-      fabricantes: new Set(armaduras.map(a => a.fabricante)).size
-    };
-
-    // Título da seção
-    this.doc.setFillColor(59, 130, 246);
-    this.doc.rect(15, startY - 5, 180, 10, 'F');
-    this.doc.setFontSize(14);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(255, 255, 255);
-    this.doc.text('Resumo Executivo', 20, startY + 2);
-
-    // KPIs
-    const kpiY = startY + 12;
-    this.addKPICard(20, kpiY, 'Total', stats.total.toString(), [59, 130, 246]);
-    this.addKPICard(75, kpiY, 'Peso Total', `${stats.pesoTotal.toFixed(1)} kg`, [34, 197, 94]);
-    this.addKPICard(130, kpiY, 'Aprovadas', stats.aprovadas.toString(), [168, 85, 247]);
-
-    return kpiY + 30;
-  }
-
-  private addRelatorioFiltradoArmaduras(options: RelatorioArmadurasOptions, startY: number): number {
-    const armaduras = options.armaduras;
-    
-    // Título da seção
-    this.doc.setFillColor(59, 130, 246);
-    this.doc.rect(15, startY - 5, 180, 10, 'F');
-    this.doc.setFontSize(14);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(255, 255, 255);
-    this.doc.text('Detalhes das Armaduras', 20, startY + 2);
-
-    // Preparar dados para tabela
-    const tableData = armaduras.map(armadura => [
-      armadura.codigo,
-      armadura.tipo.replace('_', ' '),
-      `${armadura.diametro} mm`,
-      armadura.quantidade.toString(),
-      `${armadura.peso_total} kg`,
-      armadura.fabricante,
-      armadura.numero_colada,
-      armadura.estado.replace('_', ' '),
-      armadura.local_aplicacao,
-      new Date(armadura.data_rececao).toLocaleDateString("pt-PT")
-    ]);
-
-    // Adicionar tabela
-    autoTable(this.doc, {
-      startY: startY + 15,
-      head: [['Código', 'Tipo', 'Diâmetro', 'Qtd', 'Peso', 'Fabricante', 'Nº Colada', 'Estado', 'Local', 'Data']],
-      body: tableData,
-      theme: 'grid',
-      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
-      styles: { fontSize: 8 }
-    });
-
-    return (this.doc as any).lastAutoTable.finalY + 10;
-  }
-
-  private addRelatorioComparativoArmaduras(options: RelatorioArmadurasOptions, startY: number): number {
-    const armaduras = options.armaduras;
-    
-    // Análise por estado
-    const analisePorEstado = armaduras.reduce((acc, armadura) => {
-      acc[armadura.estado] = (acc[armadura.estado] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    // Análise por diâmetro
-    const analisePorDiametro = armaduras.reduce((acc, armadura) => {
-      acc[armadura.diametro] = (acc[armadura.diametro] || 0) + armadura.peso_total;
-      return acc;
-    }, {} as Record<number, number>);
-
-    this.doc.setFontSize(12);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(31, 41, 55);
-    this.doc.text('Análise Comparativa', 20, startY);
-
-    let currentY = startY + 15;
-
-    // Análise por estado
-    this.doc.setFontSize(10);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text('Distribuição por Estado:', 20, currentY);
-    currentY += 8;
-
-    this.doc.setFont('helvetica', 'normal');
-    Object.entries(analisePorEstado).forEach(([estado, quantidade]) => {
-      this.doc.text(`${estado.replace('_', ' ')}: ${quantidade} armaduras`, 25, currentY);
-      currentY += 6;
-    });
-
-    currentY += 10;
-
-    // Análise por diâmetro
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.text('Peso Total por Diâmetro:', 20, currentY);
-    currentY += 8;
-
-    this.doc.setFont('helvetica', 'normal');
-    Object.entries(analisePorDiametro)
-      .sort(([a], [b]) => Number(a) - Number(b))
-      .forEach(([diametro, peso]) => {
-        this.doc.text(`${diametro}mm: ${peso.toFixed(1)} kg`, 25, currentY);
-        currentY += 6;
-      });
-
-    return currentY;
-  }
-
-  private addKPICard(x: number, y: number, label: string, value: string, color: number[]): void {
-    this.doc.setFillColor(...color);
-    this.doc.rect(x, y, 50, 20, 'F');
-    
-    this.doc.setFontSize(8);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(255, 255, 255);
-    this.doc.text(label, x + 2, y + 6);
-    
-    this.doc.setFontSize(10);
-    this.doc.text(value, x + 2, y + 15);
-  }
 
   async gerarRelatorioCertificados(options: RelatorioCertificadosOptions): Promise<void> {
     this.initDocument();
@@ -8900,6 +8740,455 @@ class PDFService {
         currentY += 4;
       });
     }
+  }
+
+  // Métodos para Pontes e Túneis
+  private calcularEstatisticasPontesTuneis(pontesTuneis: PonteTunel[]) {
+    const total = pontesTuneis.length;
+    const pontes = pontesTuneis.filter(pt => pt.tipo === 'PONTE').length;
+    const tuneis = pontesTuneis.filter(pt => pt.tipo === 'TUNEL').length;
+    const ativas = pontesTuneis.filter(pt => pt.estado === 'ATIVO').length;
+    const emManutencao = pontesTuneis.filter(pt => pt.estado === 'MANUTENCAO').length;
+    const operacionais = pontesTuneis.filter(pt => pt.status_operacional === 'OPERACIONAL').length;
+    
+    const comprimentoTotal = pontesTuneis.reduce((sum, pt) => sum + (pt.parametros?.comprimento || 0), 0);
+    const capacidadeTotal = pontesTuneis.reduce((sum, pt) => sum + (pt.parametros?.capacidade_carga || 0), 0);
+    
+    const taxaOperacional = total > 0 ? ((operacionais / total) * 100).toFixed(1) : "0";
+    
+    return {
+      total,
+      pontes,
+      tuneis,
+      ativas,
+      emManutencao,
+      operacionais,
+      comprimentoTotal,
+      capacidadeTotal,
+      taxaOperacional
+    };
+  }
+
+  private calcularEstatisticasInspecaoPontesTuneis(inspecoes: InspecaoPontesTuneis[]) {
+    const total = inspecoes.length;
+    const conformes = inspecoes.filter(i => i.resultado === 'CONFORME').length;
+    const naoConformes = inspecoes.filter(i => i.resultado === 'NAO_CONFORME').length;
+    const pendentes = inspecoes.filter(i => i.resultado === 'PENDENTE').length;
+    const criticos = inspecoes.filter(i => i.resultado === 'CRITICO').length;
+    
+    const inspecoesRutina = inspecoes.filter(i => i.tipo_inspecao === 'RUTINA').length;
+    const inspecoesEspecial = inspecoes.filter(i => i.tipo_inspecao === 'ESPECIAL').length;
+    const inspecoesEmergencia = inspecoes.filter(i => i.tipo_inspecao === 'EMERGENCIA').length;
+    
+    const taxaConformidade = total > 0 ? ((conformes / total) * 100).toFixed(1) : "0";
+    
+    return {
+      total,
+      conformes,
+      naoConformes,
+      pendentes,
+      criticos,
+      inspecoesRutina,
+      inspecoesEspecial,
+      inspecoesEmergencia,
+      taxaConformidade
+    };
+  }
+
+  private addEstatisticasPontesTuneis(stats: any, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Resumo Executivo', 20, startY);
+    
+    // Cards de estatísticas
+    this.addKPICard(20, startY + 5, 'Total', stats.total.toString(), [59, 130, 246]);
+    this.addKPICard(65, startY + 5, 'Pontes', stats.pontes.toString(), [34, 197, 94]);
+    this.addKPICard(110, startY + 5, 'Túneis', stats.tuneis.toString(), [168, 85, 247]);
+    this.addKPICard(155, startY + 5, 'Ativas', stats.ativas.toString(), [16, 185, 129]);
+    
+    // Segunda linha de cards
+    this.addKPICard(20, startY + 30, 'Operacionais', stats.operacionais.toString(), [34, 197, 94]);
+    this.addKPICard(65, startY + 30, 'Manutenção', stats.emManutencao.toString(), [251, 146, 60]);
+    this.addKPICard(110, startY + 30, 'Taxa Op.', `${stats.taxaOperacional}%`, [59, 130, 246]);
+    this.addKPICard(155, startY + 30, 'Comprimento', `${stats.comprimentoTotal}m`, [16, 185, 129]);
+    
+    return startY + 65;
+  }
+
+  private addEstatisticasInspecaoPontesTuneis(stats: any, startY: number): number {
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Resumo Executivo', 20, startY);
+    
+    // Cards de estatísticas
+    this.addKPICard(20, startY + 5, 'Total', stats.total.toString(), [59, 130, 246]);
+    this.addKPICard(65, startY + 5, 'Conformes', stats.conformes.toString(), [34, 197, 94]);
+    this.addKPICard(110, startY + 5, 'Não Conformes', stats.naoConformes.toString(), [239, 68, 68]);
+    this.addKPICard(155, startY + 5, 'Pendentes', stats.pendentes.toString(), [251, 146, 60]);
+    
+    // Segunda linha de cards
+    this.addKPICard(20, startY + 30, 'Críticos', stats.criticos.toString(), [239, 68, 68]);
+    this.addKPICard(65, startY + 30, 'Rutina', stats.inspecoesRutina.toString(), [34, 197, 94]);
+    this.addKPICard(110, startY + 30, 'Especial', stats.inspecoesEspecial.toString(), [168, 85, 247]);
+    this.addKPICard(155, startY + 30, 'Taxa Conf.', `${stats.taxaConformidade}%`, [59, 130, 246]);
+    
+    return startY + 65;
+  }
+
+  public gerarRelatorioPontesTuneis(options: RelatorioPontesTuneisOptions): void {
+    this.doc = new jsPDF();
+    this.pageNumber = 1;
+    this.totalPages = 1;
+
+    this.addProfessionalHeader(options.titulo || 'Relatório de Pontes e Túneis', options.subtitulo);
+    this.addProfessionalFooter();
+
+    switch (options.tipo) {
+      case 'executivo':
+        this.gerarRelatorioExecutivoPontesTuneis(options);
+        break;
+      case 'filtrado':
+        this.gerarRelatorioFiltradoPontesTuneis(options);
+        break;
+      case 'comparativo':
+        this.gerarRelatorioComparativoPontesTuneis(options);
+        break;
+      case 'individual':
+        this.gerarRelatorioIndividualPontesTuneis(options);
+        break;
+    }
+
+    this.doc.save(`relatorio_pontes_tuneis_${options.tipo}_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  // Métodos auxiliares para relatórios de Pontes e Túneis
+  private addRelatorioExecutivoPontesTuneis(options: RelatorioPontesTuneisOptions, startY: number): number {
+    const pontesTuneis = options.pontesTuneis || [];
+    
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise por Tipo de Infraestrutura', 20, startY);
+    
+    // Análise por tipo
+    const analisePorTipo = pontesTuneis.reduce((acc, pt) => {
+      acc[pt.tipo] = (acc[pt.tipo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const tableData = Object.entries(analisePorTipo).map(([tipo, quantidade]) => [
+      tipo,
+      quantidade.toString(),
+      `${((quantidade / pontesTuneis.length) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: startY + 8,
+      head: [['Tipo', 'Quantidade', 'Percentual']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+      styles: { fontSize: 8 }
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addRelatorioIndividualPontesTuneis(options: RelatorioPontesTuneisOptions, startY: number): number {
+    const pontesTuneis = options.pontesTuneis || [];
+    
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Detalhes das Infraestruturas', 20, startY);
+    
+    // Preparar dados para tabela
+    const tableData = pontesTuneis.map(pt => [
+      pt.codigo,
+      pt.tipo,
+      pt.categoria,
+      pt.localizacao,
+      `${pt.km_inicial} - ${pt.km_final}`,
+      pt.estado,
+      pt.status_operacional,
+      pt.fabricante,
+      new Date(pt.data_construcao).toLocaleDateString("pt-PT")
+    ]);
+    
+    // Adicionar tabela
+    autoTable(this.doc, {
+      startY: startY + 8,
+      head: [['Código', 'Tipo', 'Categoria', 'Localização', 'KM', 'Estado', 'Status', 'Fabricante', 'Data Const.']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+      styles: { fontSize: 8 }
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addRelatorioFiltradoPontesTuneis(options: RelatorioPontesTuneisOptions, startY: number): number {
+    const pontesTuneis = options.pontesTuneis || [];
+    
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Infraestruturas Filtradas', 20, startY);
+    
+    // Preparar dados para tabela
+    const tableData = pontesTuneis.map(pt => [
+      pt.codigo,
+      pt.tipo,
+      pt.categoria,
+      pt.localizacao,
+      pt.estado,
+      pt.status_operacional,
+      pt.fabricante,
+      pt.responsavel
+    ]);
+    
+    // Adicionar tabela
+    autoTable(this.doc, {
+      startY: startY + 8,
+      head: [['Código', 'Tipo', 'Categoria', 'Localização', 'Estado', 'Status', 'Fabricante', 'Responsável']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+      styles: { fontSize: 8 }
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addRelatorioComparativoPontesTuneis(options: RelatorioPontesTuneisOptions, startY: number): number {
+    const pontesTuneis = options.pontesTuneis || [];
+    
+    // Análise por estado
+    const analisePorEstado = pontesTuneis.reduce((acc, pt) => {
+      acc[pt.estado] = (acc[pt.estado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Análise por categoria
+    const analisePorCategoria = pontesTuneis.reduce((acc, pt) => {
+      acc[pt.categoria] = (acc[pt.categoria] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, startY);
+
+    let currentY = startY + 15;
+
+    // Análise por estado
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Estado:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorEstado).forEach(([estado, quantidade]) => {
+      this.doc.text(`${estado}: ${quantidade} infraestruturas`, 25, currentY);
+      currentY += 6;
+    });
+
+    currentY += 10;
+
+    // Análise por categoria
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Categoria:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorCategoria).forEach(([categoria, quantidade]) => {
+      this.doc.text(`${categoria}: ${quantidade} infraestruturas`, 25, currentY);
+      currentY += 6;
+    });
+
+    return currentY;
+  }
+
+  // Métodos auxiliares para relatórios de Inspeções de Pontes e Túneis
+  private addRelatorioExecutivoInspecaoPontesTuneis(options: RelatorioInspecaoPontesTuneisOptions, startY: number): number {
+    const inspecoes = options.inspecoes || [];
+    
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise por Tipo de Inspeção', 20, startY);
+    
+    // Análise por tipo
+    const analisePorTipo = inspecoes.reduce((acc, ins) => {
+      acc[ins.tipo_inspecao] = (acc[ins.tipo_inspecao] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const tableData = Object.entries(analisePorTipo).map(([tipo, quantidade]) => [
+      tipo,
+      quantidade.toString(),
+      `${((quantidade / inspecoes.length) * 100).toFixed(1)}%`
+    ]);
+    
+    autoTable(this.doc, {
+      startY: startY + 8,
+      head: [['Tipo', 'Quantidade', 'Percentual']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+      styles: { fontSize: 8 }
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addRelatorioIndividualInspecaoPontesTuneis(options: RelatorioInspecaoPontesTuneisOptions, startY: number): number {
+    const inspecoes = options.inspecoes || [];
+    
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Detalhes das Inspeções', 20, startY);
+    
+    // Preparar dados para tabela
+    const tableData = inspecoes.map(ins => [
+      ins.ponte_tunel_id,
+      ins.tipo_inspecao,
+      ins.resultado,
+      ins.responsavel,
+      new Date(ins.data_inspecao).toLocaleDateString("pt-PT"),
+      new Date(ins.proxima_inspecao).toLocaleDateString("pt-PT")
+    ]);
+    
+    // Adicionar tabela
+    autoTable(this.doc, {
+      startY: startY + 8,
+      head: [['Infraestrutura', 'Tipo', 'Resultado', 'Responsável', 'Data Inspeção', 'Próxima Inspeção']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+      styles: { fontSize: 8 }
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addRelatorioFiltradoInspecaoPontesTuneis(options: RelatorioInspecaoPontesTuneisOptions, startY: number): number {
+    const inspecoes = options.inspecoes || [];
+    
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Inspeções Filtradas', 20, startY);
+    
+    // Preparar dados para tabela
+    const tableData = inspecoes.map(ins => [
+      ins.ponte_tunel_id,
+      ins.tipo_inspecao,
+      ins.resultado,
+      ins.responsavel,
+      new Date(ins.data_inspecao).toLocaleDateString("pt-PT")
+    ]);
+    
+    // Adicionar tabela
+    autoTable(this.doc, {
+      startY: startY + 8,
+      head: [['Infraestrutura', 'Tipo', 'Resultado', 'Responsável', 'Data']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+      styles: { fontSize: 8 }
+    });
+    
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addRelatorioComparativoInspecaoPontesTuneis(options: RelatorioInspecaoPontesTuneisOptions, startY: number): number {
+    const inspecoes = options.inspecoes || [];
+    
+    // Análise por resultado
+    const analisePorResultado = inspecoes.reduce((acc, ins) => {
+      acc[ins.resultado] = (acc[ins.resultado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Análise por tipo
+    const analisePorTipo = inspecoes.reduce((acc, ins) => {
+      acc[ins.tipo_inspecao] = (acc[ins.tipo_inspecao] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, startY);
+
+    let currentY = startY + 15;
+
+    // Análise por resultado
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Resultado:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorResultado).forEach(([resultado, quantidade]) => {
+      this.doc.text(`${resultado}: ${quantidade} inspeções`, 25, currentY);
+      currentY += 6;
+    });
+
+    currentY += 10;
+
+    // Análise por tipo
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Tipo:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorTipo).forEach(([tipo, quantidade]) => {
+      this.doc.text(`${tipo}: ${quantidade} inspeções`, 25, currentY);
+      currentY += 6;
+    });
+
+    return currentY;
+  }
+
+  public gerarRelatorioInspecaoPontesTuneis(options: RelatorioInspecaoPontesTuneisOptions): void {
+    this.doc = new jsPDF();
+    this.pageNumber = 1;
+    this.totalPages = 1;
+
+    this.addProfessionalHeader(options.titulo || 'Relatório de Inspeções - Pontes e Túneis', options.subtitulo);
+    this.addProfessionalFooter();
+
+    switch (options.tipo) {
+      case 'executivo':
+        this.gerarRelatorioExecutivoInspecaoPontesTuneis(options);
+        break;
+      case 'filtrado':
+        this.gerarRelatorioFiltradoInspecaoPontesTuneis(options);
+        break;
+      case 'comparativo':
+        this.gerarRelatorioComparativoInspecaoPontesTuneis(options);
+        break;
+      case 'individual':
+        this.gerarRelatorioIndividualInspecaoPontesTuneis(options);
+        break;
+    }
+
+    this.doc.save(`relatorio_inspecao_pontes_tuneis_${options.tipo}_${new Date().toISOString().split('T')[0]}.pdf`);
   }
 }
 

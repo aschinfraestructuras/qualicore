@@ -452,7 +452,7 @@ export default function Relatorios() {
               </div>
             </div>
             <div className="card-content">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Módulo
@@ -791,7 +791,7 @@ export default function Relatorios() {
       </motion.div>
 
       {/* Tipos de Relatórios */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
         {/* Relatório Executivo */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -1344,7 +1344,7 @@ export default function Relatorios() {
               </div>
             </div>
             <div className="card-content">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {relatorioAtivo === "executivo" && (
                   <>
                     <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">

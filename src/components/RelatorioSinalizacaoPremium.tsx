@@ -316,7 +316,7 @@ export default function RelatorioSinalizacaoPremium({
 
       {/* Estatísticas */}
       {tipoRelatorio === 'sinalizacoes' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -390,7 +390,7 @@ export default function RelatorioSinalizacaoPremium({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -469,7 +469,7 @@ export default function RelatorioSinalizacaoPremium({
       {tipoRelatorio === 'sinalizacoes' && (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Análise por Tipo de Sinalização</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {Object.entries(tiposSinalizacao).map(([tipo, count]) => (
               <div key={tipo} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <span className="text-sm font-medium text-gray-700">{TIPOS_SINALIZACAO[tipo as keyof typeof TIPOS_SINALIZACAO] || tipo}</span>
@@ -484,7 +484,7 @@ export default function RelatorioSinalizacaoPremium({
       {tipoRelatorio === 'sinalizacoes' && (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Análise por Categoria</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {Object.entries(categorias).map(([categoria, count]) => (
               <div key={categoria} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <span className="text-sm font-medium text-gray-700">{CATEGORIAS_SINALIZACAO[categoria as keyof typeof CATEGORIAS_SINALIZACAO] || categoria}</span>

@@ -478,7 +478,7 @@ export default function CaracterizacaoSolosDetails({
                   <Microscope className="w-6 h-6 mr-2 text-red-600" />
                   Características Químicas
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   <div className="bg-red-50 rounded-lg p-3">
                     <p className="text-sm text-red-600">pH</p>
                     <p className="text-lg font-semibold text-gray-900">{formatNumber(solo.caracteristicas_quimicas.ph, 1)}</p>
@@ -568,7 +568,7 @@ export default function CaracterizacaoSolosDetails({
                     <FileText className="w-6 h-6 mr-2 text-purple-600" />
                     Documentação
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {solo.relatorio_laboratorio && (
                       <div className="bg-purple-50 rounded-lg p-4">
                         <div className="flex items-center justify-between">

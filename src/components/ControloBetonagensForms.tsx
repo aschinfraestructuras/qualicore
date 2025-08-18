@@ -365,7 +365,7 @@ export default function ControloBetonagensForms({ betonagem, onSubmit, onClose }
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             {/* Informações Básicas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                              <div>
                  <label className="block text-sm font-medium text-gray-700 mb-1">
                    <Hash className="h-4 w-4 inline mr-1" />
@@ -642,7 +642,7 @@ export default function ControloBetonagensForms({ betonagem, onSubmit, onClose }
                 Resistências das Provetas (MPa)
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {/* Resistências 7 dias */}
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <h4 className="font-medium text-blue-800 mb-3">A 7 dias</h4>

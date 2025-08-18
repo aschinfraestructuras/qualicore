@@ -132,7 +132,7 @@ export default function ControloBetonagensDetails({
           {/* Content */}
           <div className="p-6 space-y-6">
             {/* Informações Básicas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
               <div className="bg-white p-4 rounded-lg border border-gray-200">
                 <div className="flex items-center space-x-2 mb-2">
                   <Hash className="h-4 w-4 text-blue-600" />
@@ -193,7 +193,7 @@ export default function ControloBetonagensDetails({
             </div>
 
             {/* Datas de Ensaio */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
               <div className="bg-white p-4 rounded-lg border border-gray-200">
                 <div className="flex items-center space-x-2 mb-2">
                   <Calendar className="h-4 w-4 text-blue-600" />
@@ -276,7 +276,7 @@ export default function ControloBetonagensDetails({
                 Resistências das Provetas (MPa)
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {/* Resistências 7 dias */}
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                   <h4 className="font-medium text-blue-800 mb-3 flex items-center">

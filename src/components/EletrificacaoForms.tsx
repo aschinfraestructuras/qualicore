@@ -243,8 +243,8 @@ export function EletrificacaoForm({ isOpen, onClose, editData, onSuccess, type }
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {/* Informações Básicas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Informações Básicas */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Código *
@@ -429,7 +429,7 @@ export function EletrificacaoForm({ isOpen, onClose, editData, onSuccess, type }
                 <Gauge className="h-5 w-5 mr-2 text-yellow-600" />
                 Parâmetros Técnicos
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Tensão (V) *

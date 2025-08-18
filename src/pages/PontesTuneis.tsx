@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   TrendingUp, Activity, Building, MapPin, Calendar, AlertTriangle, CheckCircle, Clock,
-  Plus, Search, Filter, Download, Eye, Edit, Trash, Mountain, Gauge, Shield
+  Plus, Search, Filter, Download, Eye, Edit, Trash, Mountain, Gauge, Shield, FileText
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { pontesTuneisAPI } from '../lib/supabase-api/pontesTuneisAPI';
 import { PontesTuneisFilters } from '../components/PontesTuneisFilters';
 import { PontesTuneisForms } from '../components/PontesTuneisForms';
 import { PontesTuneisDetails } from '../components/PontesTuneisDetails';
+import RelatorioPontesTuneisPremium from '../components/RelatorioPontesTuneisPremium';
+import Modal from '../components/Modal';
 import { applyFilters, getDefaultFilters, getActiveFiltersCount } from '../utils/filterUtils';
 import { exportToExcel, exportToCSV, exportToPDF } from '../utils/exportUtils';
 
@@ -64,6 +66,9 @@ export default function PontesTuneis() {
   const [itemsPerPage] = useState(10);
   const [sortField, setSortField] = useState<string>('codigo');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [showRelatorio, setShowRelatorio] = useState(false);
+  const [tipoRelatorio, setTipoRelatorio] = useState<'pontesTuneis' | 'inspecoesPontesTuneis'>('pontesTuneis');
+  const [pontesTuneisSelecionadas, setPontesTuneisSelecionadas] = useState<string[]>([]);
 
   useEffect(() => {
     loadData();
@@ -268,8 +273,18 @@ export default function PontesTuneis() {
           </div>
           <div className="flex items-center space-x-3">
             <button
-              onClick={() => handleExport('excel')}
+              onClick={() => {
+                setTipoRelatorio('pontesTuneis');
+                setShowRelatorio(true);
+              }}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+            >
+              <FileText className="h-4 w-4" />
+              <span>Relatório</span>
+            </button>
+            <button
+              onClick={() => handleExport('excel')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
             >
               <Download className="h-4 w-4" />
               <span>Exportar</span>
@@ -517,6 +532,30 @@ export default function PontesTuneis() {
           }}
           onDelete={() => handleDelete(selectedItem.id)}
         />
+      )}
+
+      {/* Modal de Relatórios */}
+      {showRelatorio && (
+        <Modal
+          isOpen={showRelatorio}
+          onClose={() => setShowRelatorio(false)}
+          size="xl"
+          title={`Relatórios de ${tipoRelatorio === 'pontesTuneis' ? 'Pontes e Túneis' : 'Inspeções'}`}
+        >
+          <div className="p-6">
+            {pontesTuneisSelecionadas.length > 0 && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700">
+                  {pontesTuneisSelecionadas.length} ponte(s)/túnel(is) selecionado(s) para relatório
+                </p>
+              </div>
+            )}
+            <RelatorioPontesTuneisPremium
+              tipoRelatorio={tipoRelatorio}
+              onSelecaoChange={setPontesTuneisSelecionadas}
+            />
+          </div>
+        </Modal>
       )}
     </div>
   );

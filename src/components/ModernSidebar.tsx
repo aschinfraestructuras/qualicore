@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Building2,
   Shield,
@@ -28,6 +28,7 @@ interface ModernSidebarProps {
 
 export default function ModernSidebar({ isOpen, onClose }: ModernSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [expandedSections, setExpandedSections] = useState<string[]>(['QUALIDADE']);
 
   const toggleSection = (section: string) => {
@@ -104,7 +105,10 @@ export default function ModernSidebar({ isOpen, onClose }: ModernSidebarProps) {
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200/50">
-              <div className="flex items-center space-x-3">
+              <div 
+                onClick={() => navigate("/dashboard")}
+                className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+              >
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                   <Shield className="h-5 w-5 text-white" />
                 </div>

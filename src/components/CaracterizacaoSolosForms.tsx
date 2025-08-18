@@ -308,7 +308,7 @@ export default function CaracterizacaoSolosForms({ isOpen, onClose, onSubmit, ed
         <div className="flex-1 overflow-y-auto max-h-[60vh] p-6">
           {/* Step 1: Informações Gerais */}
           {currentStep === 1 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Código da Amostra *
@@ -429,7 +429,7 @@ export default function CaracterizacaoSolosForms({ isOpen, onClose, onSubmit, ed
 
           {/* Step 2: Características Físicas */}
           {currentStep === 2 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Humidade Natural (%)
@@ -621,7 +621,7 @@ export default function CaracterizacaoSolosForms({ isOpen, onClose, onSubmit, ed
               {/* Características Químicas */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Características Químicas</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">pH</label>
                     <input

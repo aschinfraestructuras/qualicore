@@ -460,7 +460,7 @@ ${searchResults.join('\n\n')}
                 <Menu className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" />
               </button>
               
-              <Link to="/" className="flex items-center space-x-3 group">
+              <Link to="/dashboard" className="flex items-center space-x-3 group">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300 relative overflow-hidden">
                   <span className="text-white font-bold text-lg relative z-10">Q</span>
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-indigo-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -475,6 +475,33 @@ ${searchResults.join('\n\n')}
                   </p>
                 </div>
               </Link>
+
+              {/* Botão de Logout - Sempre visível */}
+              <button
+                onClick={() => {
+                  console.log("🚪 Logout clicked!");
+                  toast.success("👋 A sair do Qualicore...", {
+                    icon: '👋',
+                    duration: 2000,
+                    style: {
+                      background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
+                      color: 'white',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }
+                  });
+                  setTimeout(() => {
+                    navigate("/");
+                  }, 1000);
+                }}
+                className="flex items-center space-x-2 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 rounded-xl text-red-200 hover:text-red-100 transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105 active:scale-95 group"
+                title="Sair do Qualicore"
+              >
+                <LogOut className="h-4 w-4 group-hover:rotate-12 transition-transform duration-200" />
+                <span className="hidden sm:inline text-sm font-medium">Sair</span>
+              </button>
             </div>
 
             {/* Espaçador central para distribuir melhor os elementos */}

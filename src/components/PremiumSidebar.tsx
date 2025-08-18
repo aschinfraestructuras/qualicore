@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Shield,
   Search,
@@ -113,6 +113,7 @@ interface PremiumSidebarProps {
 
 export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [stats, setStats] = useState({ obras: 0, ensaios: 0, ncs: 0, documentos: 0 });
@@ -228,7 +229,10 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
           {/* Header */}
           <div className="p-4 border-b border-blue-600/40">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
+              <div 
+                onClick={() => navigate("/dashboard")}
+                className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+              >
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-400 via-purple-400 to-indigo-400 rounded-lg flex items-center justify-center shadow-lg">
                   <Shield className="h-5 w-5 text-white" />
                 </div>
