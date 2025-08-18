@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { normasAPI } from '../lib/supabase-api/normasAPI';
+import { storageService } from '../lib/supabase-storage';
+import NormasForms from '../components/NormasForms';
 import type { 
   Norma, 
   FiltrosNormas, 
@@ -35,7 +37,9 @@ import type {
   CategoriaNorma,
   OrganismoNormativo,
   StatusNorma,
-  PrioridadeNorma,
+  PrioridadeNorma
+} from '../types/normas';
+import {
   CATEGORIAS_NORMAS,
   SUBCATEGORIAS_NORMAS,
   ORGANISMOS_NORMATIVOS
@@ -43,7 +47,7 @@ import type {
 
 interface NormasProps {}
 
-export default function Normas({}: NormasProps) {
+export default function Normas() {
   const [normas, setNormas] = useState<Norma[]>([]);
   const [loading, setLoading] = useState(true);
   const [estatisticas, setEstatisticas] = useState<EstatisticasNormas | null>(null);
@@ -54,6 +58,9 @@ export default function Normas({}: NormasProps) {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedNorma, setSelectedNorma] = useState<Norma | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [deletingNorma, setDeletingNorma] = useState<string | null>(null);
+  const [editingNorma, setEditingNorma] = useState<Norma | null>(null);
 
   useEffect(() => {
     loadNormas();
@@ -187,9 +194,105 @@ export default function Normas({}: NormasProps) {
     }
   };
 
+  // Download de um anexo (abre numa nova aba ou inicia download)
+  const handleDownloadDocumento = async (documento: any) => {
+    try {
+      if (documento.path) {
+        // Download via Supabase Storage (bucket normas -> mapeado para 'documents' por default)
+        await storageService.downloadFile(documento.path, documento.nome, (import.meta as any).env?.VITE_SUPABASE_BUCKET_NORMAS || 'documents');
+        toast.success(`Download iniciado: ${documento.nome}`);
+      } else {
+        // Fallback para URL direta (para documentos antigos)
+        const a = document.createElement('a');
+        a.href = documento.url;
+        a.download = documento.nome || 'documento';
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        toast.success(`Download iniciado: ${documento.nome}`);
+      }
+    } catch (error) {
+      console.error('Erro no download do anexo:', error);
+      toast.error(`Erro ao descarregar o anexo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
+  };
+
+  // Eliminar uma norma
+  const handleDeleteNorma = async (norma: Norma) => {
+    if (!confirm(`Tem certeza que deseja eliminar a norma "${norma.titulo}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+
+    try {
+      setDeletingNorma(norma.id);
+
+      // Eliminar documentos anexos do storage primeiro
+      if (norma.documentos_anexos && norma.documentos_anexos.length > 0) {
+        for (const doc of norma.documentos_anexos) {
+          if (doc.path) {
+            try {
+              await storageService.deleteFile(
+                doc.path,
+                (import.meta as any).env?.VITE_SUPABASE_BUCKET_NORMAS || 'documents'
+              );
+            } catch (error) {
+              console.warn('Erro ao eliminar documento do storage:', error);
+              // Continua mesmo se falhar a eliminação do documento
+            }
+          }
+        }
+      }
+
+      // Eliminar a norma da base de dados
+      await normasAPI.normas.delete(norma.id);
+
+      // Atualizar a lista local
+      setNormas(prev => prev.filter(n => n.id !== norma.id));
+
+      toast.success(`Norma "${norma.titulo}" eliminada com sucesso!`);
+
+      // Fechar modal de detalhes se estiver aberto
+      if (selectedNorma?.id === norma.id) {
+        setShowDetails(false);
+        setSelectedNorma(null);
+      }
+    } catch (error) {
+      console.error('Erro ao eliminar norma:', error);
+      toast.error(`Erro ao eliminar norma: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    } finally {
+      setDeletingNorma(null);
+    }
+  };
+
+  // Download rápido: primeiro anexo da norma
+  const downloadFirstAttachment = (norma: Norma) => {
+    const docs = (norma as any).documentos_anexos || [];
+    if (docs.length === 0) {
+      toast.error('Esta norma não tem anexos');
+      return;
+    }
+    handleDownloadDocumento(docs[0]);
+  };
+
   const clearFilters = () => {
     setFiltros({});
     setSearchTerm('');
+  };
+
+  const handleCreate = () => {
+    setEditingNorma(null);
+    setShowForm(true);
+  };
+
+  const handleEdit = (norma: Norma) => {
+    setEditingNorma(norma);
+    setShowForm(true);
+  };
+
+  const handleFormSuccess = () => {
+    loadNormas();
+    loadEstatisticas();
   };
 
   return (
@@ -222,10 +325,13 @@ export default function Normas({}: NormasProps) {
                 <FileText className="h-4 w-4" />
                 <span>PDF</span>
               </button>
-              <button className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg hover:from-blue-600 hover:to-purple-600 flex items-center space-x-2">
-                <Plus className="h-4 w-4" />
-                <span>Nova Norma</span>
-              </button>
+                             <button 
+                 onClick={handleCreate}
+                 className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg hover:from-blue-600 hover:to-purple-600 flex items-center space-x-2"
+               >
+                 <Plus className="h-4 w-4" />
+                 <span>Nova Norma</span>
+               </button>
             </div>
           </div>
         </div>
@@ -499,6 +605,15 @@ export default function Normas({}: NormasProps) {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
+                          {Array.isArray((norma as any).documentos_anexos) && (norma as any).documentos_anexos.length > 0 && (
+                            <button
+                              onClick={() => downloadFirstAttachment(norma)}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="Descarregar norma (primeiro anexo)"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => {
                               setSelectedNorma(norma);
@@ -508,11 +623,25 @@ export default function Normas({}: NormasProps) {
                           >
                             <Eye className="h-4 w-4" />
                           </button>
-                          <button className="text-gray-600 hover:text-gray-900">
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button className="text-red-600 hover:text-red-900">
-                            <Trash2 className="h-4 w-4" />
+                                                     <button 
+                             onClick={() => handleEdit(norma)}
+                             className="text-gray-600 hover:text-gray-900"
+                           >
+                             <Edit className="h-4 w-4" />
+                           </button>
+                          <button
+                            onClick={() => handleDeleteNorma(norma)}
+                            disabled={deletingNorma === norma.id}
+                            className={`text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed ${
+                              deletingNorma === norma.id ? 'animate-pulse' : ''
+                            }`}
+                            title="Eliminar norma"
+                          >
+                            {deletingNorma === norma.id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -545,12 +674,28 @@ export default function Normas({}: NormasProps) {
                     <p className="text-sm text-gray-600">Detalhes da Norma</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setShowDetails(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handleDeleteNorma(selectedNorma)}
+                    disabled={deletingNorma === selectedNorma.id}
+                    className={`p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      deletingNorma === selectedNorma.id ? 'animate-pulse' : ''
+                    }`}
+                    title="Eliminar norma"
+                  >
+                    {deletingNorma === selectedNorma.id ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
+                    ) : (
+                      <Trash2 className="h-5 w-5" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowDetails(false)}
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -655,6 +800,29 @@ export default function Normas({}: NormasProps) {
                 </div>
               )}
 
+              {/* Documentos Anexos */}
+              {Array.isArray((selectedNorma as any).documentos_anexos) && (selectedNorma as any).documentos_anexos.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Documentos Anexos</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {(selectedNorma as any).documentos_anexos.map((doc: any, index: number) => (
+                      <div key={index} className="flex items-center px-3 py-2 bg-blue-50 border border-blue-200 text-blue-800 text-sm rounded-lg hover:bg-blue-100 transition-colors">
+                        <span className="mr-2">📎</span>
+                        <span className="font-medium truncate max-w-48">{doc.nome}</span>
+                        <span className="ml-2 text-gray-600 text-xs">{doc.tamanho ? `(${(doc.tamanho / 1024 / 1024).toFixed(2)} MB)` : ''}</span>
+                        <button
+                          onClick={() => handleDownloadDocumento(doc)}
+                          className="ml-2 p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded"
+                          title="Descarregar documento"
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Observações */}
               {selectedNorma.observacoes && (
                 <div>
@@ -664,8 +832,16 @@ export default function Normas({}: NormasProps) {
               )}
             </div>
           </motion.div>
-        </div>
-      )}
-    </div>
-  );
-}
+                 </div>
+       )}
+
+       {/* Form Modal */}
+       <NormasForms
+         isOpen={showForm}
+         onClose={() => setShowForm(false)}
+         editingNorma={editingNorma}
+         onSuccess={handleFormSuccess}
+       />
+     </div>
+   );
+ }

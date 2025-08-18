@@ -98,6 +98,7 @@ import {
   Hash as HashIcon7,
   Hash as HashIcon8,
   Hash as HashIcon9,
+  Package,
   Hash as HashIcon10,
      Zap,
    Building,
@@ -112,7 +113,7 @@ interface PremiumSidebarProps {
 
 export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps) {
   const location = useLocation();
-  const [expandedSections, setExpandedSections] = useState<string[]>(['qualidade', 'ferroviario']);
+  const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [stats, setStats] = useState({ obras: 0, ensaios: 0, ncs: 0, documentos: 0 });
   const [loading, setLoading] = useState(true);
@@ -169,10 +170,11 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
       title: "QUALIDADE",
       items: [
         { name: "Ensaios", href: "/ensaios", icon: ClipboardList, badge: stats.ensaios.toString() },
-        { name: "Ensaios Compactação", href: "/ensaios-compactacao", icon: Database, badge: "0" },
         { name: "Controlo Betonagens", href: "/controlo-betonagens", icon: Building, badge: "🆕" },
         { name: "Caracterização Solos", href: "/caracterizacao-solos", icon: Layers, badge: "🆕" },
         { name: "Sistema de Normas", href: "/normas", icon: BookOpen, badge: "🌟" },
+        { name: "Submissão Materiais", href: "/submissao-materiais", icon: Package, badge: "🆕" },
+        { name: "Certificados e Registos", href: "/certificados", icon: Award, badge: "🆕" },
         { name: "Checklists", href: "/checklists", icon: FileText, badge: "0" },
         { name: "Não Conformidades", href: "/nao-conformidades", icon: AlertTriangle, badge: stats.ncs.toString() },
       ]
@@ -182,31 +184,30 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
       title: "GESTÃO",
       items: [
         { name: "Obras", href: "/obras", icon: Building2, badge: stats.obras.toString() },
-        { name: "RFIs", href: "/rfis", icon: HelpCircle, badge: "0" },
         { name: "Materiais", href: "/materiais", icon: Grid3X3, badge: "0" },
         { name: "Fornecedores", href: "/fornecedores", icon: Users, badge: "0" },
-      ]
-    },
-    {
-      section: "especializados",
-      title: "ESPECIALIZADOS",
-      items: [
-        { name: "PIE", href: "/pie", icon: Shield, badge: "0" },
-        { name: "Relatórios", href: "/relatorios", icon: BarChart3, badge: "0" },
-        { name: "Via Férrea", href: "/via-ferrea", icon: Train, badge: "🆕" },
-        { name: "Documentos", href: "/documentos", icon: Folder, badge: stats.documentos.toString() },
+        { name: "RFIs", href: "/rfis", icon: HelpCircle, badge: "0" },
       ]
     },
     {
       section: "ferroviario",
       title: "FERROVIÁRIO",
       items: [
-        { name: "Via Férrea", href: "/via-ferrea", icon: TrendingUp, badge: "0" },
+        { name: "Via Férrea", href: "/via-ferrea", icon: Train, badge: "🆕" },
         { name: "Sinalização", href: "/sinalizacao", icon: Activity, badge: "🆕" },
         { name: "Eletrificação", href: "/eletrificacao", icon: Zap, badge: "0" },
         { name: "Pontes & Túneis", href: "/pontes-tuneis", icon: Archive, badge: "🆕" },
         { name: "Estações", href: "/estacoes", icon: Building, badge: "🆕" },
         { name: "Segurança", href: "/seguranca-ferroviaria", icon: Shield, badge: "🆕" },
+      ]
+    },
+    {
+      section: "documentacao",
+      title: "DOCUMENTAÇÃO",
+      items: [
+        { name: "Documentos", href: "/documentos", icon: Folder, badge: stats.documentos.toString() },
+        { name: "PIE", href: "/pie", icon: Shield, badge: "0" },
+        { name: "Relatórios", href: "/relatorios", icon: BarChart3, badge: "0" },
       ]
     }
   ];

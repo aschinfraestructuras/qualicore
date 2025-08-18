@@ -16,6 +16,53 @@ import type {
 export const normasAPI = {
   // ===== NORMAS =====
   normas: {
+    // Utilitário interno: tenta remover colunas opcionais que não existam no schema
+    // e refaz a operação. Útil enquanto o schema do Supabase não for atualizado.
+    async _retryWithoutMissingColumns<T extends Record<string, any>>(
+      operation: 'insert' | 'update',
+      originalPayload: T,
+      tableId: string,
+      id?: string
+    ): Promise<any> {
+      const optionalColumns = [
+        'documentos_anexos',
+        'limites_aceitacao',
+        'metodos_ensaio',
+        'documentos_relacionados',
+        'observacoes',
+        'tags'
+      ];
+
+      const sanitized: Record<string, any> = { ...originalPayload };
+      // Remove apenas colunas opcionais que possam causar o erro
+      optionalColumns.forEach((col) => {
+        if (col in sanitized) {
+          delete sanitized[col];
+        }
+      });
+
+      if (operation === 'insert') {
+        const { data, error } = await supabase
+          .from(tableId)
+          .insert([{ ...sanitized }])
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      }
+
+      // update
+      const { data, error } = await supabase
+        .from(tableId)
+        .update({ ...sanitized })
+        .eq('id', id as string)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
     // Buscar todas as normas
     async getAll(): Promise<Norma[]> {
       const { data, error } = await supabase
@@ -91,6 +138,8 @@ export const normasAPI = {
 
     // Criar nova norma
     async create(norma: Omit<Norma, 'id' | 'criado_em' | 'atualizado_em'>): Promise<Norma> {
+      console.log('API: Criando norma com dados:', norma);
+      
       const { data, error } = await supabase
         .from('normas')
         .insert([{
@@ -101,12 +150,33 @@ export const normasAPI = {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('API: Erro ao criar norma:', error);
+        // Fallback para casos onde o schema ainda não tem todas as colunas opcionais
+        // Erro típico: PGRST204 Could not find the 'documentos_anexos' column of 'normas' in the schema cache
+        const code = (error as any).code as string | undefined;
+        const message = (error as any).message as string | undefined;
+        const isMissingColumn = code === 'PGRST204' || (message && /Could not find the .* column of 'normas'/i.test(message));
+        if (isMissingColumn) {
+          console.warn('API: Tentando criar norma removendo colunas opcionais em falta no schema...');
+          const retryData = await this._retryWithoutMissingColumns('insert', {
+            ...norma,
+            criado_em: new Date().toISOString(),
+            atualizado_em: new Date().toISOString()
+          }, 'normas');
+          return retryData as Norma;
+        }
+        throw error;
+      }
+      
+      console.log('API: Norma criada com sucesso:', data);
       return data;
     },
 
     // Atualizar norma
     async update(id: string, updates: Partial<Norma>): Promise<Norma> {
+      console.log('API: Atualizando norma com ID:', id, 'dados:', updates);
+      
       const { data, error } = await supabase
         .from('normas')
         .update({
@@ -117,7 +187,23 @@ export const normasAPI = {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('API: Erro ao atualizar norma:', error);
+        const code = (error as any).code as string | undefined;
+        const message = (error as any).message as string | undefined;
+        const isMissingColumn = code === 'PGRST204' || (message && /Could not find the .* column of 'normas'/i.test(message));
+        if (isMissingColumn) {
+          console.warn('API: Tentando atualizar norma removendo colunas opcionais em falta no schema...');
+          const retryData = await this._retryWithoutMissingColumns('update', {
+            ...updates,
+            atualizado_em: new Date().toISOString()
+          }, 'normas', id);
+          return retryData as Norma;
+        }
+        throw error;
+      }
+      
+      console.log('API: Norma atualizada com sucesso:', data);
       return data;
     },
 

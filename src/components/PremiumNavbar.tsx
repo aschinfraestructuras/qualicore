@@ -397,24 +397,26 @@ ${searchResults.join('\n\n')}
   const commands = [
     { name: "Dashboard", icon: "📊", category: "Navegação", path: "/dashboard", shortcut: "⌘D" },
     { name: "Obras", icon: "🏗️", category: "Gestão", path: "/obras", shortcut: "⌘O" },
-    { name: "Ensaios", icon: "🧪", category: "Laboratório", path: "/ensaios", shortcut: "⌘E" },
-    { name: "Controlo Betonagens", icon: "🏗️", category: "Especializado", path: "/controlo-betonagens", shortcut: "⌘B" },
-    { name: "Caracterização Solos", icon: "🌱", category: "Especializado", path: "/caracterizacao-solos", shortcut: "⌘S" },
-    { name: "Checklists", icon: "✅", category: "Inspeção", path: "/checklists", shortcut: "⌘C" },
+    { name: "Ensaios", icon: "🧪", category: "Qualidade", path: "/ensaios", shortcut: "⌘E" },
+    { name: "Controlo Betonagens", icon: "🏗️", category: "Qualidade", path: "/controlo-betonagens", shortcut: "⌘B" },
+    { name: "Caracterização Solos", icon: "🌱", category: "Qualidade", path: "/caracterizacao-solos", shortcut: "⌘S" },
+    { name: "Sistema de Normas", icon: "📚", category: "Qualidade", path: "/normas", shortcut: "⌘N" },
+    { name: "Submissão Materiais", icon: "📦", category: "Qualidade", path: "/submissao-materiais", shortcut: "⌘M" },
+    { name: "Certificados e Registos", icon: "🏆", category: "Qualidade", path: "/certificados", shortcut: "⌘C" },
+    { name: "Checklists", icon: "✅", category: "Qualidade", path: "/checklists", shortcut: "⌘C" },
+    { name: "Não Conformidades", icon: "⚠️", category: "Qualidade", path: "/nao-conformidades", shortcut: "⌘N" },
     { name: "Materiais", icon: "📦", category: "Gestão", path: "/materiais", shortcut: "⌘M" },
     { name: "Fornecedores", icon: "🏢", category: "Gestão", path: "/fornecedores", shortcut: "⌘F" },
-    { name: "Não Conformidades", icon: "⚠️", category: "Qualidade", path: "/nao-conformidades", shortcut: "⌘N" },
-    { name: "Documentos", icon: "📄", category: "Gestão", path: "/documentos", shortcut: "⌘D" },
-    { name: "Relatórios", icon: "📈", category: "Análise", path: "/relatorios", shortcut: "⌘R" },
-            { name: "Via Férrea", icon: "🛤️", category: "Ferroviário", path: "/via-ferrea", shortcut: "⌘V" },
-        { name: "Sinalização", icon: "🚦", category: "Ferroviário", path: "/sinalizacao", shortcut: "⌘S" },
-        { name: "Eletrificação", icon: "⚡", category: "Ferroviário", path: "/eletrificacao", shortcut: "⌘E" },
-        { name: "Pontes & Túneis", icon: "🌉", category: "Ferroviário", path: "/pontes-tuneis", shortcut: "⌘P" },
-        { name: "Estações", icon: "🏢", category: "Ferroviário", path: "/estacoes", shortcut: "⌘T" },
-        { name: "Segurança", icon: "🛡️", category: "Ferroviário", path: "/seguranca-ferroviaria", shortcut: "⌘G" },
-        { name: "RFIs", icon: "❓", category: "Gestão", path: "/rfis", shortcut: "⌘I" },
-    { name: "Ensaios Compactação", icon: "🔧", category: "Especializado", path: "/ensaios-compactacao", shortcut: "⌘A" },
-    { name: "PIE", icon: "🎯", category: "Especializado", path: "/pie", shortcut: "⌘P" },
+    { name: "RFIs", icon: "❓", category: "Gestão", path: "/rfis", shortcut: "⌘I" },
+    { name: "Via Férrea", icon: "🛤️", category: "Ferroviário", path: "/via-ferrea", shortcut: "⌘V" },
+    { name: "Sinalização", icon: "🚦", category: "Ferroviário", path: "/sinalizacao", shortcut: "⌘S" },
+    { name: "Eletrificação", icon: "⚡", category: "Ferroviário", path: "/eletrificacao", shortcut: "⌘E" },
+    { name: "Pontes & Túneis", icon: "🌉", category: "Ferroviário", path: "/pontes-tuneis", shortcut: "⌘P" },
+    { name: "Estações", icon: "🏢", category: "Ferroviário", path: "/estacoes", shortcut: "⌘T" },
+    { name: "Segurança", icon: "🛡️", category: "Ferroviário", path: "/seguranca-ferroviaria", shortcut: "⌘G" },
+    { name: "Documentos", icon: "📄", category: "Documentação", path: "/documentos", shortcut: "⌘D" },
+    { name: "PIE", icon: "🎯", category: "Documentação", path: "/pie", shortcut: "⌘P" },
+    { name: "Relatórios", icon: "📈", category: "Documentação", path: "/relatorios", shortcut: "⌘R" },
   ];
 
   const filteredCommands = commands.filter((command) =>
@@ -433,13 +435,10 @@ ${searchResults.join('\n\n')}
 
   const categoryColors = {
     "Navegação": "blue",
-    "Gestão": "emerald", 
-    "Laboratório": "purple",
-    "Inspeção": "green",
-    "Qualidade": "red",
-    "Análise": "indigo",
-    "Ferroviário": "brown",
-    "Especializado": "orange"
+    "Qualidade": "emerald", 
+    "Gestão": "purple",
+    "Ferroviário": "orange",
+    "Documentação": "indigo"
   };
 
   console.log("🎯 PremiumNavbar render - showCommandPalette:", showCommandPalette);

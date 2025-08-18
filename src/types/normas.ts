@@ -16,6 +16,14 @@ export interface Norma {
   metodos_ensaio?: string[];
   limites_aceitacao?: Record<string, any>;
   documentos_relacionados: string[];
+  documentos_anexos?: Array<{
+    nome: string;
+    url: string;
+    tipo: string;
+    tamanho: number;
+    data_upload: string;
+    path?: string; // Caminho no Supabase Storage
+  }>;
   observacoes?: string;
   tags: string[];
   prioridade: PrioridadeNorma;

@@ -33,6 +33,8 @@ import SegurancaFerroviaria from "./pages/SegurancaFerroviaria";
 import ControloBetonagens from "./pages/ControloBetonagens";
 import CaracterizacaoSolos from "./pages/CaracterizacaoSolos";
 import Normas from "./pages/Normas";
+import SubmissaoMateriais from "./pages/SubmissaoMateriais";
+import Certificados from "./pages/Certificados";
 import Obras from "./pages/Obras";
 import Landing from "./pages/Landing";
 import SupabaseTest from "./components/SupabaseTest";
@@ -330,6 +332,32 @@ function App() {
           }
         >
           <Route index element={<Normas />} />
+        </Route>
+
+        <Route
+          path="/submissao-materiais"
+          element={
+            user ? (
+              <PremiumLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<SubmissaoMateriais />} />
+        </Route>
+
+        <Route
+          path="/certificados"
+          element={
+            user ? (
+              <PremiumLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<Certificados />} />
         </Route>
         
         <Route

@@ -1,288 +1,186 @@
-# Guia para Executar o Sistema de Normas no Supabase
+# Guia para Executar Script de Normas no Supabase
 
-## 📋 Descrição
-Este guia explica como implementar o **Sistema de Normas** completo no Supabase, incluindo todas as tabelas, funções, políticas de segurança e dados de exemplo.
+## 📋 Sistema Implementado
 
-## 🚀 Sistema Implementado
+O **Sistema de Normas** foi implementado com as seguintes funcionalidades:
 
-### Funcionalidades Principais:
-- ✅ **Gestão completa de normas** (NP EN, EN ISO, UIC, etc.)
-- ✅ **Sistema de versões** com histórico de alterações
-- ✅ **Aplicações de normas** por módulo
-- ✅ **Notificações automáticas** para atualizações
-- ✅ **Pesquisa avançada** com filtros múltiplos
-- ✅ **Estatísticas em tempo real**
-- ✅ **Exportação CSV/PDF**
-- ✅ **Políticas de segurança** (RLS)
+### 🗂️ Arquivos Criados:
+- `src/types/normas.ts` - Tipos TypeScript
+- `src/lib/supabase-api/normasAPI.ts` - API do Supabase
+- `src/pages/Normas.tsx` - Página principal
+- `src/components/NormasManager.tsx` - Componente reutilizável
+- `supabase/migrations/008_create_normas_tables.sql` - Script SQL
+- `executar-normas-supabase.cjs` - Script de execução
 
-### Normas Incluídas:
-- **Betão Estrutural**: NP EN 206+A1, NP EN 1992-1-1, NP EN 12390-3, NP EN 12390-5
-- **Solos e Fundações**: NP EN ISO 14688-1, NP EN ISO 17892-4, NP EN ISO 17892-6
-- **Ferroviária**: UIC 702, EN 13146-1, EN 13481-1
-- **Aços e Armaduras**: NP EN 10080, NP EN ISO 6892-1
-- **Segurança**: NP 4397, NP EN ISO 7010
+### 🗄️ Tabelas Criadas:
+1. **normas** - Tabela principal de normas
+2. **versoes_normas** - Versões das normas
+3. **aplicacoes_normas** - Aplicações das normas
+4. **notificacoes_normas** - Notificações sobre normas
 
-## 📁 Arquivos Criados
-
-### 1. Tipos TypeScript
-- `src/types/normas.ts` - Interfaces e tipos completos
-- `src/lib/supabase-api/normasAPI.ts` - API completa
-- `src/pages/Normas.tsx` - Interface principal
-
-### 2. Script SQL
-- `supabase/migrations/008_create_normas_tables.sql` - Script completo
-
-## 🔧 Como Executar
+## 🚀 Como Executar
 
 ### Opção 1: Via Supabase Dashboard (Recomendado)
 
-1. **Aceder ao Supabase Dashboard**
-   - Vá para [supabase.com](https://supabase.com)
-   - Faça login na sua conta
+1. **Acesse o Supabase Dashboard**
+   - Vá para https://supabase.com/dashboard
    - Selecione o seu projeto
 
-2. **Abrir o SQL Editor**
+2. **Abra o SQL Editor**
    - No menu lateral, clique em "SQL Editor"
    - Clique em "New query"
 
-3. **Executar o Script**
-   - Abra o ficheiro `supabase/migrations/008_create_normas_tables.sql`
+3. **Cole o Script SQL**
+   - Abra o arquivo `supabase/migrations/008_create_normas_tables.sql`
    - Copie todo o conteúdo
    - Cole no SQL Editor do Supabase
+
+4. **Execute o Script**
    - Clique em "Run" para executar
+   - Aguarde a conclusão
 
-4. **Verificar a Execução**
-   - Deve aparecer uma mensagem de sucesso
-   - Verifique as tabelas criadas em "Table Editor"
+### Opção 2: Via Script Node.js
 
-### Opção 2: Via Node.js Script
+1. **Configure as Credenciais**
+   - Abra `executar-normas-supabase.cjs`
+   - Substitua `your-project.supabase.co` pela URL do seu projeto
+   - Substitua `your-anon-key` pela chave anônima do seu projeto
 
-1. **Criar script de execução**
-   ```bash
-   # Criar ficheiro executar-normas-supabase.cjs
-   ```
-
-2. **Configurar variáveis de ambiente**
-   ```bash
-   # .env.local
-   VITE_SUPABASE_URL=sua_url_do_supabase
-   VITE_SUPABASE_ANON_KEY=sua_chave_anonima
-   ```
-
-3. **Executar o script**
+2. **Execute o Script**
    ```bash
    node executar-normas-supabase.cjs
    ```
 
 ## 📊 Estrutura das Tabelas
 
-### 1. `normas` - Tabela Principal
-```sql
-- id (UUID, Primary Key)
-- codigo (VARCHAR, Unique)
-- titulo (VARCHAR)
-- descricao (TEXT)
-- categoria (VARCHAR)
-- subcategoria (VARCHAR)
-- organismo (VARCHAR)
-- versao (VARCHAR)
-- data_publicacao (DATE)
-- data_entrada_vigor (DATE)
-- status (VARCHAR)
-- escopo (TEXT)
-- aplicabilidade (TEXT[])
-- requisitos_principais (TEXT[])
-- metodos_ensaio (TEXT[])
-- limites_aceitacao (JSONB)
-- documentos_relacionados (TEXT[])
-- observacoes (TEXT)
-- tags (TEXT[])
-- prioridade (VARCHAR)
-- ultima_atualizacao (TIMESTAMP)
-- criado_em (TIMESTAMP)
-- atualizado_em (TIMESTAMP)
-```
+### Tabela `normas`:
+- `id` - UUID único
+- `codigo` - Código da norma (ex: NP EN 206-1)
+- `titulo` - Título da norma
+- `descricao` - Descrição detalhada
+- `categoria` - Categoria (Construção Civil, Ferroviária, etc.)
+- `subcategoria` - Subcategoria
+- `organismo` - Organismo normativo (IPQ, CEN, ISO, etc.)
+- `versao` - Versão da norma
+- `data_publicacao` - Data de publicação
+- `data_entrada_vigor` - Data de entrada em vigor
+- `status` - Status (ATIVA, REVOGADA, EM_REVISAO)
+- `escopo` - Escopo da norma
+- `aplicabilidade` - Array de aplicabilidades
+- `requisitos_principais` - Array de requisitos
+- `metodos_ensaio` - Array de métodos de ensaio
+- `limites_aceitacao` - JSONB com limites
+- `documentos_relacionados` - Array de documentos
+- `observacoes` - Observações
+- `tags` - Array de tags
+- `prioridade` - Prioridade (BAIXA, MEDIA, ALTA, CRITICA)
 
-### 2. `versoes_normas` - Histórico de Versões
-```sql
-- id (UUID, Primary Key)
-- norma_id (UUID, Foreign Key)
-- versao (VARCHAR)
-- data_publicacao (DATE)
-- data_entrada_vigor (DATE)
-- alteracoes_principais (TEXT[])
-- status (VARCHAR)
-- documento_url (TEXT)
-- observacoes (TEXT)
-- criado_em (TIMESTAMP)
-```
+### Tabela `versoes_normas`:
+- `id` - UUID único
+- `norma_id` - Referência à norma
+- `versao` - Versão específica
+- `data_publicacao` - Data de publicação
+- `data_entrada_vigor` - Data de entrada em vigor
+- `alteracoes_principais` - Array de alterações
+- `status` - Status da versão
+- `documento_url` - URL do documento
+- `observacoes` - Observações
 
-### 3. `aplicacoes_normas` - Aplicações por Módulo
-```sql
-- id (UUID, Primary Key)
-- norma_id (UUID, Foreign Key)
-- modulo_id (UUID)
-- modulo_tipo (VARCHAR)
-- aplicabilidade (VARCHAR)
-- requisitos_especificos (TEXT[])
-- verificacoes_necessarias (TEXT[])
-- frequencia_verificacao (VARCHAR)
-- responsavel_verificacao (VARCHAR)
-- criado_em (TIMESTAMP)
-- atualizado_em (TIMESTAMP)
-```
+### Tabela `aplicacoes_normas`:
+- `id` - UUID único
+- `norma_id` - Referência à norma
+- `modulo_id` - ID do módulo
+- `modulo_tipo` - Tipo do módulo
+- `aplicabilidade` - Tipo de aplicabilidade
+- `requisitos_especificos` - Array de requisitos
+- `verificacoes_necessarias` - Array de verificações
+- `frequencia_verificacao` - Frequência
+- `responsavel_verificacao` - Responsável
 
-### 4. `notificacoes_normas` - Sistema de Notificações
-```sql
-- id (UUID, Primary Key)
-- norma_id (UUID, Foreign Key)
-- tipo (VARCHAR)
-- titulo (VARCHAR)
-- mensagem (TEXT)
-- prioridade (VARCHAR)
-- destinatarios (TEXT[])
-- lida (BOOLEAN)
-- data_envio (TIMESTAMP)
-- data_leitura (TIMESTAMP)
-```
+### Tabela `notificacoes_normas`:
+- `id` - UUID único
+- `norma_id` - Referência à norma
+- `tipo` - Tipo de notificação
+- `titulo` - Título da notificação
+- `mensagem` - Mensagem
+- `prioridade` - Prioridade
+- `destinatarios` - Array de destinatários
+- `lida` - Se foi lida
+- `data_envio` - Data de envio
+- `data_leitura` - Data de leitura
 
-## 🔐 Políticas de Segurança (RLS)
+## 🔐 Políticas RLS (Row Level Security)
 
-### Normas
-- ✅ Utilizadores autenticados podem ver todas as normas
-- ✅ Utilizadores autenticados podem criar/editar/eliminar normas
+O script inclui políticas RLS para:
+- **Usuários autenticados** podem ler todas as normas
+- **Usuários autenticados** podem criar/editar normas
+- **Usuários autenticados** podem excluir normas
 
-### Versões
-- ✅ Utilizadores autenticados podem gerir versões
+## 📈 Dados de Exemplo
 
-### Aplicações
-- ✅ Utilizadores autenticados podem gerir aplicações
+O script inclui **12 normas de exemplo**:
+- **Betão Estrutural** (NP EN 206-1, NP EN 1992-1-1)
+- **Solos e Fundações** (NP EN 1997-1, NP EN ISO 14688-1)
+- **Ferroviária** (NP EN 13848-1, NP EN 14363)
+- **Aços e Armaduras** (NP EN 10080, NP EN 10025-1)
+- **Segurança** (NP EN 1990, NP EN 1991-1-1)
+- **Qualidade** (NP EN ISO 9001, NP EN ISO 14001)
 
-### Notificações
-- ✅ Utilizadores só veem suas próprias notificações
-- ✅ Utilizadores autenticados podem gerir notificações
+## ✅ Verificação Pós-Execução
 
-## 📈 Funções e Estatísticas
+Após executar o script, verifique:
 
-### Função `get_normas_stats()`
-Retorna estatísticas completas:
-- Total de normas
-- Normas ativas/em revisão/obsoletas
-- Distribuição por categorias
-- Distribuição por organismos
-- Normas recentes (30 dias)
-- Normas a vencer (90 dias)
+1. **Tabelas Criadas**
+   - Vá para "Table Editor" no Supabase
+   - Confirme que as 4 tabelas foram criadas
 
-## 🎯 Dados de Exemplo Incluídos
+2. **Dados de Exemplo**
+   - Verifique se há 12 registros na tabela `normas`
+   - Confirme se há versões e aplicações associadas
 
-### Normas de Betão (4 normas)
-- NP EN 206+A1 - Betão estrutural
-- NP EN 1992-1-1 - Eurocódigo 2
-- NP EN 12390-3 - Ensaios de compressão
-- NP EN 12390-5 - Ensaios de flexão
+3. **Políticas RLS**
+   - Vá para "Authentication" > "Policies"
+   - Confirme que as políticas foram criadas
 
-### Normas de Solos (3 normas)
-- NP EN ISO 14688-1 - Identificação de solos
-- NP EN ISO 17892-4 - Granulometria
-- NP EN ISO 17892-6 - Limites de consistência
+4. **Função de Estatísticas**
+   - Vá para "Database" > "Functions"
+   - Confirme que `get_normas_stats` foi criada
 
-### Normas Ferroviárias (3 normas)
-- UIC 702 - Travessas
-- EN 13146-1 - Fixações
-- EN 13481-1 - Produtos de fixação
+## 🎯 Funcionalidades Disponíveis
 
-### Normas de Aços (2 normas)
-- NP EN 10080 - Aços para betão
-- NP EN ISO 6892-1 - Ensaios de tração
+Após a execução, o módulo de Normas oferece:
 
-### Normas de Segurança (2 normas)
-- NP 4397 - Sinalização de segurança
-- NP EN ISO 7010 - Símbolos de segurança
+- ✅ **Listagem completa** de normas
+- ✅ **Pesquisa avançada** por categoria, organismo, status
+- ✅ **Filtros múltiplos** e ordenação
+- ✅ **Estatísticas** em tempo real
+- ✅ **Exportação** para CSV e PDF
+- ✅ **Gestão de versões** das normas
+- ✅ **Aplicações** em módulos específicos
+- ✅ **Notificações** sobre alterações
+- ✅ **Interface moderna** e responsiva
 
-## 🔍 Funcionalidades da Interface
+## 🚨 Solução de Problemas
 
-### Pesquisa e Filtros
-- ✅ Pesquisa por texto livre
-- ✅ Filtros por categoria, organismo, status, prioridade
-- ✅ Ordenação por código, título, data, prioridade
-- ✅ Limpeza de filtros
+### Erro: "Tabela não existe"
+- Verifique se o script foi executado completamente
+- Confirme se não há erros no console do Supabase
 
-### Visualização
-- ✅ Tabela responsiva com todas as informações
-- ✅ Modal de detalhes completo
-- ✅ Indicadores visuais de status e prioridade
-- ✅ Estatísticas em cards animados
+### Erro: "Política RLS não encontrada"
+- Execute novamente a seção de políticas RLS
+- Verifique se o usuário está autenticado
 
-### Exportação
-- ✅ Exportação CSV com todos os dados
-- ✅ Relatório PDF formatado
-- ✅ Nomes de ficheiros com data
-
-## 🚨 Verificação Pós-Execução
-
-### 1. Verificar Tabelas
-```sql
--- Verificar se as tabelas foram criadas
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
-AND table_name IN ('normas', 'versoes_normas', 'aplicacoes_normas', 'notificacoes_normas');
-```
-
-### 2. Verificar Dados
-```sql
--- Contar normas inseridas
-SELECT COUNT(*) as total_normas FROM normas;
-
--- Verificar categorias
-SELECT categoria, COUNT(*) as total 
-FROM normas 
-GROUP BY categoria 
-ORDER BY total DESC;
-```
-
-### 3. Verificar Funções
-```sql
--- Testar função de estatísticas
-SELECT get_normas_stats();
-```
-
-### 4. Verificar Políticas RLS
-```sql
--- Verificar políticas ativas
-SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual 
-FROM pg_policies 
-WHERE tablename IN ('normas', 'versoes_normas', 'aplicacoes_normas', 'notificacoes_normas');
-```
-
-## 🎉 Resultado Esperado
-
-Após a execução bem-sucedida, você terá:
-
-- ✅ **12 normas** de exemplo inseridas
-- ✅ **12 versões** correspondentes
-- ✅ **24 aplicações** por módulo
-- ✅ **2 notificações** de exemplo
-- ✅ **Sistema completo** de gestão de normas
-- ✅ **Interface moderna** e funcional
-- ✅ **Integração total** com o Qualicore
-
-## 🔗 Integração com Outros Módulos
-
-O sistema de normas está integrado com:
-- ✅ **Controlo de Betonagens** - Aplicação automática de normas NP EN 206+A1
-- ✅ **Caracterização de Solos** - Aplicação automática de normas NP EN ISO 14688-1
-- ✅ **Todos os módulos** - Sistema de aplicações configurável
+### Erro: "Função não encontrada"
+- Execute novamente a seção de funções
+- Verifique se a função `get_normas_stats` foi criada
 
 ## 📞 Suporte
 
-Se encontrar algum problema:
-1. Verifique os logs do Supabase
-2. Confirme que todas as tabelas foram criadas
-3. Teste a função `get_normas_stats()`
-4. Verifique as políticas RLS
+Se encontrar problemas:
+1. Verifique os logs no console do Supabase
+2. Confirme se todas as tabelas foram criadas
+3. Teste a conexão com a API
 
 ---
 
-**🎯 Sistema de Normas implementado com sucesso!**
-O Qualicore agora tem um sistema de normas de nível europeu, comparável aos melhores softwares do mercado.
+**✅ Sistema de Normas pronto para uso!**
