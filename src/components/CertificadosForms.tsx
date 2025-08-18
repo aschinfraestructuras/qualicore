@@ -121,16 +121,16 @@ const CertificadosForms: React.FC<CertificadosFormsProps> = ({
     try {
       setUploadingFile(true);
       const bucket = (import.meta as any).env?.VITE_SUPABASE_BUCKET_CERTIFICADOS || 'documents';
-      const path = `certificados/${Date.now()}_${file.name}`;
+      const folder = 'certificados';
       
-      const url = await storageService.uploadFile(file, path, bucket);
+      const result = await storageService.uploadFile(file, folder, bucket);
       
       const newDocument = {
         nome: file.name,
         tipo: file.type,
         tamanho: file.size,
-        url: url,
-        path: path,
+        url: result.url,
+        path: result.path,
         data_upload: new Date().toISOString()
       };
 
@@ -143,6 +143,7 @@ const CertificadosForms: React.FC<CertificadosFormsProps> = ({
       toast.error('Erro ao carregar documento');
     } finally {
       setUploadingFile(false);
+      if (event.target) event.target.value = '';
     }
   };
 
@@ -211,12 +212,23 @@ const CertificadosForms: React.FC<CertificadosFormsProps> = ({
     try {
       setLoading(true);
       
+      const userId = await certificadosAPI.getCurrentUserId();
+      console.log('User ID obtido:', userId);
+      
+      if (!userId) {
+        toast.error('Erro: Não foi possível obter o ID do usuário');
+        return;
+      }
+      
       const certificadoData = {
         ...formData,
+        user_id: userId,
         custo_emissao: Number(formData.custo_emissao) || 0,
         custo_manutencao: Number(formData.custo_manutencao) || 0,
         custo_renovacao: Number(formData.custo_renovacao) || 0
       } as Certificado;
+      
+      console.log('Dados do certificado a serem enviados:', certificadoData);
 
       if (certificado?.id) {
         await certificadosAPI.certificados.update(certificado.id, certificadoData);

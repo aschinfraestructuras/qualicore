@@ -24,6 +24,19 @@ const BUCKETS = {
   padrao: (import.meta as any).env?.VITE_SUPABASE_BUCKET_PADRAO || 'documents'
 };
 
+// Função para obter o bucket correto baseado no contexto
+const getBucketForContext = (folder?: string, bucket?: string): string => {
+  if (bucket) return bucket;
+  
+  if (folder?.includes('normas')) return BUCKETS.normas;
+  if (folder?.includes('certificados')) return BUCKETS.certificados;
+  if (folder?.includes('registos')) return BUCKETS.certificados;
+  if (folder?.includes('termos')) return BUCKETS.certificados;
+  if (folder?.includes('relatorios')) return BUCKETS.certificados;
+  
+  return BUCKETS.padrao;
+};
+
 export const storageService = {
   // Upload de ficheiro com bucket configurável
   async uploadFile(
@@ -35,7 +48,9 @@ export const storageService = {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${folder}/${fileName}`;
-      const bucketToUse = bucket || (folder === 'normas' ? BUCKETS.normas : folder === 'certificados' ? BUCKETS.certificados : BUCKETS.padrao);
+      const bucketToUse = getBucketForContext(folder, bucket);
+
+      console.log(`Uploading to bucket: ${bucketToUse}, path: ${filePath}`);
 
       const { data, error } = await supabase.storage
         .from(bucketToUse)
@@ -70,7 +85,9 @@ export const storageService = {
   // Download de ficheiro
   async downloadFile(filePath: string, fileName: string, bucket?: string): Promise<void> {
     try {
-      const bucketToUse = bucket || BUCKETS.padrao;
+      const bucketToUse = getBucketForContext(filePath, bucket);
+      console.log(`Downloading from bucket: ${bucketToUse}, path: ${filePath}`);
+      
       const { data, error } = await supabase.storage
         .from(bucketToUse)
         .download(filePath);
@@ -98,7 +115,9 @@ export const storageService = {
   // Eliminar ficheiro
   async deleteFile(filePath: string, bucket?: string): Promise<void> {
     try {
-      const bucketToUse = bucket || BUCKETS.padrao;
+      const bucketToUse = getBucketForContext(filePath, bucket);
+      console.log(`Deleting from bucket: ${bucketToUse}, path: ${filePath}`);
+      
       const { error } = await supabase.storage
         .from(bucketToUse)
         .remove([filePath]);

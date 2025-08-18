@@ -41,6 +41,8 @@ import { SinalizacaoDetails } from '../components/SinalizacaoDetails';
 import { SinalizacaoFilters } from '../components/SinalizacaoFilters';
 import { Pagination } from '../components/Pagination';
 import { ExportButtons } from '../components/ExportButtons';
+import RelatorioSinalizacaoPremium from '../components/RelatorioSinalizacaoPremium';
+import Modal from '../components/Modal';
 import { 
   FilterState, 
   applyFilters,
@@ -131,6 +133,11 @@ export default function Sinalizacao() {
   const [itemsPerPage] = useState(10);
   const [sortBy, setSortBy] = useState('codigo');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  // Estados para relatórios
+  const [showRelatorio, setShowRelatorio] = useState(false);
+  const [tipoRelatorio, setTipoRelatorio] = useState('sinalizacoes');
+  const [sinalizacoesSelecionadas, setSinalizacoesSelecionadas] = useState<SistemaSinalizacao[]>([]);
 
   const loadData = async () => {
     try {
@@ -428,6 +435,16 @@ export default function Sinalizacao() {
             </div>
             <div className="flex items-center space-x-3">
               <button
+                onClick={() => {
+                  setTipoRelatorio('sinalizacoes');
+                  setShowRelatorio(true);
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+              >
+                <FileText className="h-4 w-4" />
+                <span>Relatório</span>
+              </button>
+              <button
                 onClick={() => handleAddNew('sinalizacao')}
                 className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 flex items-center space-x-2 shadow-lg"
               >
@@ -613,6 +630,16 @@ export default function Sinalizacao() {
                     entityType="sinalizacoes"
                   />
                   <button
+                    onClick={() => {
+                      setTipoRelatorio('sinalizacoes');
+                      setShowRelatorio(true);
+                    }}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>Relatório</span>
+                  </button>
+                  <button
                     onClick={() => handleAddNew('sinalizacao')}
                     className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 flex items-center space-x-2"
                   >
@@ -776,6 +803,16 @@ export default function Sinalizacao() {
               <h2 className="text-2xl font-bold text-gray-900">Inspeções de Sinalização</h2>
               <div className="flex items-center space-x-3">
                 <button
+                  onClick={() => {
+                    setTipoRelatorio('inspecoes');
+                    setShowRelatorio(true);
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>Relatório</span>
+                </button>
+                <button
                   onClick={() => handleAddNew('inspecao')}
                   className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-200 flex items-center space-x-2"
                 >
@@ -870,6 +907,39 @@ export default function Sinalizacao() {
             type={modalType}
           />
         )}
+
+        {/* Relatório Modal */}
+        <Modal
+          isOpen={showRelatorio}
+          onClose={() => setShowRelatorio(false)}
+          size="xl"
+          title={`Relatório de ${tipoRelatorio === 'sinalizacoes' ? 'Sinalizações' : 'Inspeções de Sinalização'}`}
+        >
+          <div className="space-y-4">
+            <RelatorioSinalizacaoPremium 
+              tipoRelatorio={tipoRelatorio as 'sinalizacoes' | 'inspecoes'}
+              onSelecaoChange={setSinalizacoesSelecionadas}
+            />
+            
+            {sinalizacoesSelecionadas.length > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-blue-900">
+                      {sinalizacoesSelecionadas.length} sinalização(ões) selecionada(s)
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setSinalizacoesSelecionadas([])}
+                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm hover:bg-blue-200"
+                  >
+                    Limpar seleção
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
       </div>
     </div>
   );

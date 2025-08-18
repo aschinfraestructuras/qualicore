@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FileText, Download, X, Filter, Calendar, Building, TrendingUp, Users, MapPin, DollarSign, Clock, CheckCircle, AlertCircle, XCircle, Info } from 'lucide-react';
-import { PDFService } from '../services/pdfService';
+import PDFService from '../services/pdfService';
 import { Obra } from '../types';
 
 interface RelatorioObrasPremiumProps {

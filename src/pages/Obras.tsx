@@ -30,7 +30,7 @@ import RelatorioObrasPremium from "@/components/RelatorioObrasPremium";
 import { ShareObraModal } from "@/components/ShareObraModal";
 import { SavedObrasViewer } from "@/components/SavedObrasViewer";
 import { obrasAPI } from "@/lib/supabase-api";
-import { PDFService } from "@/services/pdfService";
+import PDFService from "@/services/pdfService";
 import { ShareService } from "@/services/shareService";
 import { Link } from "react-router-dom";
 

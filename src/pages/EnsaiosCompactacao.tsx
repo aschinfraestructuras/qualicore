@@ -4,7 +4,7 @@ import { EnsaioCompactacao } from '../types';
 import { ensaioCompactacaoService } from '../services/ensaioCompactacaoService';
 import EnsaioCompactacaoForm from '../components/forms/EnsaioCompactacaoForm';
 import RelatorioEnsaiosCompactacaoPremium from '../components/RelatorioEnsaiosCompactacaoPremium';
-import { PDFService } from '../services/pdfService';
+import PDFService from '../services/pdfService';
 import { obrasAPI } from '../lib/supabase-api';
 import toast from 'react-hot-toast';
 

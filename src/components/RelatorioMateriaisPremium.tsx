@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Material } from "@/types";
 import { Download, Printer, FileText, Filter, Calendar, Package, CheckCircle, AlertTriangle, XCircle, Clock } from "lucide-react";
 import toast from "react-hot-toast";
-import { PDFService } from "@/services/pdfService";
+import PDFService from "@/services/pdfService";
 
 interface RelatorioMateriaisPremiumProps {
   materiais: Material[];

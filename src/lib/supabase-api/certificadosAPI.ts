@@ -822,5 +822,15 @@ export const certificadosAPI = {
 
       return html;
     }
+  },
+
+  // Função para obter o ID do usuário atual
+  async getCurrentUserId(): Promise<string | null> {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) {
+      console.error('Erro ao obter usuário atual:', error);
+      return null;
+    }
+    return user?.id || null;
   }
 };

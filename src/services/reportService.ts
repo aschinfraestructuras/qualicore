@@ -7,6 +7,12 @@ import {
   NaoConformidade,
   Obra,
 } from "@/types";
+import type { Armadura } from "@/types/armaduras";
+import { Certificado } from "@/types/certificados";
+import { Norma } from "@/types/normas";
+import { SubmissaoMaterial } from "@/types/submissaoMateriais";
+import type { Sinalizacao, InspecaoSinalizacao } from "@/types/sinalizacao";
+import type { SistemaSeguranca, InspecaoSeguranca } from "@/types/segurancaFerroviaria";
 import type { MetricasReais } from "./metricsService";
 
 // Configuração da empresa
@@ -39,7 +45,15 @@ export type TipoRelatorio =
   | "ncs"
   | "documentos"
   | "obras"
-  | "fornecedores";
+  | "fornecedores"
+  | "armaduras"
+  | "certificados"
+  | "normas"
+  | "submissaoMateriais"
+  | "sinalizacoes"
+  | "inspecoesSinalizacao"
+  | "segurancaFerroviaria"
+  | "inspecoesSeguranca";
 
 // Interface para dados do relatório
 export interface DadosRelatorio {
@@ -114,6 +128,22 @@ export class ReportService {
         return this.templateObras.bind(this);
       case "fornecedores":
         return this.templateFornecedores.bind(this);
+      case "armaduras":
+        return this.templateArmaduras.bind(this);
+      case "certificados":
+        return this.templateCertificados.bind(this);
+      case "normas":
+        return this.templateNormas.bind(this);
+      case "submissaoMateriais":
+        return this.templateSubmissaoMateriais.bind(this);
+      case "sinalizacoes":
+        return this.templateSinalizacoes.bind(this);
+      case "inspecoesSinalizacao":
+        return this.templateInspecoesSinalizacao.bind(this);
+      case "segurancaFerroviaria":
+        return this.templateSegurancaFerroviaria.bind(this);
+      case "inspecoesSeguranca":
+        return this.templateInspecoesSeguranca.bind(this);
       default:
         return this.templateGenerico.bind(this);
     }
@@ -698,6 +728,85 @@ export class ReportService {
     `;
   }
 
+  // Template para relatório de armaduras
+  private templateArmaduras(dados: DadosRelatorio): string {
+    const armaduras = (dados.dados as Armadura[]) || [];
+
+    return `
+      <!DOCTYPE html>
+      <html lang="pt-PT">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${dados.titulo}</title>
+        <style>
+          ${this.getEstilosCSS()}
+        </style>
+      </head>
+      <body>
+        ${this.getCabecalho(dados)}
+        
+        <div class="container">
+          <h1 class="titulo-principal">Relatório de Armaduras</h1>
+          
+          <div class="resumo">
+            <h2>Resumo</h2>
+            <p><strong>Período:</strong> ${dados.periodo}</p>
+            <p><strong>Total de Armaduras:</strong> ${armaduras.length}</p>
+            <p><strong>Peso Total:</strong> ${armaduras.reduce((sum, a) => sum + a.peso_total, 0).toFixed(2)} kg</p>
+            <p><strong>Fabricantes:</strong> ${[...new Set(armaduras.map((a) => a.fabricante))].join(", ")}</p>
+            <p><strong>Estados:</strong> ${[...new Set(armaduras.map((a) => a.estado))].join(", ")}</p>
+          </div>
+
+          <div class="tabela-container">
+            <h2>Detalhes das Armaduras</h2>
+            <table class="tabela-dados">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Tipo</th>
+                  <th>Diâmetro</th>
+                  <th>Quantidade</th>
+                  <th>Peso Total</th>
+                  <th>Fabricante</th>
+                  <th>Nº Colada</th>
+                  <th>Estado</th>
+                  <th>Local Aplicação</th>
+                  <th>Responsável</th>
+                  <th>Data Receção</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${armaduras
+                  .map(
+                    (armadura) => `
+                  <tr>
+                    <td>${armadura.codigo}</td>
+                    <td>${armadura.tipo}</td>
+                    <td>${armadura.diametro} mm</td>
+                    <td>${armadura.quantidade}</td>
+                    <td>${armadura.peso_total} kg</td>
+                    <td>${armadura.fabricante}</td>
+                    <td>${armadura.numero_colada}</td>
+                    <td class="estado-${armadura.estado}">${armadura.estado}</td>
+                    <td>${armadura.local_aplicacao}</td>
+                    <td>${armadura.responsavel}</td>
+                    <td>${new Date(armadura.data_rececao).toLocaleDateString("pt-PT")}</td>
+                  </tr>
+                `,
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+
+          ${this.getRodape(dados)}
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
   // Template genérico
   private templateGenerico(dados: DadosRelatorio): string {
     return `
@@ -999,10 +1108,22 @@ export class ReportService {
       .status-aprovado { color: #28a745; font-weight: bold; }
       .status-reprovado { color: #dc3545; font-weight: bold; }
       .status-em_analise { color: #17a2b8; font-weight: bold; }
+      .status-operacional { color: #28a745; font-weight: bold; }
+      .status-manutencao { color: #ffc107; font-weight: bold; }
+      .status-avaria { color: #dc3545; font-weight: bold; }
 
       .estado-ativo { color: #28a745; font-weight: bold; }
       .estado-inativo { color: #6c757d; font-weight: bold; }
       .estado-pendente { color: #ffc107; font-weight: bold; }
+
+      .resultado-conforme { color: #28a745; font-weight: bold; }
+      .resultado-nao_conforme { color: #dc3545; font-weight: bold; }
+      .resultado-pendente { color: #6c757d; font-weight: bold; }
+
+      .prioridade-critica { color: #dc3545; font-weight: bold; }
+      .prioridade-alta { color: #fd7e14; font-weight: bold; }
+      .prioridade-media { color: #ffc107; font-weight: bold; }
+      .prioridade-baixa { color: #28a745; font-weight: bold; }
       .estado-aprovado { color: #28a745; font-weight: bold; }
       .estado-reprovado { color: #dc3545; font-weight: bold; }
       .estado-concluido { color: #28a745; font-weight: bold; }
@@ -1051,6 +1172,763 @@ export class ReportService {
           border: 1px solid #ddd;
         }
       }
+    `;
+  }
+
+  // Template para relatórios de certificados
+  private templateCertificados(dados: DadosRelatorio): string {
+    const certificados = dados.dados || [];
+    
+    // Estatísticas
+    const stats = {
+      total: certificados.length,
+      validos: certificados.filter((c: any) => c.status === 'valido').length,
+      expirados: certificados.filter((c: any) => c.status === 'expirado').length,
+      pendentes: certificados.filter((c: any) => c.status === 'pendente').length,
+      fornecedores: new Set(certificados.map((c: any) => c.fornecedor)).size
+    };
+
+    return `
+      <!DOCTYPE html>
+      <html lang="pt-PT">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${dados.titulo}</title>
+        <style>
+          ${this.getEstilosCSS()}
+        </style>
+      </head>
+      <body>
+        ${this.getCabecalho(dados)}
+        
+        <div class="container">
+          <h1 class="titulo-principal">Relatório de Certificados</h1>
+          
+          <div class="resumo-executivo">
+            <h2>Resumo Executivo</h2>
+            <p>Este relatório apresenta uma visão geral dos certificados do período ${dados.periodo}.</p>
+          </div>
+
+          <div class="metricas-principais">
+            <h2>Estatísticas Gerais</h2>
+            <div class="grid-metricas">
+              <div class="metrica">
+                <h3>Total de Certificados</h3>
+                <div class="valor">${stats.total}</div>
+              </div>
+              <div class="metrica">
+                <h3>Certificados Válidos</h3>
+                <div class="valor conforme">${stats.validos}</div>
+              </div>
+              <div class="metrica">
+                <h3>Certificados Expirados</h3>
+                <div class="valor nao-conforme">${stats.expirados}</div>
+              </div>
+              <div class="metrica">
+                <h3>Certificados Pendentes</h3>
+                <div class="valor">${stats.pendentes}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="secoes-modulos">
+            <div class="secao">
+              <h2>Detalhes dos Certificados</h2>
+              <div class="tabela-container">
+                <table class="tabela-dados">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Tipo</th>
+                      <th>Fornecedor</th>
+                      <th>Status</th>
+                      <th>Data de Validade</th>
+                      <th>Responsável</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${certificados.map((certificado: any) => `
+                      <tr>
+                        <td>${certificado.codigo}</td>
+                        <td>${certificado.tipo}</td>
+                        <td>${certificado.fornecedor}</td>
+                        <td class="status-${certificado.status}">${certificado.status}</td>
+                        <td>${new Date(certificado.data_validade).toLocaleDateString('pt-PT')}</td>
+                        <td>${certificado.responsavel}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        ${this.getRodape(dados)}
+      </body>
+      </html>
+    `;
+  }
+
+  // Template para relatórios de Normas
+  private templateNormas(dados: DadosRelatorio): string {
+    const normas = dados.dados || [];
+    
+    const stats = {
+      total: normas.length,
+      ativas: normas.filter((n: any) => n.status === 'ATIVA').length,
+      revisao: normas.filter((n: any) => n.status === 'REVISAO').length,
+      obsoletas: normas.filter((n: any) => n.status === 'OBSOLETA').length,
+      criticas: normas.filter((n: any) => n.prioridade === 'CRITICA').length,
+      categorias: new Set(normas.map((n: any) => n.categoria)).size,
+      organismos: new Set(normas.map((n: any) => n.organismo)).size
+    };
+
+    return `
+      <!DOCTYPE html>
+      <html lang="pt-PT">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${dados.titulo}</title>
+        <style>
+          ${this.getEstilosCSS()}
+        </style>
+      </head>
+      <body>
+        ${this.getCabecalho(dados)}
+        
+        <div class="container">
+          <h1 class="titulo-principal">Relatório de Normas</h1>
+          
+          <div class="resumo-executivo">
+            <h2>Resumo Executivo</h2>
+            <p>Este relatório apresenta uma visão geral das normas do período ${dados.periodo}.</p>
+          </div>
+
+          <div class="metricas-principais">
+            <h2>Estatísticas Gerais</h2>
+            <div class="grid-metricas">
+              <div class="metrica">
+                <h3>Total de Normas</h3>
+                <div class="valor">${stats.total}</div>
+              </div>
+              <div class="metrica">
+                <h3>Normas Ativas</h3>
+                <div class="valor conforme">${stats.ativas}</div>
+              </div>
+              <div class="metrica">
+                <h3>Em Revisão</h3>
+                <div class="valor">${stats.revisao}</div>
+              </div>
+              <div class="metrica">
+                <h3>Obsoletas</h3>
+                <div class="valor nao-conforme">${stats.obsoletas}</div>
+              </div>
+              <div class="metrica">
+                <h3>Prioridade Crítica</h3>
+                <div class="valor critico">${stats.criticas}</div>
+              </div>
+              <div class="metrica">
+                <h3>Categorias</h3>
+                <div class="valor">${stats.categorias}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="secoes-modulos">
+            <div class="secao">
+              <h2>Detalhes das Normas</h2>
+              <div class="tabela-container">
+                <table class="tabela-dados">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Título</th>
+                      <th>Categoria</th>
+                      <th>Organismo</th>
+                      <th>Versão</th>
+                      <th>Status</th>
+                      <th>Prioridade</th>
+                      <th>Data Publicação</th>
+                      <th>Entrada em Vigor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${normas.map((norma: any) => `
+                      <tr>
+                        <td>${norma.codigo}</td>
+                        <td>${norma.titulo}</td>
+                        <td>${norma.categoria}</td>
+                        <td>${norma.organismo}</td>
+                        <td>${norma.versao}</td>
+                        <td class="status-${norma.status.toLowerCase()}">${norma.status}</td>
+                        <td class="prioridade-${norma.prioridade.toLowerCase()}">${norma.prioridade}</td>
+                        <td>${new Date(norma.data_publicacao).toLocaleDateString('pt-PT')}</td>
+                        <td>${new Date(norma.data_entrada_vigor).toLocaleDateString('pt-PT')}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        ${this.getRodape(dados)}
+      </body>
+      </html>
+    `;
+  }
+
+  // Template para relatório de submissão de materiais
+  private templateSubmissaoMateriais(dados: DadosRelatorio): string {
+    const submissoes = dados.dados || [];
+    
+    // Calcular estatísticas
+    const stats = {
+      total: submissoes.length,
+      aprovadas: submissoes.filter((s: any) => s.estado === 'aprovado').length,
+      pendentes: submissoes.filter((s: any) => ['submetido', 'em_revisao', 'aguardando_aprovacao'].includes(s.estado)).length,
+      rejeitadas: submissoes.filter((s: any) => s.estado === 'rejeitado').length,
+      urgentes: submissoes.filter((s: any) => s.urgencia === 'urgente' || s.urgencia === 'muito_urgente').length,
+      criticas: submissoes.filter((s: any) => s.prioridade === 'critica').length,
+      tipos: new Set(submissoes.map((s: any) => s.tipo_material)).size,
+      categorias: new Set(submissoes.map((s: any) => s.categoria)).size
+    };
+
+    return `
+      <!DOCTYPE html>
+      <html lang="pt-PT">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Relatório de Submissões de Materiais - ${dados.titulo}</title>
+        ${this.getEstilosCSS()}
+      </head>
+      <body>
+        ${this.getCabecalho(dados)}
+        
+        <div class="container">
+          <h1 class="titulo-principal">Relatório de Submissões de Materiais</h1>
+          
+          <div class="resumo-executivo">
+            <h2>Resumo Executivo</h2>
+            <p>Este relatório apresenta uma visão geral das submissões de materiais do período ${dados.periodo}.</p>
+          </div>
+
+          <div class="metricas-principais">
+            <h2>Estatísticas Gerais</h2>
+            <div class="grid-metricas">
+              <div class="metrica">
+                <h3>Total de Submissões</h3>
+                <div class="valor">${stats.total}</div>
+              </div>
+              <div class="metrica">
+                <h3>Aprovadas</h3>
+                <div class="valor conforme">${stats.aprovadas}</div>
+              </div>
+              <div class="metrica">
+                <h3>Pendentes</h3>
+                <div class="valor">${stats.pendentes}</div>
+              </div>
+              <div class="metrica">
+                <h3>Rejeitadas</h3>
+                <div class="valor nao-conforme">${stats.rejeitadas}</div>
+              </div>
+              <div class="metrica">
+                <h3>Urgentes</h3>
+                <div class="valor critico">${stats.urgentes}</div>
+              </div>
+              <div class="metrica">
+                <h3>Críticas</h3>
+                <div class="valor critico">${stats.criticas}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="secoes-modulos">
+            <div class="secao">
+              <h2>Detalhes das Submissões</h2>
+              <div class="tabela-container">
+                <table class="tabela-dados">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Título</th>
+                      <th>Tipo Material</th>
+                      <th>Categoria</th>
+                      <th>Estado</th>
+                      <th>Prioridade</th>
+                      <th>Submissor</th>
+                      <th>Data Submissão</th>
+                      <th>Obra</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${submissoes.map((submissao: any) => `
+                      <tr>
+                        <td>${submissao.codigo}</td>
+                        <td>${submissao.titulo}</td>
+                        <td>${submissao.tipo_material}</td>
+                        <td>${submissao.categoria}</td>
+                        <td class="status-${submissao.estado.toLowerCase()}">${submissao.estado}</td>
+                        <td class="prioridade-${submissao.prioridade.toLowerCase()}">${submissao.prioridade}</td>
+                        <td>${submissao.submissor_nome}</td>
+                        <td>${new Date(submissao.data_submissao).toLocaleDateString('pt-PT')}</td>
+                        <td>${submissao.obra_nome || 'N/A'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        ${this.getRodape(dados)}
+      </body>
+      </html>
+    `;
+  }
+
+  // Template para relatório de sinalizações
+  private templateSinalizacoes(dados: DadosRelatorio): string {
+    const sinalizacoes = (dados.dados as Sinalizacao[]) || [];
+    
+    const stats = {
+      total: sinalizacoes.length,
+      operacional: sinalizacoes.filter((s: any) => s.status_operacional === 'OPERACIONAL').length,
+      manutencao: sinalizacoes.filter((s: any) => s.status_operacional === 'MANUTENCAO').length,
+      avaria: sinalizacoes.filter((s: any) => s.status_operacional === 'AVARIA').length,
+      ativo: sinalizacoes.filter((s: any) => s.estado === 'ATIVO').length,
+      inativo: sinalizacoes.filter((s: any) => s.estado === 'INATIVO').length,
+      tipos: new Set(sinalizacoes.map((s: any) => s.tipo)).size,
+      categorias: new Set(sinalizacoes.map((s: any) => s.categoria)).size
+    };
+
+    return `
+      <!DOCTYPE html>
+      <html lang="pt-PT">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${dados.titulo}</title>
+        <style>
+          ${this.getEstilosCSS()}
+        </style>
+      </head>
+      <body>
+        ${this.getCabecalho(dados)}
+        
+        <div class="container">
+          <h1 class="titulo-principal">Relatório de Sinalizações</h1>
+          
+          <div class="resumo-executivo">
+            <h2>Resumo Executivo</h2>
+            <p>Este relatório apresenta uma visão geral das sinalizações do período ${dados.periodo}.</p>
+          </div>
+
+          <div class="metricas-principais">
+            <h2>Estatísticas Gerais</h2>
+            <div class="grid-metricas">
+              <div class="metrica">
+                <h3>Total de Sinalizações</h3>
+                <div class="valor">${stats.total}</div>
+              </div>
+              <div class="metrica">
+                <h3>Operacionais</h3>
+                <div class="valor conforme">${stats.operacional}</div>
+              </div>
+              <div class="metrica">
+                <h3>Em Manutenção</h3>
+                <div class="valor">${stats.manutencao}</div>
+              </div>
+              <div class="metrica">
+                <h3>Em Avaria</h3>
+                <div class="valor nao-conforme">${stats.avaria}</div>
+              </div>
+              <div class="metrica">
+                <h3>Ativas</h3>
+                <div class="valor conforme">${stats.ativo}</div>
+              </div>
+              <div class="metrica">
+                <h3>Inativas</h3>
+                <div class="valor nao-conforme">${stats.inativo}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="secoes-modulos">
+            <div class="secao">
+              <h2>Detalhes das Sinalizações</h2>
+              <div class="tabela-container">
+                <table class="tabela-dados">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Tipo</th>
+                      <th>Categoria</th>
+                      <th>Localização</th>
+                      <th>Status Operacional</th>
+                      <th>Estado</th>
+                      <th>Última Inspeção</th>
+                      <th>Responsável</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${sinalizacoes.map((sinalizacao: any) => `
+                      <tr>
+                        <td>${sinalizacao.codigo}</td>
+                        <td>${sinalizacao.tipo}</td>
+                        <td>${sinalizacao.categoria}</td>
+                        <td>${sinalizacao.localizacao}</td>
+                        <td class="status-${sinalizacao.status_operacional.toLowerCase()}">${sinalizacao.status_operacional}</td>
+                        <td class="estado-${sinalizacao.estado.toLowerCase()}">${sinalizacao.estado}</td>
+                        <td>${sinalizacao.ultima_inspecao ? new Date(sinalizacao.ultima_inspecao).toLocaleDateString('pt-PT') : 'N/A'}</td>
+                        <td>${sinalizacao.responsavel}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        ${this.getRodape(dados)}
+      </body>
+      </html>
+    `;
+  }
+
+  // Template para relatório de inspeções de sinalização
+  private templateInspecoesSinalizacao(dados: DadosRelatorio): string {
+    const inspecoes = (dados.dados as InspecaoSinalizacao[]) || [];
+    
+    const stats = {
+      total: inspecoes.length,
+      conformes: inspecoes.filter((i: any) => i.resultado === 'CONFORME').length,
+      naoConformes: inspecoes.filter((i: any) => i.resultado === 'NAO_CONFORME').length,
+      pendentes: inspecoes.filter((i: any) => i.resultado === 'PENDENTE').length,
+      criticas: inspecoes.filter((i: any) => i.prioridade === 'CRITICA').length,
+      altas: inspecoes.filter((i: any) => i.prioridade === 'ALTA').length,
+      tipos: new Set(inspecoes.map((i: any) => i.tipo_inspecao)).size
+    };
+
+    return `
+      <!DOCTYPE html>
+      <html lang="pt-PT">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${dados.titulo}</title>
+        <style>
+          ${this.getEstilosCSS()}
+        </style>
+      </head>
+      <body>
+        ${this.getCabecalho(dados)}
+        
+        <div class="container">
+          <h1 class="titulo-principal">Relatório de Inspeções de Sinalização</h1>
+          
+          <div class="resumo-executivo">
+            <h2>Resumo Executivo</h2>
+            <p>Este relatório apresenta uma visão geral das inspeções de sinalização do período ${dados.periodo}.</p>
+          </div>
+
+          <div class="metricas-principais">
+            <h2>Estatísticas Gerais</h2>
+            <div class="grid-metricas">
+              <div class="metrica">
+                <h3>Total de Inspeções</h3>
+                <div class="valor">${stats.total}</div>
+              </div>
+              <div class="metrica">
+                <h3>Conformes</h3>
+                <div class="valor conforme">${stats.conformes}</div>
+              </div>
+              <div class="metrica">
+                <h3>Não Conformes</h3>
+                <div class="valor nao-conforme">${stats.naoConformes}</div>
+              </div>
+              <div class="metrica">
+                <h3>Pendentes</h3>
+                <div class="valor">${stats.pendentes}</div>
+              </div>
+              <div class="metrica">
+                <h3>Críticas</h3>
+                <div class="valor critico">${stats.criticas}</div>
+              </div>
+              <div class="metrica">
+                <h3>Alta Prioridade</h3>
+                <div class="valor critico">${stats.altas}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="secoes-modulos">
+            <div class="secao">
+              <h2>Detalhes das Inspeções</h2>
+              <div class="tabela-container">
+                <table class="tabela-dados">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Sinalização</th>
+                      <th>Tipo Inspeção</th>
+                      <th>Resultado</th>
+                      <th>Prioridade</th>
+                      <th>Data Inspeção</th>
+                      <th>Inspetor</th>
+                      <th>Observações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${inspecoes.map((inspecao: any) => `
+                      <tr>
+                        <td>${inspecao.codigo}</td>
+                        <td>${inspecao.sinalizacao_codigo}</td>
+                        <td>${inspecao.tipo_inspecao}</td>
+                        <td class="resultado-${inspecao.resultado.toLowerCase()}">${inspecao.resultado}</td>
+                        <td class="prioridade-${inspecao.prioridade.toLowerCase()}">${inspecao.prioridade}</td>
+                        <td>${new Date(inspecao.data_inspecao).toLocaleDateString('pt-PT')}</td>
+                        <td>${inspecao.inspetor}</td>
+                        <td>${inspecao.observacoes ? inspecao.observacoes.substring(0, 50) + '...' : 'N/A'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        ${this.getRodape(dados)}
+      </body>
+      </html>
+    `;
+  }
+
+  // Template para relatório de segurança ferroviária
+  private templateSegurancaFerroviaria(dados: DadosRelatorio): string {
+    const sistemas = (dados.dados as SistemaSeguranca[]) || [];
+    
+    const stats = {
+      total: sistemas.length,
+      operacionais: sistemas.filter((s: any) => s.status_operacional === 'Operacional').length,
+      manutencao: sistemas.filter((s: any) => s.status_operacional === 'Manutenção').length,
+      avaria: sistemas.filter((s: any) => s.status_operacional === 'Avaria').length,
+      ativos: sistemas.filter((s: any) => s.estado === 'Ativo').length,
+      inativos: sistemas.filter((s: any) => s.estado === 'Inativo').length,
+      criticos: sistemas.filter((s: any) => s.parametros?.nivel_seguranca > 8).length,
+      tipos: new Set(sistemas.map((s: any) => s.tipo)).size,
+      categorias: new Set(sistemas.map((s: any) => s.categoria)).size
+    };
+
+    return `
+      <!DOCTYPE html>
+      <html lang="pt-PT">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${dados.titulo}</title>
+        <style>
+          ${this.getEstilosCSS()}
+        </style>
+      </head>
+      <body>
+        ${this.getCabecalho(dados)}
+        
+        <div class="container">
+          <h1 class="titulo-principal">Relatório de Sistemas de Segurança Ferroviária</h1>
+          
+          <div class="resumo-executivo">
+            <h2>Resumo Executivo</h2>
+            <p>Este relatório apresenta uma visão geral dos sistemas de segurança ferroviária do período ${dados.periodo}.</p>
+          </div>
+
+          <div class="metricas-principais">
+            <h2>Estatísticas Gerais</h2>
+            <div class="grid-metricas">
+              <div class="metrica">
+                <h3>Total de Sistemas</h3>
+                <div class="valor">${stats.total}</div>
+              </div>
+              <div class="metrica">
+                <h3>Operacionais</h3>
+                <div class="valor conforme">${stats.operacionais}</div>
+              </div>
+              <div class="metrica">
+                <h3>Em Manutenção</h3>
+                <div class="valor">${stats.manutencao}</div>
+              </div>
+              <div class="metrica">
+                <h3>Em Avaria</h3>
+                <div class="valor nao-conforme">${stats.avaria}</div>
+              </div>
+              <div class="metrica">
+                <h3>Ativos</h3>
+                <div class="valor conforme">${stats.ativos}</div>
+              </div>
+              <div class="metrica">
+                <h3>Inativos</h3>
+                <div class="valor nao-conforme">${stats.inativos}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="secoes-modulos">
+            <div class="secao">
+              <h2>Detalhes dos Sistemas</h2>
+              <div class="tabela-container">
+                <table class="tabela-dados">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Tipo</th>
+                      <th>Categoria</th>
+                      <th>Localização</th>
+                      <th>Status Operacional</th>
+                      <th>Estado</th>
+                      <th>Fabricante</th>
+                      <th>Última Inspeção</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${sistemas.map((sistema: any) => `
+                      <tr>
+                        <td>${sistema.codigo}</td>
+                        <td>${sistema.tipo}</td>
+                        <td>${sistema.categoria}</td>
+                        <td>${sistema.localizacao}</td>
+                        <td class="status-${sistema.status_operacional.toLowerCase()}">${sistema.status_operacional}</td>
+                        <td class="estado-${sistema.estado.toLowerCase()}">${sistema.estado}</td>
+                        <td>${sistema.fabricante}</td>
+                        <td>${sistema.ultima_inspecao ? new Date(sistema.ultima_inspecao).toLocaleDateString('pt-PT') : 'N/A'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        ${this.getRodape(dados)}
+      </body>
+      </html>
+    `;
+  }
+
+  // Template para relatório de inspeções de segurança
+  private templateInspecoesSeguranca(dados: DadosRelatorio): string {
+    const inspecoes = (dados.dados as InspecaoSeguranca[]) || [];
+    
+    const stats = {
+      total: inspecoes.length,
+      conformes: inspecoes.filter((i: any) => i.resultado === 'Conforme').length,
+      naoConformes: inspecoes.filter((i: any) => i.resultado === 'Não Conforme').length,
+      pendentes: inspecoes.filter((i: any) => i.resultado === 'Pendente').length,
+      criticas: inspecoes.filter((i: any) => i.prioridade === 'Crítica').length,
+      altas: inspecoes.filter((i: any) => i.prioridade === 'Alta').length,
+      tipos: new Set(inspecoes.map((i: any) => i.tipo_inspecao)).size
+    };
+
+    return `
+      <!DOCTYPE html>
+      <html lang="pt-PT">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${dados.titulo}</title>
+        <style>
+          ${this.getEstilosCSS()}
+        </style>
+      </head>
+      <body>
+        ${this.getCabecalho(dados)}
+        
+        <div class="container">
+          <h1 class="titulo-principal">Relatório de Inspeções de Segurança</h1>
+          
+          <div class="resumo-executivo">
+            <h2>Resumo Executivo</h2>
+            <p>Este relatório apresenta uma visão geral das inspeções de segurança do período ${dados.periodo}.</p>
+          </div>
+
+          <div class="metricas-principais">
+            <h2>Estatísticas Gerais</h2>
+            <div class="grid-metricas">
+              <div class="metrica">
+                <h3>Total de Inspeções</h3>
+                <div class="valor">${stats.total}</div>
+              </div>
+              <div class="metrica">
+                <h3>Conformes</h3>
+                <div class="valor conforme">${stats.conformes}</div>
+              </div>
+              <div class="metrica">
+                <h3>Não Conformes</h3>
+                <div class="valor nao-conforme">${stats.naoConformes}</div>
+              </div>
+              <div class="metrica">
+                <h3>Pendentes</h3>
+                <div class="valor">${stats.pendentes}</div>
+              </div>
+              <div class="metrica">
+                <h3>Críticas</h3>
+                <div class="valor critico">${stats.criticas}</div>
+              </div>
+              <div class="metrica">
+                <h3>Alta Prioridade</h3>
+                <div class="valor critico">${stats.altas}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="secoes-modulos">
+            <div class="secao">
+              <h2>Detalhes das Inspeções</h2>
+              <div class="tabela-container">
+                <table class="tabela-dados">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Sistema</th>
+                      <th>Tipo Inspeção</th>
+                      <th>Resultado</th>
+                      <th>Prioridade</th>
+                      <th>Data Inspeção</th>
+                      <th>Responsável</th>
+                      <th>Observações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${inspecoes.map((inspecao: any) => `
+                      <tr>
+                        <td>${inspecao.id}</td>
+                        <td>${inspecao.seguranca_id}</td>
+                        <td>${inspecao.tipo_inspecao}</td>
+                        <td class="resultado-${inspecao.resultado.toLowerCase()}">${inspecao.resultado}</td>
+                        <td class="prioridade-${inspecao.prioridade.toLowerCase()}">${inspecao.prioridade}</td>
+                        <td>${new Date(inspecao.data_inspecao).toLocaleDateString('pt-PT')}</td>
+                        <td>${inspecao.responsavel}</td>
+                        <td>${inspecao.observacoes ? inspecao.observacoes.substring(0, 50) + '...' : 'N/A'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        ${this.getRodape(dados)}
+      </body>
+      </html>
     `;
   }
 

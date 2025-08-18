@@ -6,6 +6,8 @@ import {
 import toast from 'react-hot-toast';
 import { submissaoMateriaisAPI } from '../lib/supabase-api/submissaoMateriaisAPI';
 import SubmissaoMateriaisForms from '../components/SubmissaoMateriaisForms';
+import RelatorioSubmissaoMateriaisPremium from '../components/RelatorioSubmissaoMateriaisPremium';
+import Modal from '../components/Modal';
 import type {
   SubmissaoMaterial, FiltrosSubmissao, EstatisticasSubmissao, EstadoSubmissao, TipoMaterial, CategoriaMaterial, PrioridadeSubmissao, UrgenciaSubmissao
 } from '../types/submissaoMateriais';
@@ -28,6 +30,9 @@ export default function SubmissaoMateriais() {
   const [showDetails, setShowDetails] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingSubmissao, setEditingSubmissao] = useState<SubmissaoMaterial | null>(null);
+  const [showRelatorio, setShowRelatorio] = useState(false);
+  const [tipoRelatorio, setTipoRelatorio] = useState('filtrado');
+  const [submissoesSelecionadas, setSubmissoesSelecionadas] = useState<SubmissaoMaterial[]>([]);
 
   useEffect(() => {
     loadSubmissoes();
@@ -206,19 +211,22 @@ export default function SubmissaoMateriais() {
                 <span>CSV</span>
               </button>
               <button
-                onClick={() => handleExport('pdf')}
-                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center space-x-2"
+                onClick={() => {
+                  setTipoRelatorio('filtrado');
+                  setShowRelatorio(true);
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
               >
                 <FileText className="h-4 w-4" />
-                <span>PDF</span>
+                <span>Relatório</span>
               </button>
-                             <button 
-                 onClick={handleCreate}
-                 className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-200 flex items-center space-x-2"
-               >
-                 <Plus className="h-4 w-4" />
-                 <span>Nova Submissão</span>
-               </button>
+              <button 
+                onClick={handleCreate}
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-200 flex items-center space-x-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Nova Submissão</span>
+              </button>
             </div>
           </div>
         </div>
@@ -717,6 +725,38 @@ export default function SubmissaoMateriais() {
          editingSubmissao={editingSubmissao}
          onSuccess={handleFormSuccess}
        />
+
+       {/* Relatório Modal */}
+       <Modal
+         isOpen={showRelatorio}
+         onClose={() => setShowRelatorio(false)}
+         size="xl"
+         title="Relatório de Submissões de Materiais"
+       >
+         <div className="space-y-4">
+           <RelatorioSubmissaoMateriaisPremium 
+             onSelecaoChange={setSubmissoesSelecionadas}
+           />
+           
+           {submissoesSelecionadas.length > 0 && (
+             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+               <div className="flex items-center justify-between">
+                 <div className="flex items-center space-x-2">
+                   <span className="text-sm font-medium text-blue-900">
+                     {submissoesSelecionadas.length} submissão(ões) selecionada(s)
+                   </span>
+                 </div>
+                 <button
+                   onClick={() => setSubmissoesSelecionadas([])}
+                   className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm hover:bg-blue-200"
+                 >
+                   Limpar seleção
+                 </button>
+               </div>
+             </div>
+           )}
+         </div>
+       </Modal>
      </div>
    );
  }

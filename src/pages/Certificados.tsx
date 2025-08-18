@@ -38,6 +38,9 @@ import { certificadosAPI } from '../lib/supabase-api/certificadosAPI';
 import { storageService } from '../lib/supabase-storage';
 import CertificadosForms from '../components/CertificadosForms';
 import RegistosForms from '../components/RegistosForms';
+import TermosForms from '../components/TermosForms';
+import RelatoriosForms from '../components/RelatoriosForms';
+import RelatorioCertificadosPremium from '../components/RelatorioCertificadosPremium';
 import type { 
   Certificado, 
   Registo,
@@ -73,8 +76,15 @@ export default function Certificados() {
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [showCertificadosForm, setShowCertificadosForm] = useState(false);
   const [showRegistosForm, setShowRegistosForm] = useState(false);
+  const [showTermosForm, setShowTermosForm] = useState(false);
+  const [showRelatoriosForm, setShowRelatoriosForm] = useState(false);
   const [editingCertificado, setEditingCertificado] = useState<Certificado | null>(null);
   const [editingRegisto, setEditingRegisto] = useState<Registo | null>(null);
+  const [editingTermo, setEditingTermo] = useState<TermoCondicoes | null>(null);
+  const [editingRelatorio, setEditingRelatorio] = useState<Relatorio | null>(null);
+  const [showRelatorio, setShowRelatorio] = useState(false);
+  const [tipoRelatorio, setTipoRelatorio] = useState('filtrado');
+  const [certificadosSelecionados, setCertificadosSelecionados] = useState<Certificado[]>([]);
 
   useEffect(() => {
     loadData();
@@ -316,6 +326,271 @@ export default function Certificados() {
     }
     setShowRegistosForm(false);
     setEditingRegisto(null);
+    loadRegistos();
+  };
+
+  const handleNewTermo = () => {
+    setEditingTermo(null);
+    setShowTermosForm(true);
+  };
+
+  const handleEditTermo = (termo: TermoCondicoes) => {
+    setEditingTermo(termo);
+    setShowTermosForm(true);
+  };
+
+  const handleSaveTermo = (termo: TermoCondicoes) => {
+    if (editingTermo) {
+      setTermos(prev => prev.map(t => t.id === termo.id ? termo : t));
+    } else {
+      setTermos(prev => [...prev, termo]);
+    }
+    setShowTermosForm(false);
+    setEditingTermo(null);
+    loadTermos();
+  };
+
+  const handleNewRelatorio = () => {
+    setEditingRelatorio(null);
+    setShowRelatoriosForm(true);
+  };
+
+  const handleEditRelatorio = (relatorio: Relatorio) => {
+    setEditingRelatorio(relatorio);
+    setShowRelatoriosForm(true);
+  };
+
+  const handleSaveRelatorio = (relatorio: Relatorio) => {
+    if (editingRelatorio) {
+      setRelatorios(prev => prev.map(r => r.id === relatorio.id ? relatorio : r));
+    } else {
+      setRelatorios(prev => [...prev, relatorio]);
+    }
+    setShowRelatoriosForm(false);
+    setEditingRelatorio(null);
+    loadRelatorios();
+  };
+
+  // Funções de Delete para todos os subcapítulos
+  const handleDeleteCertificado = async (certificado: Certificado) => {
+    if (!window.confirm(`Tem certeza que deseja apagar o certificado "${certificado.titulo}"?`)) {
+      return;
+    }
+
+    try {
+      // Apagar documentos anexos do storage
+      if (certificado.documentos_anexos && certificado.documentos_anexos.length > 0) {
+        for (const doc of certificado.documentos_anexos) {
+          if (doc.path) {
+            await storageService.deleteFile(
+              doc.path,
+              (import.meta as any).env?.VITE_SUPABASE_BUCKET_CERTIFICADOS || 'documents'
+            );
+          }
+        }
+      }
+
+      await certificadosAPI.certificados.delete(certificado.id);
+      setCertificados(prev => prev.filter(c => c.id !== certificado.id));
+      toast.success('Certificado apagado com sucesso');
+    } catch (error) {
+      console.error('Erro ao apagar certificado:', error);
+      toast.error('Erro ao apagar certificado');
+    }
+  };
+
+  const handleDeleteRegisto = async (registo: Registo) => {
+    if (!window.confirm(`Tem certeza que deseja apagar o registo "${registo.titulo}"?`)) {
+      return;
+    }
+
+    try {
+      // Apagar documentos anexos do storage
+      if (registo.documentos_anexos && registo.documentos_anexos.length > 0) {
+        for (const doc of registo.documentos_anexos) {
+          if (doc.path) {
+            await storageService.deleteFile(
+              doc.path,
+              (import.meta as any).env?.VITE_SUPABASE_BUCKET_CERTIFICADOS || 'documents'
+            );
+          }
+        }
+      }
+
+      // Apagar fotografias do storage
+      if (registo.fotografias && registo.fotografias.length > 0) {
+        for (const foto of registo.fotografias) {
+          if (foto.path) {
+            await storageService.deleteFile(
+              foto.path,
+              (import.meta as any).env?.VITE_SUPABASE_BUCKET_CERTIFICADOS || 'documents'
+            );
+          }
+        }
+      }
+
+      await certificadosAPI.registos.delete(registo.id);
+      setRegistos(prev => prev.filter(r => r.id !== registo.id));
+      toast.success('Registo apagado com sucesso');
+    } catch (error) {
+      console.error('Erro ao apagar registo:', error);
+      toast.error('Erro ao apagar registo');
+    }
+  };
+
+  const handleDeleteTermo = async (termo: TermoCondicoes) => {
+    if (!window.confirm(`Tem certeza que deseja apagar o termo "${termo.titulo}"?`)) {
+      return;
+    }
+
+    try {
+      // Apagar documentos anexos do storage
+      if (termo.documentos_anexos && termo.documentos_anexos.length > 0) {
+        for (const doc of termo.documentos_anexos) {
+          if (doc.path) {
+            await storageService.deleteFile(
+              doc.path,
+              (import.meta as any).env?.VITE_SUPABASE_BUCKET_CERTIFICADOS || 'documents'
+            );
+          }
+        }
+      }
+
+      await certificadosAPI.termos.delete(termo.id);
+      setTermos(prev => prev.filter(t => t.id !== termo.id));
+      toast.success('Termo apagado com sucesso');
+    } catch (error) {
+      console.error('Erro ao apagar termo:', error);
+      toast.error('Erro ao apagar termo');
+    }
+  };
+
+  const handleDeleteRelatorio = async (relatorio: Relatorio) => {
+    if (!window.confirm(`Tem certeza que deseja apagar o relatório "${relatorio.titulo}"?`)) {
+      return;
+    }
+
+    try {
+      // Apagar documentos anexos do storage
+      if (relatorio.documentos_anexos && relatorio.documentos_anexos.length > 0) {
+        for (const doc of relatorio.documentos_anexos) {
+          if (doc.path) {
+            await storageService.deleteFile(
+              doc.path,
+              (import.meta as any).env?.VITE_SUPABASE_BUCKET_CERTIFICADOS || 'documents'
+            );
+          }
+        }
+      }
+
+      await certificadosAPI.relatorios.delete(relatorio.id);
+      setRelatorios(prev => prev.filter(r => r.id !== relatorio.id));
+      toast.success('Relatório apagado com sucesso');
+    } catch (error) {
+      console.error('Erro ao apagar relatório:', error);
+      toast.error('Erro ao apagar relatório');
+    }
+  };
+
+  // Funções de Download para todos os subcapítulos
+  const handleDownloadRegistoDocumento = async (documento: any) => {
+    try {
+      if (documento.path) {
+        await storageService.downloadFile(
+          documento.path,
+          documento.nome,
+          (import.meta as any).env?.VITE_SUPABASE_BUCKET_CERTIFICADOS || 'documents'
+        );
+        toast.success(`Download iniciado: ${documento.nome}`);
+      } else {
+        const link = document.createElement('a');
+        link.href = documento.url;
+        link.download = documento.nome;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success(`Download iniciado: ${documento.nome}`);
+      }
+    } catch (error) {
+      console.error('Erro no download:', error);
+      toast.error(`Erro ao descarregar: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
+  };
+
+  const handleDownloadRegistoFoto = async (foto: any) => {
+    try {
+      if (foto.path) {
+        await storageService.downloadFile(
+          foto.path,
+          foto.nome,
+          (import.meta as any).env?.VITE_SUPABASE_BUCKET_CERTIFICADOS || 'documents'
+        );
+        toast.success(`Download iniciado: ${foto.nome}`);
+      } else {
+        const link = document.createElement('a');
+        link.href = foto.url;
+        link.download = foto.nome;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success(`Download iniciado: ${foto.nome}`);
+      }
+    } catch (error) {
+      console.error('Erro no download:', error);
+      toast.error(`Erro ao descarregar: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
+  };
+
+  const handleDownloadTermoDocumento = async (documento: any) => {
+    try {
+      if (documento.path) {
+        await storageService.downloadFile(
+          documento.path,
+          documento.nome,
+          (import.meta as any).env?.VITE_SUPABASE_BUCKET_CERTIFICADOS || 'documents'
+        );
+        toast.success(`Download iniciado: ${documento.nome}`);
+      } else {
+        const link = document.createElement('a');
+        link.href = documento.url;
+        link.download = documento.nome;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success(`Download iniciado: ${documento.nome}`);
+      }
+    } catch (error) {
+      console.error('Erro no download:', error);
+      toast.error(`Erro ao descarregar: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
+  };
+
+  const handleDownloadRelatorioDocumento = async (documento: any) => {
+    try {
+      if (documento.path) {
+        await storageService.downloadFile(
+          documento.path,
+          documento.nome,
+          (import.meta as any).env?.VITE_SUPABASE_BUCKET_CERTIFICADOS || 'documents'
+        );
+        toast.success(`Download iniciado: ${documento.nome}`);
+      } else {
+        const link = document.createElement('a');
+        link.href = documento.url;
+        link.download = documento.nome;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success(`Download iniciado: ${documento.nome}`);
+      }
+    } catch (error) {
+      console.error('Erro no download:', error);
+      toast.error(`Erro ao descarregar: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
   };
 
   const handleUploadDocumento = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -448,18 +723,37 @@ export default function Certificados() {
                 <FileText className="h-4 w-4" />
                 <span>PDF</span>
               </button>
+              <button
+                onClick={() => {
+                  setTipoRelatorio('filtrado');
+                  setShowRelatorio(true);
+                }}
+                className="px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center space-x-2"
+              >
+                <BarChart3 className="h-4 w-4" />
+                <span>Relatório</span>
+              </button>
               <button 
                 onClick={() => {
                   if (activeTab === 'certificados') {
                     handleNewCertificado();
                   } else if (activeTab === 'registos') {
                     handleNewRegisto();
+                  } else if (activeTab === 'termos') {
+                    handleNewTermo();
+                  } else if (activeTab === 'relatorios') {
+                    handleNewRelatorio();
                   }
                 }}
                 className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-blue-500 rounded-lg hover:from-green-600 hover:to-blue-600 flex items-center space-x-2"
               >
                 <Plus className="h-4 w-4" />
-                <span>Novo {activeTab === 'certificados' ? 'Certificado' : activeTab === 'registos' ? 'Registo' : 'Item'}</span>
+                <span>Novo {
+                  activeTab === 'certificados' ? 'Certificado' : 
+                  activeTab === 'registos' ? 'Registo' : 
+                  activeTab === 'termos' ? 'Termo' :
+                  activeTab === 'relatorios' ? 'Relatório' : 'Item'
+                }</span>
               </button>
             </div>
           </div>
@@ -783,7 +1077,11 @@ export default function Certificados() {
                               >
                                 <Edit className="h-4 w-4" />
                               </button>
-                              <button className="text-red-600 hover:text-red-900">
+                              <button 
+                                onClick={() => handleDeleteCertificado(certificado)}
+                                className="text-red-600 hover:text-red-900"
+                                title="Apagar certificado"
+                              >
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
@@ -874,13 +1172,36 @@ export default function Certificados() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end space-x-2">
+                            {registo.documentos_anexos && registo.documentos_anexos.length > 0 && (
+                              <button
+                                onClick={() => handleDownloadRegistoDocumento(registo.documentos_anexos[0])}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Download documento"
+                              >
+                                <Download className="h-4 w-4" />
+                              </button>
+                            )}
+                            {registo.fotografias && registo.fotografias.length > 0 && (
+                              <button
+                                onClick={() => handleDownloadRegistoFoto(registo.fotografias[0])}
+                                className="text-green-600 hover:text-green-900"
+                                title="Download fotografia"
+                              >
+                                <FileText className="h-4 w-4" />
+                              </button>
+                            )}
                             <button
                               onClick={() => handleEditRegisto(registo)}
                               className="text-blue-600 hover:text-blue-900"
+                              title="Editar registo"
                             >
                               <Edit className="h-4 w-4" />
                             </button>
-                            <button className="text-red-600 hover:text-red-900">
+                            <button 
+                              onClick={() => handleDeleteRegisto(registo)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Apagar registo"
+                            >
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
@@ -894,19 +1215,206 @@ export default function Certificados() {
           </div>
         )}
 
-        {/* Outras tabs - Placeholder */}
-        {activeTab !== 'certificados' && activeTab !== 'registos' && (
-          <div className="bg-white rounded-xl shadow-sm border p-12 text-center">
-            <div className="flex items-center justify-center space-x-3 mb-4">
-              {getTabIcon(activeTab)}
-              <h2 className="text-xl font-semibold text-gray-900">{getTabLabel(activeTab)}</h2>
+        {/* Tab Termos */}
+        {activeTab === 'termos' && (
+          <div className="bg-white rounded-xl shadow-sm border">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Termos e Condições</h3>
+              <p className="text-sm text-gray-600">Gestão de termos, contratos e acordos</p>
             </div>
-            <p className="text-gray-600 mb-6">
-              Módulo de {getTabLabel(activeTab).toLowerCase()} em desenvolvimento.
-            </p>
-            <button className="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600">
-              Em breve disponível
-            </button>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Código
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Título
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Tipo
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Data Criação
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {termos.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                        Nenhum termo encontrado
+                      </td>
+                    </tr>
+                  ) : (
+                    termos.map((termo) => (
+                      <tr key={termo.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{termo.codigo}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-gray-900">{termo.titulo}</div>
+                          <div className="text-sm text-gray-500 line-clamp-2">{termo.descricao}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {termo.tipo_termo}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            termo.status === 'ativo' ? 'bg-green-100 text-green-800' :
+                            termo.status === 'aprovado' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {termo.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {new Date(termo.data_criacao).toLocaleDateString('pt-PT')}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end space-x-2">
+                            {termo.documentos_anexos && termo.documentos_anexos.length > 0 && (
+                              <button
+                                onClick={() => handleDownloadTermoDocumento(termo.documentos_anexos[0])}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Download documento"
+                              >
+                                <Download className="h-4 w-4" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleEditTermo(termo)}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="Editar termo"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteTermo(termo)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Apagar termo"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Tab Relatórios */}
+        {activeTab === 'relatorios' && (
+          <div className="bg-white rounded-xl shadow-sm border">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Relatórios</h3>
+              <p className="text-sm text-gray-600">Gestão de relatórios e documentação</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Código
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Título
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Tipo
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Data
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ações
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {relatorios.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                        Nenhum relatório encontrado
+                      </td>
+                    </tr>
+                  ) : (
+                    relatorios.map((relatorio) => (
+                      <tr key={relatorio.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{relatorio.codigo}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-gray-900">{relatorio.titulo}</div>
+                          <div className="text-sm text-gray-500 line-clamp-2">{relatorio.descricao}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            {relatorio.tipo_relatorio}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            relatorio.status === 'publicado' ? 'bg-green-100 text-green-800' :
+                            relatorio.status === 'aprovado' ? 'bg-blue-100 text-blue-800' :
+                            relatorio.status === 'em_revisao' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {relatorio.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {new Date(relatorio.data_relatorio).toLocaleDateString('pt-PT')}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end space-x-2">
+                            {relatorio.documentos_anexos && relatorio.documentos_anexos.length > 0 && (
+                              <button
+                                onClick={() => handleDownloadRelatorioDocumento(relatorio.documentos_anexos[0])}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Download documento"
+                              >
+                                <Download className="h-4 w-4" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleEditRelatorio(relatorio)}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="Editar relatório"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteRelatorio(relatorio)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Apagar relatório"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
@@ -1103,6 +1611,52 @@ export default function Certificados() {
           }}
           onSave={handleSaveRegisto}
         />
+      )}
+
+      {showTermosForm && (
+        <TermosForms
+          termo={editingTermo || undefined}
+          onClose={() => {
+            setShowTermosForm(false);
+            setEditingTermo(null);
+          }}
+          onSave={handleSaveTermo}
+        />
+      )}
+
+      {showRelatoriosForm && (
+        <RelatoriosForms
+          relatorio={editingRelatorio || undefined}
+          onClose={() => {
+            setShowRelatoriosForm(false);
+            setEditingRelatorio(null);
+          }}
+          onSave={handleSaveRelatorio}
+        />
+      )}
+
+      {/* Modal de Relatórios Premium */}
+      {showRelatorio && (
+        <RelatorioCertificadosPremium
+          certificados={certificados}
+          onClose={() => setShowRelatorio(false)}
+          onSelecaoChange={setCertificadosSelecionados}
+        />
+      )}
+
+      {/* Informação sobre seleção */}
+      {certificadosSelecionados.length > 0 && (
+        <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-40">
+          <div className="flex items-center space-x-2">
+            <span>{certificadosSelecionados.length} certificados selecionados</span>
+            <button
+              onClick={() => setCertificadosSelecionados([])}
+              className="text-white hover:text-blue-200"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -51,6 +51,7 @@ import RFIForm from "./components/forms/RFIForm";
 import RFIs from "./pages/RFIs";
 import PontosInspecaoEnsaiosPage from "./pages/PontosInspecaoEnsaios";
 import PontosInspecaoEnsaiosEditor from "./components/pie/PontosInspecaoEnsaiosEditor";
+import Armaduras from "./pages/Armaduras";
 import "./styles/globals.css";
 import { ensaioCompactacaoService } from "./services/ensaioCompactacaoService";
 import LoadingSpinner from "./components/LoadingSpinner";
@@ -441,6 +442,19 @@ function App() {
           }
         >
           <Route index element={<PontosInspecaoEnsaiosEditor />} />
+        </Route>
+
+        <Route
+          path="/armaduras"
+          element={
+            user ? (
+              <PremiumLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<Armaduras />} />
         </Route>
 
         {/* Rotas para ações rápidas */}

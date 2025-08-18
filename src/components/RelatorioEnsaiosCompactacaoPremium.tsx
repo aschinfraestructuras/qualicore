@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Download, Share2, Filter, FileText, BarChart3 } from 'lucide-react';
 import { EnsaioCompactacao } from '../types';
-import { PDFService } from '../services/pdfService';
+import PDFService from '../services/pdfService';
 import toast from 'react-hot-toast';
 
 interface RelatorioEnsaiosCompactacaoPremiumProps {

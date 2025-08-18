@@ -1,4 +1,3 @@
-// Removido o import que causava conflito de tipos
 // Tipos base para todos os módulos
 export interface BaseEntity {
   id: string;
@@ -1231,6 +1230,49 @@ export interface ConfiguracaoPPI {
 
 // Tipos PIE (Pontos de Inspeção e Ensaios)
 export type { PIEInstancia, PIESecao, PIEPonto, PIEResposta } from "./pie";
+
+// Tipos para Sinalização
+export type {
+  Sinalizacao,
+  InspecaoSinalizacao,
+  SinalizacaoStats,
+  SinalizacaoFormData,
+  InspecaoSinalizacaoFormData,
+  TIPOS_SINALIZACAO,
+  CATEGORIAS_SINALIZACAO,
+  ESTADOS_SINALIZACAO,
+  STATUS_OPERACIONAL,
+  TIPOS_INSPECAO,
+  RESULTADOS_INSPECAO,
+  FiltrosSinalizacao,
+  FiltrosInspecaoSinalizacao,
+  RelatorioSinalizacaoOptions,
+  RelatorioInspecaoSinalizacaoOptions,
+  SinalizacaoExportData,
+  InspecaoSinalizacaoExportData
+} from "./sinalizacao";
+
+// Tipos para Segurança Ferroviária
+export type {
+  SistemaSeguranca,
+  InspecaoSeguranca,
+  SegurancaFerroviariaStats,
+  SegurancaFerroviariaFormData,
+  InspecaoSegurancaFormData,
+  TIPOS_SISTEMA_SEGURANCA,
+  CATEGORIAS_SEGURANCA,
+  ESTADOS_SISTEMA,
+  STATUS_OPERACIONAL as STATUS_OPERACIONAL_SEGURANCA,
+  TIPOS_INSPECAO_SEGURANCA,
+  RESULTADOS_INSPECAO as RESULTADOS_INSPECAO_SEGURANCA,
+  PRIORIDADES,
+  FiltrosSegurancaFerroviaria,
+  FiltrosInspecaoSeguranca,
+  RelatorioSegurancaFerroviariaOptions,
+  RelatorioInspecaoSegurancaOptions,
+  SegurancaFerroviariaExportData,
+  InspecaoSegurancaExportData
+} from "./segurancaFerroviaria";
 
 // Tipos para Ensaios de Compactação
 export interface PontoEnsaioCompactacao {

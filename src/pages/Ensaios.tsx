@@ -30,7 +30,7 @@ import RelatorioEnsaiosPremium from "@/components/RelatorioEnsaiosPremium";
 import { ShareEnsaioModal } from "@/components/ShareEnsaioModal";
 import { SavedEnsaiosViewer } from "@/components/SavedEnsaiosViewer";
 import { AnimatePresence, motion } from "framer-motion";
-import { PDFService } from "@/services/pdfService";
+import PDFService from "@/services/pdfService";
 import { ShareService } from "@/services/shareService";
 
 export default function Ensaios() {

@@ -2,6 +2,12 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { MetricasReais } from './metricsService';
 import { Material, Obra, Ensaio, RFI, Checklist, Documento, Fornecedor, NaoConformidade } from '@/types';
+import type { Armadura } from '@/types/armaduras';
+import { Certificado } from '@/types/certificados';
+import { Norma } from '@/types/normas';
+import { SubmissaoMaterial } from '@/types/submissaoMateriais';
+import { Sinalizacao, InspecaoSinalizacao } from '@/types/sinalizacao';
+import { SistemaSeguranca, InspecaoSeguranca } from '@/types/segurancaFerroviaria';
 import { PIEInstancia, PIESecao, PIEPonto, PIEResposta } from './pieService';
 
 interface PIEReportData {
@@ -98,6 +104,28 @@ interface RelatorioRFIsOptions {
   filtros?: any;
 }
 
+interface RelatorioArmadurasOptions {
+  titulo: string;
+  subtitulo?: string;
+  armaduras: Armadura[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+  armaduraEspecifica?: Armadura;
+  mostrarCusto?: boolean;
+  colunas?: Record<string, boolean>;
+}
+
+interface RelatorioArmadurasOptions {
+  titulo: string;
+  subtitulo?: string;
+  armaduras: Armadura[];
+  tipo: "executivo" | "individual" | "filtrado" | "comparativo";
+  filtros?: any;
+  armaduraEspecifica?: Armadura;
+  mostrarCusto?: boolean;
+  colunas?: Record<string, boolean>;
+}
+
 interface RelatorioChecklistsOptions {
   titulo: string;
   subtitulo?: string;
@@ -130,7 +158,66 @@ interface RelatorioNaoConformidadesOptions {
   filtros?: any;
 }
 
-export class PDFService {
+interface RelatorioCertificadosOptions {
+  titulo: string;
+  subtitulo?: string;
+  certificados: any[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+  certificadoIndividual?: any;
+}
+
+interface RelatorioNormasOptions {
+  titulo: string;
+  subtitulo?: string;
+  normas: any[];
+  tipo: "executivo" | "individual" | "filtrado" | "comparativo";
+  filtros?: any;
+  normaEspecifica?: any;
+  colunas?: Record<string, boolean>;
+}
+
+interface RelatorioSubmissaoMateriaisOptions {
+  titulo: string;
+  subtitulo?: string;
+  submissoes: SubmissaoMaterial[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
+interface RelatorioSinalizacaoOptions {
+  titulo: string;
+  subtitulo?: string;
+  sinalizacoes: Sinalizacao[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
+interface RelatorioInspecaoSinalizacaoOptions {
+  titulo: string;
+  subtitulo?: string;
+  inspecoes: InspecaoSinalizacao[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
+interface RelatorioSegurancaFerroviariaOptions {
+  titulo: string;
+  subtitulo?: string;
+  sistemas: SistemaSeguranca[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
+interface RelatorioInspecaoSegurancaOptions {
+  titulo: string;
+  subtitulo?: string;
+  inspecoes: InspecaoSeguranca[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
+class PDFService {
   private doc: jsPDF;
   private pageNumber: number = 1;
   private totalPages: number = 1;
@@ -6651,6 +6738,2168 @@ export class PDFService {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  }
+
+  // Métodos para relatórios de Armaduras
+  private gerarRelatorioExecutivoArmaduras(options: RelatorioArmadurasOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addEstatisticasArmaduras(options.armaduras, startY);
+    currentY = this.addRelatorioExecutivoArmaduras(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioFiltradoArmaduras(options: RelatorioArmadurasOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addFiltrosArmaduras(options.filtros, startY);
+    currentY = this.addRelatorioFiltradoArmaduras(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioComparativoArmaduras(options: RelatorioArmadurasOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioComparativoArmaduras(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioIndividualArmaduras(options: RelatorioArmadurasOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioIndividualArmaduras(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private addEstatisticasArmaduras(armaduras: Armadura[], startY: number): number {
+    const stats = {
+      total: armaduras.length,
+      pesoTotal: armaduras.reduce((sum, a) => sum + a.peso_total, 0),
+      aprovadas: armaduras.filter(a => a.estado === "aprovado").length,
+      pendentes: armaduras.filter(a => a.estado === "pendente").length,
+      fabricantesUnicos: new Set(armaduras.map(a => a.fabricante)).size,
+      taxaAprovacao: armaduras.length > 0 ? 
+        ((armaduras.filter(a => a.estado === "aprovado").length / armaduras.length) * 100).toFixed(1) : "0"
+    };
+
+    // Título da seção
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Estatísticas Gerais', 20, startY);
+
+    // KPIs em grid 2x3
+    const kpiY = startY + 15;
+    this.addKPICard(20, kpiY, 'Total Armaduras', stats.total.toString(), [59, 130, 246]);
+    this.addKPICard(75, kpiY, 'Peso Total', `${stats.pesoTotal.toFixed(1)} kg`, [34, 197, 94]);
+    this.addKPICard(130, kpiY, 'Taxa Aprovação', `${stats.taxaAprovacao}%`, [168, 85, 247]);
+    this.addKPICard(20, kpiY + 25, 'Aprovadas', stats.aprovadas.toString(), [34, 197, 94]);
+    this.addKPICard(75, kpiY + 25, 'Pendentes', stats.pendentes.toString(), [245, 158, 11]);
+    this.addKPICard(130, kpiY + 25, 'Fabricantes', stats.fabricantesUnicos.toString(), [59, 130, 246]);
+
+    return kpiY + 50;
+  }
+
+  private addFiltrosArmaduras(filtros: any, startY: number): number {
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Filtros Aplicados', 20, startY);
+
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+
+    let currentY = startY + 10;
+    const filtrosAplicados = [];
+
+    if (filtros.tipo) filtrosAplicados.push(`Tipo: ${filtros.tipo}`);
+    if (filtros.estado) filtrosAplicados.push(`Estado: ${filtros.estado}`);
+    if (filtros.fabricante) filtrosAplicados.push(`Fabricante: ${filtros.fabricante}`);
+    if (filtros.zona) filtrosAplicados.push(`Zona: ${filtros.zona}`);
+    if (filtros.dataInicio) filtrosAplicados.push(`Data Início: ${filtros.dataInicio}`);
+    if (filtros.dataFim) filtrosAplicados.push(`Data Fim: ${filtros.dataFim}`);
+    if (filtros.diametroMin) filtrosAplicados.push(`Diâmetro Min: ${filtros.diametroMin}mm`);
+    if (filtros.diametroMax) filtrosAplicados.push(`Diâmetro Max: ${filtros.diametroMax}mm`);
+
+    filtrosAplicados.forEach(filtro => {
+      this.doc.text(filtro, 25, currentY);
+      currentY += 6;
+    });
+
+    return currentY + 10;
+  }
+
+  private addRelatorioExecutivoArmaduras(options: RelatorioArmadurasOptions, startY: number): number {
+    const armaduras = options.armaduras;
+
+    // Análise por tipo
+    const analisePorTipo = armaduras.reduce((acc, armadura) => {
+      acc[armadura.tipo] = (acc[armadura.tipo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Análise por fabricante
+    const analisePorFabricante = armaduras.reduce((acc, armadura) => {
+      acc[armadura.fabricante] = (acc[armadura.fabricante] || 0) + armadura.peso_total;
+      return acc;
+    }, {} as Record<string, number>);
+
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Detalhada', 20, startY);
+
+    let currentY = startY + 15;
+
+    // Análise por tipo
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Tipo:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorTipo).forEach(([tipo, quantidade]) => {
+      this.doc.text(`${tipo.replace('_', ' ')}: ${quantidade} armaduras`, 25, currentY);
+      currentY += 6;
+    });
+
+    currentY += 10;
+
+    // Análise por fabricante
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Peso Total por Fabricante:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorFabricante)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .forEach(([fabricante, peso]) => {
+        this.doc.text(`${fabricante}: ${peso.toFixed(1)} kg`, 25, currentY);
+        currentY += 6;
+      });
+
+    return currentY;
+  }
+
+  private addRelatorioFiltradoArmaduras(options: RelatorioArmadurasOptions, startY: number): number {
+    const armaduras = options.armaduras;
+
+    // Tabela de armaduras
+    autoTable(this.doc, {
+      startY: startY,
+      head: [['Código', 'Tipo', 'Diâmetro', 'Quantidade', 'Peso Total', 'Fabricante', 'Nº Colada', 'Estado', 'Local Aplicação', 'Responsável', 'Data Receção']],
+      body: armaduras.map(armadura => [
+        armadura.codigo,
+        armadura.tipo.replace('_', ' '),
+        `${armadura.diametro} mm`,
+        armadura.quantidade.toString(),
+        `${armadura.peso_total} kg`,
+        armadura.fabricante,
+        armadura.numero_colada,
+        armadura.estado.replace('_', ' '),
+        armadura.local_aplicacao,
+        armadura.responsavel,
+        new Date(armadura.data_rececao).toLocaleDateString("pt-PT")
+      ]),
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255,
+        fontStyle: 'bold',
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      margin: { left: 15, right: 15 },
+    });
+
+    return (this.doc as any).lastAutoTable.finalY + 10;
+  }
+
+  private addRelatorioComparativoArmaduras(options: RelatorioArmadurasOptions, startY: number): number {
+    const armaduras = options.armaduras;
+
+    // Análise por estado
+    const analisePorEstado = armaduras.reduce((acc, armadura) => {
+      acc[armadura.estado] = (acc[armadura.estado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Análise por diâmetro
+    const analisePorDiametro = armaduras.reduce((acc, armadura) => {
+      acc[armadura.diametro] = (acc[armadura.diametro] || 0) + armadura.peso_total;
+      return acc;
+    }, {} as Record<number, number>);
+
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, startY);
+
+    let currentY = startY + 15;
+
+    // Análise por estado
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Estado:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorEstado).forEach(([estado, quantidade]) => {
+      this.doc.text(`${estado.replace('_', ' ')}: ${quantidade} armaduras`, 25, currentY);
+      currentY += 6;
+    });
+
+    currentY += 10;
+
+    // Análise por diâmetro
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Peso Total por Diâmetro:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorDiametro)
+      .sort(([a], [b]) => Number(a) - Number(b))
+      .forEach(([diametro, peso]) => {
+        this.doc.text(`${diametro}mm: ${peso.toFixed(1)} kg`, 25, currentY);
+        currentY += 6;
+      });
+
+    return currentY;
+  }
+
+  gerarRelatorioArmaduras(options: RelatorioArmadurasOptions): void {
+    try {
+      this.doc = new jsPDF();
+      this.pageNumber = 1;
+      
+      // Cabeçalho profissional
+      this.addProfessionalHeader(options.titulo, options.subtitulo);
+      
+      let currentY = 85; // Posição inicial após cabeçalho
+      
+      // Adicionar filtros se aplicável
+      if (options.filtros && Object.keys(options.filtros).length > 0) {
+        currentY = this.addFiltrosArmaduras(options.filtros, currentY);
+        currentY += 10;
+      }
+
+      // Gerar relatório baseado no tipo
+      switch (options.tipo) {
+        case 'executivo':
+          currentY = this.addRelatorioExecutivoArmaduras(options, currentY);
+          break;
+        case 'filtrado':
+          currentY = this.addRelatorioFiltradoArmaduras(options, currentY);
+          break;
+        case 'comparativo':
+          currentY = this.addRelatorioComparativoArmaduras(options, currentY);
+          break;
+        case 'individual':
+          currentY = this.addRelatorioIndividualArmaduras(options, currentY);
+          break;
+      }
+      
+      // Calcular total de páginas
+      this.totalPages = Math.ceil(currentY / this.doc.internal.pageSize.height);
+      
+      // Adicionar rodapé
+      this.addProfessionalFooter();
+      
+      // Download
+      this.doc.save(`${options.titulo.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+      
+    } catch (error) {
+      console.error("Erro ao gerar relatório de armaduras:", error);
+      throw error;
+    }
+  }
+
+  private addRelatorioIndividualArmaduras(options: RelatorioArmadurasOptions, startY: number): number {
+    const armadura = options.armaduraEspecifica;
+    if (!armadura) return startY;
+
+    // Título da seção
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, startY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica da Armadura', 20, startY + 2);
+
+    // KPIs
+    const kpiY = startY + 12;
+    this.addKPICard(20, kpiY, 'Estado', armadura.estado.replace('_', ' '), [59, 130, 246]);
+    this.addKPICard(75, kpiY, 'Peso Total', `${armadura.peso_total} kg`, [34, 197, 94]);
+    this.addKPICard(130, kpiY, 'Diâmetro', `${armadura.diametro} mm`, [168, 85, 247]);
+
+    // Informações básicas
+    const infoY = kpiY + 30;
+    this.doc.setFillColor(249, 250, 251);
+    this.doc.rect(15, infoY - 5, 180, 60, 'F');
+
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Informações Básicas', 20, infoY);
+
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+
+    const infoBasicas = [
+      `Código: ${armadura.codigo}`,
+      `Tipo: ${armadura.tipo.replace('_', ' ')}`,
+      `Fabricante: ${armadura.fabricante}`,
+      `Nº Colada: ${armadura.numero_colada}`,
+      `Nº Guia Remessa: ${armadura.numero_guia_remessa}`,
+      `Local Aplicação: ${armadura.local_aplicacao}`,
+      `Zona Aplicação: ${armadura.zona_aplicacao}`,
+      `Lote Aplicação: ${armadura.lote_aplicacao}`,
+      `Responsável: ${armadura.responsavel}`,
+      `Data Receção: ${new Date(armadura.data_rececao).toLocaleDateString("pt-PT")}`
+    ];
+
+    let currentY = infoY + 12;
+    infoBasicas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 5;
+    });
+
+    return currentY + 10;
+  }
+
+  private addFiltrosArmaduras(filtros: any, startY: number): number {
+    this.doc.setFillColor(243, 244, 246);
+    this.doc.rect(15, startY - 5, 180, 25, 'F');
+    
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Filtros Aplicados:', 20, startY);
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(8);
+    this.doc.setTextColor(75, 85, 99);
+
+    let currentY = startY + 8;
+    let x = 20;
+    let maxX = 180;
+
+    Object.entries(filtros).forEach(([key, value]) => {
+      if (value && value !== '') {
+        const text = `${key}: ${value}`;
+        if (x + this.doc.getTextWidth(text) > maxX) {
+          x = 20;
+          currentY += 5;
+        }
+        this.doc.text(text, x, currentY);
+        x += this.doc.getTextWidth(text) + 10;
+      }
+    });
+
+    return currentY + 10;
+  }
+
+  private addRelatorioExecutivoArmaduras(options: RelatorioArmadurasOptions, startY: number): number {
+    const armaduras = options.armaduras;
+    
+    // Estatísticas gerais
+    const stats = {
+      total: armaduras.length,
+      pesoTotal: armaduras.reduce((sum, a) => sum + a.peso_total, 0),
+      aprovadas: armaduras.filter(a => a.estado === 'aprovado').length,
+      fabricantes: new Set(armaduras.map(a => a.fabricante)).size
+    };
+
+    // Título da seção
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, startY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Resumo Executivo', 20, startY + 2);
+
+    // KPIs
+    const kpiY = startY + 12;
+    this.addKPICard(20, kpiY, 'Total', stats.total.toString(), [59, 130, 246]);
+    this.addKPICard(75, kpiY, 'Peso Total', `${stats.pesoTotal.toFixed(1)} kg`, [34, 197, 94]);
+    this.addKPICard(130, kpiY, 'Aprovadas', stats.aprovadas.toString(), [168, 85, 247]);
+
+    return kpiY + 30;
+  }
+
+  private addRelatorioFiltradoArmaduras(options: RelatorioArmadurasOptions, startY: number): number {
+    const armaduras = options.armaduras;
+    
+    // Título da seção
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, startY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Detalhes das Armaduras', 20, startY + 2);
+
+    // Preparar dados para tabela
+    const tableData = armaduras.map(armadura => [
+      armadura.codigo,
+      armadura.tipo.replace('_', ' '),
+      `${armadura.diametro} mm`,
+      armadura.quantidade.toString(),
+      `${armadura.peso_total} kg`,
+      armadura.fabricante,
+      armadura.numero_colada,
+      armadura.estado.replace('_', ' '),
+      armadura.local_aplicacao,
+      new Date(armadura.data_rececao).toLocaleDateString("pt-PT")
+    ]);
+
+    // Adicionar tabela
+    autoTable(this.doc, {
+      startY: startY + 15,
+      head: [['Código', 'Tipo', 'Diâmetro', 'Qtd', 'Peso', 'Fabricante', 'Nº Colada', 'Estado', 'Local', 'Data']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+      styles: { fontSize: 8 }
+    });
+
+    return (this.doc as any).lastAutoTable.finalY + 10;
+  }
+
+  private addRelatorioComparativoArmaduras(options: RelatorioArmadurasOptions, startY: number): number {
+    const armaduras = options.armaduras;
+    
+    // Análise por estado
+    const analisePorEstado = armaduras.reduce((acc, armadura) => {
+      acc[armadura.estado] = (acc[armadura.estado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Análise por diâmetro
+    const analisePorDiametro = armaduras.reduce((acc, armadura) => {
+      acc[armadura.diametro] = (acc[armadura.diametro] || 0) + armadura.peso_total;
+      return acc;
+    }, {} as Record<number, number>);
+
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, startY);
+
+    let currentY = startY + 15;
+
+    // Análise por estado
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Estado:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorEstado).forEach(([estado, quantidade]) => {
+      this.doc.text(`${estado.replace('_', ' ')}: ${quantidade} armaduras`, 25, currentY);
+      currentY += 6;
+    });
+
+    currentY += 10;
+
+    // Análise por diâmetro
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Peso Total por Diâmetro:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorDiametro)
+      .sort(([a], [b]) => Number(a) - Number(b))
+      .forEach(([diametro, peso]) => {
+        this.doc.text(`${diametro}mm: ${peso.toFixed(1)} kg`, 25, currentY);
+        currentY += 6;
+      });
+
+    return currentY;
+  }
+
+  private addKPICard(x: number, y: number, label: string, value: string, color: number[]): void {
+    this.doc.setFillColor(...color);
+    this.doc.rect(x, y, 50, 20, 'F');
+    
+    this.doc.setFontSize(8);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text(label, x + 2, y + 6);
+    
+    this.doc.setFontSize(10);
+    this.doc.text(value, x + 2, y + 15);
+  }
+
+  async gerarRelatorioCertificados(options: RelatorioCertificadosOptions): Promise<void> {
+    this.initDocument();
+    this.pageNumber = 1;
+
+    try {
+      await this.addProfessionalHeader();
+      
+      switch (options.tipo) {
+        case 'executivo':
+          await this.gerarRelatorioExecutivoCertificados(options);
+          break;
+        case 'filtrado':
+          await this.gerarRelatorioFiltradoCertificados(options);
+          break;
+        case 'comparativo':
+          await this.gerarRelatorioComparativoCertificados(options);
+          break;
+        case 'individual':
+          await this.gerarRelatorioIndividualCertificados(options);
+          break;
+      }
+
+      await this.addProfessionalFooter();
+      this.doc.save(`Relatorio-Certificados-${options.tipo}-${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error('Erro ao gerar relatório de certificados:', error);
+      throw error;
+    }
+  }
+
+  private async gerarRelatorioExecutivoCertificados(options: RelatorioCertificadosOptions): Promise<void> {
+    const certificados = options.certificados;
+    
+    // Estatísticas gerais
+    const stats = {
+      total: certificados.length,
+      validos: certificados.filter(c => c.status === 'valido').length,
+      expirados: certificados.filter(c => c.status === 'expirado').length,
+      pendentes: certificados.filter(c => c.status === 'pendente').length,
+      fornecedores: new Set(certificados.map(c => c.fornecedor)).size
+    };
+
+    // Título da seção
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, 80 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Resumo Executivo', 20, 80 + 2);
+
+    // KPIs
+    const kpiY = 80 + 12;
+    this.addKPICard(20, kpiY, 'Total', stats.total.toString(), [59, 130, 246]);
+    this.addKPICard(75, kpiY, 'Válidos', stats.validos.toString(), [34, 197, 94]);
+    this.addKPICard(130, kpiY, 'Expirados', stats.expirados.toString(), [239, 68, 68]);
+    this.addKPICard(185, kpiY, 'Pendentes', stats.pendentes.toString(), [245, 158, 11]);
+  }
+
+  private async gerarRelatorioFiltradoCertificados(options: RelatorioCertificadosOptions): Promise<void> {
+    const certificados = options.certificados;
+    
+    // Título da seção
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, 80 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Detalhes dos Certificados', 20, 80 + 2);
+
+    // Preparar dados para tabela
+    const tableData = certificados.map(certificado => [
+      certificado.codigo,
+      certificado.tipo,
+      certificado.fornecedor,
+      certificado.status,
+      new Date(certificado.data_validade).toLocaleDateString("pt-PT"),
+      certificado.responsavel
+    ]);
+
+    // Adicionar tabela
+    autoTable(this.doc, {
+      startY: 80 + 15,
+      head: [['Código', 'Tipo', 'Fornecedor', 'Status', 'Validade', 'Responsável']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+      styles: { fontSize: 8 }
+    });
+  }
+
+  private async gerarRelatorioComparativoCertificados(options: RelatorioCertificadosOptions): Promise<void> {
+    const certificados = options.certificados;
+    
+    // Análise por status
+    const analisePorStatus = certificados.reduce((acc, certificado) => {
+      acc[certificado.status] = (acc[certificado.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Análise por tipo
+    const analisePorTipo = certificados.reduce((acc, certificado) => {
+      acc[certificado.tipo] = (acc[certificado.tipo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, 80);
+
+    let currentY = 80 + 15;
+
+    // Análise por status
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Status:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorStatus).forEach(([status, quantidade]) => {
+      this.doc.text(`${status}: ${quantidade} certificados`, 25, currentY);
+      currentY += 6;
+    });
+
+    currentY += 10;
+
+    // Análise por tipo
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Tipo:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorTipo).forEach(([tipo, quantidade]) => {
+      this.doc.text(`${tipo}: ${quantidade} certificados`, 25, currentY);
+      currentY += 6;
+    });
+  }
+
+  private async gerarRelatorioIndividualCertificados(options: RelatorioCertificadosOptions): Promise<void> {
+    const certificado = options.certificadoIndividual;
+    if (!certificado) return;
+
+    // Título da seção
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, 80 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica do Certificado', 20, 80 + 2);
+
+    // Informações básicas
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Informações Básicas:', 20, 100);
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(9);
+    this.doc.setTextColor(75, 85, 99);
+
+    const infoBasicas = [
+      `Código: ${certificado.codigo}`,
+      `Tipo: ${certificado.tipo}`,
+      `Fornecedor: ${certificado.fornecedor}`,
+      `Status: ${certificado.status}`,
+      `Data de Validade: ${new Date(certificado.data_validade).toLocaleDateString("pt-PT")}`,
+      `Responsável: ${certificado.responsavel}`,
+      `Descrição: ${certificado.descricao || 'N/A'}`
+    ];
+
+    let currentY = 100 + 12;
+    infoBasicas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 5;
+    });
+  }
+
+  // Método principal para relatórios de Normas
+  gerarRelatorioNormas(options: RelatorioNormasOptions): void {
+    this.doc = new jsPDF();
+    this.pageNumber = 1;
+    
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    this.addProfessionalFooter();
+
+    switch (options.tipo) {
+      case 'executivo':
+        this.gerarRelatorioExecutivoNormas(options);
+        break;
+      case 'filtrado':
+        this.gerarRelatorioFiltradoNormas(options);
+        break;
+      case 'comparativo':
+        this.gerarRelatorioComparativoNormas(options);
+        break;
+      case 'individual':
+        this.gerarRelatorioIndividualNormas(options);
+        break;
+      default:
+        this.gerarRelatorioExecutivoNormas(options);
+    }
+
+    this.doc.save(`Relatorio_Normas_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  private gerarRelatorioExecutivoNormas(options: RelatorioNormasOptions): void {
+    const normas = options.normas;
+    
+    // Estatísticas
+    const totalNormas = normas.length;
+    const normasAtivas = normas.filter(n => n.status === 'ATIVA').length;
+    const normasRevisao = normas.filter(n => n.status === 'REVISAO').length;
+    const normasObsoletas = normas.filter(n => n.status === 'OBSOLETA').length;
+    const normasCriticas = normas.filter(n => n.prioridade === 'CRITICA').length;
+
+    // Título da seção
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, 80 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Resumo Executivo', 20, 80 + 2);
+
+    // Estatísticas
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Estatísticas Gerais:', 20, 100);
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(9);
+    this.doc.setTextColor(75, 85, 99);
+
+    const estatisticas = [
+      `Total de Normas: ${totalNormas}`,
+      `Normas Ativas: ${normasAtivas}`,
+      `Em Revisão: ${normasRevisao}`,
+      `Obsoletas: ${normasObsoletas}`,
+      `Prioridade Crítica: ${normasCriticas}`
+    ];
+
+    let currentY = 100 + 12;
+    estatisticas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 5;
+    });
+
+    currentY += 10;
+
+    // Análise por categoria
+    const analisePorCategoria = normas.reduce((acc, norma) => {
+      acc[norma.categoria] = (acc[norma.categoria] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Categoria:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorCategoria)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .forEach(([categoria, count]) => {
+        this.doc.text(`${categoria}: ${count} normas`, 25, currentY);
+        currentY += 5;
+      });
+  }
+
+  private gerarRelatorioFiltradoNormas(options: RelatorioNormasOptions): void {
+    const normas = options.normas;
+    const filtros = options.filtros;
+
+    // Título da seção
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, 80 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Relatório Filtrado', 20, 80 + 2);
+
+    // Filtros aplicados
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Filtros Aplicados:', 20, 100);
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(9);
+    this.doc.setTextColor(75, 85, 99);
+
+    let currentY = 100 + 12;
+    if (filtros) {
+      Object.entries(filtros).forEach(([key, value]) => {
+        if (value) {
+          this.doc.text(`${key}: ${value}`, 25, currentY);
+          currentY += 5;
+        }
+      });
+    }
+
+    currentY += 10;
+
+    // Tabela de normas
+    const tableData = normas.map(norma => [
+      norma.codigo,
+      norma.titulo.substring(0, 30) + (norma.titulo.length > 30 ? '...' : ''),
+      norma.categoria,
+      norma.organismo,
+      norma.status,
+      norma.prioridade,
+      new Date(norma.data_publicacao).toLocaleDateString('pt-PT')
+    ]);
+
+    autoTable(this.doc, {
+      startY: currentY,
+      head: [['Código', 'Título', 'Categoria', 'Organismo', 'Status', 'Prioridade', 'Data Pub.']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+      styles: { fontSize: 8 }
+    });
+  }
+
+  private gerarRelatorioComparativoNormas(options: RelatorioNormasOptions): void {
+    const normas = options.normas;
+    
+    // Análise por status
+    const analisePorStatus = normas.reduce((acc, norma) => {
+      acc[norma.status] = (acc[norma.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Análise por organismo
+    const analisePorOrganismo = normas.reduce((acc, norma) => {
+      acc[norma.organismo] = (acc[norma.organismo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, 80);
+
+    let currentY = 80 + 15;
+
+    // Análise por status
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Status:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorStatus).forEach(([status, quantidade]) => {
+      this.doc.text(`${status}: ${quantidade} normas`, 25, currentY);
+      currentY += 6;
+    });
+
+    currentY += 10;
+
+    // Análise por organismo
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Organismo:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorOrganismo).forEach(([organismo, quantidade]) => {
+      this.doc.text(`${organismo}: ${quantidade} normas`, 25, currentY);
+      currentY += 6;
+    });
+  }
+
+  private gerarRelatorioIndividualNormas(options: RelatorioNormasOptions): void {
+    const norma = options.normaEspecifica;
+    if (!norma) return;
+
+    // Título da seção
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, 80 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica da Norma', 20, 80 + 2);
+
+    // Informações básicas
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Informações Básicas:', 20, 100);
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(9);
+    this.doc.setTextColor(75, 85, 99);
+
+    const infoBasicas = [
+      `Código: ${norma.codigo}`,
+      `Título: ${norma.titulo}`,
+      `Categoria: ${norma.categoria}`,
+      `Organismo: ${norma.organismo}`,
+      `Versão: ${norma.versao}`,
+      `Status: ${norma.status}`,
+      `Prioridade: ${norma.prioridade}`,
+      `Data de Publicação: ${new Date(norma.data_publicacao).toLocaleDateString("pt-PT")}`,
+      `Entrada em Vigor: ${new Date(norma.data_entrada_vigor).toLocaleDateString("pt-PT")}`,
+      `Descrição: ${norma.descricao || 'N/A'}`
+    ];
+
+    let currentY = 100 + 12;
+    infoBasicas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 5;
+    });
+  }
+
+  // ===== RELATÓRIOS SUBMISSÃO MATERIAIS =====
+  async gerarRelatorioSubmissaoMateriais(options: RelatorioSubmissaoMateriaisOptions): Promise<void> {
+    this.doc = new jsPDF();
+    this.pageNumber = 1;
+    this.totalPages = 1;
+
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    this.addProfessionalFooter();
+
+    switch (options.tipo) {
+      case 'executivo':
+        this.gerarRelatorioExecutivoSubmissaoMateriais(options);
+        break;
+      case 'filtrado':
+        this.gerarRelatorioFiltradoSubmissaoMateriais(options);
+        break;
+      case 'comparativo':
+        this.gerarRelatorioComparativoSubmissaoMateriais(options);
+        break;
+      case 'individual':
+        this.gerarRelatorioIndividualSubmissaoMateriais(options);
+        break;
+    }
+
+    this.doc.save(`relatorio_submissoes_materiais_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  private gerarRelatorioExecutivoSubmissaoMateriais(options: RelatorioSubmissaoMateriaisOptions): void {
+    const submissoes = options.submissoes;
+    
+    // Estatísticas
+    const totalSubmissoes = submissoes.length;
+    const aprovadas = submissoes.filter(s => s.estado === 'aprovado').length;
+    const pendentes = submissoes.filter(s => ['submetido', 'em_revisao', 'aguardando_aprovacao'].includes(s.estado)).length;
+    const rejeitadas = submissoes.filter(s => s.estado === 'rejeitado').length;
+    const urgentes = submissoes.filter(s => s.urgencia === 'urgente' || s.urgencia === 'muito_urgente').length;
+    const criticas = submissoes.filter(s => s.prioridade === 'critica').length;
+
+    // Título da seção
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, 80 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Resumo Executivo', 20, 80 + 2);
+
+    // Estatísticas principais
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Estatísticas Gerais:', 20, 100);
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(10);
+    this.doc.setTextColor(75, 85, 99);
+
+    const estatisticas = [
+      `Total de Submissões: ${totalSubmissoes}`,
+      `Aprovadas: ${aprovadas} (${totalSubmissoes > 0 ? ((aprovadas / totalSubmissoes) * 100).toFixed(1) : 0}%)`,
+      `Pendentes: ${pendentes} (${totalSubmissoes > 0 ? ((pendentes / totalSubmissoes) * 100).toFixed(1) : 0}%)`,
+      `Rejeitadas: ${rejeitadas} (${totalSubmissoes > 0 ? ((rejeitadas / totalSubmissoes) * 100).toFixed(1) : 0}%)`,
+      `Urgentes: ${urgentes}`,
+      `Críticas: ${criticas}`
+    ];
+
+    let currentY = 100 + 12;
+    estatisticas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 6;
+    });
+
+    // Análise por tipo de material
+    currentY += 10;
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Análise por Tipo de Material:', 20, currentY);
+    currentY += 8;
+
+    const tiposMaterial = submissoes.reduce((acc, s) => {
+      acc[s.tipo_material] = (acc[s.tipo_material] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(tiposMaterial).forEach(([tipo, count]) => {
+      this.doc.text(`${tipo}: ${count} submissões`, 25, currentY);
+      currentY += 5;
+    });
+  }
+
+  private gerarRelatorioFiltradoSubmissaoMateriais(options: RelatorioSubmissaoMateriaisOptions): void {
+    const submissoes = options.submissoes;
+    
+    // Título da seção
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, 80 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Relatório Detalhado', 20, 80 + 2);
+
+    // Filtros aplicados
+    if (options.filtros && options.filtros.length > 0) {
+      this.doc.setFontSize(10);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Filtros Aplicados:', 20, 100);
+      
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setFontSize(9);
+      this.doc.setTextColor(75, 85, 99);
+      this.doc.text(options.filtros.join(', '), 25, 110);
+    }
+
+    // Tabela de submissões
+    const tableData = submissoes.map(submissao => [
+      submissao.codigo,
+      submissao.titulo,
+      submissao.tipo_material,
+      submissao.categoria,
+      submissao.estado,
+      submissao.prioridade,
+      submissao.submissor_nome,
+      new Date(submissao.data_submissao).toLocaleDateString('pt-BR'),
+      submissao.obra_nome || 'N/A'
+    ]);
+
+    autoTable(this.doc, {
+      startY: 120,
+      head: [['Código', 'Título', 'Tipo', 'Categoria', 'Estado', 'Prioridade', 'Submissor', 'Data', 'Obra']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+      styles: { fontSize: 8 }
+    });
+  }
+
+  private gerarRelatorioComparativoSubmissaoMateriais(options: RelatorioSubmissaoMateriaisOptions): void {
+    const submissoes = options.submissoes;
+    
+    // Análise por estado
+    const analisePorEstado = submissoes.reduce((acc, submissao) => {
+      acc[submissao.estado] = (acc[submissao.estado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Análise por tipo de material
+    const analisePorTipo = submissoes.reduce((acc, submissao) => {
+      acc[submissao.tipo_material] = (acc[submissao.tipo_material] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, 80);
+
+    let currentY = 80 + 15;
+
+    // Análise por estado
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Estado:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorEstado).forEach(([estado, quantidade]) => {
+      this.doc.text(`${estado}: ${quantidade} submissões`, 25, currentY);
+      currentY += 6;
+    });
+
+    currentY += 10;
+
+    // Análise por tipo de material
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Tipo de Material:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorTipo).forEach(([tipo, quantidade]) => {
+      this.doc.text(`${tipo}: ${quantidade} submissões`, 25, currentY);
+      currentY += 6;
+    });
+  }
+
+  private gerarRelatorioIndividualSubmissaoMateriais(options: RelatorioSubmissaoMateriaisOptions): void {
+    const submissao = options.submissoes[0];
+    if (!submissao) return;
+
+    // Título da seção
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, 80 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica da Submissão', 20, 80 + 2);
+
+    // Informações básicas
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Informações Básicas:', 20, 100);
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(9);
+    this.doc.setTextColor(75, 85, 99);
+
+    const infoBasicas = [
+      `Código: ${submissao.codigo}`,
+      `Título: ${submissao.titulo}`,
+      `Descrição: ${submissao.descricao}`,
+      `Tipo de Material: ${submissao.tipo_material}`,
+      `Categoria: ${submissao.categoria}`,
+      `Estado: ${submissao.estado}`,
+      `Prioridade: ${submissao.prioridade}`,
+      `Urgência: ${submissao.urgencia}`,
+      `Submissor: ${submissao.submissor_nome}`,
+      `Data de Submissão: ${new Date(submissao.data_submissao).toLocaleDateString("pt-PT")}`,
+      `Obra: ${submissao.obra_nome || 'N/A'}`,
+      `Fornecedor Sugerido: ${submissao.fornecedor_sugerido || 'N/A'}`,
+      `Impacto Custo: ${submissao.impacto_custo ? `€${submissao.impacto_custo.toLocaleString()}` : 'N/A'}`,
+      `Impacto Prazo: ${submissao.impacto_prazo ? `${submissao.impacto_prazo} dias` : 'N/A'}`
+    ];
+
+    let currentY = 100 + 12;
+    infoBasicas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 5;
+    });
+
+    // Especificações técnicas
+    if (submissao.especificacoes_tecnicas) {
+      currentY += 10;
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('Especificações Técnicas:', 20, currentY);
+      currentY += 8;
+
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setFontSize(8);
+      const especificacoes = submissao.especificacoes_tecnicas.split('\n');
+      especificacoes.forEach(linha => {
+        this.doc.text(linha, 25, currentY);
+        currentY += 4;
+      });
+    }
+  }
+
+  // ===== RELATÓRIOS DE SINALIZAÇÃO =====
+
+  async gerarRelatorioSinalizacao(options: RelatorioSinalizacaoOptions): Promise<void> {
+    this.doc = new jsPDF();
+    this.pageNumber = 1;
+    this.totalPages = 1;
+
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    this.addProfessionalFooter();
+
+    switch (options.tipo) {
+      case 'executivo':
+        this.gerarRelatorioExecutivoSinalizacao(options);
+        break;
+      case 'filtrado':
+        this.gerarRelatorioFiltradoSinalizacao(options);
+        break;
+      case 'comparativo':
+        this.gerarRelatorioComparativoSinalizacao(options);
+        break;
+      case 'individual':
+        this.gerarRelatorioIndividualSinalizacao(options);
+        break;
+    }
+
+    this.doc.save(`relatorio_sinalizacoes_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  private gerarRelatorioExecutivoSinalizacao(options: RelatorioSinalizacaoOptions): void {
+    const sinalizacoes = options.sinalizacoes;
+    
+    // Estatísticas
+    const total = sinalizacoes.length;
+    const operacionais = sinalizacoes.filter(s => s.estado === 'operacional').length;
+    const manutencao = sinalizacoes.filter(s => s.estado === 'manutencao').length;
+    const avariadas = sinalizacoes.filter(s => s.estado === 'avariada').length;
+    const ativas = sinalizacoes.filter(s => s.status_operacional === 'ativo').length;
+    const kmCobertos = sinalizacoes.reduce((total, s) => total + (s.km_final - s.km_inicial), 0);
+
+    // Resumo executivo
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Resumo Executivo', 20, 100);
+
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+
+    const resumo = [
+      `Total de Sinalizações: ${total}`,
+      `Operacionais: ${operacionais} (${total > 0 ? ((operacionais / total) * 100).toFixed(1) : 0}%)`,
+      `Em Manutenção: ${manutencao} (${total > 0 ? ((manutencao / total) * 100).toFixed(1) : 0}%)`,
+      `Avariadas: ${avariadas} (${total > 0 ? ((avariadas / total) * 100).toFixed(1) : 0}%)`,
+      `Ativas: ${ativas} (${total > 0 ? ((ativas / total) * 100).toFixed(1) : 0}%)`,
+      `KM Cobertos: ${kmCobertos.toFixed(1)} km`
+    ];
+
+    let currentY = 100 + 15;
+    resumo.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 8;
+    });
+
+    // Análise por tipo
+    const tipos = sinalizacoes.reduce((acc, s) => {
+      acc[s.tipo] = (acc[s.tipo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    currentY += 15;
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Tipo:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(tipos).forEach(([tipo, count]) => {
+      this.doc.text(`${tipo}: ${count}`, 25, currentY);
+      currentY += 6;
+    });
+  }
+
+  private gerarRelatorioFiltradoSinalizacao(options: RelatorioSinalizacaoOptions): void {
+    const sinalizacoes = options.sinalizacoes;
+
+    // Filtros aplicados
+    if (options.filtros && options.filtros.length > 0) {
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Filtros Aplicados:', 20, 100);
+
+      this.doc.setFontSize(9);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(75, 85, 99);
+
+      let currentY = 100 + 10;
+      options.filtros.forEach(filtro => {
+        this.doc.text(`• ${filtro}`, 25, currentY);
+        currentY += 6;
+      });
+
+      currentY += 10;
+    }
+
+    // Tabela de sinalizações
+    const tableData = sinalizacoes.map(s => [
+      s.codigo,
+      s.tipo,
+      s.localizacao,
+      s.estado,
+      s.status_operacional,
+      s.fabricante,
+      `${s.km_inicial} - ${s.km_final}`,
+      new Date(s.data_instalacao).toLocaleDateString('pt-PT')
+    ]);
+
+    autoTable(this.doc, {
+      head: [['Código', 'Tipo', 'Localização', 'Estado', 'Status', 'Fabricante', 'KM', 'Data Instalação']],
+      body: tableData,
+      startY: options.filtros && options.filtros.length > 0 ? 150 : 100,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2
+      },
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255
+      }
+    });
+  }
+
+  private gerarRelatorioComparativoSinalizacao(options: RelatorioSinalizacaoOptions): void {
+    const sinalizacoes = options.sinalizacoes;
+
+    // Análise por estado
+    const analisePorEstado = sinalizacoes.reduce((acc, s) => {
+      acc[s.estado] = (acc[s.estado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Análise por tipo
+    const analisePorTipo = sinalizacoes.reduce((acc, s) => {
+      acc[s.tipo] = (acc[s.tipo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, 100);
+
+    let currentY = 100 + 15;
+
+    // Análise por estado
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Estado:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorEstado).forEach(([estado, quantidade]) => {
+      this.doc.text(`${estado}: ${quantidade} sinalizações`, 25, currentY);
+      currentY += 6;
+    });
+
+    currentY += 10;
+
+    // Análise por tipo
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Tipo:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorTipo).forEach(([tipo, quantidade]) => {
+      this.doc.text(`${tipo}: ${quantidade} sinalizações`, 25, currentY);
+      currentY += 6;
+    });
+  }
+
+  private gerarRelatorioIndividualSinalizacao(options: RelatorioSinalizacaoOptions): void {
+    const sinalizacao = options.sinalizacoes[0];
+    if (!sinalizacao) return;
+
+    // Título da seção
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, 100 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica da Sinalização', 20, 100 + 2);
+
+    // Informações básicas
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Informações Básicas:', 20, 120);
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(9);
+    this.doc.setTextColor(75, 85, 99);
+
+    const infoBasicas = [
+      `Código: ${sinalizacao.codigo}`,
+      `Tipo: ${sinalizacao.tipo}`,
+      `Categoria: ${sinalizacao.categoria}`,
+      `Localização: ${sinalizacao.localizacao}`,
+      `Estado: ${sinalizacao.estado}`,
+      `Status Operacional: ${sinalizacao.status_operacional}`,
+      `Fabricante: ${sinalizacao.fabricante}`,
+      `Modelo: ${sinalizacao.modelo}`,
+      `KM: ${sinalizacao.km_inicial} - ${sinalizacao.km_final}`,
+      `Data de Instalação: ${new Date(sinalizacao.data_instalacao).toLocaleDateString("pt-PT")}`,
+      `Última Inspeção: ${new Date(sinalizacao.ultima_inspecao).toLocaleDateString("pt-PT")}`,
+      `Próxima Inspeção: ${new Date(sinalizacao.proxima_inspecao).toLocaleDateString("pt-PT")}`
+    ];
+
+    let currentY = 120 + 12;
+    infoBasicas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 5;
+    });
+
+    // Parâmetros técnicos
+    currentY += 10;
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Parâmetros Técnicos:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    const parametros = [
+      `Alcance: ${sinalizacao.parametros.alcance} m`,
+      `Frequência: ${sinalizacao.parametros.frequencia}`,
+      `Potência: ${sinalizacao.parametros.potencia} W`,
+      `Sensibilidade: ${sinalizacao.parametros.sensibilidade} dBm`
+    ];
+
+    parametros.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 5;
+    });
+
+    // Observações
+    if (sinalizacao.observacoes) {
+      currentY += 10;
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('Observações:', 20, currentY);
+      currentY += 8;
+
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setFontSize(8);
+      const observacoes = sinalizacao.observacoes.split('\n');
+      observacoes.forEach(linha => {
+        this.doc.text(linha, 25, currentY);
+        currentY += 4;
+      });
+    }
+  }
+
+  // ===== RELATÓRIOS DE INSPEÇÕES DE SINALIZAÇÃO =====
+
+  async gerarRelatorioInspecaoSinalizacao(options: RelatorioInspecaoSinalizacaoOptions): Promise<void> {
+    this.doc = new jsPDF();
+    this.pageNumber = 1;
+    this.totalPages = 1;
+
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    this.addProfessionalFooter();
+
+    switch (options.tipo) {
+      case 'executivo':
+        this.gerarRelatorioExecutivoInspecaoSinalizacao(options);
+        break;
+      case 'filtrado':
+        this.gerarRelatorioFiltradoInspecaoSinalizacao(options);
+        break;
+      case 'comparativo':
+        this.gerarRelatorioComparativoInspecaoSinalizacao(options);
+        break;
+      case 'individual':
+        this.gerarRelatorioIndividualInspecaoSinalizacao(options);
+        break;
+    }
+
+    this.doc.save(`relatorio_inspecoes_sinalizacao_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  private gerarRelatorioExecutivoInspecaoSinalizacao(options: RelatorioInspecaoSinalizacaoOptions): void {
+    const inspecoes = options.inspecoes;
+    
+    // Estatísticas
+    const total = inspecoes.length;
+    const aprovadas = inspecoes.filter(i => i.resultado === 'aprovado').length;
+    const aprovadas_condicional = inspecoes.filter(i => i.resultado === 'aprovado_condicional').length;
+    const reprovadas = inspecoes.filter(i => i.resultado === 'reprovado').length;
+    const pendentes = inspecoes.filter(i => i.resultado === 'pendente').length;
+    const preventivas = inspecoes.filter(i => i.tipo === 'preventiva').length;
+
+    // Resumo executivo
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Resumo Executivo', 20, 100);
+
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(75, 85, 99);
+
+    const resumo = [
+      `Total de Inspeções: ${total}`,
+      `Aprovadas: ${aprovadas} (${total > 0 ? ((aprovadas / total) * 100).toFixed(1) : 0}%)`,
+      `Aprovadas Condicional: ${aprovadas_condicional} (${total > 0 ? ((aprovadas_condicional / total) * 100).toFixed(1) : 0}%)`,
+      `Reprovadas: ${reprovadas} (${total > 0 ? ((reprovadas / total) * 100).toFixed(1) : 0}%)`,
+      `Pendentes: ${pendentes} (${total > 0 ? ((pendentes / total) * 100).toFixed(1) : 0}%)`,
+      `Preventivas: ${preventivas} (${total > 0 ? ((preventivas / total) * 100).toFixed(1) : 0}%)`
+    ];
+
+    let currentY = 100 + 15;
+    resumo.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 8;
+    });
+
+    // Análise por tipo
+    const tipos = inspecoes.reduce((acc, i) => {
+      acc[i.tipo] = (acc[i.tipo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    currentY += 15;
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Tipo:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(tipos).forEach(([tipo, count]) => {
+      this.doc.text(`${tipo}: ${count}`, 25, currentY);
+      currentY += 6;
+    });
+  }
+
+  private gerarRelatorioFiltradoInspecaoSinalizacao(options: RelatorioInspecaoSinalizacaoOptions): void {
+    const inspecoes = options.inspecoes;
+
+    // Filtros aplicados
+    if (options.filtros && options.filtros.length > 0) {
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Filtros Aplicados:', 20, 100);
+
+      this.doc.setFontSize(9);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(75, 85, 99);
+
+      let currentY = 100 + 10;
+      options.filtros.forEach(filtro => {
+        this.doc.text(`• ${filtro}`, 25, currentY);
+        currentY += 6;
+      });
+
+      currentY += 10;
+    }
+
+    // Tabela de inspeções
+    const tableData = inspecoes.map(i => [
+      new Date(i.data_inspecao).toLocaleDateString('pt-PT'),
+      i.tipo,
+      i.inspector,
+      i.resultado,
+      new Date(i.proxima_inspecao).toLocaleDateString('pt-PT')
+    ]);
+
+    autoTable(this.doc, {
+      head: [['Data', 'Tipo', 'Inspector', 'Resultado', 'Próxima Inspeção']],
+      body: tableData,
+      startY: options.filtros && options.filtros.length > 0 ? 150 : 100,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2
+      },
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255
+      }
+    });
+  }
+
+  private gerarRelatorioComparativoInspecaoSinalizacao(options: RelatorioInspecaoSinalizacaoOptions): void {
+    const inspecoes = options.inspecoes;
+
+    // Análise por resultado
+    const analisePorResultado = inspecoes.reduce((acc, i) => {
+      acc[i.resultado] = (acc[i.resultado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Análise por tipo
+    const analisePorTipo = inspecoes.reduce((acc, i) => {
+      acc[i.tipo] = (acc[i.tipo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, 100);
+
+    let currentY = 100 + 15;
+
+    // Análise por resultado
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Resultado:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorResultado).forEach(([resultado, quantidade]) => {
+      this.doc.text(`${resultado}: ${quantidade} inspeções`, 25, currentY);
+      currentY += 6;
+    });
+
+    currentY += 10;
+
+    // Análise por tipo
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Tipo:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorTipo).forEach(([tipo, quantidade]) => {
+      this.doc.text(`${tipo}: ${quantidade} inspeções`, 25, currentY);
+      currentY += 6;
+    });
+  }
+
+  private gerarRelatorioIndividualInspecaoSinalizacao(options: RelatorioInspecaoSinalizacaoOptions): void {
+    const inspecao = options.inspecoes[0];
+    if (!inspecao) return;
+
+    // Título da seção
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, 100 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica da Inspeção', 20, 100 + 2);
+
+    // Informações básicas
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Informações Básicas:', 20, 120);
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(9);
+    this.doc.setTextColor(75, 85, 99);
+
+    const infoBasicas = [
+      `Data da Inspeção: ${new Date(inspecao.data_inspecao).toLocaleDateString("pt-PT")}`,
+      `Tipo: ${inspecao.tipo}`,
+      `Inspector: ${inspecao.inspector}`,
+      `Resultado: ${inspecao.resultado}`,
+      `Próxima Inspeção: ${new Date(inspecao.proxima_inspecao).toLocaleDateString("pt-PT")}`,
+      `Sinalização ID: ${inspecao.sinalizacao_id}`
+    ];
+
+    let currentY = 120 + 12;
+    infoBasicas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 5;
+    });
+
+    // Observações
+    if (inspecao.observacoes) {
+      currentY += 10;
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('Observações:', 20, currentY);
+      currentY += 8;
+
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setFontSize(8);
+      const observacoes = inspecao.observacoes.split('\n');
+      observacoes.forEach(linha => {
+        this.doc.text(linha, 25, currentY);
+        currentY += 4;
+      });
+    }
+
+    // Ações corretivas
+  }
+
+  // Métodos para Segurança Ferroviária
+  async gerarRelatorioSegurancaFerroviaria(options: RelatorioSegurancaFerroviariaOptions): Promise<void> {
+    this.doc = new jsPDF();
+    this.pageNumber = 1;
+    this.totalPages = 1;
+
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    this.addProfessionalFooter();
+
+    switch (options.tipo) {
+      case 'executivo':
+        this.gerarRelatorioExecutivoSegurancaFerroviaria(options);
+        break;
+      case 'filtrado':
+        this.gerarRelatorioFiltradoSegurancaFerroviaria(options);
+        break;
+      case 'comparativo':
+        this.gerarRelatorioComparativoSegurancaFerroviaria(options);
+        break;
+      case 'individual':
+        this.gerarRelatorioIndividualSegurancaFerroviaria(options);
+        break;
+    }
+
+    this.doc.save(`relatorio_seguranca_ferroviaria_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  async gerarRelatorioInspecaoSeguranca(options: RelatorioInspecaoSegurancaOptions): Promise<void> {
+    this.doc = new jsPDF();
+    this.pageNumber = 1;
+    this.totalPages = 1;
+
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    this.addProfessionalFooter();
+
+    switch (options.tipo) {
+      case 'executivo':
+        this.gerarRelatorioExecutivoInspecaoSeguranca(options);
+        break;
+      case 'filtrado':
+        this.gerarRelatorioFiltradoInspecaoSeguranca(options);
+        break;
+      case 'comparativo':
+        this.gerarRelatorioComparativoInspecaoSeguranca(options);
+        break;
+      case 'individual':
+        this.gerarRelatorioIndividualInspecaoSeguranca(options);
+        break;
+    }
+
+    this.doc.save(`relatorio_inspecoes_seguranca_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  private gerarRelatorioExecutivoSegurancaFerroviaria(options: RelatorioSegurancaFerroviariaOptions): void {
+    const sistemas = options.sistemas;
+
+    // Estatísticas
+    const stats = {
+      total: sistemas.length,
+      operacionais: sistemas.filter(s => s.status_operacional === 'Operacional').length,
+      manutencao: sistemas.filter(s => s.status_operacional === 'Manutenção').length,
+      avaria: sistemas.filter(s => s.status_operacional === 'Avaria').length,
+      ativos: sistemas.filter(s => s.estado === 'Ativo').length,
+      inativos: sistemas.filter(s => s.estado === 'Inativo').length,
+      criticos: sistemas.filter(s => s.parametros?.nivel_seguranca > 8).length
+    };
+
+    // Título da seção
+    this.doc.setFillColor(239, 68, 68);
+    this.doc.rect(15, 100 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Resumo Executivo - Sistemas de Segurança', 20, 100 + 2);
+
+    // Estatísticas principais
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Estatísticas Principais:', 20, 120);
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(9);
+    this.doc.setTextColor(75, 85, 99);
+
+    const estatisticas = [
+      `Total de Sistemas: ${stats.total}`,
+      `Sistemas Operacionais: ${stats.operacionais}`,
+      `Sistemas em Manutenção: ${stats.manutencao}`,
+      `Sistemas em Avaria: ${stats.avaria}`,
+      `Sistemas Ativos: ${stats.ativos}`,
+      `Sistemas Inativos: ${stats.inativos}`,
+      `Sistemas Críticos: ${stats.criticos}`
+    ];
+
+    let currentY = 120 + 12;
+    estatisticas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 5;
+    });
+
+    // Análise por tipo
+    currentY += 10;
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Tipo:', 20, currentY);
+    currentY += 8;
+
+    const tipos = sistemas.reduce((acc, s) => {
+      acc[s.tipo] = (acc[s.tipo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(tipos).forEach(([tipo, count]) => {
+      this.doc.text(`${tipo}: ${count} sistemas`, 25, currentY);
+      currentY += 5;
+    });
+  }
+
+  private gerarRelatorioFiltradoSegurancaFerroviaria(options: RelatorioSegurancaFerroviariaOptions): void {
+    const sistemas = options.sistemas;
+
+    // Título da seção
+    this.doc.setFillColor(239, 68, 68);
+    this.doc.rect(15, 100 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Sistemas de Segurança - Dados Filtrados', 20, 100 + 2);
+
+    // Tabela de sistemas
+    const tableData = sistemas.map(sistema => [
+      sistema.codigo,
+      sistema.tipo,
+      sistema.localizacao,
+      sistema.status_operacional,
+      sistema.estado,
+      sistema.fabricante,
+      sistema.ultima_inspecao ? new Date(sistema.ultima_inspecao).toLocaleDateString('pt-PT') : 'N/A'
+    ]);
+
+    autoTable(this.doc, {
+      head: [['Código', 'Tipo', 'Localização', 'Status', 'Estado', 'Fabricante', 'Última Inspeção']],
+      body: tableData,
+      startY: 120,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2
+      },
+      headStyles: {
+        fillColor: [239, 68, 68],
+        textColor: 255
+      }
+    });
+  }
+
+  private gerarRelatorioComparativoSegurancaFerroviaria(options: RelatorioSegurancaFerroviariaOptions): void {
+    const sistemas = options.sistemas;
+
+    // Análise por status operacional
+    const analisePorStatus = sistemas.reduce((acc, s) => {
+      acc[s.status_operacional] = (acc[s.status_operacional] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Análise por tipo
+    const analisePorTipo = sistemas.reduce((acc, s) => {
+      acc[s.tipo] = (acc[s.tipo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, 100);
+
+    let currentY = 100 + 15;
+
+    // Análise por status
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Status Operacional:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorStatus).forEach(([status, quantidade]) => {
+      this.doc.text(`${status}: ${quantidade} sistemas`, 25, currentY);
+      currentY += 6;
+    });
+
+    currentY += 10;
+
+    // Análise por tipo
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Tipo:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorTipo).forEach(([tipo, quantidade]) => {
+      this.doc.text(`${tipo}: ${quantidade} sistemas`, 25, currentY);
+      currentY += 6;
+    });
+  }
+
+  private gerarRelatorioIndividualSegurancaFerroviaria(options: RelatorioSegurancaFerroviariaOptions): void {
+    const sistema = options.sistemas[0];
+    if (!sistema) return;
+
+    // Título da seção
+    this.doc.setFillColor(239, 68, 68);
+    this.doc.rect(15, 100 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica do Sistema', 20, 100 + 2);
+
+    // Informações básicas
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Informações Básicas:', 20, 120);
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(9);
+    this.doc.setTextColor(75, 85, 99);
+
+    const infoBasicas = [
+      `Código: ${sistema.codigo}`,
+      `Tipo: ${sistema.tipo}`,
+      `Categoria: ${sistema.categoria}`,
+      `Localização: ${sistema.localizacao}`,
+      `Estado: ${sistema.estado}`,
+      `Status Operacional: ${sistema.status_operacional}`,
+      `Fabricante: ${sistema.fabricante}`,
+      `Modelo: ${sistema.modelo}`,
+      `Data de Instalação: ${new Date(sistema.data_instalacao).toLocaleDateString("pt-PT")}`
+    ];
+
+    let currentY = 120 + 12;
+    infoBasicas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 5;
+    });
+
+    // Parâmetros técnicos
+    if (sistema.parametros) {
+      currentY += 10;
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('Parâmetros Técnicos:', 20, currentY);
+      currentY += 8;
+
+      this.doc.setFont('helvetica', 'normal');
+      const parametros = [
+        `Nível de Segurança: ${sistema.parametros.nivel_seguranca}`,
+        `Raio de Cobertura: ${sistema.parametros.raio_cobertura}m`,
+        `Tempo de Resposta: ${sistema.parametros.tempo_resposta}ms`,
+        `Capacidade de Deteção: ${sistema.parametros.capacidade_deteccao}%`
+      ];
+
+      parametros.forEach(item => {
+        this.doc.text(item, 25, currentY);
+        currentY += 5;
+      });
+    }
+
+    // Observações
+    if (sistema.observacoes) {
+      currentY += 10;
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('Observações:', 20, currentY);
+      currentY += 8;
+
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setFontSize(8);
+      const observacoes = sistema.observacoes.split('\n');
+      observacoes.forEach(linha => {
+        this.doc.text(linha, 25, currentY);
+        currentY += 4;
+      });
+    }
+  }
+
+  private gerarRelatorioExecutivoInspecaoSeguranca(options: RelatorioInspecaoSegurancaOptions): void {
+    const inspecoes = options.inspecoes;
+
+    // Estatísticas
+    const stats = {
+      total: inspecoes.length,
+      conformes: inspecoes.filter(i => i.resultado === 'Conforme').length,
+      naoConformes: inspecoes.filter(i => i.resultado === 'Não Conforme').length,
+      pendentes: inspecoes.filter(i => i.resultado === 'Pendente').length,
+      criticas: inspecoes.filter(i => i.prioridade === 'Crítica').length,
+      altas: inspecoes.filter(i => i.prioridade === 'Alta').length
+    };
+
+    // Título da seção
+    this.doc.setFillColor(239, 68, 68);
+    this.doc.rect(15, 100 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Resumo Executivo - Inspeções de Segurança', 20, 100 + 2);
+
+    // Estatísticas principais
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Estatísticas Principais:', 20, 120);
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(9);
+    this.doc.setTextColor(75, 85, 99);
+
+    const estatisticas = [
+      `Total de Inspeções: ${stats.total}`,
+      `Inspeções Conformes: ${stats.conformes}`,
+      `Inspeções Não Conformes: ${stats.naoConformes}`,
+      `Inspeções Pendentes: ${stats.pendentes}`,
+      `Inspeções Críticas: ${stats.criticas}`,
+      `Inspeções de Alta Prioridade: ${stats.altas}`
+    ];
+
+    let currentY = 120 + 12;
+    estatisticas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 5;
+    });
+
+    // Análise por resultado
+    currentY += 10;
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Resultado:', 20, currentY);
+    currentY += 8;
+
+    const resultados = inspecoes.reduce((acc, i) => {
+      acc[i.resultado] = (acc[i.resultado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(resultados).forEach(([resultado, count]) => {
+      this.doc.text(`${resultado}: ${count} inspeções`, 25, currentY);
+      currentY += 5;
+    });
+  }
+
+  private gerarRelatorioFiltradoInspecaoSeguranca(options: RelatorioInspecaoSegurancaOptions): void {
+    const inspecoes = options.inspecoes;
+
+    // Título da seção
+    this.doc.setFillColor(239, 68, 68);
+    this.doc.rect(15, 100 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Inspeções de Segurança - Dados Filtrados', 20, 100 + 2);
+
+    // Tabela de inspeções
+    const tableData = inspecoes.map(inspecao => [
+      inspecao.seguranca_id,
+      inspecao.tipo_inspecao,
+      inspecao.resultado,
+      inspecao.prioridade,
+      new Date(inspecao.data_inspecao).toLocaleDateString('pt-PT'),
+      inspecao.responsavel
+    ]);
+
+    autoTable(this.doc, {
+      head: [['Sistema', 'Tipo Inspeção', 'Resultado', 'Prioridade', 'Data', 'Responsável']],
+      body: tableData,
+      startY: 120,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2
+      },
+      headStyles: {
+        fillColor: [239, 68, 68],
+        textColor: 255
+      }
+    });
+  }
+
+  private gerarRelatorioComparativoInspecaoSeguranca(options: RelatorioInspecaoSegurancaOptions): void {
+    const inspecoes = options.inspecoes;
+
+    // Análise por resultado
+    const analisePorResultado = inspecoes.reduce((acc, i) => {
+      acc[i.resultado] = (acc[i.resultado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Análise por tipo
+    const analisePorTipo = inspecoes.reduce((acc, i) => {
+      acc[i.tipo_inspecao] = (acc[i.tipo_inspecao] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    this.doc.setFontSize(12);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, 100);
+
+    let currentY = 100 + 15;
+
+    // Análise por resultado
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Resultado:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorResultado).forEach(([resultado, quantidade]) => {
+      this.doc.text(`${resultado}: ${quantidade} inspeções`, 25, currentY);
+      currentY += 6;
+    });
+
+    currentY += 10;
+
+    // Análise por tipo
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('Distribuição por Tipo:', 20, currentY);
+    currentY += 8;
+
+    this.doc.setFont('helvetica', 'normal');
+    Object.entries(analisePorTipo).forEach(([tipo, quantidade]) => {
+      this.doc.text(`${tipo}: ${quantidade} inspeções`, 25, currentY);
+      currentY += 6;
+    });
+  }
+
+  private gerarRelatorioIndividualInspecaoSeguranca(options: RelatorioInspecaoSegurancaOptions): void {
+    const inspecao = options.inspecoes[0];
+    if (!inspecao) return;
+
+    // Título da seção
+    this.doc.setFillColor(239, 68, 68);
+    this.doc.rect(15, 100 - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica da Inspeção', 20, 100 + 2);
+
+    // Informações básicas
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Informações Básicas:', 20, 120);
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(9);
+    this.doc.setTextColor(75, 85, 99);
+
+    const infoBasicas = [
+      `Data da Inspeção: ${new Date(inspecao.data_inspecao).toLocaleDateString("pt-PT")}`,
+      `Tipo: ${inspecao.tipo_inspecao}`,
+      `Responsável: ${inspecao.responsavel}`,
+      `Resultado: ${inspecao.resultado}`,
+      `Prioridade: ${inspecao.prioridade}`,
+      `Próxima Inspeção: ${new Date(inspecao.proxima_inspecao).toLocaleDateString("pt-PT")}`,
+      `Sistema ID: ${inspecao.seguranca_id}`
+    ];
+
+    let currentY = 120 + 12;
+    infoBasicas.forEach(item => {
+      this.doc.text(item, 25, currentY);
+      currentY += 5;
+    });
+
+    // Observações
+    if (inspecao.observacoes) {
+      currentY += 10;
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('Observações:', 20, currentY);
+      currentY += 8;
+
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setFontSize(8);
+      const observacoes = inspecao.observacoes.split('\n');
+      observacoes.forEach(linha => {
+        this.doc.text(linha, 25, currentY);
+        currentY += 4;
+      });
+    }
+
+    // Ações corretivas
+    if (inspecao.acoes_corretivas) {
+      currentY += 10;
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('Ações Corretivas:', 20, currentY);
+      currentY += 8;
+
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setFontSize(8);
+      const acoes = inspecao.acoes_corretivas.split('\n');
+      acoes.forEach(linha => {
+        this.doc.text(linha, 25, currentY);
+        currentY += 4;
+      });
+    }
   }
 }
 

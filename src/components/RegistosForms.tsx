@@ -98,16 +98,16 @@ const RegistosForms: React.FC<RegistosFormsProps> = ({
     try {
       setUploadingFile(true);
       const bucket = (import.meta as any).env?.VITE_SUPABASE_BUCKET_CERTIFICADOS || 'documents';
-      const path = `registos/documentos/${Date.now()}_${file.name}`;
+      const folder = 'registos/documentos';
       
-      const url = await storageService.uploadFile(file, path, bucket);
+      const result = await storageService.uploadFile(file, folder, bucket);
       
       const newDocument = {
         nome: file.name,
         tipo: file.type,
         tamanho: file.size,
-        url: url,
-        path: path,
+        url: result.url,
+        path: result.path,
         data_upload: new Date().toISOString()
       };
 
@@ -120,6 +120,7 @@ const RegistosForms: React.FC<RegistosFormsProps> = ({
       toast.error('Erro ao carregar documento');
     } finally {
       setUploadingFile(false);
+      if (event.target) event.target.value = '';
     }
   };
 
@@ -130,16 +131,16 @@ const RegistosForms: React.FC<RegistosFormsProps> = ({
     try {
       setUploadingPhoto(true);
       const bucket = (import.meta as any).env?.VITE_SUPABASE_BUCKET_CERTIFICADOS || 'documents';
-      const path = `registos/fotografias/${Date.now()}_${file.name}`;
+      const folder = 'registos/fotografias';
       
-      const url = await storageService.uploadFile(file, path, bucket);
+      const result = await storageService.uploadFile(file, folder, bucket);
       
       const newPhoto = {
         nome: file.name,
         tipo: file.type,
         tamanho: file.size,
-        url: url,
-        path: path,
+        url: result.url,
+        path: result.path,
         data_upload: new Date().toISOString(),
         descricao: ''
       };
@@ -153,6 +154,7 @@ const RegistosForms: React.FC<RegistosFormsProps> = ({
       toast.error('Erro ao carregar fotografia');
     } finally {
       setUploadingPhoto(false);
+      if (event.target) event.target.value = '';
     }
   };
 
@@ -231,7 +233,20 @@ const RegistosForms: React.FC<RegistosFormsProps> = ({
     try {
       setLoading(true);
       
-      const registoData = formData as Registo;
+      const userId = await certificadosAPI.getCurrentUserId();
+      console.log('User ID obtido:', userId);
+      
+      if (!userId) {
+        toast.error('Erro: Não foi possível obter o ID do usuário');
+        return;
+      }
+      
+      const registoData = {
+        ...formData,
+        user_id: userId
+      } as Registo;
+      
+      console.log('Dados do registo a serem enviados:', registoData);
 
       if (registo?.id) {
         await certificadosAPI.registos.update(registo.id, registoData);

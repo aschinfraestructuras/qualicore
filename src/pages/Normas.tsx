@@ -30,6 +30,8 @@ import toast from 'react-hot-toast';
 import { normasAPI } from '../lib/supabase-api/normasAPI';
 import { storageService } from '../lib/supabase-storage';
 import NormasForms from '../components/NormasForms';
+import RelatorioNormasPremium from '../components/RelatorioNormasPremium';
+import Modal from '../components/Modal';
 import type { 
   Norma, 
   FiltrosNormas, 
@@ -59,6 +61,9 @@ export default function Normas() {
   const [selectedNorma, setSelectedNorma] = useState<Norma | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showRelatorio, setShowRelatorio] = useState(false);
+  const [tipoRelatorio, setTipoRelatorio] = useState<string>('filtrado');
+  const [normasSelecionadas, setNormasSelecionadas] = useState<Norma[]>([]);
   const [deletingNorma, setDeletingNorma] = useState<string | null>(null);
   const [editingNorma, setEditingNorma] = useState<Norma | null>(null);
 
@@ -325,13 +330,23 @@ export default function Normas() {
                 <FileText className="h-4 w-4" />
                 <span>PDF</span>
               </button>
-                             <button 
-                 onClick={handleCreate}
-                 className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg hover:from-blue-600 hover:to-purple-600 flex items-center space-x-2"
-               >
-                 <Plus className="h-4 w-4" />
-                 <span>Nova Norma</span>
-               </button>
+              <button
+                onClick={() => {
+                  setTipoRelatorio('filtrado');
+                  setShowRelatorio(true);
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center space-x-2"
+              >
+                <FileText className="h-4 w-4" />
+                <span>Relatório</span>
+              </button>
+              <button 
+                onClick={handleCreate}
+                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg hover:from-blue-600 hover:to-purple-600 flex items-center space-x-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Nova Norma</span>
+              </button>
             </div>
           </div>
         </div>
@@ -842,6 +857,38 @@ export default function Normas() {
          editingNorma={editingNorma}
          onSuccess={handleFormSuccess}
        />
+
+       {/* Relatório Modal */}
+       <Modal
+         isOpen={showRelatorio}
+         onClose={() => setShowRelatorio(false)}
+         size="xl"
+       >
+         <div className="p-6">
+           <RelatorioNormasPremium
+             normas={normas}
+             tipoRelatorio={tipoRelatorio as "executivo" | "individual" | "filtrado" | "comparativo"}
+             onSelecaoChange={setNormasSelecionadas}
+           />
+         </div>
+         
+         {/* Informação sobre seleção */}
+         {normasSelecionadas.length > 0 && (
+           <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+             <div className="flex items-center space-x-2">
+               <span className="text-sm">
+                 {normasSelecionadas.length} norma(s) selecionada(s)
+               </span>
+               <button
+                 onClick={() => setNormasSelecionadas([])}
+                 className="text-xs bg-blue-700 hover:bg-blue-800 px-2 py-1 rounded"
+               >
+                 Limpar seleção
+               </button>
+             </div>
+           </div>
+         )}
+       </Modal>
      </div>
    );
  }

@@ -1,6 +1,6 @@
 import { Material } from "@/types";
 import { useState, useEffect, useMemo, useRef } from "react";
-import { PDFService } from "@/services/pdfService";
+import PDFService from "@/services/pdfService";
 import {
   Plus,
   Package,

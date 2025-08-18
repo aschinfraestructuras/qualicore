@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   TrendingUp, Activity, Shield, MapPin, Calendar, AlertTriangle, CheckCircle, Clock,
-  Plus, Search, Filter, Download, Eye, Edit, Trash, Users, Gauge, Lock, Camera, Bell
+  Plus, Search, Filter, Download, Eye, Edit, Trash, Users, Gauge, Lock, Camera, Bell, FileText
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { segurancaFerroviariaAPI } from '../lib/supabase-api/segurancaFerroviariaAPI';
 import { SegurancaFerroviariaFilters } from '../components/SegurancaFerroviariaFilters';
 import { SegurancaFerroviariaForms } from '../components/SegurancaFerroviariaForms';
 import { SegurancaFerroviariaDetails } from '../components/SegurancaFerroviariaDetails';
+import RelatorioSegurancaFerroviariaPremium from '../components/RelatorioSegurancaFerroviariaPremium';
+import Modal from '../components/Modal';
 import { applyFilters, getDefaultFilters, getActiveFiltersCount } from '../utils/filterUtils';
 import { exportToExcel, exportToCSV, exportToPDF } from '../utils/exportUtils';
 
@@ -64,6 +66,9 @@ export default function SegurancaFerroviaria() {
   const [itemsPerPage] = useState(10);
   const [sortField, setSortField] = useState<string>('codigo');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [showRelatorio, setShowRelatorio] = useState(false);
+  const [tipoRelatorio, setTipoRelatorio] = useState('sistemas');
+  const [sistemasSelecionados, setSistemasSelecionados] = useState<SistemaSeguranca[]>([]);
 
   useEffect(() => {
     loadData();
@@ -268,11 +273,14 @@ export default function SegurancaFerroviaria() {
           </div>
           <div className="flex items-center space-x-3">
             <button
-              onClick={() => handleExport('excel')}
+              onClick={() => {
+                setTipoRelatorio('sistemas');
+                setShowRelatorio(true);
+              }}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
             >
-              <Download className="h-4 w-4" />
-              <span>Exportar</span>
+              <FileText className="h-4 w-4" />
+              <span>Relatório</span>
             </button>
             <button
               onClick={() => setShowForm(true)}
@@ -518,6 +526,39 @@ export default function SegurancaFerroviaria() {
           onDelete={() => handleDelete(selectedItem.id)}
         />
       )}
+
+      {/* Relatório Modal */}
+      <Modal
+        isOpen={showRelatorio}
+        onClose={() => setShowRelatorio(false)}
+        size="xl"
+        title={`Relatório de ${tipoRelatorio === 'sistemas' ? 'Sistemas de Segurança' : 'Inspeções de Segurança'}`}
+      >
+        <div className="space-y-4">
+          <RelatorioSegurancaFerroviariaPremium
+            tipoRelatorio={tipoRelatorio as 'sistemas' | 'inspecoes'}
+            onSelecaoChange={setSistemasSelecionados}
+          />
+
+          {sistemasSelecionados.length > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-blue-900">
+                    {sistemasSelecionados.length} sistema(s) selecionado(s)
+                  </span>
+                </div>
+                <button
+                  onClick={() => setSistemasSelecionados([])}
+                  className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm hover:bg-blue-200"
+                >
+                  Limpar seleção
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

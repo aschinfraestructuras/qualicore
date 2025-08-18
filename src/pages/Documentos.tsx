@@ -30,7 +30,7 @@ import DocumentoForm from "@/components/forms/DocumentoForm";
 import RelatorioDocumentosPremium from "@/components/RelatorioDocumentosPremium";
 import { ShareDocumentoModal } from "@/components/ShareDocumentoModal";
 import { SavedDocumentosViewer } from "@/components/SavedDocumentosViewer";
-import { PDFService } from "@/services/pdfService";
+import PDFService from "@/services/pdfService";
 import type { Documento } from "@/types";
 
 // Dados mockados mais realistas

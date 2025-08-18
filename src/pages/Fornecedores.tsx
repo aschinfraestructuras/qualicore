@@ -26,7 +26,7 @@ import FornecedorForm from "@/components/forms/FornecedorForm";
 import RelatorioFornecedoresPremium from "@/components/RelatorioFornecedoresPremium";
 import { ShareFornecedorModal } from "@/components/ShareFornecedorModal";
 import { SavedFornecedoresViewer } from "@/components/SavedFornecedoresViewer";
-import { PDFService } from "@/services/pdfService";
+import PDFService from "@/services/pdfService";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function Fornecedores() {

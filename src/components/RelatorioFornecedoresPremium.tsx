@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X, FileText, Filter, BarChart3, User, Download, Building } from "lucide-react";
 import { Fornecedor } from "@/types";
-import { PDFService } from "@/services/pdfService";
+import PDFService from "@/services/pdfService";
 import toast from "react-hot-toast";
 
 interface RelatorioFornecedoresPremiumProps {

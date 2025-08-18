@@ -172,6 +172,7 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
         { name: "Ensaios", href: "/ensaios", icon: ClipboardList, badge: stats.ensaios.toString() },
         { name: "Controlo Betonagens", href: "/controlo-betonagens", icon: Building, badge: "🆕" },
         { name: "Caracterização Solos", href: "/caracterizacao-solos", icon: Layers, badge: "🆕" },
+        { name: "Armaduras", href: "/armaduras", icon: Package, badge: "🆕" },
         { name: "Sistema de Normas", href: "/normas", icon: BookOpen, badge: "🌟" },
         { name: "Submissão Materiais", href: "/submissao-materiais", icon: Package, badge: "🆕" },
         { name: "Certificados e Registos", href: "/certificados", icon: Award, badge: "🆕" },
