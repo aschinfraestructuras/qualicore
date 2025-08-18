@@ -46,7 +46,7 @@ import {
   getTotalPages
 } from '../utils/filterUtils';
 
-interface Eletrificacao {
+interface EletrificacaoItem {
   id: string;
   codigo: string;
   tipo: string;

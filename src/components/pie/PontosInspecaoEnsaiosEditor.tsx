@@ -5,7 +5,7 @@ import {
   Save,
   Download,
   Share2,
-  History,
+  History as HistoryIcon,
   Users,
   Settings,
   Plus,

@@ -8,7 +8,7 @@ import {
   Obra,
   ZonaObra,
 } from "../../types";
-import { useState } from "react";
+import React, { useState, FormEvent } from "react";
 import {
   Plus,
   X,

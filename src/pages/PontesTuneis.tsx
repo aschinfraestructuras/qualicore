@@ -12,7 +12,7 @@ import { PontesTuneisDetails } from '../components/PontesTuneisDetails';
 import { applyFilters, getDefaultFilters, getActiveFiltersCount } from '../utils/filterUtils';
 import { exportToExcel, exportToCSV, exportToPDF } from '../utils/exportUtils';
 
-interface PontesTuneis {
+interface PonteTunel {
   id: string;
   codigo: string;
   tipo: string;
@@ -52,7 +52,7 @@ interface InspecaoPontesTuneis {
 }
 
 export default function PontesTuneis() {
-  const [pontesTuneis, setPontesTuneis] = useState<PontesTuneis[]>([]);
+  const [pontesTuneis, setPontesTuneis] = useState<PonteTunel[]>([]);
   const [inspecoes, setInspecoes] = useState<InspecaoPontesTuneis[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);

@@ -6,17 +6,14 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-interface FormData {
+interface EstacoesFormData {
   codigo: string;
   nome: string;
   tipo: string;
-  categoria: string;
   localizacao: string;
   km: number;
   estado: string;
-  operador: string;
   data_inauguracao: string;
-  status_operacional: string;
   observacoes: string;
   parametros: {
     num_plataformas: number;
@@ -30,21 +27,18 @@ interface EstacoesFormsProps {
   isOpen: boolean;
   onClose: () => void;
   data?: any;
-  onSubmit: (data: FormData) => void;
+  onSubmit: (data: EstacoesFormData) => void;
 }
 
 export function EstacoesForms({ isOpen, onClose, data, onSubmit }: EstacoesFormsProps) {
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<EstacoesFormData>({
     codigo: '',
     nome: '',
     tipo: '',
-    categoria: '',
     localizacao: '',
     km: 0,
     estado: '',
-    operador: '',
     data_inauguracao: '',
-    status_operacional: '',
     observacoes: '',
     parametros: {
       num_plataformas: 0,
@@ -54,7 +48,7 @@ export function EstacoesForms({ isOpen, onClose, data, onSubmit }: EstacoesForms
     }
   });
 
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [errors, setErrors] = useState<Partial<EstacoesFormData>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -63,43 +57,47 @@ export function EstacoesForms({ isOpen, onClose, data, onSubmit }: EstacoesForms
         codigo: data.codigo || '',
         nome: data.nome || '',
         tipo: data.tipo || '',
-        categoria: data.categoria || '',
         localizacao: data.localizacao || '',
         km: data.km || 0,
         estado: data.estado || '',
-        operador: data.operador || '',
         data_inauguracao: data.data_inauguracao || '',
-        status_operacional: data.status_operacional || '',
         observacoes: data.observacoes || '',
-        parametros: {
-          num_plataformas: data.parametros?.num_plataformas || 0,
-          num_vias: data.parametros?.num_vias || 0,
-          area_total: data.parametros?.area_total || 0,
-          capacidade_passageiros: data.parametros?.capacidade_passageiros || 0
+        parametros: data.parametros || {
+          num_plataformas: 0,
+          num_vias: 0,
+          area_total: 0,
+          capacidade_passageiros: 0
         }
       });
     }
   }, [data]);
 
   const handleInputChange = (field: string, value: any) => {
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.');
-      setFormData(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent as keyof FormData],
-          [child]: value
-        }
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [field]: value
-      }));
-    }
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
 
     // Limpar erro do campo
-    if (errors[field as keyof FormData]) {
+    if (errors[field as keyof EstacoesFormData]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: undefined
+      }));
+    }
+  };
+
+  const handleParametrosChange = (field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      parametros: {
+        ...prev.parametros,
+        [field]: value
+      }
+    }));
+
+    // Limpar erro do campo
+    if (errors[field as keyof EstacoesFormData]) {
       setErrors(prev => ({
         ...prev,
         [field]: undefined
@@ -108,7 +106,7 @@ export function EstacoesForms({ isOpen, onClose, data, onSubmit }: EstacoesForms
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: Partial<EstacoesFormData> = {};
 
     if (!formData.codigo.trim()) {
       newErrors.codigo = 'Código é obrigatório';
@@ -120,10 +118,6 @@ export function EstacoesForms({ isOpen, onClose, data, onSubmit }: EstacoesForms
 
     if (!formData.tipo) {
       newErrors.tipo = 'Tipo é obrigatório';
-    }
-
-    if (!formData.categoria) {
-      newErrors.categoria = 'Categoria é obrigatória';
     }
 
     if (!formData.localizacao.trim()) {
@@ -138,32 +132,8 @@ export function EstacoesForms({ isOpen, onClose, data, onSubmit }: EstacoesForms
       newErrors.estado = 'Estado é obrigatório';
     }
 
-    if (!formData.operador.trim()) {
-      newErrors.operador = 'Operador é obrigatório';
-    }
-
     if (!formData.data_inauguracao) {
       newErrors.data_inauguracao = 'Data de inauguração é obrigatória';
-    }
-
-    if (!formData.status_operacional) {
-      newErrors.status_operacional = 'Status operacional é obrigatório';
-    }
-
-    if (formData.parametros.num_plataformas < 0) {
-      newErrors.parametros = { ...newErrors.parametros, num_plataformas: 'Número de plataformas deve ser maior ou igual a 0' };
-    }
-
-    if (formData.parametros.num_vias < 0) {
-      newErrors.parametros = { ...newErrors.parametros, num_vias: 'Número de vias deve ser maior ou igual a 0' };
-    }
-
-    if (formData.parametros.area_total < 0) {
-      newErrors.parametros = { ...newErrors.parametros, area_total: 'Área total deve ser maior ou igual a 0' };
-    }
-
-    if (formData.parametros.capacidade_passageiros < 0) {
-      newErrors.parametros = { ...newErrors.parametros, capacidade_passageiros: 'Capacidade de passageiros deve ser maior ou igual a 0' };
     }
 
     setErrors(newErrors);
@@ -308,28 +278,6 @@ export function EstacoesForms({ isOpen, onClose, data, onSubmit }: EstacoesForms
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Categoria *
-                  </label>
-                  <select
-                    value={formData.categoria}
-                    onChange={(e) => handleInputChange('categoria', e.target.value)}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                      errors.categoria ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  >
-                    <option value="">Selecione a categoria</option>
-                    <option value="Terminal">Terminal</option>
-                    <option value="Intercambiador">Intercambiador</option>
-                    <option value="Regional">Regional</option>
-                    <option value="Metropolitana">Metropolitana</option>
-                  </select>
-                  {errors.categoria && (
-                    <p className="mt-1 text-sm text-red-600">{errors.categoria}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Estado *
                   </label>
                   <select
@@ -354,19 +302,18 @@ export function EstacoesForms({ isOpen, onClose, data, onSubmit }: EstacoesForms
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Operador *
+                    Data de Inauguração *
                   </label>
                   <input
-                    type="text"
-                    value={formData.operador}
-                    onChange={(e) => handleInputChange('operador', e.target.value)}
+                    type="date"
+                    value={formData.data_inauguracao}
+                    onChange={(e) => handleInputChange('data_inauguracao', e.target.value)}
                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                      errors.operador ? 'border-red-500' : 'border-gray-300'
+                      errors.data_inauguracao ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    placeholder="Ex: CP - Comboios de Portugal"
                   />
-                  {errors.operador && (
-                    <p className="mt-1 text-sm text-red-600">{errors.operador}</p>
+                  {errors.data_inauguracao && (
+                    <p className="mt-1 text-sm text-red-600">{errors.data_inauguracao}</p>
                   )}
                 </div>
               </div>
@@ -390,152 +337,24 @@ export function EstacoesForms({ isOpen, onClose, data, onSubmit }: EstacoesForms
                 )}
               </div>
 
-              {/* KM e Data de Inauguração */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    KM *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.001"
-                    value={formData.km}
-                    onChange={(e) => handleInputChange('km', parseFloat(e.target.value) || 0)}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                      errors.km ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="0.000"
-                  />
-                  {errors.km && (
-                    <p className="mt-1 text-sm text-red-600">{errors.km}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Data de Inauguração *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.data_inauguracao}
-                    onChange={(e) => handleInputChange('data_inauguracao', e.target.value)}
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                      errors.data_inauguracao ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {errors.data_inauguracao && (
-                    <p className="mt-1 text-sm text-red-600">{errors.data_inauguracao}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Status Operacional */}
+              {/* KM */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status Operacional *
+                  KM *
                 </label>
-                <select
-                  value={formData.status_operacional}
-                  onChange={(e) => handleInputChange('status_operacional', e.target.value)}
+                <input
+                  type="number"
+                  step="0.001"
+                  value={formData.km}
+                  onChange={(e) => handleInputChange('km', parseFloat(e.target.value) || 0)}
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                    errors.status_operacional ? 'border-red-500' : 'border-gray-300'
+                    errors.km ? 'border-red-500' : 'border-gray-300'
                   }`}
-                >
-                  <option value="">Selecione o status</option>
-                  <option value="Operacional">Operacional</option>
-                  <option value="Pendente">Pendente</option>
-                  <option value="Manutenção">Manutenção</option>
-                  <option value="Avaria">Avaria</option>
-                  <option value="Teste">Teste</option>
-                </select>
-                {errors.status_operacional && (
-                  <p className="mt-1 text-sm text-red-600">{errors.status_operacional}</p>
+                  placeholder="0.000"
+                />
+                {errors.km && (
+                  <p className="mt-1 text-sm text-red-600">{errors.km}</p>
                 )}
-              </div>
-
-              {/* Parâmetros Técnicos */}
-              <div className="glass-card p-4 rounded-xl">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <Gauge className="h-5 w-5 mr-2" />
-                  Parâmetros Técnicos
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nº Plataformas
-                    </label>
-                    <input
-                      type="number"
-                      step="1"
-                      value={formData.parametros.num_plataformas}
-                      onChange={(e) => handleInputChange('parametros.num_plataformas', parseInt(e.target.value) || 0)}
-                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                        errors.parametros?.num_plataformas ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="0"
-                    />
-                    {errors.parametros?.num_plataformas && (
-                      <p className="mt-1 text-sm text-red-600">{errors.parametros.num_plataformas}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nº Vias
-                    </label>
-                    <input
-                      type="number"
-                      step="1"
-                      value={formData.parametros.num_vias}
-                      onChange={(e) => handleInputChange('parametros.num_vias', parseInt(e.target.value) || 0)}
-                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                        errors.parametros?.num_vias ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="0"
-                    />
-                    {errors.parametros?.num_vias && (
-                      <p className="mt-1 text-sm text-red-600">{errors.parametros.num_vias}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Área Total (m²)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={formData.parametros.area_total}
-                      onChange={(e) => handleInputChange('parametros.area_total', parseFloat(e.target.value) || 0)}
-                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                        errors.parametros?.area_total ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="0.0"
-                    />
-                    {errors.parametros?.area_total && (
-                      <p className="mt-1 text-sm text-red-600">{errors.parametros.area_total}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Capacidade Passageiros
-                    </label>
-                    <input
-                      type="number"
-                      step="1"
-                      value={formData.parametros.capacidade_passageiros}
-                      onChange={(e) => handleInputChange('parametros.capacidade_passageiros', parseInt(e.target.value) || 0)}
-                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                        errors.parametros?.capacidade_passageiros ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="0"
-                    />
-                    {errors.parametros?.capacidade_passageiros && (
-                      <p className="mt-1 text-sm text-red-600">{errors.parametros.capacidade_passageiros}</p>
-                    )}
-                  </div>
-                </div>
               </div>
 
               {/* Observações */}

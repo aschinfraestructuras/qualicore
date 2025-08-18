@@ -54,7 +54,7 @@ import {
   formatSinalizacaoForExport
 } from '../utils/exportUtils';
 
-interface Sinalizacao {
+interface SistemaSinalizacao {
   id: string;
   codigo: string;
   tipo: string;
@@ -110,7 +110,7 @@ interface SinalizacaoStats {
 
 export default function Sinalizacao() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [selectedSinalizacao, setSelectedSinalizacao] = useState<Sinalizacao | null>(null);
+  const [selectedSinalizacao, setSelectedSinalizacao] = useState<SistemaSinalizacao | null>(null);
   const [selectedInspecao, setSelectedInspecao] = useState<InspecaoSinalizacao | null>(null);
   
   // Estados para modais
@@ -120,7 +120,7 @@ export default function Sinalizacao() {
   const [editData, setEditData] = useState<any>(null);
   
   // Estados para dados reais
-  const [sinalizacoes, setSinalizacoes] = useState<Sinalizacao[]>([]);
+  const [sinalizacoes, setSinalizacoes] = useState<SistemaSinalizacao[]>([]);
   const [inspecoes, setInspecoes] = useState<InspecaoSinalizacao[]>([]);
   const [stats, setStats] = useState<SinalizacaoStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -162,7 +162,7 @@ export default function Sinalizacao() {
   }, []);
 
   // Dados simulados para demonstração (mantido como fallback)
-  const sinalizacoesDemo: Sinalizacao[] = [
+  const sinalizacoesDemo: SistemaSinalizacao[] = [
     {
       id: '1',
       codigo: 'SIG-001-2024',

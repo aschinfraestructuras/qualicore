@@ -399,6 +399,7 @@ ${searchResults.join('\n\n')}
     { name: "Obras", icon: "🏗️", category: "Gestão", path: "/obras", shortcut: "⌘O" },
     { name: "Ensaios", icon: "🧪", category: "Laboratório", path: "/ensaios", shortcut: "⌘E" },
     { name: "Controlo Betonagens", icon: "🏗️", category: "Especializado", path: "/controlo-betonagens", shortcut: "⌘B" },
+    { name: "Caracterização Solos", icon: "🌱", category: "Especializado", path: "/caracterizacao-solos", shortcut: "⌘S" },
     { name: "Checklists", icon: "✅", category: "Inspeção", path: "/checklists", shortcut: "⌘C" },
     { name: "Materiais", icon: "📦", category: "Gestão", path: "/materiais", shortcut: "⌘M" },
     { name: "Fornecedores", icon: "🏢", category: "Gestão", path: "/fornecedores", shortcut: "⌘F" },

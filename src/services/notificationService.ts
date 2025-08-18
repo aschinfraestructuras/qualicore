@@ -1,7 +1,7 @@
 import { documentosAPI, ensaiosAPI, naoConformidadesAPI } from "@/lib/supabase-api";
 import toast from "react-hot-toast";
 
-export interface Notification {
+export interface AppNotification {
   id: string;
   type: 'urgent' | 'high' | 'medium' | 'low';
   category: 'document' | 'test' | 'nc system';
@@ -21,7 +21,7 @@ export interface Notification {
 
 class NotificationService {
   private notifications: Notification[] = [];
-  private checkInterval: NodeJS.Timeout | null = null;
+  private checkInterval: ReturnType<typeof setTimeout> | null = null;
 
   // Iniciar verificações automáticas
   startAutoChecks() {

@@ -19,6 +19,7 @@ import {
 import { betonagensAPI } from "@/lib/supabase-api/betonagensAPI";
 import { pontesTuneisAPI } from "@/lib/supabase-api/pontesTuneisAPI";
 import { viaFerreaAPI } from "@/lib/supabase-api/viaFerreaAPI";
+import { solosAPI } from "@/lib/supabase-api/solosAPI";
 
 // Tipos para métricas reais
 export interface MetricasReais {
@@ -30,6 +31,7 @@ export interface MetricasReais {
   fornecedores: KPIsFornecedores;
   obras: KPIsObras;
   betonagens: KPIsBetonagens;
+  solos: KPIsSolos;
   ferroviario: KPIsFerroviario;
   geral: KPIsGerais;
 }
@@ -129,6 +131,21 @@ export interface KPIsBetonagens {
   obras_distribuicao: Record<string, number>;
 }
 
+export interface KPIsSolos {
+  total_solos: number;
+  conformes: number;
+  nao_conformes: number;
+  adequados: number;
+  inadequados: number;
+  marginais: number;
+  tipos_amostra_distribuicao: Record<string, number>;
+  obras_distribuicao: Record<string, number>;
+  laboratorios_distribuicao: Record<string, number>;
+  profundidade_media: number;
+  cbr_medio: number;
+  resistencia_cisalhamento_media: number;
+}
+
 export interface KPIsFerroviario {
   via_ferrea: {
     total_trilhos: number;
@@ -177,6 +194,7 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       fornecedores,
       obras,
       betonagens,
+      solos,
       viaFerreaStats,
       pontesTuneisStats,
     ] = await Promise.all([
@@ -188,6 +206,7 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       fornecedoresAPI.getAll().catch(e => { console.error("❌ Erro ao buscar fornecedores:", e); return []; }),
       obrasAPI.getAll().catch(e => { console.error("❌ Erro ao buscar obras:", e); return []; }),
       betonagensAPI.betonagens.getAll().catch(e => { console.error("❌ Erro ao buscar betonagens:", e); return []; }),
+      solosAPI.caracterizacoes.getAll().catch(e => { console.error("❌ Erro ao buscar solos:", e); return []; }),
       viaFerreaAPI.stats.getStats().catch(e => { console.error("❌ Erro ao buscar stats via férrea:", e); return null; }),
       pontesTuneisAPI.stats.getStats().catch(e => { console.error("❌ Erro ao buscar stats pontes/túneis:", e); return null; }),
     ]);
@@ -201,6 +220,7 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
     console.log("  - Fornecedores:", fornecedores.length);
     console.log("  - Obras:", obras.length);
     console.log("  - Betonagens:", betonagens.length);
+    console.log("  - Solos:", solos.length);
     console.log("  - Via Férrea Stats:", viaFerreaStats);
     console.log("  - Pontes/Túneis Stats:", pontesTuneisStats);
 
@@ -236,6 +256,10 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
     console.log("🏗️ Calculando métricas de betonagens...");
     const kpisBetonagens = calcularKPIsBetonagens(betonagens);
 
+    // Calcular métricas de solos
+    console.log("🌱 Calculando métricas de solos...");
+    const kpisSolos = calcularKPIsSolos(solos);
+
     // Calcular métricas ferroviárias
     console.log("🚂 Calculando métricas ferroviárias...");
     const kpisFerroviario = calcularKPIsFerroviario(viaFerreaStats, pontesTuneisStats);
@@ -251,6 +275,7 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       fornecedores: kpisFornecedores,
       obras: kpisObras,
       betonagens: kpisBetonagens,
+      solos: kpisSolos,
       ferroviario: kpisFerroviario,
     });
 
@@ -263,6 +288,7 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
     console.log("  - Materiais:", kpisMateriais.total_materiais);
     console.log("  - NCs:", kpisNCs.total_ncs);
     console.log("  - Betonagens:", kpisBetonagens.total_betonagens);
+    console.log("  - Solos:", kpisSolos.total_solos);
     console.log("  - Via Férrea:", kpisFerroviario.via_ferrea.total_trilhos);
 
     return {
@@ -274,6 +300,7 @@ export const calcularMetricasReais = async (): Promise<MetricasReais> => {
       fornecedores: kpisFornecedores,
       obras: kpisObras,
       betonagens: kpisBetonagens,
+      solos: kpisSolos,
       ferroviario: kpisFerroviario,
       geral: kpisGerais,
     };
@@ -730,9 +757,15 @@ const calcularKPIsGerais = (
   metricas: Omit<MetricasReais, "geral">,
 ): KPIsGerais => {
   console.log("🔍 Calculando KPIs Gerais...");
+  // Calcular conformidade de solos primeiro
+  const solosConformidade = metricas.solos.total_solos > 0 
+    ? (metricas.solos.conformes / metricas.solos.total_solos) * 100 
+    : 0;
+
   console.log("  - Ensaios taxa_conformidade:", metricas.ensaios.taxa_conformidade);
   console.log("  - Checklists conformidade_media:", metricas.checklists.conformidade_media);
   console.log("  - Materiais taxa_aprovacao:", metricas.materiais.taxa_aprovacao);
+  console.log("  - Solos conformidade:", solosConformidade);
   console.log("  - NCs taxa_resolucao:", metricas.naoConformidades.taxa_resolucao);
 
   // Conformidade geral (média ponderada) - com proteção contra NaN
@@ -741,16 +774,20 @@ const calcularKPIsGerais = (
   const materiaisAprovacao = isNaN(metricas.materiais.taxa_aprovacao) ? 0 : metricas.materiais.taxa_aprovacao;
   const ncsResolucao = isNaN(metricas.naoConformidades.taxa_resolucao) ? 0 : metricas.naoConformidades.taxa_resolucao;
 
+
+
   const conformidadeGeral =
-    ensaiosConformidade * 0.4 +
-    checklistsConformidade * 0.3 +
-    materiaisAprovacao * 0.2 +
+    ensaiosConformidade * 0.35 +
+    checklistsConformidade * 0.25 +
+    materiaisAprovacao * 0.15 +
+    solosConformidade * 0.15 +
     (100 - ncsResolucao) * 0.1;
 
   console.log("  - Valores calculados:");
-  console.log("    * Ensaios (40%):", ensaiosConformidade * 0.4);
-  console.log("    * Checklists (30%):", checklistsConformidade * 0.3);
-  console.log("    * Materiais (20%):", materiaisAprovacao * 0.2);
+  console.log("    * Ensaios (35%):", ensaiosConformidade * 0.35);
+  console.log("    * Checklists (25%):", checklistsConformidade * 0.25);
+  console.log("    * Materiais (15%):", materiaisAprovacao * 0.15);
+  console.log("    * Solos (15%):", solosConformidade * 0.15);
   console.log("    * NCs (10%):", (100 - ncsResolucao) * 0.1);
   console.log("  - Conformidade Geral Final:", conformidadeGeral);
 
@@ -761,7 +798,8 @@ const calcularKPIsGerais = (
     metricas.naoConformidades.total_ncs +
     metricas.documentos.total_documentos +
     metricas.obras.total_obras +
-    metricas.betonagens.total_betonagens;
+    metricas.betonagens.total_betonagens +
+    metricas.solos.total_solos;
 
       // Alertas críticos
     const alertasCriticos = 
@@ -883,19 +921,68 @@ const calcularKPIsBetonagens = (betonagens: any[]): KPIsBetonagens => {
     tipos_betao_distribuicao: Object.fromEntries(tiposBetao.slice(0, 5).map(([key, value]) => [key, value])),
     obras_distribuicao: Object.fromEntries(obras.slice(0, 5).map(([key, value]) => [key, value])),
   };
+};
+
+// Função para calcular métricas de solos
+const calcularKPIsSolos = (solos: any[]): KPIsSolos => {
+  console.log("🔍 Calculando KPIs Solos...");
+  console.log("  - Total de solos:", solos.length);
+  
+  if (solos.length === 0) {
+    console.log("⚠️ Nenhum solo encontrado, usando dados de teste...");
+    return {
+      total_solos: 0,
+      conformes: 0,
+      nao_conformes: 0,
+      adequados: 0,
+      inadequados: 0,
+      marginais: 0,
+      tipos_amostra_distribuicao: {},
+      obras_distribuicao: {},
+      laboratorios_distribuicao: {},
+      profundidade_media: 0,
+      cbr_medio: 0,
+      resistencia_cisalhamento_media: 0,
+    };
+  }
+
+  const total = solos.length;
+  const conformes = solos.filter(s => s.conforme === true).length;
+  const naoConformes = total - conformes;
+  
+  // Classificação por adequação
+  const adequados = solos.filter(s => s.classificacao?.adequacao === 'ADEQUADO' || s.classificacao?.adequacao === 'EXCELENTE').length;
+  const inadequados = solos.filter(s => s.classificacao?.adequacao === 'INADECUADO').length;
+  const marginais = solos.filter(s => s.classificacao?.adequacao === 'MARGINAL' || s.classificacao?.adequacao === 'TOLERABLE').length;
+
+  // Distribuições
+  const tiposAmostra = contarFrequencias(solos.map(s => s.tipo_amostra).filter(Boolean));
+  const obras = contarFrequencias(solos.map(s => s.obra).filter(Boolean));
+  const laboratorios = contarFrequencias(solos.map(s => s.laboratorio).filter(Boolean));
+
+  // Cálculos médios
+  const profundidades = solos.map(s => s.profundidade_colheita).filter(p => p > 0);
+  const profundidadeMedia = profundidades.length > 0 ? profundidades.reduce((a, b) => a + b, 0) / profundidades.length : 0;
+
+  const cbrs = solos.map(s => s.cbr?.valor_cbr).filter(c => c > 0);
+  const cbrMedio = cbrs.length > 0 ? cbrs.reduce((a, b) => a + b, 0) / cbrs.length : 0;
+
+  const resistencias = solos.map(s => s.resistencia_cisalhamento?.coesao).filter(r => r > 0);
+  const resistenciaMedia = resistencias.length > 0 ? resistencias.reduce((a, b) => a + b, 0) / resistencias.length : 0;
 
   return {
-    total_betonagens: total,
+    total_solos: total,
     conformes,
-    nao_conformes,
-    pendentes,
-    resistencia_media_7d: resistencia7d.length > 0 ? resistencia7d.reduce((a, b) => a + b, 0) / resistencia7d.length : 0,
-    resistencia_media_28d: resistencia28d.length > 0 ? resistencia28d.reduce((a, b) => a + b, 0) / resistencia28d.length : 0,
-    resistencia_media_rotura: resistenciaRotura.length > 0 ? resistenciaRotura.reduce((a, b) => a + b, 0) / resistenciaRotura.length : 0,
-    ensaios_7d_pendentes: ensaios7dPendentes,
-    ensaios_28d_pendentes: ensaios28dPendentes,
-    tipos_betao_distribuicao: Object.fromEntries(tiposBetao.slice(0, 5)),
-    obras_distribuicao: Object.fromEntries(obras.slice(0, 5)),
+    nao_conformes: naoConformes,
+    adequados,
+    inadequados,
+    marginais,
+    tipos_amostra_distribuicao: Object.fromEntries(tiposAmostra.slice(0, 5).map(([key, value]) => [key, value])),
+    obras_distribuicao: Object.fromEntries(obras.slice(0, 5).map(([key, value]) => [key, value])),
+    laboratorios_distribuicao: Object.fromEntries(laboratorios.slice(0, 5).map(([key, value]) => [key, value])),
+    profundidade_media: Math.round(profundidadeMedia * 100) / 100,
+    cbr_medio: Math.round(cbrMedio * 100) / 100,
+    resistencia_cisalhamento_media: Math.round(resistenciaMedia * 100) / 100,
   };
 };
 

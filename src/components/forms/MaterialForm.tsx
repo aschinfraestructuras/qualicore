@@ -7,7 +7,7 @@ import {
   NaoConformidade,
   Obra,
 } from "@/types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -202,7 +202,7 @@ export default function MaterialForm({
   const watchedFornecedor = watch("fornecedor_id");
   const watchedZona = watch("zona");
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     setUploadedFiles((prev) => [...prev, ...files]);
     toast.success(`${files.length} ficheiro(s) adicionado(s)`);

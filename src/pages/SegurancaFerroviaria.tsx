@@ -12,7 +12,7 @@ import { SegurancaFerroviariaDetails } from '../components/SegurancaFerroviariaD
 import { applyFilters, getDefaultFilters, getActiveFiltersCount } from '../utils/filterUtils';
 import { exportToExcel, exportToCSV, exportToPDF } from '../utils/exportUtils';
 
-interface SegurancaFerroviaria {
+interface SistemaSeguranca {
   id: string;
   codigo: string;
   tipo: string;
@@ -52,7 +52,7 @@ interface InspecaoSeguranca {
 }
 
 export default function SegurancaFerroviaria() {
-  const [segurancaItems, setSegurancaItems] = useState<SegurancaFerroviaria[]>([]);
+  const [segurancaItems, setSegurancaItems] = useState<SistemaSeguranca[]>([]);
   const [inspecoes, setInspecoes] = useState<InspecaoSeguranca[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);

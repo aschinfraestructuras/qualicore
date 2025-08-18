@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-interface FormData {
+interface PontesTuneisFormData {
   codigo: string;
   tipo: string;
   categoria: string;
@@ -31,11 +31,11 @@ interface PontesTuneisFormsProps {
   isOpen: boolean;
   onClose: () => void;
   data?: any;
-  onSubmit: (data: FormData) => void;
+  onSubmit: (data: PontesTuneisFormData) => void;
 }
 
 export function PontesTuneisForms({ isOpen, onClose, data, onSubmit }: PontesTuneisFormsProps) {
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<PontesTuneisFormData>({
     codigo: '',
     tipo: '',
     categoria: '',
@@ -56,7 +56,7 @@ export function PontesTuneisForms({ isOpen, onClose, data, onSubmit }: PontesTun
     }
   });
 
-  const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [errors, setErrors] = useState<Partial<PontesTuneisFormData>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -102,7 +102,7 @@ export function PontesTuneisForms({ isOpen, onClose, data, onSubmit }: PontesTun
     }
 
     // Limpar erro do campo
-    if (errors[field as keyof FormData]) {
+    if (errors[field as keyof PontesTuneisFormData]) {
       setErrors(prev => ({
         ...prev,
         [field]: undefined
@@ -111,7 +111,7 @@ export function PontesTuneisForms({ isOpen, onClose, data, onSubmit }: PontesTun
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: Partial<PontesTuneisFormData> = {};
 
     if (!formData.codigo.trim()) {
       newErrors.codigo = 'Código é obrigatório';

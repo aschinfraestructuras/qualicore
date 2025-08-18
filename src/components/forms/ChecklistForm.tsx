@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, FormEvent, ChangeEvent } from "react";
 import {
   Plus,
   X,
   Upload,
-  File,
+  File as FileIcon,
   Download,
   Trash2,
   CheckCircle,
@@ -234,7 +234,7 @@ export default function ChecklistForm({
     addEventoPonto(index, acao, `Status alterado para: ${novoStatus}`);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
     // Garantir que o campo codigo está preenchido

@@ -1,12 +1,3 @@
-import {
-  Ensaio,
-  Documento,
-  Checklist,
-  Material,
-  Fornecedor,
-  NaoConformidade,
-  Obra,
-} from "@/types";
 import { Link, useLocation } from "react-router-dom";
 import {
   Home,
@@ -19,7 +10,6 @@ import {
   BarChart3,
   FilePlus,
   Shield,
-  Settings,
   Menu,
   X,
   ChevronDown,

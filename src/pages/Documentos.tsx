@@ -12,7 +12,7 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
-  File,
+  File as FileIcon,
   FileCheck,
   ArrowUpDown,
   Filter,
@@ -183,7 +183,7 @@ const documentTypes = [
   {
     value: "relatorio",
     label: "Relatório",
-    icon: File,
+    icon: FileIcon,
     color: "text-purple-600",
   },
   {
@@ -230,7 +230,7 @@ const documentTypes = [
     icon: FileText,
     color: "text-amber-600",
   },
-  { value: "outro", label: "Outro", icon: File, color: "text-gray-600" },
+  { value: "outro", label: "Outro", icon: FileIcon, color: "text-gray-600" },
 ];
 
 const statusOptions = [
@@ -1011,7 +1011,7 @@ export default function Documentos() {
                   : "text-gray-400 hover:text-gray-600"
               }`}
             >
-              <File className="h-5 w-5" />
+              <FileIcon className="h-5 w-5" />
             </button>
           </div>
 

@@ -1,7 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  Home,
   Building2,
   Shield,
   FileText,
@@ -14,24 +13,11 @@ import {
   Users,
   Settings,
   ChevronRight,
-  ChevronLeft,
-  Star,
-  Clock,
-  TrendingUp,
-  Activity,
   Database,
-  Archive,
-  BookOpen,
-  Calendar,
-  MessageSquare,
-  Bell,
-  Zap,
   Target,
-  Award,
   CheckCircle,
-  XCircle,
-  Minus,
   Plus,
+  X as XIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -133,7 +119,7 @@ export default function ModernSidebar({ isOpen, onClose }: ModernSidebarProps) {
                 onClick={onClose}
                 className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 lg:hidden"
               >
-                <X className="h-5 w-5" />
+                <XIcon className="h-5 w-5" />
               </button>
             </div>
 

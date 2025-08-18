@@ -936,7 +936,7 @@ export interface User {
   avatar?: string;
 }
 
-export interface Notification {
+export interface AppNotification {
   id: string;
   tipo: "info" | "success" | "warning" | "error";
   titulo: string;

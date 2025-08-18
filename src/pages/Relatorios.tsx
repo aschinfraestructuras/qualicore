@@ -31,6 +31,7 @@ import {
   ChevronUp,
   Building,
   Zap,
+  Layers,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -276,6 +277,9 @@ export default function Relatorios() {
         break;
       case "controlo-betonagens":
         navigate("/controlo-betonagens");
+        break;
+      case "caracterizacao-solos":
+        navigate("/caracterizacao-solos");
         break;
       case "via-ferrea":
         navigate("/via-ferrea");
@@ -696,6 +700,23 @@ export default function Relatorios() {
                 </p>
               </div>
               <Building className="h-8 w-8 text-red-500" />
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="card card-hover cursor-pointer"
+          onClick={() => handleViewRelatorio("caracterizacao-solos")}
+        >
+          <div className="card-content">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Caracterização Solos</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {metricas.solos?.total_solos || 0}
+                </p>
+              </div>
+              <Layers className="h-8 w-8 text-green-500" />
             </div>
           </div>
         </div>

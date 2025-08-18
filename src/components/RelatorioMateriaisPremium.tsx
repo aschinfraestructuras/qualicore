@@ -321,7 +321,7 @@ export default function RelatorioMateriaisPremium({
             min-width: 0 !important;
             max-width: 100vw !important;
           }
-          .print\:hidden, .btn, .btn-outline, .btn-accent, .btn-primary, .btn-link, .modal, .modal-overlay, .modal-content, .modal-header, .modal-body {
+          .print\\:hidden, .btn, .btn-outline, .btn-accent, .btn-primary, .btn-link, .modal, .modal-overlay, .modal-content, .modal-header, .modal-body {
             display: none !important;
           }
           .no-print {

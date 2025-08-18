@@ -25,7 +25,7 @@ interface SinalizacaoFormProps {
   type: 'sinalizacao' | 'inspecao';
 }
 
-interface FormData {
+interface SinalizacaoFormData {
   codigo: string;
   tipo: string;
   categoria: string;
@@ -47,7 +47,7 @@ interface FormData {
 }
 
 export function SinalizacaoForm({ isOpen, onClose, editData, onSuccess, type }: SinalizacaoFormProps) {
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<SinalizacaoFormData>({
     codigo: '',
     tipo: '',
     categoria: '',

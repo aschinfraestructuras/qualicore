@@ -31,6 +31,8 @@ import PontesTuneis from "./pages/PontesTuneis";
 import Estacoes from "./pages/Estacoes";
 import SegurancaFerroviaria from "./pages/SegurancaFerroviaria";
 import ControloBetonagens from "./pages/ControloBetonagens";
+import CaracterizacaoSolos from "./pages/CaracterizacaoSolos";
+import Normas from "./pages/Normas";
 import Obras from "./pages/Obras";
 import Landing from "./pages/Landing";
 import SupabaseTest from "./components/SupabaseTest";
@@ -302,6 +304,32 @@ function App() {
           }
         >
           <Route index element={<ControloBetonagens />} />
+        </Route>
+
+        <Route
+          path="/caracterizacao-solos"
+          element={
+            user ? (
+              <PremiumLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<CaracterizacaoSolos />} />
+        </Route>
+
+        <Route
+          path="/normas"
+          element={
+            user ? (
+              <PremiumLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<Normas />} />
         </Route>
         
         <Route

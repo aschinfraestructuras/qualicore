@@ -122,6 +122,9 @@ export default function Dashboard() {
       case "controlo-betonagens":
         navigate("/controlo-betonagens");
         break;
+      case "caracterizacao-solos":
+        navigate("/caracterizacao-solos");
+        break;
       case "via-ferrea":
         navigate("/via-ferrea");
         break;

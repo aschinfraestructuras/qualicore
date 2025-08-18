@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, ChangeEvent, FormEvent } from "react";
 import { motion } from "framer-motion";
 import { X, FileText } from "lucide-react";
 import { SeguimentoEnsaio, ContextoAdicional } from "@/types";
@@ -290,7 +290,7 @@ export default function EnsaioForm({
     );
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setAnexos((prev) => [...prev, ...files]);
   };
@@ -299,7 +299,7 @@ export default function EnsaioForm({
     setAnexos((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     let codigo = formData.codigo;
     if (!codigo) {

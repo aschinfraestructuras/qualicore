@@ -7,7 +7,7 @@ import {
   NaoConformidade,
   Obra,
 } from "@/types";
-import { useState } from "react";
+import React, { useState, ChangeEvent, FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -95,7 +95,7 @@ export default function FornecedorForm({
   const watchedCertificacoes = watch("certificacoes");
   const watchedProdutosServicos = watch("produtos_servicos");
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     setUploadedFiles((prev) => [...prev, ...files]);
     toast.success(`${files.length} ficheiro(s) adicionado(s)`);

@@ -1,19 +1,20 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 import {
   Building2,
-  Upload,
-  Save,
-  X,
-  Image as ImageIcon,
-  Phone,
   Mail,
+  Phone,
   Globe,
   MapPin,
-  FileText,
-} from "lucide-react";
-import toast from "react-hot-toast";
+  Save,
+  Upload,
+  X,
+  Image as ImageIcon,
+  File as FileIcon,
+} from 'lucide-react';
 import { reportService, type EmpresaConfig as EmpresaConfigType } from "@/services/reportService";
+import { AnimatePresence } from 'framer-motion';
 
 interface EmpresaConfigProps {
   isOpen: boolean;
@@ -99,13 +100,7 @@ export default function EmpresaConfig({ isOpen, onClose }: EmpresaConfigProps) {
         localStorage.setItem("empresaLogotipo", logotipo);
       }
 
-      // Atualizar serviço de relatórios
-      reportService.atualizarConfigEmpresa(config);
-      if (logotipo) {
-        reportService.definirLogotipo(logotipo);
-      }
-
-      toast.success("Configuração da empresa salva com sucesso!");
+      toast.success("Configuração salva com sucesso!");
       onClose();
     } catch (error) {
       console.error("Erro ao salvar configuração:", error);
@@ -115,112 +110,79 @@ export default function EmpresaConfig({ isOpen, onClose }: EmpresaConfigProps) {
     }
   };
 
-  const handleReset = () => {
-    setConfig({
-      nome: "Qualicore",
-      morada: "Rua da Qualidade, 123",
-      telefone: "+351 123 456 789",
-      email: "info@qualicore.pt",
-      website: "www.qualicore.pt",
-      nif: "123456789",
-    });
-    setLogotipo("");
-    setLogotipoFile(null);
-    toast.success("Configuração resetada para valores padrão");
-  };
-
   if (!isOpen) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={onClose}
-    >
+    <AnimatePresence>
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       >
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Building2 className="h-6 w-6" />
-              <div>
-                <h2 className="text-xl font-semibold">
-                  Configuração da Empresa
-                </h2>
-                <p className="text-blue-100">
-                  Configure os dados da sua empresa para os relatórios
-                </p>
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        >
+          {/* Header */}
+          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Configuração da Empresa</h2>
+                  <p className="text-sm text-gray-600">Configure os dados da sua empresa</p>
+                </div>
               </div>
+              <button
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="text-white hover:text-blue-200 transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
           </div>
-        </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-          <div className="space-y-6">
+          {/* Form */}
+          <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="p-6 space-y-6">
             {/* Logotipo */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <ImageIcon className="h-5 w-5 mr-2" />
                 Logotipo da Empresa
               </h3>
-
-              <div className="space-y-4">
+              <div className="flex items-center space-x-4">
                 {logotipo && (
-                  <div className="flex items-center space-x-4">
+                  <div className="w-20 h-20 border-2 border-gray-300 rounded-lg overflow-hidden">
                     <img
                       src={logotipo}
                       alt="Logotipo"
-                      className="w-20 h-20 object-contain border border-gray-300 rounded-lg"
+                      className="w-full h-full object-cover"
                     />
-                    <div>
-                      <p className="text-sm text-gray-600">Logotipo atual</p>
-                      <button
-                        onClick={() => {
-                          setLogotipo("");
-                          setLogotipoFile(null);
-                        }}
-                        className="text-red-600 text-sm hover:text-red-800"
-                      >
-                        Remover
-                      </button>
-                    </div>
                   </div>
                 )}
-
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <div className="flex-1">
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleLogotipoChange}
                     className="hidden"
-                    id="logotipo-upload"
+                    id="logotipo-input"
                   />
                   <label
-                    htmlFor="logotipo-upload"
-                    className="cursor-pointer flex flex-col items-center space-y-2"
+                    htmlFor="logotipo-input"
+                    className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
-                    <Upload className="h-8 w-8 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">
-                        {logotipo ? "Alterar logotipo" : "Carregar logotipo"}
-                      </p>
-                      <p className="text-xs text-gray-500">PNG, JPG até 5MB</p>
-                    </div>
+                    <Upload className="h-4 w-4 mr-2" />
+                    {logotipo ? "Alterar Logotipo" : "Carregar Logotipo"}
                   </label>
+                  <p className="text-xs text-gray-500 mt-1">
+                    PNG, JPG até 5MB
+                  </p>
                 </div>
               </div>
             </div>
@@ -228,10 +190,9 @@ export default function EmpresaConfig({ isOpen, onClose }: EmpresaConfigProps) {
             {/* Informações da Empresa */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Building2 className="h-5 w-5 mr-2" />
+                <FileIcon className="h-5 w-5 mr-2" />
                 Informações da Empresa
               </h3>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -240,11 +201,9 @@ export default function EmpresaConfig({ isOpen, onClose }: EmpresaConfigProps) {
                   <input
                     type="text"
                     value={config.nome}
-                    onChange={(e) =>
-                      setConfig((prev) => ({ ...prev, nome: e.target.value }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nome da sua empresa"
+                    onChange={(e) => setConfig({ ...config, nome: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Nome da empresa"
                   />
                 </div>
 
@@ -255,149 +214,87 @@ export default function EmpresaConfig({ isOpen, onClose }: EmpresaConfigProps) {
                   <input
                     type="text"
                     value={config.nif}
-                    onChange={(e) =>
-                      setConfig((prev) => ({ ...prev, nif: e.target.value }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setConfig({ ...config, nif: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="123456789"
                   />
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <MapPin className="h-4 w-4 inline mr-1" />
                     Morada
                   </label>
                   <input
                     type="text"
                     value={config.morada}
-                    onChange={(e) =>
-                      setConfig((prev) => ({ ...prev, morada: e.target.value }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setConfig({ ...config, morada: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Rua da Qualidade, 123"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Phone className="h-4 w-4 inline mr-1" />
                     Telefone
                   </label>
                   <input
                     type="tel"
                     value={config.telefone}
-                    onChange={(e) =>
-                      setConfig((prev) => ({
-                        ...prev,
-                        telefone: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setConfig({ ...config, telefone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="+351 123 456 789"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Mail className="h-4 w-4 inline mr-1" />
                     Email
                   </label>
                   <input
                     type="email"
                     value={config.email}
-                    onChange={(e) =>
-                      setConfig((prev) => ({ ...prev, email: e.target.value }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setConfig({ ...config, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="info@empresa.pt"
                   />
                 </div>
 
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Globe className="h-4 w-4 inline mr-1" />
                     Website
                   </label>
                   <input
                     type="url"
                     value={config.website}
-                    onChange={(e) =>
-                      setConfig((prev) => ({
-                        ...prev,
-                        website: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e) => setConfig({ ...config, website: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="www.empresa.pt"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Preview */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <FileText className="h-5 w-5 mr-2" />
-                Pré-visualização do Cabeçalho
-              </h3>
-
-              <div className="bg-gray-50 p-4 rounded-lg border">
-                <div className="flex items-center space-x-4">
-                  {logotipo && (
-                    <img
-                      src={logotipo}
-                      alt="Logo"
-                      className="w-16 h-16 object-contain"
-                    />
-                  )}
-                  <div>
-                    <h4 className="font-semibold text-gray-900">
-                      {config.nome}
-                    </h4>
-                    <p className="text-sm text-gray-600">{config.morada}</p>
-                    <p className="text-sm text-gray-600">
-                      Tel: {config.telefone} | Email: {config.email}
-                    </p>
-                    {config.website && (
-                      <p className="text-sm text-gray-600">{config.website}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 border-t">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={handleReset}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Resetar
-            </button>
-
-            <div className="flex space-x-3">
+            {/* Actions */}
+            <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
               <button
+                type="button"
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
               >
                 Cancelar
               </button>
               <button
-                onClick={handleSave}
+                type="submit"
                 disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                <span>{loading ? "A guardar..." : "Guardar"}</span>
+                <span>{loading ? "Salvando..." : "Salvar"}</span>
               </button>
             </div>
-          </div>
-        </div>
+          </form>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </AnimatePresence>
   );
 }

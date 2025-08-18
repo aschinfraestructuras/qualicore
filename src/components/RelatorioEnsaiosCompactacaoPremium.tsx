@@ -35,16 +35,18 @@ export default function RelatorioEnsaiosCompactacaoPremium({ ensaios, onClose }:
             toast.success('Relatório individual gerado com sucesso!');
           }
           break;
-        case 'filtrado':
+        case 'filtrado': {
           const pdfService = new PDFService();
           await pdfService.generateEnsaiosCompactacaoFilteredReport(ensaios);
           toast.success('Relatório filtrado gerado com sucesso!');
           break;
-        case 'executivo':
+        }
+        case 'executivo': {
           const pdfServiceExec = new PDFService();
           await pdfServiceExec.generateEnsaiosCompactacaoExecutiveReport(ensaios);
           toast.success('Relatório executivo gerado com sucesso!');
           break;
+        }
       }
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);
@@ -72,16 +74,18 @@ export default function RelatorioEnsaiosCompactacaoPremium({ ensaios, onClose }:
             toast.success('Relatório individual pronto para partilha!');
           }
           break;
-        case 'filtrado':
+        case 'filtrado': {
           const pdfService = new PDFService();
           await pdfService.generateEnsaiosCompactacaoFilteredReport(ensaios);
           toast.success('Relatório filtrado pronto para partilha!');
           break;
-        case 'executivo':
+        }
+        case 'executivo': {
           const pdfServiceExec = new PDFService();
           await pdfServiceExec.generateEnsaiosCompactacaoExecutiveReport(ensaios);
           toast.success('Relatório executivo pronto para partilha!');
           break;
+        }
       }
     } catch (error) {
       console.error('Erro ao preparar relatório para partilha:', error);

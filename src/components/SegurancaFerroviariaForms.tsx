@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-interface FormData {
+interface SegurancaFerroviariaFormData {
   codigo: string;
   tipo: string;
   categoria: string;
@@ -35,7 +35,7 @@ interface SegurancaFerroviariaFormsProps {
 }
 
 export function SegurancaFerroviariaForms({ isOpen, onClose, data, onSubmit }: SegurancaFerroviariaFormsProps) {
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<SegurancaFerroviariaFormData>({
     codigo: '',
     tipo: '',
     categoria: '',

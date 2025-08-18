@@ -12,7 +12,7 @@ import { EstacoesDetails } from '../components/EstacoesDetails';
 import { applyFilters, getDefaultFilters, getActiveFiltersCount } from '../utils/filterUtils';
 import { exportToExcel, exportToCSV, exportToPDF } from '../utils/exportUtils';
 
-interface Estacoes {
+interface Estacao {
   id: string;
   codigo: string;
   nome: string;
@@ -51,7 +51,7 @@ interface InspecaoEstacoes {
 }
 
 export default function Estacoes() {
-  const [estacoes, setEstacoes] = useState<Estacoes[]>([]);
+  const [estacoes, setEstacoes] = useState<Estacao[]>([]);
   const [inspecoes, setInspecoes] = useState<InspecaoEstacoes[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
