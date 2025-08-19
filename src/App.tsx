@@ -57,6 +57,7 @@ import FornecedoresAvancados from "./pages/FornecedoresAvancados";
 import CalibracoesEquipamentos from "./pages/CalibracoesEquipamentos";
 import Auditorias from "./pages/Auditorias";
 import RelatoriosAuditorias from "./pages/RelatoriosAuditorias";
+import RececaoObraGarantias from "./pages/RececaoObraGarantias";
 import "./styles/globals.css";
 import { ensaioCompactacaoService } from "./services/ensaioCompactacaoService";
 import LoadingSpinner from "./components/LoadingSpinner";
@@ -486,19 +487,31 @@ function App() {
           <Route index element={<CalibracoesEquipamentos />} />
         </Route>
 
-             <Route
-       path="/auditorias"
-       element={
-         user ? (
-           <PremiumLayout />
-         ) : (
-           <Navigate to="/login" replace />
-         )
-       }
-     >
-       <Route index element={<Auditorias />} />
-       <Route path="relatorios" element={<RelatoriosAuditorias />} />
-     </Route>
+                   <Route
+        path="/auditorias"
+        element={
+          user ? (
+            <PremiumLayout />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      >
+        <Route index element={<Auditorias />} />
+        <Route path="relatorios" element={<RelatoriosAuditorias />} />
+      </Route>
+      <Route
+        path="/rececao-obra-garantias"
+        element={
+          user ? (
+            <PremiumLayout />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      >
+        <Route index element={<RececaoObraGarantias />} />
+      </Route>
 
         {/* Rotas para ações rápidas */}
         <Route
