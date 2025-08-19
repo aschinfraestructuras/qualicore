@@ -356,6 +356,7 @@ export default function Dashboard() {
                     { name: "Submissão Materiais", icon: Upload, color: "from-blue-300 to-blue-500", path: "/submissao-materiais", count: totalSubmissaoMateriais },
                     { name: "Certificados e Registos", icon: Award, color: "from-gold-400 to-gold-600", path: "/certificados", count: totalCertificados },
                     { name: "Calibrações e Equipamentos", icon: Settings, color: "from-purple-400 to-purple-600", path: "/calibracoes-equipamentos", count: 0 },
+                    { name: "Auditorias SGQ", icon: Shield, color: "from-indigo-400 to-indigo-600", path: "/auditorias", count: 0 },
                     { name: "Checklists", icon: ClipboardCheck, color: "from-green-500 to-emerald-600", path: "/checklists", count: totalChecklists },
                     { name: "Não Conformidades", icon: AlertTriangle, color: "from-red-500 to-pink-600", path: "/nao-conformidades", count: realData.naoConformidades.total },
                     

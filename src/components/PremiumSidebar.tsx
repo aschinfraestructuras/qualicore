@@ -184,6 +184,7 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
         { name: "Submissão Materiais", href: "/submissao-materiais", icon: Package, badge: "🆕" },
         { name: "Certificados e Registos", href: "/certificados", icon: Award, badge: "🆕" },
         { name: "Calibrações e Equipamentos", href: "/calibracoes-equipamentos", icon: Settings, badge: "🆕" },
+        { name: "Auditorias SGQ", href: "/auditorias", icon: Shield, badge: "🆕" },
         { name: "Checklists", href: "/checklists", icon: FileText, badge: "0" },
         { name: "Não Conformidades", href: "/nao-conformidades", icon: AlertTriangle, badge: stats.ncs.toString() },
       ]
