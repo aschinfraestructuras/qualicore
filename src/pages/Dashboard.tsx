@@ -87,6 +87,7 @@ import {
   CalendarHeart,
   Train,
 } from "lucide-react";
+import TestPDF from '../components/TestPDF';
 import {
   BarChart as RechartsBarChart,
   Bar,
@@ -401,14 +402,64 @@ export default function Dashboard() {
                 </div>
               </motion.section>
 
-              {/* Métricas Principais */}
-              <motion.section 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.3 }}
-                className="mb-8"
-              >
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Métricas Principais</h2>
+                             {/* Teste de Funcionalidades - VISÍVEL */}
+               <motion.section 
+                 initial={{ opacity: 0, y: 20 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 transition={{ duration: 0.8, delay: 0.2 }}
+                 className="mb-8"
+               >
+                 <h2 className="text-2xl font-bold text-gray-900 mb-6">🔧 Teste de Funcionalidades</h2>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <button 
+                     onClick={async () => {
+                       try {
+                         console.log('🔍 Iniciando teste de PDF...');
+                         const { PDFService } = await import('../services/pdfService');
+                         const pdfService = new PDFService();
+                         await pdfService.testPDFGeneration();
+                         alert('✅ PDF de teste gerado com sucesso! Verifica a pasta de downloads.');
+                       } catch (error) {
+                         console.error('❌ Erro no teste de PDF:', error);
+                         alert('❌ Erro ao gerar PDF de teste: ' + error.message);
+                       }
+                     }}
+                     className="p-6 rounded-2xl bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 hover:shadow-lg transition-all duration-300"
+                   >
+                     <div className="flex items-center space-x-3">
+                       <FileText className="h-8 w-8 text-red-600" />
+                       <div className="text-left">
+                         <div className="font-bold text-gray-900 text-lg">Testar PDF</div>
+                         <div className="text-sm text-gray-600">Verificar se PDF generation funciona</div>
+                       </div>
+                     </div>
+                   </button>
+                   <button 
+                     onClick={() => {
+                       console.log('🔍 Verificando console...');
+                       alert('Verifica o console (F12) para ver os logs de debug');
+                     }}
+                     className="p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 hover:shadow-lg transition-all duration-300"
+                   >
+                     <div className="flex items-center space-x-3">
+                       <Settings className="h-8 w-8 text-blue-600" />
+                       <div className="text-left">
+                         <div className="font-bold text-gray-900 text-lg">Ver Console</div>
+                         <div className="text-sm text-gray-600">Verificar logs de debug</div>
+                       </div>
+                     </div>
+                   </button>
+                 </div>
+               </motion.section>
+
+               {/* Métricas Principais */}
+               <motion.section 
+                 initial={{ opacity: 0, y: 20 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 transition={{ duration: 0.8, delay: 0.3 }}
+                 className="mb-8"
+               >
+                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Métricas Principais</h2>
                 
                 {/* KPI Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
