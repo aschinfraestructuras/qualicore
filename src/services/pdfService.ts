@@ -97,6 +97,14 @@ interface RelatorioEnsaiosOptions {
   filtros?: any;
 }
 
+interface RelatorioSolosOptions {
+  titulo: string;
+  subtitulo?: string;
+  solos: any[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
 interface RelatorioRFIsOptions {
   titulo: string;
   subtitulo?: string;
@@ -9452,6 +9460,473 @@ class PDFService {
     }
 
     this.doc.save(`relatorio_inspecoes_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  // ===== MÉTODOS PARA RELATÓRIOS DE SOLOS =====
+  
+  public async generateSolosExecutiveReport(solos: any[]): Promise<void> {
+    console.log('PDFService: Iniciando relatório executivo de solos com', solos.length, 'solos');
+    
+    try {
+      const options: RelatorioSolosOptions = {
+        titulo: 'Relatório Executivo de Caracterização de Solos',
+        subtitulo: 'Visão Geral e Indicadores de Conformidade',
+        solos,
+        tipo: 'executivo'
+      };
+      
+      console.log('PDFService: Gerando relatório...');
+      this.gerarRelatorioExecutivoSolos(options);
+      
+      console.log('PDFService: Fazendo download...');
+      this.download(`relatorio-solos-executivo-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      console.log('PDFService: Relatório executivo concluído!');
+    } catch (error) {
+      console.error('PDFService: Erro no relatório executivo:', error);
+      throw error;
+    }
+  }
+
+  public async generateSolosFilteredReport(solos: any[], filtros: any): Promise<void> {
+    const options: RelatorioSolosOptions = {
+      titulo: 'Relatório Filtrado de Caracterização de Solos',
+      subtitulo: 'Análise Detalhada com Filtros Aplicados',
+      solos,
+      tipo: 'filtrado',
+      filtros
+    };
+    this.gerarRelatorioFiltradoSolos(options);
+    this.download(`relatorio-solos-filtrado-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateSolosComparativeReport(solos: any[]): Promise<void> {
+    const options: RelatorioSolosOptions = {
+      titulo: 'Relatório Comparativo de Caracterização de Solos',
+      subtitulo: 'Análise Comparativa e Benchmarks',
+      solos,
+      tipo: 'comparativo'
+    };
+    this.gerarRelatorioComparativoSolos(options);
+    this.download(`relatorio-solos-comparativo-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateSolosIndividualReport(solos: any[]): Promise<void> {
+    if (solos.length !== 1) {
+      throw new Error('Relatório individual deve conter apenas um solo');
+    }
+    
+    const solo = solos[0];
+    const options: RelatorioSolosOptions = {
+      titulo: `Relatório Individual - Caracterização de Solo`,
+      subtitulo: `Código: ${solo.codigo} | Obra: ${solo.obra}`,
+      solos,
+      tipo: 'individual'
+    };
+    this.gerarRelatorioIndividualSolo(options);
+    this.download(`relatorio-solos-individual-${solo.codigo}-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  private gerarRelatorioExecutivoSolos(options: RelatorioSolosOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addEstatisticasSolos(options.solos, startY);
+    currentY = this.addRelatorioExecutivoSolos(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioFiltradoSolos(options: RelatorioSolosOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addFiltrosSolos(options.filtros, startY);
+    currentY = this.addRelatorioFiltradoSolos(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioComparativoSolos(options: RelatorioSolosOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioComparativoSolos(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioIndividualSolo(options: RelatorioSolosOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioIndividualSolo(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private addEstatisticasSolos(solos: any[], startY: number): number {
+    let currentY = startY;
+
+    // Título da seção
+    this.doc.setFillColor(34, 197, 94); // Verde
+    this.doc.rect(15, currentY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Estatísticas Gerais', 20, currentY + 2);
+
+    currentY += 20;
+
+    // Calcular estatísticas
+    const total = solos.length;
+    const conformes = solos.filter(s => s.conforme).length;
+    const nao_conformes = total - conformes;
+    const adequados = solos.filter(s => s.classificacao && s.classificacao.adequacao && 
+      (s.classificacao.adequacao === 'ADEQUADO' || s.classificacao.adequacao === 'EXCELENTE')).length;
+    const inadequados = total - adequados;
+    const percentual_conformidade = total > 0 ? (conformes / total) * 100 : 0;
+    const laboratorios_unicos = new Set(solos.map(s => s.laboratorio)).size;
+
+    // Estatísticas em grid
+    const stats = [
+      { label: 'Total de Solos', value: total, color: [59, 130, 246] },
+      { label: 'Conformes', value: conformes, color: [34, 197, 94] },
+      { label: 'Não Conformes', value: nao_conformes, color: [239, 68, 68] },
+      { label: 'Adequados', value: adequados, color: [59, 130, 246] },
+      { label: 'Inadequados', value: inadequados, color: [245, 158, 11] },
+      { label: 'Taxa Conformidade', value: `${percentual_conformidade.toFixed(1)}%`, color: [147, 51, 234] },
+      { label: 'Laboratórios', value: laboratorios_unicos, color: [236, 72, 153] }
+    ];
+
+    let x = 20;
+    let y = currentY;
+    const boxWidth = 55;
+    const boxHeight = 25;
+
+    stats.forEach((stat, index) => {
+      if (index > 0 && index % 3 === 0) {
+        y += 35;
+        x = 20;
+      }
+
+      // Fundo colorido
+      this.doc.setFillColor(stat.color[0], stat.color[1], stat.color[2]);
+      this.doc.rect(x, y, boxWidth, boxHeight, 'F');
+
+      // Texto
+      this.doc.setFontSize(8);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(255, 255, 255);
+      this.doc.text(stat.label, x + 2, y + 8);
+
+      this.doc.setFontSize(12);
+      this.doc.text(stat.value.toString(), x + 2, y + 18);
+
+      x += 60;
+    });
+
+    return y + 40;
+  }
+
+  private addRelatorioExecutivoSolos(options: RelatorioSolosOptions, startY: number): number {
+    let currentY = startY;
+
+    // Análise por adequação
+    this.doc.setFillColor(34, 197, 94);
+    this.doc.rect(15, currentY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Análise por Adequação', 20, currentY + 2);
+
+    currentY += 20;
+
+    const adequacaoStats = this.calcularEstatisticasAdequacao(options.solos);
+    const adequacaoData = Object.entries(adequacaoStats).map(([adequacao, count]) => [adequacao, count.toString()]);
+
+    autoTable(this.doc, {
+      startY: currentY,
+      head: [['Adequação', 'Quantidade']],
+      body: adequacaoData,
+      theme: 'grid',
+      headStyles: { fillColor: [34, 197, 94], textColor: 255 },
+      styles: { fontSize: 10 }
+    });
+
+    currentY = (this.doc as any).lastAutoTable.finalY + 15;
+
+    // Análise por laboratório
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(15, currentY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Análise por Laboratório', 20, currentY + 2);
+
+    currentY += 20;
+
+    const laboratorioStats = this.calcularEstatisticasLaboratorio(options.solos);
+    const laboratorioData = Object.entries(laboratorioStats).map(([lab, stats]) => [
+      lab, 
+      stats.total.toString(), 
+      stats.conformes.toString(), 
+      `${((stats.conformes / stats.total) * 100).toFixed(1)}%`
+    ]);
+
+    autoTable(this.doc, {
+      startY: currentY,
+      head: [['Laboratório', 'Total', 'Conformes', '% Conformidade']],
+      body: laboratorioData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+      styles: { fontSize: 9 }
+    });
+
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addFiltrosSolos(filtros: any, startY: number): number {
+    let currentY = startY;
+
+    this.doc.setFillColor(245, 158, 11);
+    this.doc.rect(15, currentY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Filtros Aplicados', 20, currentY + 2);
+
+    currentY += 20;
+
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(0, 0, 0);
+
+    const filtrosAplicados = [];
+    if (filtros.obra) filtrosAplicados.push(['Obra', filtros.obra]);
+    if (filtros.laboratorio) filtrosAplicados.push(['Laboratório', filtros.laboratorio]);
+    if (filtros.conforme !== '') filtrosAplicados.push(['Conformidade', filtros.conforme === 'true' ? 'Conformes' : 'Não Conformes']);
+    if (filtros.adequacao) filtrosAplicados.push(['Adequação', filtros.adequacao]);
+    if (filtros.dataInicio && filtros.dataFim) filtrosAplicados.push(['Período', `${filtros.dataInicio} a ${filtros.dataFim}`]);
+
+    if (filtrosAplicados.length > 0) {
+      autoTable(this.doc, {
+        startY: currentY,
+        head: [['Filtro', 'Valor']],
+        body: filtrosAplicados,
+        theme: 'grid',
+        headStyles: { fillColor: [245, 158, 11], textColor: 255 },
+        styles: { fontSize: 10 }
+      });
+      currentY = (this.doc as any).lastAutoTable.finalY + 15;
+    } else {
+      this.doc.text('Nenhum filtro aplicado', 20, currentY);
+      currentY += 10;
+    }
+
+    return currentY;
+  }
+
+  private addRelatorioFiltradoSolos(options: RelatorioSolosOptions, startY: number): number {
+    let currentY = startY;
+
+    // Tabela de dados filtrados
+    this.doc.setFillColor(34, 197, 94);
+    this.doc.rect(15, currentY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Dados Filtrados', 20, currentY + 2);
+
+    currentY += 20;
+
+    const dadosParaTabela = options.solos.map(solo => [
+      solo.codigo || '',
+      solo.obra || '',
+      solo.localizacao || '',
+      solo.laboratorio || '',
+      new Date(solo.data_colheita).toLocaleDateString('pt-PT'),
+      solo.classificacao?.adequacao || 'N/A',
+      solo.conforme ? 'Sim' : 'Não'
+    ]);
+
+    autoTable(this.doc, {
+      startY: currentY,
+      head: [['Código', 'Obra', 'Localização', 'Laboratório', 'Data Colheita', 'Adequação', 'Conforme']],
+      body: dadosParaTabela,
+      theme: 'grid',
+      headStyles: { fillColor: [34, 197, 94], textColor: 255 },
+      styles: { fontSize: 8 }
+    });
+
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addRelatorioComparativoSolos(options: RelatorioSolosOptions, startY: number): number {
+    let currentY = startY;
+
+    // Comparação por adequação
+    this.doc.setFillColor(147, 51, 234);
+    this.doc.rect(15, currentY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Comparação por Adequação', 20, currentY + 2);
+
+    currentY += 20;
+
+    const adequacaoStats = this.calcularEstatisticasAdequacao(options.solos);
+    const adequacaoData = Object.entries(adequacaoStats).map(([adequacao, count]) => [
+      adequacao, 
+      count.toString(), 
+      `${((count / options.solos.length) * 100).toFixed(1)}%`
+    ]);
+
+    autoTable(this.doc, {
+      startY: currentY,
+      head: [['Adequação', 'Quantidade', 'Percentagem']],
+      body: adequacaoData,
+      theme: 'grid',
+      headStyles: { fillColor: [147, 51, 234], textColor: 255 },
+      styles: { fontSize: 10 }
+    });
+
+    currentY = (this.doc as any).lastAutoTable.finalY + 15;
+
+    // Comparação por laboratório
+    this.doc.setFillColor(236, 72, 153);
+    this.doc.rect(15, currentY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Comparação por Laboratório', 20, currentY + 2);
+
+    currentY += 20;
+
+    const laboratorioStats = this.calcularEstatisticasLaboratorio(options.solos);
+    const laboratorioData = Object.entries(laboratorioStats).map(([lab, stats]) => [
+      lab, 
+      stats.total.toString(), 
+      stats.conformes.toString(), 
+      stats.nao_conformes.toString(),
+      `${((stats.conformes / stats.total) * 100).toFixed(1)}%`
+    ]);
+
+    autoTable(this.doc, {
+      startY: currentY,
+      head: [['Laboratório', 'Total', 'Conformes', 'Não Conformes', '% Conformidade']],
+      body: laboratorioData,
+      theme: 'grid',
+      headStyles: { fillColor: [236, 72, 153], textColor: 255 },
+      styles: { fontSize: 9 }
+    });
+
+    return (this.doc as any).lastAutoTable.finalY + 15;
+  }
+
+  private addRelatorioIndividualSolo(options: RelatorioSolosOptions, startY: number): number {
+    const solo = options.solos[0];
+    let currentY = startY;
+
+    // Informações gerais
+    this.doc.setFillColor(34, 197, 94);
+    this.doc.rect(15, currentY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Informações Gerais', 20, currentY + 2);
+
+    currentY += 20;
+
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setTextColor(0, 0, 0);
+
+    const infoGeral = [
+      ['Código', solo.codigo || ''],
+      ['Obra', solo.obra || ''],
+      ['Localização', solo.localizacao || ''],
+      ['Laboratório', solo.laboratorio || ''],
+      ['Data de Colheita', new Date(solo.data_colheita).toLocaleDateString('pt-PT')],
+      ['Tipo de Amostra', solo.tipo_amostra || ''],
+      ['Profundidade de Colheita', `${solo.profundidade_colheita || 0} m`],
+      ['Conforme', solo.conforme ? 'Sim' : 'Não']
+    ];
+
+    autoTable(this.doc, {
+      startY: currentY,
+      head: [['Campo', 'Valor']],
+      body: infoGeral,
+      theme: 'grid',
+      headStyles: { fillColor: [34, 197, 94], textColor: 255 },
+      styles: { fontSize: 10 }
+    });
+
+    currentY = (this.doc as any).lastAutoTable.finalY + 15;
+
+    // Classificação
+    if (solo.classificacao) {
+      this.doc.setFillColor(59, 130, 246);
+      this.doc.rect(15, currentY - 5, 180, 10, 'F');
+      this.doc.setFontSize(14);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(255, 255, 255);
+      this.doc.text('Classificação', 20, currentY + 2);
+
+      currentY += 20;
+
+      const classificacaoData = [
+        ['Adequação', solo.classificacao.adequacao || 'N/A'],
+        ['Descrição', solo.classificacao.descricao || 'N/A']
+      ];
+
+      autoTable(this.doc, {
+        startY: currentY,
+        head: [['Campo', 'Valor']],
+        body: classificacaoData,
+        theme: 'grid',
+        headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+        styles: { fontSize: 10 }
+      });
+
+      currentY = (this.doc as any).lastAutoTable.finalY + 15;
+    }
+
+    return currentY;
+  }
+
+  private calcularEstatisticasAdequacao(solos: any[]): Record<string, number> {
+    const stats: Record<string, number> = {};
+    
+    solos.forEach(solo => {
+      const adequacao = solo.classificacao?.adequacao || 'N/A';
+      stats[adequacao] = (stats[adequacao] || 0) + 1;
+    });
+    
+    return stats;
+  }
+
+  private calcularEstatisticasLaboratorio(solos: any[]): Record<string, { total: number; conformes: number; nao_conformes: number }> {
+    const stats: Record<string, { total: number; conformes: number; nao_conformes: number }> = {};
+    
+    solos.forEach(solo => {
+      const lab = solo.laboratorio || 'N/A';
+      if (!stats[lab]) {
+        stats[lab] = { total: 0, conformes: 0, nao_conformes: 0 };
+      }
+      stats[lab].total++;
+      if (solo.conforme) {
+        stats[lab].conformes++;
+      } else {
+        stats[lab].nao_conformes++;
+      }
+    });
+    
+    return stats;
   }
 }
 

@@ -697,7 +697,7 @@ export default function CaracterizacaoSolosForms({ isOpen, onClose, onSubmit, ed
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Adequação</label>
                     <select
-                      value={formData.classificacao.adequacao}
+                      value={formData.classificacao?.adequacao || ''}
                       onChange={(e) => setFormData(prev => ({
                         ...prev,
                         classificacao: { ...prev.classificacao, adequacao: e.target.value as any }

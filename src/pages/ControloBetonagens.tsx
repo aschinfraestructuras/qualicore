@@ -20,13 +20,15 @@ import {
   Save,
   Loader,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  LayoutDashboard
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { betonagensAPI } from '@/lib/supabase-api/betonagensAPI';
 import ControloBetonagensForms from '@/components/ControloBetonagensForms';
 import ControloBetonagensFilters from '@/components/ControloBetonagensFilters';
 import ControloBetonagensDetails from '@/components/ControloBetonagensDetails';
+import BetonagemDashboard from '@/components/BetonagemDashboard';
 import { applyFilters, getDefaultFilters, getActiveFiltersCount, sortData } from '@/utils/filterUtils';
 
 interface Betonagem {
@@ -86,6 +88,7 @@ export default function ControloBetonagens() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [stats, setStats] = useState<any>(null);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   useEffect(() => {
     loadBetonagens();
@@ -298,22 +301,40 @@ export default function ControloBetonagens() {
               Gestão técnica de betonagens, ensaios de resistência e controlo de qualidade
             </p>
           </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2 shadow-lg"
-          >
-            <Plus className="h-5 w-5" />
-            <span>Nova Betonagem</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setShowDashboard(!showDashboard)}
+              className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                showDashboard 
+                  ? 'bg-gray-600 text-white' 
+                  : 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700'
+              } shadow-lg`}
+            >
+              <LayoutDashboard className="h-5 w-5" />
+              <span>{showDashboard ? 'Lista' : 'Dashboard'}</span>
+            </button>
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2 shadow-lg"
+            >
+              <Plus className="h-5 w-5" />
+              <span>Nova Betonagem</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Dashboard Stats */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-      >
+      {/* Dashboard or List View */}
+      {showDashboard ? (
+        <BetonagemDashboard />
+      ) : (
+        <>
+          {/* Dashboard Stats */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+          >
         <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
@@ -360,10 +381,10 @@ export default function ControloBetonagens() {
               <TrendingUp className="h-6 w-6 text-indigo-600" />
             </div>
           </div>
-        </div>
-      </motion.div>
+          </div>
+        </motion.div>
 
-      {/* Filters and Search */}
+        {/* Filters and Search */}
       <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4">
@@ -674,35 +695,37 @@ export default function ControloBetonagens() {
         )}
       </div>
 
-      {/* Modals */}
-      {showForm && (
-        <ControloBetonagensForms
-          betonagem={editingBetonagem}
-          onSubmit={editingBetonagem ? handleUpdate : handleCreate}
-          onClose={() => {
-            setShowForm(false);
-            setEditingBetonagem(null);
-          }}
-        />
-      )}
+        {/* Modals */}
+        {showForm && (
+          <ControloBetonagensForms
+            betonagem={editingBetonagem}
+            onSubmit={editingBetonagem ? handleUpdate : handleCreate}
+            onClose={() => {
+              setShowForm(false);
+              setEditingBetonagem(null);
+            }}
+          />
+        )}
 
-      {showDetails && selectedBetonagem && (
-        <ControloBetonagensDetails
-          betonagem={selectedBetonagem}
-          onClose={() => {
-            setShowDetails(false);
-            setSelectedBetonagem(null);
-          }}
-          onEdit={() => {
-            setShowDetails(false);
-            setEditingBetonagem(selectedBetonagem);
-            setShowForm(true);
-          }}
-          onDelete={() => {
-            setShowDetails(false);
-            handleDelete(selectedBetonagem.id);
-          }}
-        />
+        {showDetails && selectedBetonagem && (
+          <ControloBetonagensDetails
+            betonagem={selectedBetonagem}
+            onClose={() => {
+              setShowDetails(false);
+              setSelectedBetonagem(null);
+            }}
+            onEdit={() => {
+              setShowDetails(false);
+              setEditingBetonagem(selectedBetonagem);
+              setShowForm(true);
+            }}
+            onDelete={() => {
+              setShowDetails(false);
+              handleDelete(selectedBetonagem.id);
+            }}
+          />
+        )}
+        </>
       )}
     </div>
   );

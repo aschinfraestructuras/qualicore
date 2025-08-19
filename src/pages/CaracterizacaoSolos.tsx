@@ -13,13 +13,26 @@ import {
   TrendingUp,
   AlertCircle,
   CheckCircle,
-  X
+  X,
+  BarChart3,
+  Shield,
+  Cloud,
+  ArrowUpRight,
+  Share2,
+  Calendar,
+  MapPin,
+  TestTube,
+  User,
+  Clock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CaracterizacaoSolo, FiltroSolos } from '@/types/solos';
 import { solosAPI } from '@/lib/supabase-api/solosAPI';
 import CaracterizacaoSolosForms from '@/components/CaracterizacaoSolosForms';
 import CaracterizacaoSolosDetails from '@/components/CaracterizacaoSolosDetails';
+import { AnimatePresence } from 'framer-motion';
+import { SolosDashboard } from '@/components/SolosDashboard';
+import RelatorioSolosPremium from '@/components/RelatorioSolosPremium';
 
 export default function CaracterizacaoSolos() {
   const [solos, setSolos] = useState<CaracterizacaoSolo[]>([]);
@@ -32,6 +45,8 @@ export default function CaracterizacaoSolos() {
   const [showFilters, setShowFilters] = useState(false);
   const [sortField, setSortField] = useState<keyof CaracterizacaoSolo>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [showRelatorioPremium, setShowRelatorioPremium] = useState(false);
 
   // Filtros
   const [filtros, setFiltros] = useState<FiltroSolos>({
@@ -53,7 +68,9 @@ export default function CaracterizacaoSolos() {
     conformes: 0,
     nao_conformes: 0,
     adequados: 0,
-    inadequados: 0
+    inadequados: 0,
+    esteMes: 0,
+    esteAno: 0
   });
 
   useEffect(() => {
@@ -74,10 +91,22 @@ export default function CaracterizacaoSolos() {
       const total = data.length;
       const conformes = data.filter(s => s.conforme).length;
       const nao_conformes = total - conformes;
-      const adequados = data.filter(s => s.classificacao.adequacao === 'ADEQUADO' || s.classificacao.adequacao === 'EXCELENTE').length;
+      const adequados = data.filter(s => s.classificacao && s.classificacao.adequacao && (s.classificacao.adequacao === 'ADEQUADO' || s.classificacao.adequacao === 'EXCELENTE')).length;
       const inadequados = total - adequados;
 
-      setStats({ total, conformes, nao_conformes, adequados, inadequados });
+      // Estatísticas por período
+      const agora = new Date();
+      const esteMes = data.filter(s => {
+        const dataSolo = new Date(s.created_at);
+        return dataSolo.getMonth() === agora.getMonth() && dataSolo.getFullYear() === agora.getFullYear();
+      }).length;
+
+      const esteAno = data.filter(s => {
+        const dataSolo = new Date(s.created_at);
+        return dataSolo.getFullYear() === agora.getFullYear();
+      }).length;
+
+      setStats({ total, conformes, nao_conformes, adequados, inadequados, esteMes, esteAno });
     } catch (error) {
       console.error('Erro ao carregar solos:', error);
       toast.error('Erro ao carregar dados');
@@ -117,7 +146,7 @@ export default function CaracterizacaoSolos() {
     }
 
     if (filtros.adequacao) {
-      filtered = filtered.filter(solo => solo.classificacao.adequacao === filtros.adequacao);
+      filtered = filtered.filter(solo => solo.classificacao && solo.classificacao.adequacao && solo.classificacao.adequacao === filtros.adequacao);
     }
 
     if (filtros.profundidade_min > 0) {
@@ -259,6 +288,22 @@ export default function CaracterizacaoSolos() {
             
             <div className="flex items-center space-x-3">
               <button
+                onClick={() => setShowDashboard(!showDashboard)}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span>{showDashboard ? 'Lista' : 'Dashboard'}</span>
+              </button>
+              
+              <button
+                onClick={() => setShowRelatorioPremium(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Relatórios</span>
+              </button>
+              
+              <button
                 onClick={handleExport}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
               >
@@ -278,13 +323,13 @@ export default function CaracterizacaoSolos() {
         </div>
       </div>
 
-             {/* Stats Cards */}
-       <div className="px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
+      {/* Stats Cards */}
+      <div className="px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-6 mb-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl shadow-sm p-6"
+            className="bg-white rounded-xl shadow-sm p-6 border border-gray-200"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -299,7 +344,7 @@ export default function CaracterizacaoSolos() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white rounded-xl shadow-sm p-6"
+            className="bg-white rounded-xl shadow-sm p-6 border border-gray-200"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -314,7 +359,7 @@ export default function CaracterizacaoSolos() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-xl shadow-sm p-6"
+            className="bg-white rounded-xl shadow-sm p-6 border border-gray-200"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -329,7 +374,7 @@ export default function CaracterizacaoSolos() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white rounded-xl shadow-sm p-6"
+            className="bg-white rounded-xl shadow-sm p-6 border border-gray-200"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -344,7 +389,7 @@ export default function CaracterizacaoSolos() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white rounded-xl shadow-sm p-6"
+            className="bg-white rounded-xl shadow-sm p-6 border border-gray-200"
           >
             <div className="flex items-center justify-between">
               <div>
@@ -354,10 +399,53 @@ export default function CaracterizacaoSolos() {
               <X className="w-8 h-8 text-orange-600" />
             </div>
           </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-white rounded-xl shadow-sm p-6 border border-gray-200"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Este Mês</p>
+                <p className="text-2xl font-bold text-purple-600">{stats.esteMes}</p>
+              </div>
+              <Calendar className="w-8 h-8 text-purple-600" />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="bg-white rounded-xl shadow-sm p-6 border border-gray-200"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Este Ano</p>
+                <p className="text-2xl font-bold text-indigo-600">{stats.esteAno}</p>
+              </div>
+              <BarChart3 className="w-8 h-8 text-indigo-600" />
+            </div>
+          </motion.div>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+        {/* Conteúdo principal - Dashboard ou Lista */}
+        {showDashboard ? (
+          <SolosDashboard
+            solos={filteredSolos}
+            onSearch={(query, options) => {
+              setFiltros(prev => ({ ...prev, search: query }));
+            }}
+            onFilterChange={(newFilters) => {
+              setFiltros(prev => ({ ...prev, ...newFilters }));
+            }}
+          />
+        ) : (
+          <>
+            {/* Filters */}
+            <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-200">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -381,67 +469,69 @@ export default function CaracterizacaoSolos() {
             </button>
           </div>
 
-          {showFilters && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Obra</label>
-                <input
-                  type="text"
-                  value={filtros.obra}
-                  onChange={(e) => setFiltros(prev => ({ ...prev, obra: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                />
-              </div>
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Obra</label>
+                  <input
+                    type="text"
+                    value={filtros.obra}
+                    onChange={(e) => setFiltros(prev => ({ ...prev, obra: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Laboratório</label>
-                <input
-                  type="text"
-                  value={filtros.laboratorio}
-                  onChange={(e) => setFiltros(prev => ({ ...prev, laboratorio: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                />
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Laboratório</label>
+                  <input
+                    type="text"
+                    value={filtros.laboratorio}
+                    onChange={(e) => setFiltros(prev => ({ ...prev, laboratorio: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Conformidade</label>
-                <select
-                  value={filtros.conforme}
-                  onChange={(e) => setFiltros(prev => ({ ...prev, conforme: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Todos</option>
-                  <option value="true">Conformes</option>
-                  <option value="false">Não Conformes</option>
-                </select>
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Conformidade</label>
+                  <select
+                    value={filtros.conforme}
+                    onChange={(e) => setFiltros(prev => ({ ...prev, conforme: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">Todos</option>
+                    <option value="true">Conformes</option>
+                    <option value="false">Não Conformes</option>
+                  </select>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Adequação</label>
-                <select
-                  value={filtros.adequacao}
-                  onChange={(e) => setFiltros(prev => ({ ...prev, adequacao: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Todas</option>
-                  <option value="EXCELENTE">Excelente</option>
-                  <option value="ADEQUADO">Adequado</option>
-                  <option value="MARGINAL">Marginal</option>
-                  <option value="TOLERABLE">Tolerável</option>
-                  <option value="INADECUADO">Inadequado</option>
-                </select>
-              </div>
-            </motion.div>
-          )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Adequação</label>
+                  <select
+                    value={filtros.adequacao}
+                    onChange={(e) => setFiltros(prev => ({ ...prev, adequacao: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="">Todas</option>
+                    <option value="EXCELENTE">Excelente</option>
+                    <option value="ADEQUADO">Adequado</option>
+                    <option value="MARGINAL">Marginal</option>
+                    <option value="TOLERABLE">Tolerável</option>
+                    <option value="INADECUADO">Inadequado</option>
+                  </select>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -519,8 +609,8 @@ export default function CaracterizacaoSolos() {
                         {new Date(solo.data_colheita).toLocaleDateString('pt-PT')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getAdequacaoColor(solo.classificacao.adequacao)}`}>
-                          {solo.classificacao.adequacao}
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getAdequacaoColor(solo.classificacao?.adequacao || 'N/A')}`}>
+                          {solo.classificacao?.adequacao || 'N/A'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -571,6 +661,8 @@ export default function CaracterizacaoSolos() {
         <div className="mt-4 text-sm text-gray-700 text-center">
           Mostrando {filteredSolos.length} de {solos.length} caracterizações
         </div>
+      </>
+        )}
       </div>
 
       {/* Forms and Details Modals */}
@@ -592,6 +684,14 @@ export default function CaracterizacaoSolos() {
         }}
         solo={selectedSolo}
       />
+
+      {/* Modal de Relatórios Premium */}
+      {showRelatorioPremium && (
+        <RelatorioSolosPremium
+          solos={filteredSolos}
+          onClose={() => setShowRelatorioPremium(false)}
+        />
+      )}
     </div>
   );
 }

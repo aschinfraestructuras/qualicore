@@ -246,9 +246,9 @@ export default function CaracterizacaoSolosDetails({
                         Adequação
                       </span>
                     </div>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getAdequacaoColor(solo.classificacao.adequacao)}`}>
-                      {solo.classificacao.adequacao}
-                    </span>
+                                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getAdequacaoColor(solo.classificacao?.adequacao || 'N/A')}`}>
+                          {solo.classificacao?.adequacao || 'N/A'}
+                        </span>
                   </div>
                 </div>
 

@@ -3157,4 +3157,587 @@ export class ReportService {
       return 'Outros';
     }
   }
+
+  // Métodos para relatórios de Betonagens
+  static async generateBetonagemExecutiveReport(betonagens: any[], kpis: any) {
+    const doc = new jsPDF();
+        const utils = ReportService.createReportUtils(doc);
+    
+    utils.addMetadata(doc, 'Relatório Executivo - Controlo de Betonagens', 'Relatório de Betonagens');
+    utils.addHeader(doc, 'Relatório Executivo', 'Controlo de Betonagens');
+
+    let currentY = 60;
+
+    // KPIs Principais
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('KPIs Principais', 20, currentY);
+    currentY += 20;
+
+    // Cards de KPI
+    const kpiCards = [
+      { title: 'Total Betonagens', value: kpis.total, unit: '', color: utils.COLORS.primary },
+      { title: 'Taxa Conformidade', value: kpis.taxaConformidade, unit: '%', color: utils.COLORS.success },
+      { title: 'Resistência Média', value: kpis.resistenciaMedia, unit: ' MPa', color: utils.COLORS.info },
+      { title: 'Temperatura Média', value: kpis.temperaturaMedia, unit: '°C', color: [251, 191, 36] as [number, number, number] }
+    ];
+
+    let cardX = 20;
+    kpiCards.forEach((kpi, index) => {
+      utils.addKPICard(doc, kpi.title, kpi.value, kpi.unit, cardX, currentY, kpi.color);
+      cardX += 45;
+      if (index === 1) {
+        cardX = 20;
+        currentY += 35;
+      }
+    });
+
+    currentY += 50;
+
+    // Distribuição por Status
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Distribuição por Status', 20, currentY);
+    currentY += 15;
+
+    const statusData = [
+      { status: 'Conformes', quantidade: kpis.conformes, cor: utils.COLORS.success },
+      { status: 'Não Conformes', quantidade: kpis.naoConformes, cor: utils.COLORS.danger },
+      { status: 'Pendentes', quantidade: kpis.pendentes, cor: [251, 191, 36] as [number, number, number] }
+    ];
+
+    statusData.forEach(status => {
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(status.cor[0], status.cor[1], status.cor[2]);
+      doc.text(`${status.status}: ${status.quantidade}`, 25, currentY);
+      currentY += 10;
+    });
+
+    currentY += 10;
+
+    // Métricas Técnicas
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Métricas Técnicas', 20, currentY);
+    currentY += 15;
+
+    const metricas = [
+      { label: 'Slump Médio', valor: kpis.slumpMedia, unidade: ' cm' },
+      { label: 'Ensaios 7d Realizados', valor: betonagens.filter(b => b.data_ensaio_7d).length, unidade: '' },
+      { label: 'Ensaios 28d Realizados', valor: betonagens.filter(b => b.data_ensaio_28d).length, unidade: '' }
+    ];
+
+    metricas.forEach(metrica => {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(utils.COLORS.lightText[0], utils.COLORS.lightText[1], utils.COLORS.lightText[2]);
+      doc.text(`${metrica.label}: ${metrica.valor}${metrica.unidade}`, 25, currentY);
+      currentY += 8;
+    });
+
+    currentY += 15;
+
+    // Recomendações
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Recomendações', 20, currentY);
+    currentY += 15;
+
+    const recomendacoes = [
+      'Monitorizar temperaturas elevadas que podem afetar a cura',
+      'Acelerar ensaios pendentes para melhor controlo',
+      'Otimizar slump para melhor trabalhabilidade',
+      'Implementar controlo de qualidade mais rigoroso'
+    ];
+
+    recomendacoes.forEach((rec, index) => {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...utils.COLORS.lightText);
+      doc.text(`${index + 1}. ${rec}`, 25, currentY);
+      currentY += 8;
+    });
+
+    utils.addFooter(doc);
+    doc.save('relatorio-executivo-betonagens.pdf');
+  }
+
+  static async generateBetonagemAnalyticsReport(betonagens: any[], chartData: any) {
+    const doc = new jsPDF();
+    const utils = ReportService.createReportUtils(doc);
+
+    utils.addMetadata(doc, 'Relatório Analítico - Controlo de Betonagens');
+    utils.addHeader(doc, 'Relatório Analítico', 'Controlo de Betonagens');
+
+    let currentY = 60;
+
+    // Análise de Evolução
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Análise de Evolução da Resistência', 20, currentY);
+    currentY += 20;
+
+    // Tabela de dados de evolução
+    const evolucaoData = chartData.areaData.map((item: any, index: number) => [
+      item.mes,
+      `${item.resistencia} MPa`,
+      `${item.temperatura}°C`,
+      `${item.slump} cm`
+    ]);
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Período', 'Resistência', 'Temperatura', 'Slump']],
+      body: evolucaoData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      styles: {
+        fontSize: 10
+      }
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 20;
+
+    // Distribuição por Elemento
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Distribuição por Elemento Estrutural', 20, currentY);
+    currentY += 15;
+
+    const elementoData = chartData.barData.map((item: any) => [
+      item.elemento,
+      item.quantidade,
+      `${item.resistencia_media} MPa`
+    ]);
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Elemento', 'Quantidade', 'Resistência Média']],
+      body: elementoData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [34, 197, 94],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      styles: {
+        fontSize: 10
+      }
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 20;
+
+    // Análise de Correlação
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Análise de Correlação: Temperatura vs Resistência', 20, currentY);
+    currentY += 15;
+
+    const correlacaoData = chartData.scatterData.slice(0, 10).map((item: any) => [
+      `${item.temperatura}°C`,
+      `${item.resistencia} MPa`,
+      `${item.slump} cm`
+    ]);
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Temperatura', 'Resistência', 'Slump']],
+      body: correlacaoData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [239, 68, 68],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      styles: {
+        fontSize: 10
+      }
+    });
+
+    utils.addFooter(doc);
+    doc.save('relatorio-analitico-betonagens.pdf');
+  }
+
+  static async generateBetonagemComplianceReport(betonagens: any[], kpis: any) {
+    const doc = new jsPDF();
+    const utils = ReportService.createReportUtils(doc);
+
+    utils.addMetadata(doc, 'Relatório de Conformidade - Controlo de Betonagens', 'Relatório de Conformidade');
+    utils.addHeader(doc, 'Relatório de Conformidade', 'Controlo de Betonagens');
+
+    let currentY = 60;
+
+    // Resumo de Conformidade
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resumo de Conformidade', 20, currentY);
+    currentY += 20;
+
+    const conformidadeData = [
+      ['Status', 'Quantidade', 'Percentagem'],
+      ['Conformes', kpis.conformes, `${kpis.taxaConformidade}%`],
+      ['Não Conformes', kpis.naoConformes, `${((kpis.naoConformes / kpis.total) * 100).toFixed(1)}%`],
+      ['Pendentes', kpis.pendentes, `${((kpis.pendentes / kpis.total) * 100).toFixed(1)}%`],
+      ['Total', kpis.total, '100%']
+    ];
+
+    autoTable(doc, {
+      startY: currentY,
+      body: conformidadeData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      styles: {
+        fontSize: 10
+      }
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 20;
+
+    // Análise de Resistências
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Análise de Resistências', 20, currentY);
+    currentY += 15;
+
+    const resistencias = betonagens
+      .filter(b => b.resistencia_28d_1 > 0 || b.resistencia_28d_2 > 0 || b.resistencia_28d_3 > 0)
+      .map(b => {
+        const media = (b.resistencia_28d_1 + b.resistencia_28d_2 + b.resistencia_28d_3) / 3;
+        return {
+          codigo: b.codigo,
+          elemento: b.elemento_estrutural,
+          resistencia: media,
+          status: media >= 30 ? 'Conforme' : 'Não Conforme'
+        };
+      })
+      .slice(0, 15);
+
+    const resistenciaData = resistencias.map(r => [
+      r.codigo,
+      r.elemento,
+      `${r.resistencia.toFixed(1)} MPa`,
+      r.status
+    ]);
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Código', 'Elemento', 'Resistência 28d', 'Status']],
+      body: resistenciaData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [34, 197, 94],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      styles: {
+        fontSize: 9
+      }
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 20;
+
+    // Análise de Temperaturas
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Análise de Temperaturas', 20, currentY);
+    currentY += 15;
+
+    const temperaturas = betonagens
+      .filter(b => b.temperatura > 0)
+      .map(b => ({
+        codigo: b.codigo,
+        temperatura: b.temperatura,
+        status: b.temperatura >= 5 && b.temperatura <= 35 ? 'Adequada' : 'Fora do Limite'
+      }))
+      .slice(0, 10);
+
+    const temperaturaData = temperaturas.map(t => [
+      t.codigo,
+      `${t.temperatura}°C`,
+      t.status
+    ]);
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Código', 'Temperatura', 'Status']],
+      body: temperaturaData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [251, 191, 36],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      styles: {
+        fontSize: 10
+      }
+    });
+
+    currentY = (doc as any).lastAutoTable.finalY + 20;
+
+    // Recomendações de Conformidade
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Recomendações de Conformidade', 20, currentY);
+    currentY += 15;
+
+    const recomendacoes = [
+      'Implementar controlo de temperatura mais rigoroso',
+      'Acelerar ensaios de resistência pendentes',
+      'Revisar especificações de slump para melhor trabalhabilidade',
+      'Estabelecer procedimentos de cura adequados',
+      'Monitorizar fornecedores com maior incidência de não conformidades'
+    ];
+
+    recomendacoes.forEach((rec, index) => {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(utils.COLORS.lightText[0], utils.COLORS.lightText[1], utils.COLORS.lightText[2]);
+      doc.text(`${index + 1}. ${rec}`, 25, currentY);
+      currentY += 8;
+    });
+
+    utils.addFooter(doc);
+    doc.save('relatorio-conformidade-betonagens.pdf');
+  }
+
+  // =====================================================
+  // RELATÓRIOS PARA CARACTERIZAÇÃO DE SOLOS
+  // =====================================================
+
+  static async generateSolosExecutiveReport(options: {
+    kpis: any;
+    chartData: any;
+    period: string;
+    totalRecords: number;
+  }): Promise<void> {
+    const doc = new jsPDF();
+    const utils = ReportService.createReportUtils(doc);
+    
+    utils.addMetadata(doc, 'Relatório Executivo - Caracterização de Solos', 'Análise executiva de caracterização de solos');
+    
+    // Header
+    utils.addHeader(doc, 'Relatório Executivo', 'Caracterização de Solos');
+    
+    let currentY = 50;
+    
+    // KPIs
+    const kpiCards = [
+      { title: 'Total Caracterizações', value: options.kpis.totalCaracterizacoes, unit: '', color: utils.COLORS.primary },
+      { title: 'Taxa Conformidade', value: options.kpis.taxaConformidade, unit: '%', color: utils.COLORS.success },
+      { title: 'Taxa Adequação', value: options.kpis.taxaAdequacao, unit: '%', color: utils.COLORS.info },
+      { title: 'CBR Médio', value: options.kpis.cbrMedio, unit: '%', color: utils.COLORS.secondary }
+    ];
+    
+    currentY = ReportService.addKPICards(doc, kpiCards, currentY);
+    currentY += 20;
+    
+    // Resumo Executivo
+    doc.setFontSize(16);
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.text('Resumo Executivo', 20, currentY);
+    currentY += 10;
+    
+    doc.setFontSize(12);
+    doc.setTextColor(utils.COLORS.lightText[0], utils.COLORS.lightText[1], utils.COLORS.lightText[2]);
+    
+    const summaryText = [
+      `• Total de caracterizações analisadas: ${options.kpis.totalCaracterizacoes}`,
+      `• Taxa de conformidade: ${options.kpis.taxaConformidade}%`,
+      `• Taxa de adequação: ${options.kpis.taxaAdequacao}%`,
+      `• CBR médio: ${options.kpis.cbrMedio}%`,
+      `• Período de análise: ${options.period}`,
+      `• Principais laboratórios: ${options.chartData.barData?.slice(0, 3).map((d: any) => d.name).join(', ')}`
+    ];
+    
+    summaryText.forEach(text => {
+      doc.text(text, 20, currentY);
+      currentY += 7;
+    });
+    
+    // Footer
+    utils.addFooter(doc);
+    
+    // Save
+    doc.save(`relatorio_executivo_solos_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  static async generateSolosAnalyticsReport(options: {
+    chartData: any;
+    period: string;
+    totalRecords: number;
+  }): Promise<void> {
+    const doc = new jsPDF();
+    const utils = ReportService.createReportUtils(doc);
+    
+    utils.addMetadata(doc, 'Relatório Analítico - Caracterização de Solos', 'Análise detalhada de caracterização de solos');
+    
+    // Header
+    utils.addHeader(doc, 'Relatório Analítico', 'Caracterização de Solos');
+    
+    let currentY = 50;
+    
+    // Tabela de Evolução Temporal
+    doc.setFontSize(16);
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.text('Evolução Temporal', 20, currentY);
+    currentY += 15;
+    
+    const evolutionData = options.chartData.areaData?.map((item: any) => [
+      item.name,
+      item.conformes,
+      item.naoConformes,
+      item.adequados,
+      item.inadequados
+    ]) || [];
+    
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Mês', 'Conformes', 'Não Conformes', 'Adequados', 'Inadequados']],
+      body: evolutionData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: [255, 255, 255],
+        fontSize: 10
+      },
+      bodyStyles: {
+        fontSize: 9
+      }
+    });
+    
+    currentY = (doc as any).lastAutoTable.finalY + 20;
+    
+    // Tabela de Performance por Laboratório
+    doc.setFontSize(16);
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.text('Performance por Laboratório', 20, currentY);
+    currentY += 15;
+    
+    const labData = options.chartData.barData?.map((item: any) => [
+      item.name,
+      item.caracterizacoes,
+      item.conformes,
+      item.adequados
+    ]) || [];
+    
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Laboratório', 'Total', 'Conformes', 'Adequados']],
+      body: labData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [34, 197, 94],
+        textColor: [255, 255, 255],
+        fontSize: 10
+      },
+      bodyStyles: {
+        fontSize: 9
+      }
+    });
+    
+    // Footer
+    utils.addFooter(doc);
+    
+    // Save
+    doc.save(`relatorio_analitico_solos_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  static async generateSolosComplianceReport(options: {
+    kpis: any;
+    period: string;
+    totalRecords: number;
+  }): Promise<void> {
+    const doc = new jsPDF();
+    const utils = ReportService.createReportUtils(doc);
+    
+    utils.addMetadata(doc, 'Relatório de Conformidade - Caracterização de Solos', 'Análise de conformidade de caracterização de solos');
+    
+    // Header
+    utils.addHeader(doc, 'Relatório de Conformidade', 'Caracterização de Solos');
+    
+    let currentY = 50;
+    
+    // Resumo de Conformidade
+    doc.setFontSize(16);
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.text('Resumo de Conformidade', 20, currentY);
+    currentY += 15;
+    
+    const complianceData = [
+      ['Métrica', 'Valor', 'Status'],
+      ['Total Caracterizações', options.kpis.totalCaracterizacoes, 'Total'],
+      ['Conformes', options.kpis.conformes, 'Conforme'],
+      ['Não Conformes', options.kpis.naoConformes, 'Não Conforme'],
+      ['Taxa Conformidade', `${options.kpis.taxaConformidade}%`, options.kpis.taxaConformidade >= 80 ? 'Excelente' : 'A Melhorar'],
+      ['Adequados', options.kpis.adequados, 'Adequado'],
+      ['Inadequados', options.kpis.inadequados, 'Inadequado'],
+      ['Taxa Adequação', `${options.kpis.taxaAdequacao}%`, options.kpis.taxaAdequacao >= 85 ? 'Excelente' : 'A Melhorar']
+    ];
+    
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Métrica', 'Valor', 'Status']],
+      body: complianceData.slice(1),
+      theme: 'grid',
+      headStyles: {
+        fillColor: [239, 68, 68],
+        textColor: [255, 255, 255],
+        fontSize: 10
+      },
+      bodyStyles: {
+        fontSize: 9
+      }
+    });
+    
+    currentY = (doc as any).lastAutoTable.finalY + 20;
+    
+    // Recomendações
+    doc.setFontSize(16);
+    doc.setTextColor(utils.COLORS.text[0], utils.COLORS.text[1], utils.COLORS.text[2]);
+    doc.text('Recomendações', 20, currentY);
+    currentY += 10;
+    
+    doc.setFontSize(12);
+    doc.setTextColor(utils.COLORS.lightText[0], utils.COLORS.lightText[1], utils.COLORS.lightText[2]);
+    
+    const recommendations = [
+      `• Taxa de conformidade atual: ${options.kpis.taxaConformidade}%`,
+      options.kpis.taxaConformidade < 80 ? '• Recomenda-se melhorar os procedimentos de caracterização' : '• Taxa de conformidade dentro dos parâmetros aceitáveis',
+      `• Taxa de adequação atual: ${options.kpis.taxaAdequacao}%`,
+      options.kpis.taxaAdequacao < 85 ? '• Recomenda-se revisar critérios de adequação' : '• Taxa de adequação dentro dos parâmetros aceitáveis',
+      '• Manter monitorização contínua dos resultados',
+      '• Realizar auditorias periódicas aos laboratórios'
+    ];
+    
+    recommendations.forEach(text => {
+      doc.text(text, 20, currentY);
+      currentY += 7;
+    });
+    
+    // Footer
+    utils.addFooter(doc);
+    
+    // Save
+    doc.save(`relatorio_conformidade_solos_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
 }
