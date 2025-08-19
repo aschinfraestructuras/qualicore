@@ -11,7 +11,14 @@ import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
 import { useEffect } from "react";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from "./lib/auth";
+import { queryClient } from "./lib/queryClient";
+import { ErrorTrackingService } from "./lib/error-tracking";
+import { PerformanceMonitor } from "./lib/performance";
+import { SecurityService } from "./lib/security";
+import { PerformanceOptimizer } from "./lib/performance-optimizer";
+import { PerformanceAnalyzer } from "./lib/performance-analyzer";
 import Layout from "./components/Layout";
 import ModernLayout from "./components/ModernLayout";
 import PremiumLayout from "./components/PremiumLayout";
@@ -61,6 +68,10 @@ import RececaoObraGarantias from "./pages/RececaoObraGarantias";
 import "./styles/globals.css";
 import { ensaioCompactacaoService } from "./services/ensaioCompactacaoService";
 import LoadingSpinner from "./components/LoadingSpinner";
+import { AnalyticsDashboard } from "./components/AnalyticsDashboard";
+import { AuditDashboard } from "./components/AuditDashboard";
+import { RealTimeUpdates } from "./lib/real-time-updates";
+import { UIEnhancements } from "./lib/ui-enhancements";
 
 function App() {
   const { user, loading } = useAuthStore();
@@ -69,6 +80,23 @@ function App() {
   useEffect(() => {
     // Verificar autenticação ao carregar a app
     useAuthStore.getState().checkUser();
+    
+    // Setup security and monitoring
+    SecurityService.setupSessionTimeout(30); // 30 minutos
+    ErrorTrackingService.setupGlobalErrorHandler();
+    PerformanceMonitor.setupPerformanceMonitoring();
+    
+    // Setup performance optimizations
+    PerformanceOptimizer.setupAutoOptimizations();
+    
+    // Initialize advanced analytics
+    PerformanceAnalyzer.initialize();
+    
+    // Setup real-time updates
+    RealTimeUpdates.setupAutoRefresh(30000); // 30 segundos
+    
+    // Initialize UI enhancements
+    UIEnhancements.initialize();
   }, []);
 
   if (loading) {
@@ -76,7 +104,8 @@ function App() {
   }
 
   return (
-    <div className="App">
+    <QueryClientProvider client={queryClient}>
+      <div className="App">
       <Toaster
         position="top-right"
         toastOptions={{
@@ -727,10 +756,17 @@ function App() {
           } />
         </Route>
 
+        {/* Analytics Dashboard */}
+        <Route path="/analytics" element={<AnalyticsDashboard />} />
+        
+        {/* Audit Dashboard */}
+        <Route path="/audit" element={<AuditDashboard />} />
+        
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
+  </QueryClientProvider>
   );
 }
 

@@ -1,4 +1,6 @@
 // Tipos para o módulo de Auditorias SGQ
+import { BaseEntity } from './index';
+
 export interface Auditoria extends BaseEntity {
   tipo: "interna" | "externa" | "certificacao" | "seguimento" | "surpresa";
   escopo: string;
@@ -165,7 +167,7 @@ export interface RelatorioAuditoria {
   classificacao_geral: string;
   
   // Anexos
-  anexos: Anexo[];
+anexos: any[];
   
   // Aprovação
   aprovador?: string;

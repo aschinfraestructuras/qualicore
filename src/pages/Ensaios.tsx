@@ -21,6 +21,8 @@ import {
   Share2,
   Cloud,
   ArrowUpRight,
+  BarChart3,
+  Shield,
 } from "lucide-react";
 import { ensaiosAPI } from "@/lib/supabase-api";
 import { toast } from "react-hot-toast";
@@ -32,6 +34,7 @@ import { SavedEnsaiosViewer } from "@/components/SavedEnsaiosViewer";
 import { AnimatePresence, motion } from "framer-motion";
 import PDFService from "@/services/pdfService";
 import { ShareService } from "@/services/shareService";
+import { EnsaioDashboard } from "@/components/EnsaioDashboard";
 
 export default function Ensaios() {
   const [ensaios, setEnsaios] = useState<any[]>([]); // Changed type to any[] as Ensaio type is removed
@@ -43,6 +46,7 @@ export default function Ensaios() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showSavedEnsaiosViewer, setShowSavedEnsaiosViewer] = useState(false);
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   // Filtros ativos
   const [filters, setFilters] = useState({
@@ -303,13 +307,125 @@ export default function Ensaios() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
-            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl animate-pulse">
-              <TestTube className="h-8 w-8 text-white" />
+            <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl animate-pulse">
+              <TestTube className="h-10 w-10 text-white" />
             </div>
-            <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full animate-bounce"></div>
+            <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full animate-bounce"></div>
           </div>
-          <p className="text-gray-600 mt-4 font-medium">Carregando ensaios...</p>
+          <p className="text-gray-600 mt-6 font-medium text-lg">Carregando ensaios...</p>
+          <div className="mt-4 flex justify-center">
+            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse"></div>
+            </div>
+          </div>
         </div>
+      </div>
+    );
+  }
+
+  // Empty state quando não há ensaios
+  if (ensaios.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8 pt-16">
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-purple-800 to-pink-900 bg-clip-text text-transparent mb-2">
+                Gestão de Ensaios
+              </h1>
+              <p className="text-xl text-gray-600 flex items-center">
+                <TestTube className="h-5 w-5 mr-2 text-purple-500" />
+                Controlo laboratorial e análise de qualidade em tempo real
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Empty State */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex items-center justify-center min-h-[60vh]"
+        >
+          <div className="text-center max-w-md">
+            <div className="relative mb-8">
+              <div className="w-32 h-32 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full flex items-center justify-center mx-auto">
+                <TestTube className="h-16 w-16 text-purple-500" />
+              </div>
+              <div className="absolute -top-4 -right-4 w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full flex items-center justify-center">
+                <Plus className="h-4 w-4 text-white" />
+              </div>
+            </div>
+            
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Nenhum Ensaio Encontrado
+            </h2>
+            
+            <p className="text-gray-600 mb-8 leading-relaxed">
+              Comece a criar ensaios para monitorizar a qualidade dos seus materiais e estruturas. 
+              O sistema irá ajudá-lo a manter o controlo de qualidade em conformidade com as normas europeias.
+            </p>
+            
+            <div className="space-y-4">
+              <button
+                onClick={() => setShowForm(true)}
+                className="w-full inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
+              >
+                <Plus className="h-5 w-5 mr-3 group-hover:rotate-90 transition-transform duration-300" />
+                Criar Primeiro Ensaio
+              </button>
+              
+              <div className="flex items-center justify-center space-x-6 text-sm text-gray-500">
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                  <span>Conformidade EN/ISO</span>
+                </div>
+                <div className="flex items-center">
+                  <BarChart3 className="h-4 w-4 mr-2 text-blue-500" />
+                  <span>Relatórios Avançados</span>
+                </div>
+                <div className="flex items-center">
+                  <Shield className="h-4 w-4 mr-2 text-purple-500" />
+                  <span>Controlo de Qualidade</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Modal de Formulário */}
+        {showForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Novo Ensaio
+                  </h2>
+                  <button
+                    onClick={() => setShowForm(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-6">
+                <EnsaioForm
+                  onSubmit={handleFormSubmit}
+                  onCancel={() => setShowForm(false)}
+                  initialData={undefined}
+                  isEditing={false}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -342,6 +458,13 @@ export default function Ensaios() {
             </p>
           </div>
           <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowDashboard(!showDashboard)}
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
+            >
+              <BarChart3 className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+              {showDashboard ? 'Lista' : 'Dashboard'}
+            </button>
             <button
               onClick={() => setShowForm(true)}
               className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
@@ -511,40 +634,55 @@ export default function Ensaios() {
         </motion.div>
       </motion.div>
 
-      {/* Botões de ação */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <button
-          onClick={handleCreate}
-          className="btn btn-primary flex items-center space-x-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Novo Ensaio</span>
-        </button>
+      {/* Conteúdo principal - Dashboard ou Lista */}
+      {showDashboard ? (
+        <EnsaioDashboard
+          ensaios={filteredEnsaios}
+          onSearch={(query, options) => {
+            setFilters(prev => ({ ...prev, search: query }));
+          }}
+          onFilterChange={(newFilters) => {
+            setFilters(prev => ({ ...prev, ...newFilters }));
+          }}
+        />
+      ) : (
+        <>
+          {/* Botões de ação */}
+          <div className="flex flex-wrap gap-3 mb-6">
+            <button
+              onClick={handleCreate}
+              className="btn btn-primary flex items-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Novo Ensaio</span>
+            </button>
 
-        <button
-          onClick={() => setShowRelatorioPremium(true)}
-          className="btn btn-secondary flex items-center space-x-2"
-        >
-          <FileText className="h-4 w-4" />
-          <span>Relatórios PDF</span>
-        </button>
+            <button
+              onClick={() => setShowRelatorioPremium(true)}
+              className="btn btn-secondary flex items-center space-x-2"
+            >
+              <FileText className="h-4 w-4" />
+              <span>Relatórios PDF</span>
+            </button>
 
-        <button
-          onClick={handleViewSavedEnsaios}
-          className="btn btn-outline flex items-center space-x-2"
-        >
-          <Cloud className="h-4 w-4" />
-          <span>Ver Salvos</span>
-        </button>
+            <button
+              onClick={handleViewSavedEnsaios}
+              className="btn btn-outline flex items-center space-x-2"
+            >
+              <Cloud className="h-4 w-4" />
+              <span>Ver Salvos</span>
+            </button>
 
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="btn btn-outline flex items-center space-x-2"
-        >
-          <Filter className="h-4 w-4" />
-          <span>Filtros</span>
-        </button>
-      </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="btn btn-outline flex items-center space-x-2"
+            >
+              <Filter className="h-4 w-4" />
+              <span>Filtros</span>
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Botão de Filtros */}
       <div className="flex items-center space-x-4">

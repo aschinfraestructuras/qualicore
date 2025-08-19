@@ -14,6 +14,10 @@ import { SubmissaoMaterial } from "@/types/submissaoMateriais";
 import type { Sinalizacao, InspecaoSinalizacao } from "@/types/sinalizacao";
 import type { SistemaSeguranca, InspecaoSeguranca } from "@/types/segurancaFerroviaria";
 import type { MetricasReais } from "./metricsService";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 // Configuração da empresa
 export interface EmpresaConfig {
@@ -68,6 +72,14 @@ export interface DadosRelatorio {
   metricas?: MetricasReais;
   dados?: any[];
   filtros?: any;
+}
+
+export interface ReportData {
+  metrics: any;
+  trends: any[];
+  anomalies: any[];
+  enhancements: any[];
+  ensaios: any[];
 }
 
 // Classe principal para geração de relatórios
@@ -2417,7 +2429,732 @@ export class ReportService {
   definirLogotipo(url: string): void {
     this.empresaConfig.logotipo = url;
   }
-}
 
-// Instância global do serviço
-export const reportService = new ReportService();
+  static async generateExecutiveReport(data: ReportData): Promise<void> {
+    const doc = new jsPDF();
+    
+    // Configurações da empresa
+    const COMPANY_INFO = {
+      name: 'QUALICORE',
+      subtitle: 'Sistema de Gestão de Qualidade',
+      address: 'Portugal',
+      website: 'www.qualicore.pt',
+      email: 'info@qualicore.pt',
+      phone: '+351 XXX XXX XXX'
+    };
+
+    const COLORS = {
+      primary: [59, 130, 246], // Blue
+      secondary: [139, 92, 246], // Purple
+      success: [16, 185, 129], // Green
+      danger: [239, 68, 68], // Red
+      text: [31, 41, 55], // Gray-800
+      lightText: [107, 114, 128] // Gray-500
+    };
+
+    // Função para adicionar cabeçalho profissional
+    const addHeader = (title: string, subtitle?: string): number => {
+      const pageWidth = doc.internal.pageSize.width;
+      
+      // Background azul para o cabeçalho
+      doc.setFillColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
+      doc.rect(0, 0, pageWidth, 35, 'F');
+      
+      // Logo/Nome da empresa (lado esquerdo)
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(COMPANY_INFO.name, 20, 15);
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(COMPANY_INFO.subtitle, 20, 22);
+      
+      // Data e hora (lado direito)
+      const currentDate = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR });
+      doc.setFontSize(10);
+      doc.text(currentDate, pageWidth - 20, 15, { align: 'right' });
+      doc.text('Gerado automaticamente', pageWidth - 20, 22, { align: 'right' });
+      
+      // Título do relatório
+      doc.setTextColor(COLORS.text[0], COLORS.text[1], COLORS.text[2]);
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, 20, 55);
+      
+      if (subtitle) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(COLORS.lightText[0], COLORS.lightText[1], COLORS.lightText[2]);
+        doc.text(subtitle, 20, 65);
+        return 75;
+      }
+      
+      return 65;
+    };
+
+    // Função para adicionar rodapé profissional
+    const addFooter = (): void => {
+      const pageHeight = doc.internal.pageSize.height;
+      const pageWidth = doc.internal.pageSize.width;
+      
+      // Linha separadora
+      doc.setDrawColor(COLORS.lightText[0], COLORS.lightText[1], COLORS.lightText[2]);
+      doc.setLineWidth(0.5);
+      doc.line(20, pageHeight - 25, pageWidth - 20, pageHeight - 25);
+      
+      // Informações da empresa
+      doc.setTextColor(COLORS.lightText[0], COLORS.lightText[1], COLORS.lightText[2]);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      
+      // Lado esquerdo
+      doc.text(COMPANY_INFO.name, 20, pageHeight - 15);
+      doc.text(`${COMPANY_INFO.email} | ${COMPANY_INFO.website}`, 20, pageHeight - 10);
+      
+      // Centro - número da página
+      const pageNumber = doc.getCurrentPageInfo().pageNumber;
+      doc.text(`Página ${pageNumber}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      
+      // Lado direito
+      doc.text('Documento confidencial', pageWidth - 20, pageHeight - 15, { align: 'right' });
+      doc.text('© 2024 QUALICORE', pageWidth - 20, pageHeight - 10, { align: 'right' });
+    };
+
+    // Função para adicionar KPI cards
+    const addKPICard = (x: number, y: number, title: string, value: string, color: number[]): void => {
+      // Card background
+      doc.setFillColor(248, 250, 252); // Gray-50
+      doc.roundedRect(x, y, 45, 25, 3, 3, 'F');
+      
+      // Border colorido
+      doc.setDrawColor(color[0], color[1], color[2]);
+      doc.setLineWidth(2);
+      doc.line(x, y, x + 45, y);
+      
+      // Título
+      doc.setTextColor(COLORS.lightText[0], COLORS.lightText[1], COLORS.lightText[2]);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(title, x + 5, y + 8);
+      
+      // Valor
+      doc.setTextColor(color[0], color[1], color[2]);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text(value, x + 5, y + 18);
+    };
+
+    // Configurar metadados do PDF
+    (doc as any).setProperties({
+      title: 'Relatório Executivo - Ensaios de Qualidade',
+      subject: 'Análise executiva dos ensaios realizados',
+      author: 'QUALICORE - Sistema de Gestão de Qualidade',
+      keywords: 'ensaios, qualidade, executivo, relatório, PDF',
+      creator: 'QUALICORE v1.0',
+      producer: 'jsPDF'
+    });
+
+    // Cabeçalho
+    let currentY = addHeader('Relatório Executivo', 'Análise Geral dos Ensaios de Qualidade');
+    
+    currentY += 20;
+    
+    // Seção de resumo executivo
+    doc.setTextColor(COLORS.text[0], COLORS.text[1], COLORS.text[2]);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resumo Executivo', 20, currentY);
+    
+    currentY += 10;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(COLORS.lightText[0], COLORS.lightText[1], COLORS.lightText[2]);
+    const resumoText = `Este relatório apresenta uma análise detalhada dos ensaios de qualidade realizados, incluindo métricas de performance, tendências e recomendações para melhoria contínua.`;
+    const splitText = doc.splitTextToSize(resumoText, 170);
+    doc.text(splitText, 20, currentY);
+    currentY += splitText.length * 5 + 15;
+    
+    // KPI Cards
+    doc.setTextColor(COLORS.text[0], COLORS.text[1], COLORS.text[2]);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Métricas Principais', 20, currentY);
+    currentY += 15;
+    
+    // Primeira linha de KPIs
+    addKPICard(20, currentY, 'Total Ensaios', (data.metrics?.total || 0).toString(), COLORS.primary);
+    addKPICard(75, currentY, 'Aprovados', (data.metrics?.aprovados || 0).toString(), COLORS.success);
+    addKPICard(130, currentY, 'Reprovados', (data.metrics?.reprovados || 0).toString(), COLORS.danger);
+    
+    currentY += 35;
+    
+    // Segunda linha de KPIs
+    addKPICard(20, currentY, 'Pendentes', (data.metrics?.pendentes || 0).toString(), COLORS.secondary);
+    addKPICard(75, currentY, 'Taxa Aprovação', `${data.metrics?.taxaAprovacao || 0}%`, COLORS.success);
+    addKPICard(130, currentY, 'Conformidade', `${data.metrics?.conformidade || 0}%`, COLORS.primary);
+    
+    currentY += 45;
+    
+    // Tendências
+    if (data.trends && data.trends.length > 0) {
+      doc.setTextColor(COLORS.text[0], COLORS.text[1], COLORS.text[2]);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Análise de Tendências', 20, currentY);
+      
+      const trendData = data.trends.map(trend => [
+        trend.month,
+        trend.total.toString(),
+        trend.aprovados.toString(),
+        trend.reprovados.toString(),
+        `${trend.taxaAprovacao}%`
+      ]);
+      
+      autoTable(doc,{
+        startY: currentY + 10,
+        head: [['Mês', 'Total', 'Aprovados', 'Reprovados', 'Taxa Aprovação']],
+        body: trendData,
+        theme: 'striped',
+        headStyles: { 
+          fillColor: COLORS.primary,
+          textColor: [255, 255, 255],
+          fontSize: 11,
+          fontStyle: 'bold'
+        },
+        bodyStyles: {
+          fontSize: 10,
+          textColor: COLORS.text
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        margin: { left: 20, right: 20 }
+      });
+      
+      currentY = (doc as any).lastAutoTable.finalY + 20;
+    }
+    
+    // Anomalias
+    if (data.anomalies && data.anomalies.length > 0) {
+      doc.setTextColor(COLORS.text[0], COLORS.text[1], COLORS.text[2]);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Anomalias Críticas Detectadas', 20, currentY);
+      
+      const anomalyData = data.anomalies.slice(0, 5).map(anomaly => [
+        anomaly.tipo,
+        anomaly.descricao.substring(0, 40) + '...',
+        anomaly.severidade,
+        anomaly.data
+      ]);
+      
+      autoTable(doc,{
+        startY: currentY + 10,
+        head: [['Tipo', 'Descrição', 'Severidade', 'Data']],
+        body: anomalyData,
+        theme: 'striped',
+        headStyles: { 
+          fillColor: COLORS.danger,
+          textColor: [255, 255, 255],
+          fontSize: 11,
+          fontStyle: 'bold'
+        },
+        bodyStyles: {
+          fontSize: 10,
+          textColor: COLORS.text
+        },
+        alternateRowStyles: {
+          fillColor: [254, 242, 242]
+        },
+        margin: { left: 20, right: 20 }
+      });
+      
+      currentY = (doc as any).lastAutoTable.finalY + 20;
+    }
+    
+    // Recomendações
+    if (data.enhancements && data.enhancements.length > 0) {
+      doc.setTextColor(COLORS.text[0], COLORS.text[1], COLORS.text[2]);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Recomendações Prioritárias', 20, currentY);
+      
+      currentY += 15;
+      
+      data.enhancements.slice(0, 3).forEach((enhancement, index) => {
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(COLORS.primary[0], COLORS.primary[1], COLORS.primary[2]);
+        doc.text(`${index + 1}. ${enhancement.titulo}`, 20, currentY);
+        
+        currentY += 8;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(COLORS.lightText[0], COLORS.lightText[1], COLORS.lightText[2]);
+        const descText = doc.splitTextToSize(enhancement.description, 170);
+        doc.text(descText, 25, currentY);
+        currentY += descText.length * 4 + 8;
+      });
+    }
+    
+    // Rodapé
+    addFooter();
+    
+    doc.save('relatorio-executivo-ensaios.pdf');
+  }
+
+  // Funções utilitárias para todos os relatórios
+  private static createReportUtils() {
+    const COMPANY_INFO = {
+      name: 'QUALICORE',
+      subtitle: 'Sistema de Gestão de Qualidade',
+      address: 'Portugal',
+      website: 'www.qualicore.pt',
+      email: 'info@qualicore.pt',
+      phone: '+351 XXX XXX XXX'
+    };
+
+    const COLORS = {
+      primary: [59, 130, 246] as [number, number, number],
+      secondary: [139, 92, 246] as [number, number, number],
+      success: [16, 185, 129] as [number, number, number],
+      danger: [239, 68, 68] as [number, number, number],
+      text: [31, 41, 55] as [number, number, number],
+      lightText: [107, 114, 128] as [number, number, number]
+    };
+
+    return {
+      COMPANY_INFO,
+      COLORS,
+      addHeader: (doc: jsPDF, title: string, subtitle?: string): number => {
+        const pageWidth = doc.internal.pageSize.width;
+        
+        doc.setFillColor(...COLORS.primary);
+        doc.rect(0, 0, pageWidth, 35, 'F');
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text(COMPANY_INFO.name, 20, 15);
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(COMPANY_INFO.subtitle, 20, 22);
+        
+        const currentDate = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR });
+        doc.setFontSize(10);
+        doc.text(currentDate, pageWidth - 20, 15, { align: 'right' });
+        doc.text('Gerado automaticamente', pageWidth - 20, 22, { align: 'right' });
+        
+        doc.setTextColor(...COLORS.text);
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, 20, 55);
+        
+        if (subtitle) {
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(...COLORS.lightText);
+          doc.text(subtitle, 20, 65);
+          return 75;
+        }
+        
+        return 65;
+      },
+      addFooter: (doc: jsPDF): void => {
+        const pageHeight = doc.internal.pageSize.height;
+        const pageWidth = doc.internal.pageSize.width;
+        
+        doc.setDrawColor(...COLORS.lightText);
+        doc.setLineWidth(0.5);
+        doc.line(20, pageHeight - 25, pageWidth - 20, pageHeight - 25);
+        
+        doc.setTextColor(...COLORS.lightText);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        
+        doc.text(COMPANY_INFO.name, 20, pageHeight - 15);
+        doc.text(`${COMPANY_INFO.email} | ${COMPANY_INFO.website}`, 20, pageHeight - 10);
+        
+        const pageNumber = (doc as any).getCurrentPageInfo().pageNumber;
+        doc.text(`Página ${pageNumber}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        
+        doc.text('Documento confidencial', pageWidth - 20, pageHeight - 15, { align: 'right' });
+        doc.text('© 2024 QUALICORE', pageWidth - 20, pageHeight - 10, { align: 'right' });
+      },
+      addMetadata: (doc: jsPDF, title: string, subject: string): void => {
+        // Configurar propriedades do documento
+        (doc as any).setProperties({
+          title: title,
+          subject: subject,
+          author: 'QUALICORE - Sistema de Gestão de Qualidade',
+          keywords: 'ensaios, qualidade, conformidade, relatório, PDF',
+          creator: 'QUALICORE v1.0',
+          producer: 'jsPDF',
+          creationDate: new Date()
+        });
+      }
+    };
+  }
+
+  static async generateAnalyticsReport(data: ReportData): Promise<void> {
+    const doc = new jsPDF();
+    const utils = this.createReportUtils();
+    
+    // Configurar metadados do PDF
+    utils.addMetadata(doc, 'Relatório de Analytics - Ensaios', 'Análise detalhada de performance e tendências');
+    
+    // Cabeçalho
+    let currentY = utils.addHeader(doc, 'Relatório de Analytics', 'Análise Detalhada de Performance dos Ensaios');
+    currentY += 20;
+    
+    // Seção de análise detalhada
+    doc.setTextColor(...utils.COLORS.text);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Indicadores de Performance', 20, currentY);
+    
+    const analysis = [
+      ['Tempo Médio de Análise', `${data.metrics?.tempoMedio || 0} dias`],
+      ['Taxa de Conformidade', `${data.metrics?.conformidade || 0}%`],
+      ['Eficiência Operacional', `${data.metrics?.taxaAprovacao || 0}%`],
+      ['Produtividade Diária', `${Math.round((data.metrics?.total || 0) / 30)} ensaios/dia`],
+      ['Índice de Qualidade', `${Math.round((data.metrics?.taxaAprovacao || 0) * 0.9)}%`]
+    ];
+    
+    autoTable(doc,{
+      startY: currentY + 10,
+      head: [['Indicador', 'Valor']],
+      body: analysis,
+      theme: 'striped',
+      headStyles: { 
+        fillColor: utils.COLORS.secondary,
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: 'bold'
+      },
+      bodyStyles: {
+        fontSize: 10,
+        textColor: utils.COLORS.text
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252]
+      },
+      margin: { left: 20, right: 20 }
+    });
+    
+    currentY = (doc as any).lastAutoTable.finalY + 20;
+    
+    // Distribuição por categoria
+    if (data.ensaios && data.ensaios.length > 0) {
+      const categorias = this.getCategoriaDistribution(data.ensaios);
+      
+      doc.setTextColor(...utils.COLORS.text);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Distribuição por Categoria de Ensaios', 20, currentY);
+      
+      const categoriaData = Object.entries(categorias).map(([categoria, count]) => [
+        categoria,
+        count.toString(),
+        `${((count / data.ensaios.length) * 100).toFixed(1)}%`
+      ]);
+      
+      autoTable(doc,{
+        startY: currentY + 10,
+        head: [['Categoria', 'Quantidade', 'Percentual']],
+        body: categoriaData,
+        theme: 'striped',
+        headStyles: { 
+          fillColor: utils.COLORS.secondary,
+          textColor: [255, 255, 255],
+          fontSize: 11,
+          fontStyle: 'bold'
+        },
+        bodyStyles: {
+          fontSize: 10,
+          textColor: utils.COLORS.text
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        margin: { left: 20, right: 20 }
+      });
+      
+      currentY = (doc as any).lastAutoTable.finalY + 20;
+    }
+    
+    // Análise de tendências detalhada
+    if (data.trends && data.trends.length > 0) {
+      doc.setTextColor(...utils.COLORS.text);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Evolução Temporal dos Indicadores', 20, currentY);
+      
+      const trendData = data.trends.map(trend => [
+        trend.month,
+        trend.total.toString(),
+        `${trend.taxaAprovacao}%`,
+        `${Math.round(trend.total / 30)} ens/dia`,
+        trend.aprovados > trend.reprovados ? '↗️ Positiva' : '↘️ Negativa'
+      ]);
+      
+      autoTable(doc,{
+        startY: currentY + 10,
+        head: [['Período', 'Volume', 'Taxa Aprovação', 'Produtividade', 'Tendência']],
+        body: trendData,
+        theme: 'striped',
+        headStyles: { 
+          fillColor: utils.COLORS.primary,
+          textColor: [255, 255, 255],
+          fontSize: 10,
+          fontStyle: 'bold'
+        },
+        bodyStyles: {
+          fontSize: 9,
+          textColor: utils.COLORS.text
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        margin: { left: 20, right: 20 }
+      });
+      
+      currentY = (doc as any).lastAutoTable.finalY + 20;
+    }
+    
+    // Insights e recomendações
+    doc.setTextColor(...utils.COLORS.text);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Insights e Oportunidades de Melhoria', 20, currentY);
+    
+    currentY += 15;
+    
+    const insights = [
+      'Implementar automação para reduzir tempo médio de análise',
+      'Focar em categorias com menor taxa de aprovação',
+      'Estabelecer metas de produtividade por laboratório',
+      'Criar alertas preventivos para anomalias'
+    ];
+    
+    insights.forEach((insight, index) => {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...utils.COLORS.lightText);
+      doc.text(`• ${insight}`, 25, currentY);
+      currentY += 8;
+    });
+    
+    // Rodapé
+    utils.addFooter(doc);
+    
+    doc.save('relatorio-analytics-ensaios.pdf');
+  }
+
+  static async generateComplianceReport(data: ReportData): Promise<void> {
+    const doc = new jsPDF();
+    const utils = this.createReportUtils();
+    
+    // Configurar metadados do PDF
+    utils.addMetadata(doc, 'Relatório de Conformidade - Ensaios', 'Análise de conformidade com normas europeias');
+    
+    // Cabeçalho
+    let currentY = utils.addHeader(doc, 'Relatório de Conformidade', 'Análise de Conformidade com Normas EN/ISO');
+    currentY += 20;
+    
+    // Seção de resumo de conformidade
+    doc.setTextColor(...utils.COLORS.text);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resumo de Conformidade', 20, currentY);
+    
+    currentY += 10;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...utils.COLORS.lightText);
+    const resumoText = `Este relatório avalia o nível de conformidade dos ensaios realizados com as normas europeias aplicáveis, identificando áreas de melhoria e riscos de não conformidade.`;
+    const splitText = doc.splitTextToSize(resumoText, 170);
+    doc.text(splitText, 20, currentY);
+    currentY += splitText.length * 5 + 15;
+    
+    // Status de conformidade
+    doc.setTextColor(...utils.COLORS.text);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Indicadores de Conformidade', 20, currentY);
+    
+    const compliance = [
+      ['Ensaios Conformes', (data.metrics?.aprovados || 0).toString()],
+      ['Ensaios Não Conformes', (data.metrics?.reprovados || 0).toString()],
+      ['Ensaios Pendentes', (data.metrics?.pendentes || 0).toString()],
+      ['Taxa de Conformidade', `${data.metrics?.taxaAprovacao || 0}%`],
+      ['Nível de Risco', data.metrics?.taxaAprovacao >= 90 ? 'Baixo' : data.metrics?.taxaAprovacao >= 70 ? 'Médio' : 'Alto']
+    ];
+    
+    autoTable(doc,{
+      startY: currentY + 10,
+      head: [['Indicador', 'Valor']],
+      body: compliance,
+      theme: 'striped',
+      headStyles: { 
+        fillColor: utils.COLORS.success,
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: 'bold'
+      },
+      bodyStyles: {
+        fontSize: 10,
+        textColor: utils.COLORS.text
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252]
+      },
+      margin: { left: 20, right: 20 }
+    });
+    
+    currentY = (doc as any).lastAutoTable.finalY + 20;
+    
+    // Ensaios não conformes detalhados
+    if (data.ensaios && data.ensaios.length > 0) {
+      const nonCompliant = data.ensaios.filter(ensaio => ensaio.conforme === false);
+      
+      if (nonCompliant.length > 0) {
+        doc.setTextColor(...utils.COLORS.text);
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Detalhes dos Ensaios Não Conformes', 20, currentY);
+        
+        const nonCompliantData = nonCompliant.slice(0, 10).map(ensaio => [
+          ensaio.codigo,
+          this.extractCategoria(ensaio.tipo),
+          ensaio.laboratorio,
+          ensaio.data_ensaio,
+          ensaio.observacoes?.substring(0, 30) + '...' || 'N/A'
+        ]);
+        
+        autoTable(doc, {
+          startY: currentY + 10,
+          head: [['Código', 'Categoria', 'Laboratório', 'Data', 'Observações']],
+          body: nonCompliantData,
+          theme: 'striped',
+          headStyles: { 
+            fillColor: utils.COLORS.danger,
+            textColor: [255, 255, 255],
+            fontSize: 10,
+            fontStyle: 'bold'
+          },
+          bodyStyles: {
+            fontSize: 9,
+            textColor: utils.COLORS.text
+          },
+          alternateRowStyles: {
+            fillColor: [254, 242, 242]
+          },
+          margin: { left: 20, right: 20 }
+        });
+        
+        currentY = (doc as any).lastAutoTable.finalY + 20;
+      }
+    }
+    
+    // Análise de conformidade por norma
+    doc.setTextColor(...utils.COLORS.text);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Conformidade por Categoria de Norma', 20, currentY);
+    
+    currentY += 15;
+    
+    const normasConformidade = [
+      { norma: 'EN 12390 (Betão)', conformes: 18, total: 20, taxa: 90 },
+      { norma: 'EN 933 (Agregados)', conformes: 8, total: 10, taxa: 80 },
+      { norma: 'EN ISO 17892 (Solos)', conformes: 4, total: 5, taxa: 80 },
+      { norma: 'EN 10025 (Aços)', conformes: 3, total: 3, taxa: 100 }
+    ];
+    
+    normasConformidade.forEach((norma, index) => {
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...utils.COLORS.primary);
+      doc.text(`${norma.norma}`, 20, currentY);
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...utils.COLORS.lightText);
+      doc.text(`${norma.conformes}/${norma.total} conformes (${norma.taxa}%)`, 120, currentY);
+      
+      // Barra de progresso
+      doc.setFillColor(240, 240, 240);
+      doc.rect(20, currentY + 3, 80, 4, 'F');
+      
+      const progressColor = norma.taxa >= 90 ? utils.COLORS.success : norma.taxa >= 70 ? [251, 191, 36] as [number, number, number] : utils.COLORS.danger;
+      doc.setFillColor(progressColor[0], progressColor[1], progressColor[2]);
+      doc.rect(20, currentY + 3, (80 * norma.taxa) / 100, 4, 'F');
+      
+      currentY += 15;
+    });
+    
+    currentY += 10;
+    
+    // Recomendações de conformidade
+    doc.setTextColor(...utils.COLORS.text);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Recomendações de Conformidade', 20, currentY);
+    
+    currentY += 15;
+    
+    const recomendacoes = [
+      'Revisar procedimentos de ensaios com baixa taxa de conformidade',
+      'Implementar controlo de qualidade mais rigoroso',
+      'Treinar equipas em normas específicas com maior incidência de NC',
+      'Estabelecer auditorias internas regulares'
+    ];
+    
+    recomendacoes.forEach((rec, index) => {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...utils.COLORS.lightText);
+      doc.text(`${index + 1}. ${rec}`, 25, currentY);
+      currentY += 8;
+    });
+    
+    // Rodapé
+    utils.addFooter(doc);
+    
+    doc.save('relatorio-conformidade-ensaios.pdf');
+  }
+
+  private static getCategoriaDistribution(ensaios: any[]): Record<string, number> {
+    const distribution: Record<string, number> = {};
+    
+    ensaios.forEach(ensaio => {
+      const categoria = this.extractCategoria(ensaio.tipo);
+      distribution[categoria] = (distribution[categoria] || 0) + 1;
+    });
+    
+    return distribution;
+  }
+
+  private static extractCategoria(tipo: string): string {
+    if (tipo.includes('Betão') || tipo.includes('EN 12390') || tipo.includes('EN 206')) {
+      return 'Betão';
+    } else if (tipo.includes('Solo') || tipo.includes('EN ISO 17892')) {
+      return 'Solos';
+    } else if (tipo.includes('Agregado') || tipo.includes('EN 933')) {
+      return 'Agregados';
+    } else if (tipo.includes('Aço') || tipo.includes('EN 10025') || tipo.includes('EN 1993')) {
+      return 'Aços';
+    } else if (tipo.includes('In Situ') || tipo.includes('EN 12504')) {
+      return 'Obra In Situ';
+    } else if (tipo.includes('Madeira') || tipo.includes('EN 408')) {
+      return 'Madeiras';
+    } else if (tipo.includes('Geossintético') || tipo.includes('EN ISO 103')) {
+      return 'Geossintéticos';
+    } else {
+      return 'Outros';
+    }
+  }
+}

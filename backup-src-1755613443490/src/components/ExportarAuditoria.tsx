@@ -1,0 +1,471 @@
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  Download, 
+  FileText, 
+  FileSpreadsheet, 
+  FileCode, 
+  X, 
+  CheckCircle,
+  AlertCircle,
+  Calendar,
+  MapPin,
+  Users,
+  Shield
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { Auditoria } from '../types/auditorias';
+import { auditoriasAPI } from '../lib/supabase-api/auditoriasAPI';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+interface ExportarAuditoriaProps {
+  auditoria: Auditoria;
+  onClose: () => void;
+}
+
+export default function ExportarAuditoria({ auditoria, onClose }: ExportarAuditoriaProps) {
+  const [formato, setFormato] = useState<'pdf' | 'excel' | 'csv'>('pdf');
+  const [incluirEvidencias, setIncluirEvidencias] = useState(true);
+  const [incluirNaoConformidades, setIncluirNaoConformidades] = useState(true);
+  const [incluirObservacoes, setIncluirObservacoes] = useState(true);
+  const [incluirAcoesCorretivas, setIncluirAcoesCorretivas] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const formatos = [
+    { 
+      id: 'pdf', 
+      label: 'PDF', 
+      icon: FileText, 
+      description: 'Documento formatado para impressão',
+      color: 'text-red-600'
+    },
+    { 
+      id: 'excel', 
+      label: 'Excel', 
+      icon: FileSpreadsheet, 
+      description: 'Planilha com dados estruturados',
+      color: 'text-green-600'
+    },
+    { 
+      id: 'csv', 
+      label: 'CSV', 
+      icon: FileCode, 
+      description: 'Dados em formato texto simples',
+      color: 'text-blue-600'
+    }
+  ];
+
+  const handleExport = async () => {
+    setLoading(true);
+    
+    try {
+      if (formato === 'pdf') {
+        // Gerar PDF real
+        const doc = new jsPDF();
+        
+        // Configuração da empresa
+        const empresa = {
+          nome: "ASCH Infraestructuras y Servicios SA",
+          morada: "Praça das Industrias - Edificio Aip - Sala 7, Nº Aip, 3, Lisboa 1300-307 Lisboa",
+          email: "info@aschinfraestructuras.com",
+          telefone: "+351 123 456 789"
+        };
+
+        // Cabeçalho profissional com fundo azul
+        doc.setFillColor(30, 64, 175); // Azul escuro
+        doc.rect(0, 0, doc.internal.pageSize.width, 40, 'F');
+        
+        // Logo/Texto da empresa (branco)
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Qualicore', 20, 20);
+        
+        // Informações da empresa
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text(empresa.nome, 20, 28);
+        doc.text(`${empresa.morada} | Tel: ${empresa.telefone} | Email: ${empresa.email}`, 20, 32);
+        
+        // Título do relatório (preto)
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Relatório de Auditoria', 20, 55);
+        
+        // Subtítulo
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(75, 85, 99); // Cinza
+        doc.text(`Gerado em: ${new Date().toLocaleString('pt-PT')}`, 20, 65);
+        
+        // Linha separadora
+        doc.setDrawColor(229, 231, 235);
+        doc.setLineWidth(0.5);
+        doc.line(20, 80, doc.internal.pageSize.width - 20, 80);
+        
+        // Informações da auditoria
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Código: ${auditoria.codigo}`, 20, 95);
+        doc.text(`Tipo: ${auditoria.tipo}`, 20, 105);
+        doc.text(`Escopo: ${auditoria.escopo}`, 20, 115);
+        doc.text(`Data Início: ${new Date(auditoria.data_inicio).toLocaleDateString('pt-PT')}`, 20, 125);
+        doc.text(`Data Fim: ${auditoria.data_fim ? new Date(auditoria.data_fim).toLocaleDateString('pt-PT') : 'N/A'}`, 20, 135);
+        doc.text(`Status: ${auditoria.status}`, 20, 145);
+        doc.text(`Resultado: ${auditoria.resultado || 'N/A'}`, 20, 155);
+        
+        // Equipa de auditoria
+        if (auditoria.equipa_auditoria && auditoria.equipa_auditoria.length > 0) {
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Equipa de Auditoria', 20, 175);
+          
+          const equipaData = auditoria.equipa_auditoria.map(membro => [
+            membro.nome,
+            membro.funcao,
+            membro.organizacao || 'N/A'
+          ]);
+          
+          autoTable(doc, {
+            head: [['Nome', 'Função', 'Organização']],
+            body: equipaData,
+            startY: 185,
+            styles: {
+              fontSize: 8,
+              cellPadding: 2
+            },
+            headStyles: {
+              fillColor: [59, 130, 246],
+              textColor: 255
+            }
+          });
+        }
+        
+        // Critérios de auditoria
+        if (auditoria.criterios && auditoria.criterios.length > 0) {
+          const startY = auditoria.equipa_auditoria && auditoria.equipa_auditoria.length > 0 
+            ? (doc as any).lastAutoTable.finalY + 20 
+            : 175;
+          
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Critérios de Auditoria', 20, startY);
+          
+          const criteriosData = auditoria.criterios.map(criterio => [
+            criterio.categoria,
+            criterio.descricao,
+            criterio.peso.toString(),
+            criterio.pontuacao ? criterio.pontuacao.toString() : 'N/A'
+          ]);
+          
+          autoTable(doc, {
+            head: [['Categoria', 'Descrição', 'Peso', 'Pontuação']],
+            body: criteriosData,
+            startY: startY + 10,
+            styles: {
+              fontSize: 7,
+              cellPadding: 1
+            },
+            headStyles: {
+              fillColor: [34, 197, 94],
+              textColor: 255
+            }
+          });
+        }
+        
+        // Rodapé profissional
+        const pageWidth = doc.internal.pageSize.width;
+        const pageHeight = doc.internal.pageSize.height;
+        
+        // Linha separadora
+        doc.setDrawColor(229, 231, 235);
+        doc.setLineWidth(0.5);
+        doc.line(20, pageHeight - 30, pageWidth - 20, pageHeight - 30);
+        
+        // Informações do rodapé
+        doc.setFontSize(8);
+        doc.setTextColor(107, 114, 128);
+        doc.setFont('helvetica', 'normal');
+        
+        // Lado esquerdo - Informações da empresa
+        doc.text('Qualicore - Sistema de Gestão de Qualidade', 20, pageHeight - 20);
+        doc.text('ASCH Infraestructuras y Servicios SA', 20, pageHeight - 15);
+        
+        // Centro - Data
+        doc.text(`Data: ${new Date().toLocaleDateString('pt-PT')}`, pageWidth/2 - 15, pageHeight - 20);
+        
+        // Lado direito - Numeração de páginas
+        doc.text(`Página 1 de 1`, pageWidth - 50, pageHeight - 20);
+        doc.text('Documento confidencial', pageWidth - 60, pageHeight - 15);
+        
+        // Salvar PDF
+        doc.save(`auditoria-${auditoria.codigo}-${new Date().toISOString().split('T')[0]}.pdf`);
+        
+      } else {
+        // Para Excel e CSV, usar a API existente
+        const url = await auditoriasAPI.exportarAuditoria(auditoria.id, formato);
+        
+        // Simular download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `auditoria-${auditoria.codigo}-${new Date().toISOString().split('T')[0]}.${formato}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      toast.success(`Auditoria exportada com sucesso em formato ${formato.toUpperCase()}`);
+      onClose();
+    } catch (error) {
+      console.error('Erro ao exportar auditoria:', error);
+      toast.error('Erro ao exportar auditoria');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'concluida': return 'text-green-600 bg-green-100';
+      case 'em_curso': return 'text-blue-600 bg-blue-100';
+      case 'programada': return 'text-yellow-600 bg-yellow-100';
+      case 'cancelada': return 'text-red-600 bg-red-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const getResultadoColor = (resultado: string) => {
+    switch (resultado) {
+      case 'conforme': return 'text-green-600 bg-green-100';
+      case 'nao_conforme': return 'text-red-600 bg-red-100';
+      case 'conforme_com_observacoes': return 'text-yellow-600 bg-yellow-100';
+      case 'pendente': return 'text-gray-600 bg-gray-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Download className="h-8 w-8" />
+              <div>
+                <h2 className="text-2xl font-bold">Exportar Auditoria</h2>
+                <p className="text-green-100">
+                  {auditoria.codigo} - {auditoria.escopo}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Informações da Auditoria */}
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Informações da Auditoria</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center space-x-3">
+                <Shield className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{auditoria.codigo}</p>
+                  <p className="text-sm text-gray-500">{auditoria.tipo}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <Calendar className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {new Date(auditoria.data_inicio).toLocaleDateString('pt-PT')}
+                  </p>
+                  <p className="text-sm text-gray-500">{auditoria.duracao_horas}h</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <MapPin className="h-5 w-5 text-red-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{auditoria.local}</p>
+                  <p className="text-sm text-gray-500">{auditoria.obra_nome}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <Users className="h-5 w-5 text-purple-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{auditoria.auditor_principal}</p>
+                  <p className="text-sm text-gray-500">{auditoria.auditores?.length || 0} auditores</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-4 flex items-center space-x-4">
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(auditoria.status)}`}>
+                {auditoria.status.replace('_', ' ')}
+              </span>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getResultadoColor(auditoria.resultado)}`}>
+                {auditoria.resultado.replace('_', ' ')}
+              </span>
+            </div>
+          </div>
+
+          {/* Formato de Exportação */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Formato de Exportação</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {formatos.map((fmt) => (
+                <button
+                  key={fmt.id}
+                  onClick={() => setFormato(fmt.id as 'pdf' | 'excel' | 'csv')}
+                  className={`p-4 border-2 rounded-lg text-left transition-all ${
+                    formato === fmt.id
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <fmt.icon className={`h-6 w-6 ${fmt.color}`} />
+                    <div>
+                      <p className="font-medium text-gray-900">{fmt.label}</p>
+                      <p className="text-sm text-gray-500">{fmt.description}</p>
+                    </div>
+                  </div>
+                  {formato === fmt.id && (
+                    <CheckCircle className="h-5 w-5 text-blue-600 mt-2" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Opções de Conteúdo */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Conteúdo a Incluir</h3>
+            <div className="space-y-3">
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={incluirEvidencias}
+                  onChange={(e) => setIncluirEvidencias(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-gray-700">Evidências e documentos</span>
+                <span className="text-sm text-gray-500">({auditoria.evidencias?.length || 0} ficheiros)</span>
+              </label>
+              
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={incluirNaoConformidades}
+                  onChange={(e) => setIncluirNaoConformidades(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-gray-700">Não conformidades</span>
+                <span className="text-sm text-gray-500">({auditoria.nao_conformidades?.length || 0} itens)</span>
+              </label>
+              
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={incluirObservacoes}
+                  onChange={(e) => setIncluirObservacoes(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-gray-700">Observações</span>
+                <span className="text-sm text-gray-500">({auditoria.observacoes?.length || 0} itens)</span>
+              </label>
+              
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={incluirAcoesCorretivas}
+                  onChange={(e) => setIncluirAcoesCorretivas(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-gray-700">Ações corretivas</span>
+                <span className="text-sm text-gray-500">({auditoria.acoes_corretivas?.length || 0} itens)</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Estatísticas */}
+          <div className="bg-blue-50 rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Resumo da Auditoria</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-600">{auditoria.criterios_auditoria?.length || 0}</p>
+                <p className="text-sm text-gray-600">Critérios</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-600">
+                  {auditoria.criterios_auditoria?.filter(c => c.conformidade === 'conforme').length || 0}
+                </p>
+                <p className="text-sm text-gray-600">Conformes</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-red-600">
+                  {auditoria.criterios_auditoria?.filter(c => c.conformidade === 'nao_conforme').length || 0}
+                </p>
+                <p className="text-sm text-gray-600">Não Conformes</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-purple-600">
+                  {auditoria.percentagem_conformidade || 0}%
+                </p>
+                <p className="text-sm text-gray-600">Conformidade</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <AlertCircle className="h-4 w-4" />
+              <span>O ficheiro será descarregado automaticamente</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleExport}
+                disabled={loading}
+                className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+              >
+                {loading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                <span>{loading ? 'A exportar...' : `Exportar ${formato.toUpperCase()}`}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}

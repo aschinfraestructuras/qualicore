@@ -109,17 +109,6 @@ interface RelatorioArmadurasOptions {
   titulo: string;
   subtitulo?: string;
   armaduras: Armadura[];
-  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
-  filtros?: any;
-  armaduraEspecifica?: Armadura;
-  mostrarCusto?: boolean;
-  colunas?: Record<string, boolean>;
-}
-
-interface RelatorioArmadurasOptions {
-  titulo: string;
-  subtitulo?: string;
-  armaduras: Armadura[];
   tipo: "executivo" | "individual" | "filtrado" | "comparativo";
   filtros?: any;
   armaduraEspecifica?: Armadura;
@@ -206,6 +195,22 @@ interface RelatorioSegurancaFerroviariaOptions {
   titulo: string;
   subtitulo?: string;
   sistemas: SistemaSeguranca[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
+interface RelatorioPontesTuneisOptions {
+  titulo: string;
+  subtitulo?: string;
+  pontesTuneis: any[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
+interface RelatorioInspecaoPontesTuneisOptions {
+  titulo: string;
+  subtitulo?: string;
+  inspecoes: any[];
   tipo: "executivo" | "filtrado" | "comparativo" | "individual";
   filtros?: any;
 }
