@@ -34,6 +34,8 @@ import {
   Download,
   Share2
 } from 'lucide-react';
+import PDFService from '../services/pdfService';
+import toast from 'react-hot-toast';
 
 interface NaoConformidadeDashboardProps {
   naoConformidades: any[];
@@ -198,6 +200,39 @@ export default function NaoConformidadeDashboard({
   const handleExportData = () => {
     // TODO: Implementar exportação de dados
     console.log('Exportando dados das NCs...');
+  };
+
+  const handleGenerateReport = async (reportType: string) => {
+    setLoading(true);
+    try {
+      const pdfService = new PDFService();
+      
+      switch (reportType) {
+        case 'executivo':
+          await pdfService.generateNaoConformidadesExecutiveReport(naoConformidades);
+          toast.success('Relatório executivo gerado com sucesso!');
+          break;
+        case 'detalhado':
+          await pdfService.generateNaoConformidadesFilteredReport(naoConformidades, {});
+          toast.success('Relatório detalhado gerado com sucesso!');
+          break;
+        case 'tendencias':
+          await pdfService.generateNaoConformidadesComparativeReport(naoConformidades);
+          toast.success('Relatório de tendências gerado com sucesso!');
+          break;
+        case 'comparativo':
+          await pdfService.generateNaoConformidadesComparativeReport(naoConformidades);
+          toast.success('Relatório comparativo gerado com sucesso!');
+          break;
+        default:
+          toast.error('Tipo de relatório não reconhecido');
+      }
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+      toast.error('Erro ao gerar relatório');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderOverviewTab = () => (
@@ -384,9 +419,21 @@ export default function NaoConformidadeDashboard({
         transition={{ duration: 0.3 }}
         className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm"
       >
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Relatórios Disponíveis</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Relatórios Disponíveis
+          {loading && (
+            <span className="ml-2 text-sm text-blue-600">
+              <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              Gerando...
+            </span>
+          )}
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => handleGenerateReport('executivo')}
+            disabled={loading}
+            className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <FileText className="w-5 h-5 text-blue-600" />
             <div className="text-left">
               <h4 className="font-medium text-gray-900">Relatório Executivo</h4>
@@ -394,7 +441,11 @@ export default function NaoConformidadeDashboard({
             </div>
           </button>
           
-          <button className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => handleGenerateReport('detalhado')}
+            disabled={loading}
+            className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <Download className="w-5 h-5 text-green-600" />
             <div className="text-left">
               <h4 className="font-medium text-gray-900">Relatório Detalhado</h4>
@@ -402,7 +453,11 @@ export default function NaoConformidadeDashboard({
             </div>
           </button>
           
-          <button className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => handleGenerateReport('tendencias')}
+            disabled={loading}
+            className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <TrendingUp className="w-5 h-5 text-purple-600" />
             <div className="text-left">
               <h4 className="font-medium text-gray-900">Relatório de Tendências</h4>
@@ -410,7 +465,11 @@ export default function NaoConformidadeDashboard({
             </div>
           </button>
           
-          <button className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => handleGenerateReport('comparativo')}
+            disabled={loading}
+            className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <Share2 className="w-5 h-5 text-orange-600" />
             <div className="text-left">
               <h4 className="font-medium text-gray-900">Relatório Comparativo</h4>
