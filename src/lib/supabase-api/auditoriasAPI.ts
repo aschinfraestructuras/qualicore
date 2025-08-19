@@ -579,68 +579,6 @@ export const auditoriasAPI = {
       };
     }
   },
-    ) || [];
-
-    const auditoriasEsteMes = auditoriasEsteAno.filter(a => 
-      new Date(a.data_criacao).getMonth() + 1 === esteMes
-    );
-
-    const auditoriasConformes = auditorias?.filter(a => 
-      a.resultado === 'conforme' || a.resultado === 'conforme_com_observacoes'
-    ) || [];
-
-    const percentagemConformidade = auditorias && auditorias.length > 0 
-      ? Math.round((auditoriasConformes.length / auditorias.length) * 100)
-      : 0;
-
-    // Agrupar por tipo
-    const auditoriasPorTipo = auditorias?.reduce((acc, a) => {
-      acc[a.tipo] = (acc[a.tipo] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>) || {};
-
-    const auditoriasPorTipoArray = Object.entries(auditoriasPorTipo).map(([tipo, quantidade]) => ({
-      tipo,
-      quantidade
-    }));
-
-    // Conformidade por obra
-    const conformidadePorObra = auditorias?.reduce((acc, a) => {
-      if (!acc[a.obra_nome]) {
-        acc[a.obra_nome] = { total: 0, conformes: 0 };
-      }
-      acc[a.obra_nome].total++;
-      if (a.resultado === 'conforme' || a.resultado === 'conforme_com_observacoes') {
-        acc[a.obra_nome].conformes++;
-      }
-      return acc;
-    }, {} as Record<string, { total: number; conformes: number }>) || {};
-
-    const conformidadePorObraArray = Object.entries(conformidadePorObra).map(([obra, stats]) => ({
-      obra,
-      percentagem: Math.round((stats.conformes / stats.total) * 100)
-    }));
-
-    // Próxima auditoria
-    const auditoriasProgramadas = auditorias?.filter(a => 
-      a.status === 'programada' && new Date(a.data_inicio) > agora
-    ).sort((a, b) => new Date(a.data_inicio).getTime() - new Date(b.data_inicio).getTime());
-
-    const proximaAuditoria = auditoriasProgramadas?.[0]?.data_inicio;
-
-    return {
-      total_auditorias: auditorias?.length || 0,
-      auditorias_este_ano: auditoriasEsteAno.length,
-      auditorias_este_mes: auditoriasEsteMes.length,
-      percentagem_conformidade_geral: percentagemConformidade,
-      nao_conformidades_abertas: ncs?.length || 0,
-      acoes_corretivas_pendentes: acoes?.length || 0,
-      proxima_auditoria,
-      auditorias_por_tipo: auditoriasPorTipoArray,
-      conformidade_por_obra: conformidadePorObraArray,
-      tendencia_mensal: [] // Implementar se necessário
-    };
-  },
 
   // ===== UPLOAD DE FICHEIROS =====
   async uploadEvidencia(file: File, auditoriaId: string, criterioId: string): Promise<string> {
