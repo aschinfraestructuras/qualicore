@@ -293,34 +293,70 @@ export default function RelatoriosPontosInspecao() {
       // Criar PDF real
       const doc = new jsPDF();
       
-      // Título
-      doc.setFontSize(20);
+      // Configuração da empresa
+      const empresa = {
+        nome: "ASCH Infraestructuras y Servicios SA",
+        morada: "Praça das Industrias - Edificio Aip - Sala 7, Nº Aip, 3, Lisboa 1300-307 Lisboa",
+        email: "info@aschinfraestructuras.com",
+        telefone: "+351 123 456 789"
+      };
+
+      // Cabeçalho profissional com fundo azul
+      doc.setFillColor(30, 64, 175); // Azul escuro
+      doc.rect(0, 0, doc.internal.pageSize.width, 40, 'F');
+      
+      // Logo/Texto da empresa (branco)
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text('Relatório de Pontos de Inspeção e Ensaios', 20, 30);
+      doc.text('Qualicore', 20, 20);
+      
+      // Informações da empresa
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(empresa.nome, 20, 28);
+      doc.text(`${empresa.morada} | Tel: ${empresa.telefone} | Email: ${empresa.email}`, 20, 32);
+      
+      // Título do relatório (preto)
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Relatório de Pontos de Inspeção e Ensaios', 20, 55);
+      
+      // Subtítulo
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(75, 85, 99); // Cinza
+      doc.text(`Gerado em: ${new Date().toLocaleString('pt-PT')}`, 20, 65);
+      
+      // Linha separadora
+      doc.setDrawColor(229, 231, 235);
+      doc.setLineWidth(0.5);
+      doc.line(20, 80, doc.internal.pageSize.width - 20, 80);
       
       // Informações gerais
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Data de geração: ${new Date().toLocaleDateString('pt-PT')}`, 20, 45);
-      doc.text(`Total de PIEs: ${piesToExport.length}`, 20, 55);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Total de PIEs: ${piesToExport.length}`, 20, 95);
       
       // Estatísticas
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text('Estatísticas', 20, 75);
+      doc.text('Estatísticas', 20, 115);
       
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Em Andamento: ${stats.emAndamento}`, 20, 85);
-      doc.text(`Concluídos: ${stats.concluidos}`, 20, 95);
-      doc.text(`Aprovados: ${stats.aprovados}`, 20, 105);
-      doc.text(`Reprovados: ${stats.reprovados}`, 20, 115);
+      doc.text(`Em Andamento: ${stats.emAndamento}`, 20, 125);
+      doc.text(`Concluídos: ${stats.concluidos}`, 20, 135);
+      doc.text(`Aprovados: ${stats.aprovados}`, 20, 145);
+      doc.text(`Reprovados: ${stats.reprovados}`, 20, 155);
       
       // Tabela de PIEs
       if (piesToExport.length > 0) {
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text('Lista de PIEs', 20, 140);
+        doc.text('Lista de PIEs', 20, 180);
         
         const tableData = piesToExport.map(pie => [
           pie.codigo,
@@ -335,7 +371,7 @@ export default function RelatoriosPontosInspecao() {
         autoTable(doc, {
           head: [['Código', 'Título', 'Status', 'Prioridade', 'Responsável', 'Zona', 'Data Planeada']],
           body: tableData,
-          startY: 150,
+          startY: 190,
           styles: {
             fontSize: 8,
             cellPadding: 2
@@ -346,6 +382,31 @@ export default function RelatoriosPontosInspecao() {
           }
         });
       }
+      
+      // Rodapé profissional
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
+      
+      // Linha separadora
+      doc.setDrawColor(229, 231, 235);
+      doc.setLineWidth(0.5);
+      doc.line(20, pageHeight - 30, pageWidth - 20, pageHeight - 30);
+      
+      // Informações do rodapé
+      doc.setFontSize(8);
+      doc.setTextColor(107, 114, 128);
+      doc.setFont('helvetica', 'normal');
+      
+      // Lado esquerdo - Informações da empresa
+      doc.text('Qualicore - Sistema de Gestão de Qualidade', 20, pageHeight - 20);
+      doc.text('ASCH Infraestructuras y Servicios SA', 20, pageHeight - 15);
+      
+      // Centro - Data
+      doc.text(`Data: ${new Date().toLocaleDateString('pt-PT')}`, pageWidth/2 - 15, pageHeight - 20);
+      
+      // Lado direito - Numeração de páginas
+      doc.text(`Página 1 de 1`, pageWidth - 50, pageHeight - 20);
+      doc.text('Documento confidencial', pageWidth - 60, pageHeight - 15);
       
       // Salvar PDF
       doc.save(`relatorio-pies-${new Date().getTime()}.pdf`);

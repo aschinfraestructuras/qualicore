@@ -64,27 +64,64 @@ export default function ExportarAuditoria({ auditoria, onClose }: ExportarAudito
         // Gerar PDF real
         const doc = new jsPDF();
         
-        // Título
-        doc.setFontSize(20);
+        // Configuração da empresa
+        const empresa = {
+          nome: "ASCH Infraestructuras y Servicios SA",
+          morada: "Praça das Industrias - Edificio Aip - Sala 7, Nº Aip, 3, Lisboa 1300-307 Lisboa",
+          email: "info@aschinfraestructuras.com",
+          telefone: "+351 123 456 789"
+        };
+
+        // Cabeçalho profissional com fundo azul
+        doc.setFillColor(30, 64, 175); // Azul escuro
+        doc.rect(0, 0, doc.internal.pageSize.width, 40, 'F');
+        
+        // Logo/Texto da empresa (branco)
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
-        doc.text('Relatório de Auditoria', 20, 30);
+        doc.text('Qualicore', 20, 20);
+        
+        // Informações da empresa
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text(empresa.nome, 20, 28);
+        doc.text(`${empresa.morada} | Tel: ${empresa.telefone} | Email: ${empresa.email}`, 20, 32);
+        
+        // Título do relatório (preto)
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Relatório de Auditoria', 20, 55);
+        
+        // Subtítulo
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(75, 85, 99); // Cinza
+        doc.text(`Gerado em: ${new Date().toLocaleString('pt-PT')}`, 20, 65);
+        
+        // Linha separadora
+        doc.setDrawColor(229, 231, 235);
+        doc.setLineWidth(0.5);
+        doc.line(20, 80, doc.internal.pageSize.width - 20, 80);
         
         // Informações da auditoria
         doc.setFontSize(12);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Código: ${auditoria.codigo}`, 20, 45);
-        doc.text(`Tipo: ${auditoria.tipo}`, 20, 55);
-        doc.text(`Escopo: ${auditoria.escopo}`, 20, 65);
-        doc.text(`Data Início: ${new Date(auditoria.data_inicio).toLocaleDateString('pt-PT')}`, 20, 75);
-        doc.text(`Data Fim: ${auditoria.data_fim ? new Date(auditoria.data_fim).toLocaleDateString('pt-PT') : 'N/A'}`, 20, 85);
-        doc.text(`Status: ${auditoria.status}`, 20, 95);
-        doc.text(`Resultado: ${auditoria.resultado || 'N/A'}`, 20, 105);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Código: ${auditoria.codigo}`, 20, 95);
+        doc.text(`Tipo: ${auditoria.tipo}`, 20, 105);
+        doc.text(`Escopo: ${auditoria.escopo}`, 20, 115);
+        doc.text(`Data Início: ${new Date(auditoria.data_inicio).toLocaleDateString('pt-PT')}`, 20, 125);
+        doc.text(`Data Fim: ${auditoria.data_fim ? new Date(auditoria.data_fim).toLocaleDateString('pt-PT') : 'N/A'}`, 20, 135);
+        doc.text(`Status: ${auditoria.status}`, 20, 145);
+        doc.text(`Resultado: ${auditoria.resultado || 'N/A'}`, 20, 155);
         
         // Equipa de auditoria
         if (auditoria.equipa_auditoria && auditoria.equipa_auditoria.length > 0) {
           doc.setFontSize(14);
           doc.setFont('helvetica', 'bold');
-          doc.text('Equipa de Auditoria', 20, 125);
+          doc.text('Equipa de Auditoria', 20, 175);
           
           const equipaData = auditoria.equipa_auditoria.map(membro => [
             membro.nome,
@@ -95,7 +132,7 @@ export default function ExportarAuditoria({ auditoria, onClose }: ExportarAudito
           autoTable(doc, {
             head: [['Nome', 'Função', 'Organização']],
             body: equipaData,
-            startY: 135,
+            startY: 185,
             styles: {
               fontSize: 8,
               cellPadding: 2
@@ -109,9 +146,13 @@ export default function ExportarAuditoria({ auditoria, onClose }: ExportarAudito
         
         // Critérios de auditoria
         if (auditoria.criterios && auditoria.criterios.length > 0) {
+          const startY = auditoria.equipa_auditoria && auditoria.equipa_auditoria.length > 0 
+            ? (doc as any).lastAutoTable.finalY + 20 
+            : 175;
+          
           doc.setFontSize(14);
           doc.setFont('helvetica', 'bold');
-          doc.text('Critérios de Auditoria', 20, doc.lastAutoTable.finalY + 20);
+          doc.text('Critérios de Auditoria', 20, startY);
           
           const criteriosData = auditoria.criterios.map(criterio => [
             criterio.categoria,
@@ -123,7 +164,7 @@ export default function ExportarAuditoria({ auditoria, onClose }: ExportarAudito
           autoTable(doc, {
             head: [['Categoria', 'Descrição', 'Peso', 'Pontuação']],
             body: criteriosData,
-            startY: doc.lastAutoTable.finalY + 30,
+            startY: startY + 10,
             styles: {
               fontSize: 7,
               cellPadding: 1
@@ -134,6 +175,31 @@ export default function ExportarAuditoria({ auditoria, onClose }: ExportarAudito
             }
           });
         }
+        
+        // Rodapé profissional
+        const pageWidth = doc.internal.pageSize.width;
+        const pageHeight = doc.internal.pageSize.height;
+        
+        // Linha separadora
+        doc.setDrawColor(229, 231, 235);
+        doc.setLineWidth(0.5);
+        doc.line(20, pageHeight - 30, pageWidth - 20, pageHeight - 30);
+        
+        // Informações do rodapé
+        doc.setFontSize(8);
+        doc.setTextColor(107, 114, 128);
+        doc.setFont('helvetica', 'normal');
+        
+        // Lado esquerdo - Informações da empresa
+        doc.text('Qualicore - Sistema de Gestão de Qualidade', 20, pageHeight - 20);
+        doc.text('ASCH Infraestructuras y Servicios SA', 20, pageHeight - 15);
+        
+        // Centro - Data
+        doc.text(`Data: ${new Date().toLocaleDateString('pt-PT')}`, pageWidth/2 - 15, pageHeight - 20);
+        
+        // Lado direito - Numeração de páginas
+        doc.text(`Página 1 de 1`, pageWidth - 50, pageHeight - 20);
+        doc.text('Documento confidencial', pageWidth - 60, pageHeight - 15);
         
         // Salvar PDF
         doc.save(`auditoria-${auditoria.codigo}-${new Date().toISOString().split('T')[0]}.pdf`);
