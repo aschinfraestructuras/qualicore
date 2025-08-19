@@ -17,7 +17,9 @@
     "lighthouse": "lhci autorun",
     "bundle-analyzer": "cross-env ANALYZE=true npm run build",
     "audit": "npm run analyze && npm run lighthouse",
-    "full-audit": "npm run analyze && npm run security-scan && npm run performance-check && npm run lighthouse"
+    "full-audit": "npm run analyze && npm run security-scan && npm run performance-check && npm run lighthouse",
+    "check-errors": "node check-errors.js",
+    "type-check": "tsc --noEmit --skipLibCheck"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

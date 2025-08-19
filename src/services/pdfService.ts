@@ -752,4 +752,27 @@ export class PDFService {
   public save(filename: string) {
     this.doc.save(filename);
   }
+
+  // Método de teste para verificar se o PDF funciona
+  public async testPDFGeneration(): Promise<void> {
+    try {
+      console.log('🔍 Testando PDF generation...');
+      
+      this.initDocument();
+      this.addHeader('Teste PDF - Qualicore');
+      
+      this.doc.setFontSize(12);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Este é um teste de geração de PDF', 20, 60);
+      this.doc.text('Se vires este PDF, a geração está a funcionar!', 20, 80);
+      
+      this.addFooter();
+      this.save('teste-qualicore.pdf');
+      
+      console.log('✅ PDF de teste gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar PDF de teste:', error);
+      throw error;
+    }
+  }
 }
