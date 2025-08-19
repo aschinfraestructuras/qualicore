@@ -116,9 +116,12 @@ interface RelatorioBetonagensOptions {
 interface RelatorioArmadurasOptions {
   titulo: string;
   subtitulo?: string;
-  armaduras: any[];
-  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  armaduras: Armadura[];
+  tipo: "executivo" | "individual" | "filtrado" | "comparativo";
   filtros?: any;
+  armaduraEspecifica?: Armadura;
+  mostrarCusto?: boolean;
+  colunas?: Record<string, boolean>;
 }
 
 interface RelatorioRFIsOptions {
@@ -127,17 +130,6 @@ interface RelatorioRFIsOptions {
   rfis: RFI[];
   tipo: "executivo" | "filtrado" | "comparativo" | "individual";
   filtros?: any;
-}
-
-interface RelatorioArmadurasOptions {
-  titulo: string;
-  subtitulo?: string;
-  armaduras: Armadura[];
-  tipo: "executivo" | "individual" | "filtrado" | "comparativo";
-  filtros?: any;
-  armaduraEspecifica?: Armadura;
-  mostrarCusto?: boolean;
-  colunas?: Record<string, boolean>;
 }
 
 interface RelatorioChecklistsOptions {
@@ -6770,48 +6762,7 @@ class PDFService {
     URL.revokeObjectURL(url);
   }
 
-  // Métodos para relatórios de Armaduras
-  private gerarRelatorioExecutivoArmaduras(options: RelatorioArmadurasOptions): void {
-    this.doc = new jsPDF();
-    this.addProfessionalHeader(options.titulo, options.subtitulo);
-    
-    const startY = 90;
-    let currentY = this.addEstatisticasArmaduras(options.armaduras, startY);
-    currentY = this.addRelatorioExecutivoArmaduras(options, currentY);
-    
-    this.addProfessionalFooter();
-  }
 
-  private gerarRelatorioFiltradoArmaduras(options: RelatorioArmadurasOptions): void {
-    this.doc = new jsPDF();
-    this.addProfessionalHeader(options.titulo, options.subtitulo);
-    
-    const startY = 90;
-    let currentY = this.addFiltrosArmaduras(options.filtros, startY);
-    currentY = this.addRelatorioFiltradoArmaduras(options, currentY);
-    
-    this.addProfessionalFooter();
-  }
-
-  private gerarRelatorioComparativoArmaduras(options: RelatorioArmadurasOptions): void {
-    this.doc = new jsPDF();
-    this.addProfessionalHeader(options.titulo, options.subtitulo);
-    
-    const startY = 90;
-    let currentY = this.addRelatorioComparativoArmaduras(options, startY);
-    
-    this.addProfessionalFooter();
-  }
-
-  private gerarRelatorioIndividualArmaduras(options: RelatorioArmadurasOptions): void {
-    this.doc = new jsPDF();
-    this.addProfessionalHeader(options.titulo, options.subtitulo);
-    
-    const startY = 90;
-    let currentY = this.addRelatorioIndividualArmaduras(options, startY);
-    
-    this.addProfessionalFooter();
-  }
 
   private addEstatisticasArmaduras(armaduras: Armadura[], startY: number): number {
     const stats = {
@@ -9947,93 +9898,297 @@ class PDFService {
 
   // ===== MÉTODOS PARA RELATÓRIOS DE ARMADURAS =====
   
-  public async generateArmadurasExecutiveReport(armaduras: any[]): Promise<void> {
+  public async generateArmadurasExecutiveReport(armaduras: Armadura[]): Promise<void> {
     console.log('PDFService: Iniciando relatório executivo de armaduras com', armaduras.length, 'armaduras');
     
     try {
-      const options: RelatorioArmadurasOptions = {
-        titulo: 'Relatório Executivo de Armaduras',
-        subtitulo: 'Visão Geral e Indicadores de Conformidade',
-        armaduras,
-        tipo: 'executivo'
-      };
+      // Criar novo documento PDF
+      this.doc = new jsPDF();
       
-      console.log('PDFService: Gerando relatório...');
-      this.gerarRelatorioExecutivoArmaduras(options);
+      // Adicionar cabeçalho
+      this.addProfessionalHeader('Relatório Executivo de Armaduras', 'Visão Geral e Indicadores de Conformidade');
+      
+      // Calcular estatísticas
+      const stats = {
+        total: armaduras.length,
+        pesoTotal: armaduras.reduce((sum, a) => sum + a.peso_total, 0),
+        aprovadas: armaduras.filter(a => a.estado === "aprovado").length,
+        pendentes: armaduras.filter(a => a.estado === "pendente").length,
+        reprovadas: armaduras.filter(a => a.estado === "reprovado").length,
+        emAnalise: armaduras.filter(a => a.estado === "em_analise").length,
+        fabricantesUnicos: new Set(armaduras.map(a => a.fabricante)).size,
+        taxaAprovacao: armaduras.length > 0 ? 
+          ((armaduras.filter(a => a.estado === "aprovado").length / armaduras.length) * 100).toFixed(1) : "0"
+      };
+
+      // Adicionar estatísticas
+      let currentY = 90;
+      
+      // Título da seção
+      this.doc.setFontSize(14);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Estatísticas Gerais', 20, currentY);
+      currentY += 20;
+
+      // KPIs em grid 2x3
+      this.addKPICard(20, currentY, 'Total Armaduras', stats.total.toString(), [59, 130, 246]);
+      this.addKPICard(75, currentY, 'Peso Total', `${stats.pesoTotal.toFixed(1)} kg`, [34, 197, 94]);
+      this.addKPICard(130, currentY, 'Taxa Aprovação', `${stats.taxaAprovacao}%`, [168, 85, 247]);
+      currentY += 25;
+      
+      this.addKPICard(20, currentY, 'Aprovadas', stats.aprovadas.toString(), [34, 197, 94]);
+      this.addKPICard(75, currentY, 'Pendentes', stats.pendentes.toString(), [245, 158, 11]);
+      this.addKPICard(130, currentY, 'Fabricantes', stats.fabricantesUnicos.toString(), [59, 130, 246]);
+      currentY += 40;
+
+      // Adicionar tabela de armaduras
+      this.addTabelaArmaduras(armaduras, currentY);
+      
+      // Adicionar rodapé
+      this.addProfessionalFooter();
       
       console.log('PDFService: Fazendo download...');
       this.download(`relatorio-armaduras-executivo-${new Date().toISOString().split('T')[0]}.pdf`);
       
+      console.log('PDFService: Relatório executivo de armaduras concluído!');
     } catch (error) {
       console.error('PDFService: Erro ao gerar relatório executivo de armaduras:', error);
       throw error;
     }
   }
 
-  public async generateArmadurasFilteredReport(armaduras: any[], filtros: any): Promise<void> {
+  public async generateArmadurasFilteredReport(armaduras: Armadura[], filtros: any): Promise<void> {
     console.log('PDFService: Iniciando relatório filtrado de armaduras com', armaduras.length, 'armaduras');
     
     try {
-      const options: RelatorioArmadurasOptions = {
-        titulo: 'Relatório Filtrado de Armaduras',
-        subtitulo: 'Dados com Filtros Aplicados',
-        armaduras,
-        tipo: 'filtrado',
-        filtros
-      };
+      // Criar novo documento PDF
+      this.doc = new jsPDF();
       
-      console.log('PDFService: Gerando relatório...');
-      this.gerarRelatorioFiltradoArmaduras(options);
+      // Adicionar cabeçalho
+      this.addProfessionalHeader('Relatório Filtrado de Armaduras', 'Dados com Filtros Aplicados');
+      
+      let currentY = 90;
+      
+      // Adicionar filtros aplicados
+      if (filtros) {
+        this.doc.setFontSize(12);
+        this.doc.setFont('helvetica', 'bold');
+        this.doc.setTextColor(31, 41, 55);
+        this.doc.text('Filtros Aplicados', 20, currentY);
+        currentY += 15;
+
+        this.doc.setFontSize(10);
+        this.doc.setFont('helvetica', 'normal');
+        this.doc.setTextColor(75, 85, 99);
+
+        const filtrosAplicados = [];
+        if (filtros.tipo) filtrosAplicados.push(`Tipo: ${filtros.tipo}`);
+        if (filtros.estado) filtrosAplicados.push(`Estado: ${filtros.estado}`);
+        if (filtros.fabricante) filtrosAplicados.push(`Fabricante: ${filtros.fabricante}`);
+        if (filtros.zona) filtrosAplicados.push(`Zona: ${filtros.zona}`);
+        if (filtros.dataInicio) filtrosAplicados.push(`Data Início: ${filtros.dataInicio}`);
+        if (filtros.dataFim) filtrosAplicados.push(`Data Fim: ${filtros.dataFim}`);
+
+        filtrosAplicados.forEach(filtro => {
+          this.doc.text(filtro, 25, currentY);
+          currentY += 6;
+        });
+        
+        currentY += 10;
+      }
+
+      // Adicionar tabela de armaduras
+      this.addTabelaArmaduras(armaduras, currentY);
+      
+      // Adicionar rodapé
+      this.addProfessionalFooter();
       
       console.log('PDFService: Fazendo download...');
       this.download(`relatorio-armaduras-filtrado-${new Date().toISOString().split('T')[0]}.pdf`);
       
+      console.log('PDFService: Relatório filtrado de armaduras concluído!');
     } catch (error) {
       console.error('PDFService: Erro ao gerar relatório filtrado de armaduras:', error);
       throw error;
     }
   }
 
-  public async generateArmadurasComparativeReport(armaduras: any[]): Promise<void> {
+  public async generateArmadurasComparativeReport(armaduras: Armadura[]): Promise<void> {
     console.log('PDFService: Iniciando relatório comparativo de armaduras com', armaduras.length, 'armaduras');
     
     try {
-      const options: RelatorioArmadurasOptions = {
-        titulo: 'Relatório Comparativo de Armaduras',
-        subtitulo: 'Análise Comparativa entre Períodos',
-        armaduras,
-        tipo: 'comparativo'
-      };
+      // Criar novo documento PDF
+      this.doc = new jsPDF();
       
-      console.log('PDFService: Gerando relatório...');
-      this.gerarRelatorioComparativoArmaduras(options);
+      // Adicionar cabeçalho
+      this.addProfessionalHeader('Relatório Comparativo de Armaduras', 'Análise Comparativa entre Períodos');
+      
+      let currentY = 90;
+      
+      // Calcular estatísticas por período
+      const hoje = new Date();
+      const mesAtual = hoje.getMonth();
+      const anoAtual = hoje.getFullYear();
+      
+      const armadurasMesAtual = armaduras.filter(a => {
+        const data = new Date(a.created_at);
+        return data.getMonth() === mesAtual && data.getFullYear() === anoAtual;
+      });
+      
+      const armadurasMesAnterior = armaduras.filter(a => {
+        const data = new Date(a.created_at);
+        const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
+        const anoAnterior = mesAtual === 0 ? anoAtual - 1 : anoAtual;
+        return data.getMonth() === mesAnterior && data.getFullYear() === anoAnterior;
+      });
+
+      // Título da seção
+      this.doc.setFontSize(14);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Comparação Mensal', 20, currentY);
+      currentY += 20;
+
+      // Comparação
+      this.doc.setFontSize(10);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(75, 85, 99);
+      
+      this.doc.text(`Mês Atual (${hoje.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}): ${armadurasMesAtual.length} armaduras`, 25, currentY);
+      currentY += 8;
+      
+      const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
+      const anoAnterior = mesAtual === 0 ? anoAtual - 1 : anoAtual;
+      const dataAnterior = new Date(anoAnterior, mesAnterior);
+      this.doc.text(`Mês Anterior (${dataAnterior.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}): ${armadurasMesAnterior.length} armaduras`, 25, currentY);
+      currentY += 15;
+
+      // Variação
+      const variacao = armadurasMesAnterior.length > 0 ? 
+        ((armadurasMesAtual.length - armadurasMesAnterior.length) / armadurasMesAnterior.length * 100).toFixed(1) : '0';
+      
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text(`Variação: ${variacao}%`, 25, currentY);
+      currentY += 20;
+
+      // Adicionar tabela de armaduras
+      this.addTabelaArmaduras(armaduras, currentY);
+      
+      // Adicionar rodapé
+      this.addProfessionalFooter();
       
       console.log('PDFService: Fazendo download...');
       this.download(`relatorio-armaduras-comparativo-${new Date().toISOString().split('T')[0]}.pdf`);
       
+      console.log('PDFService: Relatório comparativo de armaduras concluído!');
     } catch (error) {
       console.error('PDFService: Erro ao gerar relatório comparativo de armaduras:', error);
       throw error;
     }
   }
 
-  public async generateArmadurasIndividualReport(armadura: any): Promise<void> {
+  public async generateArmadurasIndividualReport(armadura: Armadura): Promise<void> {
     console.log('PDFService: Iniciando relatório individual de armadura');
     
     try {
-      const options: RelatorioArmadurasOptions = {
-        titulo: 'Relatório Individual de Armadura',
-        subtitulo: 'Detalhes da Armadura',
-        armaduras: [armadura],
-        tipo: 'individual'
-      };
+      // Criar novo documento PDF
+      this.doc = new jsPDF();
       
-      console.log('PDFService: Gerando relatório...');
-      this.gerarRelatorioIndividualArmaduras(options);
+      // Adicionar cabeçalho
+      this.addProfessionalHeader('Relatório Individual de Armadura', `Código: ${armadura.codigo}`);
+      
+      let currentY = 90;
+      
+      // Informações básicas
+      this.doc.setFontSize(14);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Informações Básicas', 20, currentY);
+      currentY += 20;
+
+      this.doc.setFontSize(10);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(75, 85, 99);
+      
+      this.doc.text(`Código: ${armadura.codigo}`, 25, currentY);
+      currentY += 8;
+      this.doc.text(`Tipo: ${armadura.tipo}`, 25, currentY);
+      currentY += 8;
+      this.doc.text(`Diâmetro: Ø${armadura.diametro}mm`, 25, currentY);
+      currentY += 8;
+      this.doc.text(`Comprimento: ${armadura.comprimento}m`, 25, currentY);
+      currentY += 8;
+      this.doc.text(`Quantidade: ${armadura.quantidade}`, 25, currentY);
+      currentY += 8;
+      this.doc.text(`Peso Total: ${armadura.peso_total.toFixed(1)} kg`, 25, currentY);
+      currentY += 15;
+
+      // Identificação e rastreamento
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Identificação e Rastreamento', 20, currentY);
+      currentY += 15;
+
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(75, 85, 99);
+      
+      this.doc.text(`Número de Colada: ${armadura.numero_colada}`, 25, currentY);
+      currentY += 8;
+      this.doc.text(`Número Guia de Remessa: ${armadura.numero_guia_remessa}`, 25, currentY);
+      currentY += 8;
+      this.doc.text(`Fabricante: ${armadura.fabricante}`, 25, currentY);
+      currentY += 8;
+      this.doc.text(`Fornecedor do Aço em Obra: ${armadura.fornecedor_aco_obra}`, 25, currentY);
+      currentY += 8;
+      this.doc.text(`Local de Aplicação: ${armadura.local_aplicacao}`, 25, currentY);
+      currentY += 8;
+      this.doc.text(`Zona de Aplicação: ${armadura.zona_aplicacao}`, 25, currentY);
+      currentY += 8;
+      this.doc.text(`Lote de Aplicação: ${armadura.lote_aplicacao}`, 25, currentY);
+      currentY += 15;
+
+      // Estado e localização
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Estado e Localização', 20, currentY);
+      currentY += 15;
+
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(75, 85, 99);
+      
+      this.doc.text(`Estado: ${armadura.estado}`, 25, currentY);
+      currentY += 8;
+      this.doc.text(`Data de Receção: ${new Date(armadura.data_rececao).toLocaleDateString('pt-PT')}`, 25, currentY);
+      currentY += 8;
+      if (armadura.data_instalacao) {
+        this.doc.text(`Data de Instalação: ${new Date(armadura.data_instalacao).toLocaleDateString('pt-PT')}`, 25, currentY);
+        currentY += 8;
+      }
+      this.doc.text(`Responsável: ${armadura.responsavel}`, 25, currentY);
+      currentY += 8;
+      this.doc.text(`Zona: ${armadura.zona}`, 25, currentY);
+      currentY += 15;
+
+      // Observações
+      if (armadura.observacoes) {
+        this.doc.setFont('helvetica', 'bold');
+        this.doc.setTextColor(31, 41, 55);
+        this.doc.text('Observações', 20, currentY);
+        currentY += 15;
+
+        this.doc.setFont('helvetica', 'normal');
+        this.doc.setTextColor(75, 85, 99);
+        this.doc.text(armadura.observacoes, 25, currentY);
+      }
+      
+      // Adicionar rodapé
+      this.addProfessionalFooter();
       
       console.log('PDFService: Fazendo download...');
-      this.download(`relatorio-armadura-individual-${armadura.id || new Date().toISOString().split('T')[0]}.pdf`);
+      this.download(`relatorio-armadura-individual-${armadura.codigo}-${new Date().toISOString().split('T')[0]}.pdf`);
       
+      console.log('PDFService: Relatório individual de armadura concluído!');
     } catch (error) {
       console.error('PDFService: Erro ao gerar relatório individual de armadura:', error);
       throw error;
@@ -10213,27 +10368,27 @@ class PDFService {
     });
   }
 
-  private addTabelaArmaduras(armaduras: any[]): void {
+  private addTabelaArmaduras(armaduras: Armadura[], startY: number = 200): void {
     this.doc.setFontSize(16);
     this.doc.setTextColor(31, 41, 55);
-    this.doc.text('Dados das Armaduras', 20, 200);
+    this.doc.text('Dados das Armaduras', 20, startY);
     
     // Cabeçalho da tabela
     this.doc.setFontSize(10);
     this.doc.setTextColor(255, 255, 255);
     this.doc.setFillColor(59, 130, 246);
-    this.doc.rect(20, 210, 170, 8, 'F');
+    this.doc.rect(20, startY + 10, 170, 8, 'F');
     
-    this.doc.text('ID', 22, 216);
-    this.doc.text('Tipo', 35, 216);
-    this.doc.text('Estado', 70, 216);
-    this.doc.text('Zona', 100, 216);
-    this.doc.text('Fornecedor', 130, 216);
-    this.doc.text('Data', 170, 216);
+    this.doc.text('Código', 22, startY + 16);
+    this.doc.text('Tipo', 45, startY + 16);
+    this.doc.text('Diâmetro', 70, startY + 16);
+    this.doc.text('Estado', 95, startY + 16);
+    this.doc.text('Fabricante', 120, startY + 16);
+    this.doc.text('Peso (kg)', 155, startY + 16);
     
     // Dados da tabela
     this.doc.setTextColor(31, 41, 55);
-    let y = 225;
+    let y = startY + 25;
     
     armaduras.slice(0, 20).forEach((armadura, index) => {
       if (y > 270) {
@@ -10245,12 +10400,12 @@ class PDFService {
       this.doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
       this.doc.rect(20, y - 5, 170, 6, 'F');
       
-      this.doc.text(armadura.id?.toString() || '', 22, y);
-      this.doc.text(armadura.tipo || '', 35, y);
-      this.doc.text(armadura.estado || '', 70, y);
-      this.doc.text(armadura.zona || '', 100, y);
-      this.doc.text(armadura.fornecedor || '', 130, y);
-      this.doc.text(new Date(armadura.created_at).toLocaleDateString('pt-BR'), 170, y);
+      this.doc.text(armadura.codigo || '', 22, y);
+      this.doc.text(armadura.tipo || '', 45, y);
+      this.doc.text(`Ø${armadura.diametro}mm`, 70, y);
+      this.doc.text(armadura.estado || '', 95, y);
+      this.doc.text(armadura.fabricante || '', 120, y);
+      this.doc.text(armadura.peso_total?.toFixed(1) || '', 155, y);
       
       y += 8;
     });
