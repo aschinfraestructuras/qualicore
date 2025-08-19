@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { NaoConformidade, naoConformidadesAPI } from "@/lib/supabase-api";
 import NaoConformidadeForm from "@/components/forms/NaoConformidadeForm";
+import NaoConformidadeDashboard from "@/components/NaoConformidadeDashboard";
 import RelatorioNaoConformidadesPremium from "@/components/RelatorioNaoConformidadesPremium";
 import { ShareNaoConformidadeModal } from "@/components/ShareNaoConformidadeModal";
 import { SavedNaoConformidadesViewer } from "@/components/SavedNaoConformidadesViewer";
@@ -53,6 +54,7 @@ export default function NaoConformidades() {
   const [showSavedNCs, setShowSavedNCs] = useState(false);
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [selectedNC, setSelectedNC] = useState<any>(null);
+  const [showDashboard, setShowDashboard] = useState(true);
 
   useEffect(() => {
     loadNaoConformidades();
@@ -355,6 +357,22 @@ export default function NaoConformidades() {
               <Plus className="h-4 w-4 mr-2" />
               Nova NC
             </button>
+            <button
+              onClick={() => setShowDashboard(!showDashboard)}
+              className="btn btn-outline btn-md"
+            >
+              {showDashboard ? (
+                <>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Ver Lista
+                </>
+              ) : (
+                <>
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Ver Dashboard
+                </>
+              )}
+            </button>
           </div>
         </div>
 
@@ -541,7 +559,27 @@ export default function NaoConformidades() {
               Lista de Não Conformidades
             </h2>
 
-            {filteredNCs.length === 0 ? (
+            {/* Conteúdo principal - Dashboard ou Lista */}
+            {showDashboard ? (
+              <>
+                {console.log('NaoConformidades page: Mostrando dashboard com', naoConformidades.length, 'NCs')}
+                <NaoConformidadeDashboard
+                  naoConformidades={naoConformidades}
+                  onSearch={(query, options) => {
+                    setSearchTerm(query);
+                  }}
+                  onFilterChange={(newFilters) => {
+                    // Aplicar filtros do dashboard
+                    if (newFilters.tipo) setFilterTipo(newFilters.tipo);
+                    if (newFilters.severidade) setFilterSeveridade(newFilters.severidade);
+                    if (newFilters.categoria) setFilterCategoria(newFilters.categoria);
+                    if (newFilters.status) setFilterStatus(newFilters.status);
+                  }}
+                />
+              </>
+            ) : (
+              <>
+                {filteredNCs.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500">
                   Nenhuma não conformidade encontrada
@@ -638,6 +676,8 @@ export default function NaoConformidades() {
                 );
                 })}
               </div>
+            )}
+              </>
             )}
           </div>
         </div>
