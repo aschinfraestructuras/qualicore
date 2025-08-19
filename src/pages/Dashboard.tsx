@@ -73,6 +73,7 @@ import {
   Truck,
   Factory,
   MapPin,
+  Building2,
   Timer,
   CalendarDays,
   Clock4,
@@ -344,29 +345,40 @@ export default function Dashboard() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Módulos do Sistema</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {[
+                    // ENSAIOS E CONTROLO
                     { name: "Ensaios", icon: TestTube, color: "from-blue-500 to-indigo-600", path: "/ensaios", count: totalEnsaios },
-                    { name: "Checklists", icon: ClipboardCheck, color: "from-green-500 to-emerald-600", path: "/checklists", count: totalChecklists },
-                    { name: "Documentos", icon: FileText, color: "from-purple-500 to-pink-600", path: "/documentos", count: totalDocumentos },
-                    { name: "Armaduras", icon: Package, color: "from-orange-500 to-red-600", path: "/armaduras", count: totalArmaduras },
-                    { name: "Materiais", icon: Building, color: "from-teal-500 to-cyan-600", path: "/materiais", count: totalMateriais },
-                    { name: "Fornecedores", icon: Truck, color: "from-indigo-500 to-purple-600", path: "/fornecedores", count: totalFornecedores },
-                    { name: "Não Conformidades", icon: AlertTriangle, color: "from-red-500 to-pink-600", path: "/nao-conformidades", count: realData.naoConformidades.total },
-                    { name: "Obras", icon: HardHat, color: "from-yellow-500 to-orange-600", path: "/obras", count: totalObras },
-                    { name: "Via Férrea", icon: MapPin, color: "from-gray-500 to-slate-600", path: "/via-ferrea", count: totalViaFerrea },
-                    { name: "Sinalização", icon: Bell, color: "from-blue-400 to-blue-600", path: "/sinalizacao", count: totalSinalizacao },
-                    { name: "Eletrificação", icon: Zap, color: "from-yellow-400 to-yellow-600", path: "/eletrificacao", count: totalEletrificacao },
-                    { name: "Pontes/Túneis", icon: Building, color: "from-gray-400 to-gray-600", path: "/pontes-tuneis", count: totalPontesTuneis },
-                    { name: "Estações", icon: Building, color: "from-purple-400 to-purple-600", path: "/estacoes", count: totalEstacoes },
-                    { name: "Segurança Ferroviária", icon: Shield, color: "from-red-400 to-red-600", path: "/seguranca-ferroviaria", count: totalSegurancaFerroviaria },
                     { name: "Controlo Betonagens", icon: Wrench, color: "from-orange-400 to-orange-600", path: "/controlo-betonagens", count: totalControloBetonagens },
                     { name: "Caracterização Solos", icon: Database, color: "from-brown-400 to-brown-600", path: "/caracterizacao-solos", count: totalCaracterizacaoSolos },
-                    { name: "Normas", icon: FileCheck, color: "from-green-400 to-green-600", path: "/normas", count: totalNormas },
+                    { name: "Armaduras", icon: Package, color: "from-orange-500 to-red-600", path: "/armaduras", count: totalArmaduras },
+                    
+                    // QUALIDADE
+                    { name: "Sistema de Normas", icon: FileCheck, color: "from-green-400 to-green-600", path: "/normas", count: totalNormas },
                     { name: "Submissão Materiais", icon: Upload, color: "from-blue-300 to-blue-500", path: "/submissao-materiais", count: totalSubmissaoMateriais },
-                    { name: "Certificados", icon: Award, color: "from-gold-400 to-gold-600", path: "/certificados", count: totalCertificados },
+                    { name: "Certificados e Registos", icon: Award, color: "from-gold-400 to-gold-600", path: "/certificados", count: totalCertificados },
+                    { name: "Calibrações e Equipamentos", icon: Settings, color: "from-purple-400 to-purple-600", path: "/calibracoes-equipamentos", count: 0 },
+                    { name: "Checklists", icon: ClipboardCheck, color: "from-green-500 to-emerald-600", path: "/checklists", count: totalChecklists },
+                    { name: "Não Conformidades", icon: AlertTriangle, color: "from-red-500 to-pink-600", path: "/nao-conformidades", count: realData.naoConformidades.total },
+                    
+                    // GESTÃO
+                    { name: "Obras", icon: HardHat, color: "from-yellow-500 to-orange-600", path: "/obras", count: totalObras },
+                    { name: "Materiais", icon: Building, color: "from-teal-500 to-cyan-600", path: "/materiais", count: totalMateriais },
+                    { name: "Fornecedores", icon: Truck, color: "from-indigo-500 to-purple-600", path: "/fornecedores", count: totalFornecedores },
+                    { name: "Fornecedores Avançados", icon: Building2, color: "from-blue-600 to-indigo-700", path: "/fornecedores-avancados", count: 0 },
                     { name: "RFIs", icon: AlertCircle, color: "from-red-300 to-red-500", path: "/rfis", count: totalRfis },
-                                         { name: "Pontos Inspeção", icon: Eye, color: "from-cyan-400 to-cyan-600", path: "/pie", count: totalPontosInspecao },
-                     { name: "Registos", icon: Calendar, color: "from-indigo-300 to-indigo-500", path: "/certificados", count: totalRegistos },
-                     { name: "Termos", icon: FileText, color: "from-gray-300 to-gray-500", path: "/certificados", count: totalTermos }
+                    
+                    // INFRAESTRUTURA
+                    { name: "Via Férrea", icon: MapPin, color: "from-gray-500 to-slate-600", path: "/via-ferrea", count: totalViaFerrea },
+                    { name: "Pontes & Túneis", icon: Building, color: "from-gray-400 to-gray-600", path: "/pontes-tuneis", count: totalPontesTuneis },
+                    { name: "Estações", icon: Building, color: "from-purple-400 to-purple-600", path: "/estacoes", count: totalEstacoes },
+                    
+                    // SISTEMAS
+                    { name: "Sinalização", icon: Bell, color: "from-blue-400 to-blue-600", path: "/sinalizacao", count: totalSinalizacao },
+                    { name: "Eletrificação", icon: Zap, color: "from-yellow-400 to-yellow-600", path: "/eletrificacao", count: totalEletrificacao },
+                    { name: "Segurança Ferroviária", icon: Shield, color: "from-red-400 to-red-600", path: "/seguranca-ferroviaria", count: totalSegurancaFerroviaria },
+                    
+                    // DOCUMENTAÇÃO
+                    { name: "Documentos", icon: FileText, color: "from-purple-500 to-pink-600", path: "/documentos", count: totalDocumentos },
+                    { name: "Pontos Inspeção", icon: Eye, color: "from-cyan-400 to-cyan-600", path: "/pie", count: totalPontosInspecao }
                   ].map((module, index) => (
                     <motion.button
                       key={index}

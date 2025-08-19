@@ -9190,6 +9190,264 @@ class PDFService {
 
     this.doc.save(`relatorio_inspecao_pontes_tuneis_${options.tipo}_${new Date().toISOString().split('T')[0]}.pdf`);
   }
+
+  // Métodos para Calibrações e Equipamentos
+  async gerarRelatorioExecutivoCalibracoesEquipamentos(options: any): Promise<void> {
+    this.doc = new jsPDF();
+    this.pageNumber = 1;
+    this.totalPages = 1;
+
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    this.addProfessionalFooter();
+
+    // Estatísticas principais
+    const stats = options.stats;
+    let currentY = 100;
+
+    // Título da seção
+    this.doc.setFillColor(147, 51, 234);
+    this.doc.rect(15, currentY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Resumo Executivo - Calibrações e Equipamentos', 20, currentY + 2);
+
+    currentY += 20;
+
+    // Estatísticas principais
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Estatísticas Principais:', 20, currentY);
+
+    currentY += 15;
+
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.setFontSize(9);
+    this.doc.setTextColor(75, 85, 99);
+
+    const estatisticas = [
+      `Total de Equipamentos: ${stats?.total_equipamentos || 0}`,
+      `Equipamentos Ativos: ${stats?.equipamentos_ativos || 0}`,
+      `Calibrações Vencidas: ${stats?.calibracoes_vencidas || 0}`,
+      `Calibrações Próximas de Vencer: ${stats?.calibracoes_proximas_vencer || 0}`,
+      `Valor Total dos Equipamentos: ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(stats?.valor_total_equipamentos || 0)}`,
+      `Custos de Calibrações: ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(stats?.custo_total_calibracoes || 0)}`,
+      `Custos de Manutenções: ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(stats?.custo_total_manutencoes || 0)}`
+    ];
+
+    estatisticas.forEach((stat, index) => {
+      this.doc.text(stat, 20, currentY + (index * 6));
+    });
+
+    currentY += estatisticas.length * 6 + 20;
+
+    // Tabela de equipamentos (primeiros 10)
+    if (options.equipamentos && options.equipamentos.length > 0) {
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Equipamentos Principais:', 20, currentY);
+
+      currentY += 15;
+
+      const equipamentosParaTabela = options.equipamentos.slice(0, 10).map((equip: any) => [
+        equip.codigo || '',
+        equip.nome || '',
+        equip.status_operacional || '',
+        new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(equip.valor_atual || 0)
+      ]);
+
+      autoTable(this.doc, {
+        startY: currentY,
+        head: [['Código', 'Nome', 'Status', 'Valor']],
+        body: equipamentosParaTabela,
+        theme: 'grid',
+        headStyles: { fillColor: [147, 51, 234], textColor: 255 },
+        styles: { fontSize: 8 }
+      });
+
+      currentY = (this.doc as any).lastAutoTable.finalY + 15;
+    }
+
+    this.doc.save(`relatorio_executivo_calibracoes_equipamentos_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  async gerarRelatorioEquipamentos(options: any): Promise<void> {
+    this.doc = new jsPDF();
+    this.pageNumber = 1;
+    this.totalPages = 1;
+
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    this.addProfessionalFooter();
+
+    let currentY = 100;
+
+    // Título da seção
+    this.doc.setFillColor(147, 51, 234);
+    this.doc.rect(15, currentY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Relatório de Equipamentos', 20, currentY + 2);
+
+    currentY += 20;
+
+    if (options.equipamentos && options.equipamentos.length > 0) {
+      const equipamentosParaTabela = options.equipamentos.map((equip: any) => [
+        equip.codigo || '',
+        equip.nome || '',
+        equip.tipo || '',
+        equip.categoria || '',
+        equip.status_operacional || '',
+        equip.responsavel || '',
+        new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(equip.valor_atual || 0)
+      ]);
+
+      autoTable(this.doc, {
+        startY: currentY,
+        head: [['Código', 'Nome', 'Tipo', 'Categoria', 'Status', 'Responsável', 'Valor']],
+        body: equipamentosParaTabela,
+        theme: 'grid',
+        headStyles: { fillColor: [147, 51, 234], textColor: 255 },
+        styles: { fontSize: 8 }
+      });
+    }
+
+    this.doc.save(`relatorio_equipamentos_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  async gerarRelatorioCalibracoes(options: any): Promise<void> {
+    this.doc = new jsPDF();
+    this.pageNumber = 1;
+    this.totalPages = 1;
+
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    this.addProfessionalFooter();
+
+    let currentY = 100;
+
+    // Título da seção
+    this.doc.setFillColor(147, 51, 234);
+    this.doc.rect(15, currentY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Relatório de Calibrações', 20, currentY + 2);
+
+    currentY += 20;
+
+    if (options.calibracoes && options.calibracoes.length > 0) {
+      const calibracoesParaTabela = options.calibracoes.map((cal: any) => [
+        cal.numero_calibracao || '',
+        cal.equipamento_id || '',
+        cal.tipo_calibracao || '',
+        cal.resultado || '',
+        new Date(cal.data_calibracao).toLocaleDateString('pt-PT'),
+        new Date(cal.data_proxima_calibracao).toLocaleDateString('pt-PT'),
+        new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(cal.custo || 0)
+      ]);
+
+      autoTable(this.doc, {
+        startY: currentY,
+        head: [['Número', 'Equipamento', 'Tipo', 'Resultado', 'Data', 'Próxima', 'Custo']],
+        body: calibracoesParaTabela,
+        theme: 'grid',
+        headStyles: { fillColor: [147, 51, 234], textColor: 255 },
+        styles: { fontSize: 8 }
+      });
+    }
+
+    this.doc.save(`relatorio_calibracoes_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  async gerarRelatorioManutencoes(options: any): Promise<void> {
+    this.doc = new jsPDF();
+    this.pageNumber = 1;
+    this.totalPages = 1;
+
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    this.addProfessionalFooter();
+
+    let currentY = 100;
+
+    // Título da seção
+    this.doc.setFillColor(147, 51, 234);
+    this.doc.rect(15, currentY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Relatório de Manutenções', 20, currentY + 2);
+
+    currentY += 20;
+
+    if (options.manutencoes && options.manutencoes.length > 0) {
+      const manutencoesParaTabela = options.manutencoes.map((man: any) => [
+        man.numero_manutencao || '',
+        man.equipamento_id || '',
+        man.tipo_manutencao || '',
+        man.descricao || '',
+        new Date(man.data_inicio).toLocaleDateString('pt-PT'),
+        new Date(man.data_fim).toLocaleDateString('pt-PT'),
+        new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(man.custo || 0)
+      ]);
+
+      autoTable(this.doc, {
+        startY: currentY,
+        head: [['Número', 'Equipamento', 'Tipo', 'Descrição', 'Início', 'Fim', 'Custo']],
+        body: manutencoesParaTabela,
+        theme: 'grid',
+        headStyles: { fillColor: [147, 51, 234], textColor: 255 },
+        styles: { fontSize: 8 }
+      });
+    }
+
+    this.doc.save(`relatorio_manutencoes_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  async gerarRelatorioInspecoes(options: any): Promise<void> {
+    this.doc = new jsPDF();
+    this.pageNumber = 1;
+    this.totalPages = 1;
+
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    this.addProfessionalFooter();
+
+    let currentY = 100;
+
+    // Título da seção
+    this.doc.setFillColor(147, 51, 234);
+    this.doc.rect(15, currentY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Relatório de Inspeções', 20, currentY + 2);
+
+    currentY += 20;
+
+    if (options.inspecoes && options.inspecoes.length > 0) {
+      const inspecoesParaTabela = options.inspecoes.map((insp: any) => [
+        insp.numero_inspecao || '',
+        insp.equipamento_id || '',
+        insp.tipo_inspecao || '',
+        insp.resultado || '',
+        new Date(insp.data_inspecao).toLocaleDateString('pt-PT'),
+        insp.responsavel || '',
+        insp.observacoes || ''
+      ]);
+
+      autoTable(this.doc, {
+        startY: currentY,
+        head: [['Número', 'Equipamento', 'Tipo', 'Resultado', 'Data', 'Responsável', 'Observações']],
+        body: inspecoesParaTabela,
+        theme: 'grid',
+        headStyles: { fillColor: [147, 51, 234], textColor: 255 },
+        styles: { fontSize: 8 }
+      });
+    }
+
+    this.doc.save(`relatorio_inspecoes_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
 }
 
 export default PDFService; 

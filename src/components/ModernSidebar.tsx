@@ -60,6 +60,8 @@ export default function ModernSidebar({ isOpen, onClose }: ModernSidebarProps) {
         { name: "RFIs", description: "Pedidos de Informação", icon: HelpCircle, href: "/rfis", badge: "7" },
         { name: "Materiais", description: "Gestão de materiais", icon: Grid3X3, href: "/materiais", badge: "15" },
         { name: "Fornecedores", description: "Gestão de fornecedores", icon: Users, href: "/fornecedores", badge: "32" },
+        { name: "Fornecedores Avançados", description: "Gestão avançada de fornecedores", icon: Building2, href: "/fornecedores-avancados", badge: "🆕" },
+        { name: "Calibrações e Equipamentos", description: "Gestão de calibrações e equipamentos", icon: Settings, href: "/calibracoes-equipamentos", badge: "🆕" },
       ]
     }
   ];

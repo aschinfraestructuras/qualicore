@@ -8,7 +8,204 @@ import {
   Plus,
   LogOut,
   DoorOpen,
+  Shield,
+  ClipboardList,
+  FileText,
+  AlertTriangle,
+  Building2,
+  Users,
+  Grid3X3,
+  HelpCircle,
+  Award,
+  BookOpen,
+  Package,
+  Database,
+  Layers,
+  Train,
+  Activity,
+  Zap,
+  Archive,
+  BarChart3,
+  Eye,
 } from "lucide-react";
+
+export const menuItems = [
+  {
+    label: "Dashboard",
+    path: "/dashboard",
+    icon: Shield,
+    color: "from-blue-500 to-blue-600",
+    description: "Painel principal"
+  },
+  {
+    label: "Ensaios",
+    path: "/ensaios",
+    icon: ClipboardList,
+    color: "from-green-500 to-green-600",
+    description: "Gestão de ensaios"
+  },
+  {
+    label: "Controlo Betonagens",
+    path: "/controlo-betonagens",
+    icon: Building2,
+    color: "from-orange-500 to-orange-600",
+    description: "Controlo de betonagens"
+  },
+  {
+    label: "Caracterização Solos",
+    path: "/caracterizacao-solos",
+    icon: Layers,
+    color: "from-brown-500 to-brown-600",
+    description: "Caracterização de solos"
+  },
+  {
+    label: "Armaduras",
+    path: "/armaduras",
+    icon: Package,
+    color: "from-red-500 to-red-600",
+    description: "Gestão de armaduras"
+  },
+  {
+    label: "Sistema de Normas",
+    path: "/normas",
+    icon: BookOpen,
+    color: "from-green-400 to-green-600",
+    description: "Sistema de normas"
+  },
+  {
+    label: "Submissão Materiais",
+    path: "/submissao-materiais",
+    icon: Package,
+    color: "from-blue-300 to-blue-500",
+    description: "Submissão de materiais"
+  },
+  {
+    label: "Certificados",
+    path: "/certificados",
+    icon: Award,
+    color: "from-gold-400 to-gold-600",
+    description: "Certificados e registos"
+  },
+  {
+    label: "Checklists",
+    path: "/checklists",
+    icon: FileText,
+    color: "from-purple-500 to-purple-600",
+    description: "Sistema de checklists"
+  },
+  {
+    label: "Não Conformidades",
+    path: "/nao-conformidades",
+    icon: AlertTriangle,
+    color: "from-red-500 to-pink-600",
+    description: "Gestão de NCs"
+  },
+  {
+    label: "Obras",
+    path: "/obras",
+    icon: Building2,
+    color: "from-yellow-500 to-orange-600",
+    description: "Gestão de obras"
+  },
+  {
+    label: "Materiais",
+    path: "/materiais",
+    icon: Grid3X3,
+    color: "from-teal-500 to-cyan-600",
+    description: "Gestão de materiais"
+  },
+  {
+    label: "Fornecedores",
+    path: "/fornecedores",
+    icon: Users,
+    color: "from-indigo-500 to-purple-600",
+    description: "Gestão de fornecedores"
+  },
+  {
+    label: "Fornecedores Avançados",
+    path: "/fornecedores-avancados",
+    icon: Building2,
+    color: "from-blue-600 to-indigo-700",
+    description: "Gestão avançada de fornecedores"
+  },
+  {
+    label: "RFIs",
+    path: "/rfis",
+    icon: HelpCircle,
+    color: "from-red-300 to-red-500",
+    description: "Pedidos de informação"
+  },
+  {
+    label: "Via Férrea",
+    path: "/via-ferrea",
+    icon: Train,
+    color: "from-gray-500 to-slate-600",
+    description: "Gestão da via férrea"
+  },
+  {
+    label: "Sinalização",
+    path: "/sinalizacao",
+    icon: Activity,
+    color: "from-blue-400 to-blue-600",
+    description: "Sistema de sinalização"
+  },
+  {
+    label: "Eletrificação",
+    path: "/eletrificacao",
+    icon: Zap,
+    color: "from-yellow-400 to-yellow-600",
+    description: "Sistema de eletrificação"
+  },
+  {
+    label: "Pontes & Túneis",
+    path: "/pontes-tuneis",
+    icon: Archive,
+    color: "from-gray-400 to-gray-600",
+    description: "Gestão de pontes e túneis"
+  },
+  {
+    label: "Estações",
+    path: "/estacoes",
+    icon: Building2,
+    color: "from-purple-400 to-purple-600",
+    description: "Gestão de estações"
+  },
+  {
+    label: "Segurança",
+    path: "/seguranca-ferroviaria",
+    icon: Shield,
+    color: "from-red-400 to-red-600",
+    description: "Segurança ferroviária"
+  },
+  {
+    label: "Documentos",
+    path: "/documentos",
+    icon: FileText,
+    color: "from-purple-500 to-pink-600",
+    description: "Gestão de documentos"
+  },
+  {
+    label: "PIE",
+    path: "/pie",
+    icon: Eye,
+    color: "from-cyan-400 to-cyan-600",
+    description: "Pontos de inspeção e ensaios"
+  },
+  {
+    label: "Calibrações e Equipamentos",
+    path: "/calibracoes-equipamentos",
+    icon: Settings,
+    color: "from-purple-400 to-purple-600",
+    description: "Gestão de calibrações e equipamentos"
+  },
+  {
+    label: "Relatórios",
+    path: "/relatorios",
+    icon: BarChart3,
+    color: "from-indigo-500 to-purple-600",
+    description: "Sistema de relatórios"
+  }
+];
 
 export default function Navbar() {
   const navigate = useNavigate();

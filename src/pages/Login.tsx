@@ -293,24 +293,7 @@ export default function Login() {
                 exit={{ opacity: 0, x: -50, scale: 0.9 }}
                 transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
               >
-                <div className="text-center mb-8">
-                  <motion.h2 
-                    className="text-3xl font-bold text-gray-900 mb-3"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.4 }}
-                  >
-                    Bem-vindo de volta
-                  </motion.h2>
-                  <motion.p 
-                    className="text-gray-600"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.5 }}
-                  >
-                    Entre na sua conta para continuar
-                  </motion.p>
-                </div>
+
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -388,20 +371,7 @@ export default function Login() {
                     onSwitchToLogin={handleSwitchToLogin}
                   />
                 </motion.div>
-                <motion.div 
-                  className="mt-6 text-center"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.6, delay: 0.8 }}
-                >
-                  <span className="text-gray-600 text-sm">Já tem uma conta? </span>
-                  <button
-                    onClick={handleSwitchToLogin}
-                    className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                  >
-                    Entrar
-                  </button>
-                </motion.div>
+
               </motion.div>
             )}
 

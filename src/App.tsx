@@ -37,7 +37,7 @@ import SubmissaoMateriais from "./pages/SubmissaoMateriais";
 import Certificados from "./pages/Certificados";
 import Obras from "./pages/Obras";
 import Landing from "./pages/Landing";
-import SupabaseTest from "./components/SupabaseTest";
+
 import Login from "./pages/Login";
 import DocumentoForm from "./components/forms/DocumentoForm";
 import EnsaioForm from "./components/forms/EnsaioForm";
@@ -52,6 +52,8 @@ import RFIs from "./pages/RFIs";
 import PontosInspecaoEnsaiosPage from "./pages/PontosInspecaoEnsaios";
 import PontosInspecaoEnsaiosEditor from "./components/pie/PontosInspecaoEnsaiosEditor";
 import Armaduras from "./pages/Armaduras";
+import FornecedoresAvancados from "./pages/FornecedoresAvancados";
+import CalibracoesEquipamentos from "./pages/CalibracoesEquipamentos";
 import "./styles/globals.css";
 import { ensaioCompactacaoService } from "./services/ensaioCompactacaoService";
 import LoadingSpinner from "./components/LoadingSpinner";
@@ -361,10 +363,7 @@ function App() {
           <Route index element={<Certificados />} />
         </Route>
         
-        <Route
-          path="/test-supabase"
-          element={<SupabaseTest />}
-        />
+
 
         <Route
           path="/obras"
@@ -455,6 +454,32 @@ function App() {
           }
         >
           <Route index element={<Armaduras />} />
+        </Route>
+
+        <Route
+          path="/fornecedores-avancados"
+          element={
+            user ? (
+              <PremiumLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<FornecedoresAvancados />} />
+        </Route>
+
+        <Route
+          path="/calibracoes-equipamentos"
+          element={
+            user ? (
+              <PremiumLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route index element={<CalibracoesEquipamentos />} />
         </Route>
 
         {/* Rotas para ações rápidas */}

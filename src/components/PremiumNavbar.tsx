@@ -407,6 +407,8 @@ ${searchResults.join('\n\n')}
     { name: "Não Conformidades", icon: "⚠️", category: "Qualidade", path: "/nao-conformidades", shortcut: "⌘N" },
     { name: "Materiais", icon: "📦", category: "Gestão", path: "/materiais", shortcut: "⌘M" },
     { name: "Fornecedores", icon: "🏢", category: "Gestão", path: "/fornecedores", shortcut: "⌘F" },
+    { name: "Fornecedores Avançados", icon: "🏢", category: "Gestão", path: "/fornecedores-avancados", shortcut: "⌘A" },
+    { name: "Calibrações e Equipamentos", icon: "⚙️", category: "Gestão", path: "/calibracoes-equipamentos", shortcut: "⌘C" },
     { name: "RFIs", icon: "❓", category: "Gestão", path: "/rfis", shortcut: "⌘I" },
     { name: "Via Férrea", icon: "🛤️", category: "Ferroviário", path: "/via-ferrea", shortcut: "⌘V" },
     { name: "Sinalização", icon: "🚦", category: "Ferroviário", path: "/sinalizacao", shortcut: "⌘S" },
@@ -654,6 +656,62 @@ ${searchResults.join('\n\n')}
                         <div className="text-left">
                           <p className="text-sm font-medium text-gray-900">Novo Checklist</p>
                           <p className="text-xs text-gray-500">Criar novo checklist</p>
+                        </div>
+                      </button>
+                      <button
+                                                 onClick={() => {
+                           console.log("🏢 Quick Action - Fornecedores Avançados clicked!");
+                           toast.success("🏢 Navegando para Gestão Avançada de Fornecedores...", {
+                             icon: '🏢',
+                             duration: 2500,
+                             style: {
+                               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                               color: 'white',
+                               borderRadius: '12px',
+                               padding: '16px',
+                               fontSize: '14px',
+                               fontWeight: '600'
+                             }
+                           });
+                           navigate('/fornecedores-avancados');
+                           setShowQuickActions(false);
+                         }}
+                        className="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-indigo-50 transition-colors"
+                      >
+                        <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                          <span className="text-indigo-600 text-sm">🏢</span>
+                        </div>
+                        <div className="text-left">
+                          <p className="text-sm font-medium text-gray-900">Fornecedores Avançados</p>
+                          <p className="text-xs text-gray-500">Gestão avançada de fornecedores</p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => {
+                          console.log("⚙️ Quick Action - Calibrações e Equipamentos clicked!");
+                          toast.success("⚙️ Navegando para Gestão de Calibrações e Equipamentos...", {
+                            icon: '⚙️',
+                            duration: 2500,
+                            style: {
+                              background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                              color: 'white',
+                              borderRadius: '12px',
+                              padding: '16px',
+                              fontSize: '14px',
+                              fontWeight: '600'
+                            }
+                          });
+                          navigate('/calibracoes-equipamentos');
+                          setShowQuickActions(false);
+                        }}
+                        className="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-50 transition-colors"
+                      >
+                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <span className="text-purple-600 text-sm">⚙️</span>
+                        </div>
+                        <div className="text-left">
+                          <p className="text-sm font-medium text-gray-900">Calibrações e Equipamentos</p>
+                          <p className="text-xs text-gray-500">Gestão de calibrações e equipamentos</p>
                         </div>
                       </button>
                     </div>

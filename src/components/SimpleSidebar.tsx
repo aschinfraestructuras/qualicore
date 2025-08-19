@@ -56,8 +56,10 @@ export default function SimpleSidebar({ isOpen, onClose }: SimpleSidebarProps) {
         { name: "RFIs", icon: HelpCircle, href: "/rfis" },
         { name: "Materiais", icon: Grid3X3, href: "/materiais" },
         { name: "Fornecedores", icon: Users, href: "/fornecedores" },
-      ]
-    }
+            { name: "Fornecedores Avançados", icon: Building2, href: "/fornecedores-avancados" },
+    { name: "Calibrações e Equipamentos", icon: Settings, href: "/calibracoes-equipamentos" },
+  ]
+}
   ];
 
   return (

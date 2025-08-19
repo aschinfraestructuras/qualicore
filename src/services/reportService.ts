@@ -55,7 +55,8 @@ export type TipoRelatorio =
   | "segurancaFerroviaria"
   | "inspecoesSeguranca"
   | "pontesTuneis"
-  | "inspecoesPontesTuneis";
+  | "inspecoesPontesTuneis"
+  | "calibracoesEquipamentos";
 
 // Interface para dados do relatório
 export interface DadosRelatorio {
@@ -150,6 +151,8 @@ export class ReportService {
           return this.templatePontesTuneis.bind(this);
         case "inspecoesPontesTuneis":
           return this.templateInspecoesPontesTuneis.bind(this);
+        case "calibracoesEquipamentos":
+          return this.templateCalibracoesEquipamentos.bind(this);
       default:
         return this.templateGenerico.bind(this);
     }
@@ -2158,6 +2161,251 @@ export class ReportService {
       </body>
       </html>
     `;
+  }
+
+  // Template para relatório de calibrações e equipamentos
+  private templateCalibracoesEquipamentos(dados: DadosRelatorio): string {
+    const equipamentos = (dados.dados?.equipamentos as any[]) || [];
+    const calibracoes = (dados.dados?.calibracoes as any[]) || [];
+    const manutencoes = (dados.dados?.manutencoes as any[]) || [];
+    const inspecoes = (dados.dados?.inspecoes as any[]) || [];
+    const stats = dados.dados?.stats as any;
+
+    return `
+      <!DOCTYPE html>
+      <html lang="pt-PT">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Relatório de Calibrações e Equipamentos</title>
+        <style>
+          ${this.getEstilosCSS()}
+          .status-operacional { background-color: #dcfce7; color: #16a34a; }
+          .status-nao-operacional { background-color: #fee2e2; color: #dc2626; }
+          .status-em-teste { background-color: #fef3c7; color: #d97706; }
+          .status-em-calibracao { background-color: #dbeafe; color: #2563eb; }
+          .resultado-aprovado { background-color: #dcfce7; color: #16a34a; }
+          .resultado-reprovado { background-color: #fee2e2; color: #dc2626; }
+          .resultado-condicional { background-color: #fef3c7; color: #d97706; }
+          .resultado-pendente { background-color: #dbeafe; color: #2563eb; }
+        </style>
+      </head>
+      <body>
+        ${this.getCabecalho(dados)}
+        
+        <div class="container">
+          <h1 class="titulo-principal">Relatório de Calibrações e Equipamentos</h1>
+          
+          <div class="resumo-executivo">
+            <h2>Resumo Executivo</h2>
+            <p>Este relatório apresenta uma visão geral da gestão de calibrações e equipamentos do período ${dados.periodo}.</p>
+          </div>
+
+          ${stats ? `
+          <div class="metricas-principais">
+            <h2>Estatísticas Gerais</h2>
+            <div class="grid-metricas">
+              <div class="metrica">
+                <h3>Total de Equipamentos</h3>
+                <div class="valor">${stats.totalEquipamentos || 0}</div>
+              </div>
+              <div class="metrica">
+                <h3>Equipamentos Ativos</h3>
+                <div class="valor conforme">${stats.equipamentosAtivos || 0}</div>
+              </div>
+              <div class="metrica">
+                <h3>Calibrações Vencidas</h3>
+                <div class="valor critico">${stats.calibracoesVencidas || 0}</div>
+              </div>
+              <div class="metrica">
+                <h3>Próximas de Vencer</h3>
+                <div class="valor">${stats.calibracoesProximasVencer || 0}</div>
+              </div>
+              <div class="metrica">
+                <h3>Valor Total</h3>
+                <div class="valor">${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(stats.valorTotalEquipamentos || 0)}</div>
+              </div>
+            </div>
+          </div>
+          ` : ''}
+
+          ${equipamentos.length > 0 ? `
+          <div class="secoes-modulos">
+            <div class="secao">
+              <h2>Equipamentos (${equipamentos.length})</h2>
+              <div class="tabela-container">
+                <table class="tabela-dados">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Nome</th>
+                      <th>Tipo</th>
+                      <th>Categoria</th>
+                      <th>Status</th>
+                      <th>Departamento</th>
+                      <th>Responsável</th>
+                      <th>Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${equipamentos.map((equip) => `
+                      <tr>
+                        <td>${equip.codigo}</td>
+                        <td>${equip.nome}</td>
+                        <td>${equip.tipo}</td>
+                        <td>${equip.categoria}</td>
+                        <td class="status-${equip.status_operacional.toLowerCase().replace(' ', '-')}">${equip.status_operacional}</td>
+                        <td>${equip.departamento}</td>
+                        <td>${equip.responsavel}</td>
+                        <td>${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(equip.valor_atual)}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          ` : ''}
+
+          ${calibracoes.length > 0 ? `
+          <div class="secoes-modulos">
+            <div class="secao">
+              <h2>Calibrações (${calibracoes.length})</h2>
+              <div class="tabela-container">
+                <table class="tabela-dados">
+                  <thead>
+                    <tr>
+                      <th>Equipamento</th>
+                      <th>Tipo</th>
+                      <th>Data Calibração</th>
+                      <th>Próxima Calibração</th>
+                      <th>Laboratório</th>
+                      <th>Resultado</th>
+                      <th>Custo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${calibracoes.map((cal) => `
+                      <tr>
+                        <td>${cal.equipamento_nome}</td>
+                        <td>${cal.tipo}</td>
+                        <td>${new Date(cal.data_calibracao).toLocaleDateString('pt-PT')}</td>
+                        <td>${new Date(cal.proxima_calibracao).toLocaleDateString('pt-PT')}</td>
+                        <td>${cal.laboratorio}</td>
+                        <td class="resultado-${cal.resultado.toLowerCase()}">${cal.resultado}</td>
+                        <td>${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(cal.custo)}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          ` : ''}
+
+          ${manutencoes.length > 0 ? `
+          <div class="secoes-modulos">
+            <div class="secao">
+              <h2>Manutenções (${manutencoes.length})</h2>
+              <div class="tabela-container">
+                <table class="tabela-dados">
+                  <thead>
+                    <tr>
+                      <th>Equipamento</th>
+                      <th>Tipo</th>
+                      <th>Data Início</th>
+                      <th>Data Fim</th>
+                      <th>Técnico</th>
+                      <th>Resultado</th>
+                      <th>Custo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${manutencoes.map((man) => `
+                      <tr>
+                        <td>${man.equipamento_nome}</td>
+                        <td>${man.tipo}</td>
+                        <td>${new Date(man.data_inicio).toLocaleDateString('pt-PT')}</td>
+                        <td>${man.data_fim ? new Date(man.data_fim).toLocaleDateString('pt-PT') : 'Em andamento'}</td>
+                        <td>${man.tecnico_responsavel}</td>
+                        <td class="resultado-${man.resultado.toLowerCase()}">${man.resultado}</td>
+                        <td>${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(man.custo)}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          ` : ''}
+
+          ${inspecoes.length > 0 ? `
+          <div class="secoes-modulos">
+            <div class="secao">
+              <h2>Inspeções (${inspecoes.length})</h2>
+              <div class="tabela-container">
+                <table class="tabela-dados">
+                  <thead>
+                    <tr>
+                      <th>Equipamento</th>
+                      <th>Tipo</th>
+                      <th>Data Inspeção</th>
+                      <th>Inspetor</th>
+                      <th>Resultado</th>
+                      <th>Duração (h)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${inspecoes.map((insp) => `
+                      <tr>
+                        <td>${insp.equipamento_nome}</td>
+                        <td>${insp.tipo}</td>
+                        <td>${new Date(insp.data_inspecao).toLocaleDateString('pt-PT')}</td>
+                        <td>${insp.inspetor}</td>
+                        <td class="resultado-${insp.resultado.toLowerCase()}">${insp.resultado}</td>
+                        <td>${insp.duracao_horas}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          ` : ''}
+        </div>
+        
+        ${this.getRodape(dados)}
+      </body>
+      </html>
+    `;
+  }
+
+  // Método para gerar relatório de calibrações e equipamentos
+  static generateCalibracoesEquipamentosReport(data: {
+    equipamentos: any[];
+    calibracoes: any[];
+    manutencoes: any[];
+    inspecoes: any[];
+    stats: any;
+    options: any;
+  }): string {
+    const reportService = new ReportService();
+    const dados: DadosRelatorio = {
+      tipo: "calibracoesEquipamentos",
+      titulo: data.options.customHeader || "Relatório de Calibrações e Equipamentos",
+      periodo: `${new Date(data.options.dateRange.start).toLocaleDateString('pt-PT')} - ${new Date(data.options.dateRange.end).toLocaleDateString('pt-PT')}`,
+      dataGeracao: new Date().toLocaleDateString('pt-PT'),
+      geradoPor: "Sistema Qualicore",
+      dados: {
+        equipamentos: data.equipamentos,
+        calibracoes: data.calibracoes,
+        manutencoes: data.manutencoes,
+        inspecoes: data.inspecoes,
+        stats: data.stats
+      }
+    };
+
+    return reportService.templateCalibracoesEquipamentos(dados);
   }
 
   // Atualizar configuração da empresa

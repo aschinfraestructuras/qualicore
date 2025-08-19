@@ -167,16 +167,23 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
 
   const modules = [
     {
-      section: "qualidade",
-      title: "QUALIDADE",
+      section: "ensaios",
+      title: "ENSAIOS E CONTROLO",
       items: [
         { name: "Ensaios", href: "/ensaios", icon: ClipboardList, badge: stats.ensaios.toString() },
         { name: "Controlo Betonagens", href: "/controlo-betonagens", icon: Building, badge: "🆕" },
         { name: "Caracterização Solos", href: "/caracterizacao-solos", icon: Layers, badge: "🆕" },
         { name: "Armaduras", href: "/armaduras", icon: Package, badge: "🆕" },
+      ]
+    },
+    {
+      section: "qualidade",
+      title: "QUALIDADE",
+      items: [
         { name: "Sistema de Normas", href: "/normas", icon: BookOpen, badge: "🌟" },
         { name: "Submissão Materiais", href: "/submissao-materiais", icon: Package, badge: "🆕" },
         { name: "Certificados e Registos", href: "/certificados", icon: Award, badge: "🆕" },
+        { name: "Calibrações e Equipamentos", href: "/calibracoes-equipamentos", icon: Settings, badge: "🆕" },
         { name: "Checklists", href: "/checklists", icon: FileText, badge: "0" },
         { name: "Não Conformidades", href: "/nao-conformidades", icon: AlertTriangle, badge: stats.ncs.toString() },
       ]
@@ -188,18 +195,25 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
         { name: "Obras", href: "/obras", icon: Building2, badge: stats.obras.toString() },
         { name: "Materiais", href: "/materiais", icon: Grid3X3, badge: "0" },
         { name: "Fornecedores", href: "/fornecedores", icon: Users, badge: "0" },
+        { name: "Fornecedores Avançados", href: "/fornecedores-avancados", icon: Building2, badge: "🆕" },
         { name: "RFIs", href: "/rfis", icon: HelpCircle, badge: "0" },
       ]
     },
     {
-      section: "ferroviario",
-      title: "FERROVIÁRIO",
+      section: "infraestrutura",
+      title: "INFRAESTRUTURA",
       items: [
         { name: "Via Férrea", href: "/via-ferrea", icon: Train, badge: "🆕" },
-        { name: "Sinalização", href: "/sinalizacao", icon: Activity, badge: "🆕" },
-        { name: "Eletrificação", href: "/eletrificacao", icon: Zap, badge: "0" },
         { name: "Pontes & Túneis", href: "/pontes-tuneis", icon: Archive, badge: "🆕" },
         { name: "Estações", href: "/estacoes", icon: Building, badge: "🆕" },
+      ]
+    },
+    {
+      section: "sistemas",
+      title: "SISTEMAS",
+      items: [
+        { name: "Sinalização", href: "/sinalizacao", icon: Activity, badge: "🆕" },
+        { name: "Eletrificação", href: "/eletrificacao", icon: Zap, badge: "0" },
         { name: "Segurança", href: "/seguranca-ferroviaria", icon: Shield, badge: "🆕" },
       ]
     },
