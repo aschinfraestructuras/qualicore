@@ -23,12 +23,14 @@ import {
   Share2,
   Cloud,
   ArrowUpRight,
+  BarChart,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import MaterialForm from "@/components/forms/MaterialForm";
 import MaterialView from "@/components/MaterialView";
 import { ShareMaterialModal } from "@/components/ShareMaterialModal";
 import { SavedMateriaisViewer } from "@/components/SavedMateriaisViewer";
+import MateriaisDashboard from "@/components/MateriaisDashboard";
 
 import { materiaisAPI } from "@/lib/supabase-api";
 import { sanitizeUUIDField } from "@/utils/uuid";
@@ -67,6 +69,7 @@ export default function Materiais() {
   const [showSavedMateriais, setShowSavedMateriais] = useState(false);
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [sharingMaterial, setSharingMaterial] = useState<Material | null>(null);
+  const [showDashboard, setShowDashboard] = useState(false);
 
 
   useEffect(() => {
@@ -216,6 +219,14 @@ export default function Materiais() {
     toast.success("Relatório exportado com sucesso!");
   };
 
+  const handleDashboardSearch = (query: string, options?: any) => {
+    setFiltros(prev => ({ ...prev, search: query }));
+  };
+
+  const handleDashboardFilterChange = (filters: any) => {
+    setFiltros(prev => ({ ...prev, ...filters }));
+  };
+
   const handlePrint = () => {
     setShowPrintModal(true);
   };
@@ -228,49 +239,29 @@ export default function Materiais() {
       
       // Determinar quais materiais usar baseado no tipo
       let materiaisParaRelatorio = materiais;
-      let titulo = "";
-      let subtitulo = "";
       
       switch (tipo) {
         case "executivo":
-          titulo = "Relatório Executivo de Materiais";
-          subtitulo = "Visão geral e estatísticas";
+          await pdfService.generateMateriaisExecutiveReport(materiaisParaRelatorio);
           break;
         case "filtrado":
           materiaisParaRelatorio = materiaisFiltrados;
-          titulo = "Relatório de Materiais Filtrados";
-          subtitulo = `Filtros aplicados: ${Object.entries(filtros).filter(([_, v]) => v).length} critérios`;
+          await pdfService.generateMateriaisFilteredReport(materiaisParaRelatorio, filtros);
           break;
         case "comparativo":
-          titulo = "Análise Comparativa de Materiais";
-          subtitulo = "Comparação entre tipos e estados";
+          await pdfService.generateMateriaisComparativeReport(materiaisParaRelatorio);
+          break;
+        case "individual":
+          // Para relatório individual, usar o primeiro material ou mostrar erro
+          if (materiaisParaRelatorio.length > 0) {
+            await pdfService.generateMateriaisIndividualReport([materiaisParaRelatorio[0]]);
+          } else {
+            toast.error("Nenhum material disponível para relatório individual");
+            return;
+          }
           break;
       }
       
-      const options = {
-        titulo,
-        subtitulo,
-        materiais: materiaisParaRelatorio,
-        tipo,
-        filtros: tipo === "filtrado" ? filtros : {},
-        materialEspecifico: null,
-        mostrarCusto: true,
-        colunas: {
-          codigo: true,
-          nome: true,
-          tipo: true,
-          estado: true,
-          zona: true,
-          data_rececao: true,
-          quantidade: true,
-          unidade: true,
-          lote: false,
-          responsavel: true,
-          fornecedor_id: false,
-        },
-      };
-      
-      pdfService.gerarRelatorioMateriais(options);
       toast.success(`Relatório ${tipo} gerado com sucesso!`);
       
     } catch (error) {
@@ -283,30 +274,7 @@ export default function Materiais() {
     try {
       const pdfService = new PDFService();
       
-      const options = {
-        titulo: `Ficha Técnica - ${material.codigo}`,
-        subtitulo: `Material: ${material.nome}`,
-        materiais: [material],
-        tipo: "individual" as const,
-        materialEspecifico: material,
-        filtros: {},
-        mostrarCusto: false,
-        colunas: {
-          codigo: true,
-          nome: true,
-          tipo: true,
-          estado: true,
-          zona: true,
-          data_rececao: true,
-          quantidade: true,
-          unidade: true,
-          lote: true,
-          responsavel: true,
-          fornecedor_id: false,
-        },
-      };
-      
-      pdfService.gerarRelatorioMateriais(options);
+      await pdfService.generateMateriaisIndividualReport([material]);
       toast.success("Relatório individual gerado com sucesso!");
       
     } catch (error) {
@@ -528,6 +496,13 @@ export default function Materiais() {
             </p>
           </div>
           <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowDashboard(!showDashboard)}
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              <BarChart className="h-4 w-4 mr-2" />
+              {showDashboard ? 'Lista' : 'Dashboard'}
+            </button>
             <button
               onClick={() => setShowForm(true)}
               className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
@@ -867,37 +842,44 @@ export default function Materiais() {
         </button>
       </div>
 
-      {/* Lista de Materiais */}
-      <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">Lista de Materiais</h3>
-          <p className="card-description">
-            {materiaisFiltrados.length} de {materiais.length} material(is)
-            encontrado(s)
-          </p>
-        </div>
-        <div className="card-content">
-          {materiaisFiltrados.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">
-                {materiais.length === 0
-                  ? "Nenhum material encontrado"
-                  : "Nenhum material corresponde aos filtros aplicados"}
-              </p>
-              {materiais.length === 0 && (
-                <button
-                  className="btn btn-primary btn-sm mt-4"
-                  onClick={handleCreate}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Criar Primeiro Material
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {materiaisFiltrados.map((material) => (
+      {/* Conteúdo Principal - Dashboard ou Lista */}
+      {showDashboard ? (
+        <MateriaisDashboard
+          materiais={materiais}
+          onSearch={handleDashboardSearch}
+          onFilterChange={handleDashboardFilterChange}
+        />
+      ) : (
+        <div className="card">
+          <div className="card-header">
+            <h3 className="card-title">Lista de Materiais</h3>
+            <p className="card-description">
+              {materiaisFiltrados.length} de {materiais.length} material(is)
+              encontrado(s)
+            </p>
+          </div>
+          <div className="card-content">
+            {materiaisFiltrados.length === 0 ? (
+              <div className="text-center py-12">
+                <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">
+                  {materiais.length === 0
+                    ? "Nenhum material encontrado"
+                    : "Nenhum material corresponde aos filtros aplicados"}
+                </p>
+                {materiais.length === 0 && (
+                  <button
+                    className="btn btn-primary btn-sm mt-4"
+                    onClick={handleCreate}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Criar Primeiro Material
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {materiaisFiltrados.map((material) => (
                 <div
                   key={material.id}
                   className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
@@ -994,6 +976,7 @@ export default function Materiais() {
           )}
         </div>
       </div>
+      )}
 
       {/* Modal do Formulário */}
       {showForm && (

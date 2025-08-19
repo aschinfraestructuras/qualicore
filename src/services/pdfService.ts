@@ -10440,6 +10440,311 @@ class PDFService {
     y += 8;
     this.doc.text(`Data de Criação: ${new Date(armadura.created_at).toLocaleDateString('pt-BR')}`, 20, y);
   }
+
+  // ===== MÉTODOS PARA MATERIAIS =====
+
+  public async generateMateriaisExecutiveReport(materiais: Material[]): Promise<void> {
+    const options: RelatorioMateriaisOptions = {
+      titulo: 'Relatório Executivo de Materiais',
+      subtitulo: 'Visão Geral e Estatísticas',
+      materiais,
+      tipo: 'executivo'
+    };
+    this.gerarRelatorioExecutivoMateriais(options);
+    this.download(`relatorio-materiais-executivo-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateMateriaisFilteredReport(materiais: Material[], filtros: any): Promise<void> {
+    const options: RelatorioMateriaisOptions = {
+      titulo: 'Relatório Filtrado de Materiais',
+      subtitulo: 'Análise por Critérios Específicos',
+      materiais,
+      tipo: 'filtrado',
+      filtros
+    };
+    this.gerarRelatorioFiltradoMateriais(options);
+    this.download(`relatorio-materiais-filtrado-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateMateriaisComparativeReport(materiais: Material[]): Promise<void> {
+    const options: RelatorioMateriaisOptions = {
+      titulo: 'Relatório Comparativo de Materiais',
+      subtitulo: 'Análise Comparativa e Benchmarks',
+      materiais,
+      tipo: 'comparativo'
+    };
+    this.gerarRelatorioComparativoMateriais(options);
+    this.download(`relatorio-materiais-comparativo-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateMateriaisIndividualReport(materiais: Material[]): Promise<void> {
+    if (materiais.length !== 1) {
+      throw new Error('Relatório individual deve conter apenas um material');
+    }
+    
+    const material = materiais[0];
+    const options: RelatorioMateriaisOptions = {
+      titulo: `Relatório Individual - ${material.codigo}`,
+      subtitulo: `Material: ${material.nome} | Tipo: ${this.getTipoTextMaterial(material.tipo)}`,
+      materiais,
+      tipo: 'individual'
+    };
+    this.gerarRelatorioIndividualMaterial(options);
+    this.download(`relatorio-materiais-individual-${material.codigo}-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  private gerarRelatorioExecutivoMateriais(options: RelatorioMateriaisOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addEstatisticasMateriais(options.materiais, startY);
+    currentY = this.addRelatorioExecutivoMateriais(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioFiltradoMateriais(options: RelatorioMateriaisOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addFiltrosMateriais(options.filtros, startY);
+    currentY = this.addRelatorioFiltradoMateriais(options, currentY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioComparativoMateriais(options: RelatorioMateriaisOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioComparativoMateriais(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private gerarRelatorioIndividualMaterial(options: RelatorioMateriaisOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let currentY = this.addRelatorioIndividualMaterial(options, startY);
+    
+    this.addProfessionalFooter();
+  }
+
+  private addEstatisticasMateriais(materiais: Material[], startY: number): number {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Estatísticas Gerais', 20, startY);
+    
+    const total = materiais.length;
+    const aprovados = materiais.filter(m => m.estado === 'aprovado').length;
+    const reprovados = materiais.filter(m => m.estado === 'reprovado').length;
+    const emAnalise = materiais.filter(m => m.estado === 'em_analise').length;
+    const pendentes = materiais.filter(m => m.estado === 'pendente').length;
+    const quantidadeTotal = materiais.reduce((sum, m) => sum + m.quantidade, 0);
+    
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(107, 114, 128);
+    
+    let y = startY + 15;
+    this.doc.text(`Total de Materiais: ${total}`, 20, y);
+    y += 8;
+    this.doc.text(`Aprovados: ${aprovados} (${((aprovados / total) * 100).toFixed(1)}%)`, 20, y);
+    y += 8;
+    this.doc.text(`Reprovados: ${reprovados} (${((reprovados / total) * 100).toFixed(1)}%)`, 20, y);
+    y += 8;
+    this.doc.text(`Em Análise: ${emAnalise} (${((emAnalise / total) * 100).toFixed(1)}%)`, 20, y);
+    y += 8;
+    this.doc.text(`Pendentes: ${pendentes} (${((pendentes / total) * 100).toFixed(1)}%)`, 20, y);
+    y += 8;
+    this.doc.text(`Quantidade Total: ${quantidadeTotal.toLocaleString()}`, 20, y);
+    
+    return y + 20;
+  }
+
+  private addRelatorioExecutivoMateriais(options: RelatorioMateriaisOptions, startY: number): number {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise por Tipo', 20, startY);
+    
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(107, 114, 128);
+    
+    const porTipo = options.materiais.reduce((acc, material) => {
+      const tipo = material.tipo || 'Não especificado';
+      acc[tipo] = (acc[tipo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    let y = startY + 15;
+    Object.entries(porTipo).forEach(([tipo, quantidade]) => {
+      this.doc.text(`${this.getTipoTextMaterial(tipo)}: ${quantidade}`, 25, y);
+      y += 8;
+    });
+    
+    return y + 20;
+  }
+
+  private addFiltrosMateriais(filtros: any, startY: number): number {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Filtros Aplicados', 20, startY);
+    
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(107, 114, 128);
+    
+    let y = startY + 15;
+    Object.entries(filtros).forEach(([key, value]) => {
+      if (value) {
+        this.doc.text(`${key}: ${value}`, 25, y);
+        y += 8;
+      }
+    });
+    
+    return y + 20;
+  }
+
+  private addRelatorioFiltradoMateriais(options: RelatorioMateriaisOptions, startY: number): number {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Materiais Filtrados', 20, startY);
+    
+    return this.addTabelaMateriais(options.materiais, startY + 15);
+  }
+
+  private addRelatorioComparativoMateriais(options: RelatorioMateriaisOptions, startY: number): number {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, startY);
+    
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(107, 114, 128);
+    
+    const porTipo = options.materiais.reduce((acc, material) => {
+      const tipo = material.tipo || 'Não especificado';
+      acc[tipo] = (acc[tipo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    let y = startY + 15;
+    this.doc.text('Distribuição por Tipo:', 20, y);
+    y += 8;
+    
+    Object.entries(porTipo).forEach(([tipo, quantidade]) => {
+      this.doc.text(`  ${this.getTipoTextMaterial(tipo)}: ${quantidade}`, 25, y);
+      y += 6;
+    });
+    
+    return y + 20;
+  }
+
+  private addRelatorioIndividualMaterial(options: RelatorioMateriaisOptions, startY: number): number {
+    const material = options.materiais[0];
+    
+    // Título da seção com fundo colorido
+    this.doc.setFillColor(59, 130, 246); // Azul
+    this.doc.rect(15, startY - 5, 180, 10, 'F');
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Ficha Técnica do Material', 20, startY + 2);
+    
+    // Detalhes do material
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(31, 41, 55);
+    
+    let y = startY + 20;
+    this.doc.text(`Código: ${material.codigo}`, 20, y);
+    y += 8;
+    this.doc.text(`Nome: ${material.nome}`, 20, y);
+    y += 8;
+    this.doc.text(`Tipo: ${this.getTipoTextMaterial(material.tipo)}`, 20, y);
+    y += 8;
+    this.doc.text(`Estado: ${this.getStatusTextMaterial(material.estado)}`, 20, y);
+    y += 8;
+    this.doc.text(`Quantidade: ${material.quantidade} ${material.unidade}`, 20, y);
+    y += 8;
+    this.doc.text(`Lote: ${material.lote}`, 20, y);
+    y += 8;
+    this.doc.text(`Zona: ${material.zona}`, 20, y);
+    y += 8;
+    this.doc.text(`Responsável: ${material.responsavel}`, 20, y);
+    y += 8;
+    this.doc.text(`Data de Receção: ${new Date(material.data_rececao).toLocaleDateString('pt-PT')}`, 20, y);
+    
+    return y + 20;
+  }
+
+  private addTabelaMateriais(materiais: Material[], startY: number = 200): number {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Dados dos Materiais', 20, startY);
+    
+    // Cabeçalho da tabela
+    this.doc.setFontSize(10);
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(20, startY + 10, 170, 8, 'F');
+    
+    this.doc.text('Código', 22, startY + 16);
+    this.doc.text('Nome', 45, startY + 16);
+    this.doc.text('Tipo', 80, startY + 16);
+    this.doc.text('Estado', 105, startY + 16);
+    this.doc.text('Quantidade', 130, startY + 16);
+    this.doc.text('Zona', 155, startY + 16);
+    
+    // Dados da tabela
+    this.doc.setTextColor(31, 41, 55);
+    let y = startY + 25;
+    
+    materiais.slice(0, 20).forEach((material, index) => {
+      if (y > 270) {
+        this.doc.addPage();
+        y = 20;
+      }
+      
+      const bgColor = index % 2 === 0 ? [248, 250, 252] : [255, 255, 255];
+      this.doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+      this.doc.rect(20, y - 5, 170, 6, 'F');
+      
+      this.doc.text(material.codigo || '', 22, y);
+      this.doc.text(material.nome || '', 45, y);
+      this.doc.text(this.getTipoTextMaterial(material.tipo) || '', 80, y);
+      this.doc.text(this.getStatusTextMaterial(material.estado) || '', 105, y);
+      this.doc.text(`${material.quantidade} ${material.unidade}`, 130, y);
+      this.doc.text(material.zona || '', 155, y);
+      
+      y += 8;
+    });
+    
+    return y + 10;
+  }
+
+  private getTipoTextMaterial(tipo: string): string {
+    const tipos = {
+      'betao': 'Betão',
+      'aco': 'Aço',
+      'agregado': 'Agregado',
+      'cimento': 'Cimento',
+      'outro': 'Outro'
+    };
+    return tipos[tipo as keyof typeof tipos] || tipo;
+  }
+
+  private getStatusTextMaterial(estado: string): string {
+    const estados = {
+      'pendente': 'Pendente',
+      'em_analise': 'Em Análise',
+      'aprovado': 'Aprovado',
+      'reprovado': 'Reprovado',
+      'concluido': 'Concluído'
+    };
+    return estados[estado as keyof typeof estados] || estado;
+  }
 }
 
 export default PDFService; 
