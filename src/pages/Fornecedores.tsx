@@ -18,6 +18,7 @@ import {
   XCircle,
   Share2,
   Cloud,
+  BarChart,
 } from "lucide-react";
 import { fornecedoresAPI } from "@/lib/supabase-api";
 import { Fornecedor } from "@/types";
@@ -26,6 +27,7 @@ import FornecedorForm from "@/components/forms/FornecedorForm";
 import RelatorioFornecedoresPremium from "@/components/RelatorioFornecedoresPremium";
 import { ShareFornecedorModal } from "@/components/ShareFornecedorModal";
 import { SavedFornecedoresViewer } from "@/components/SavedFornecedoresViewer";
+import FornecedoresDashboard from "@/components/FornecedoresDashboard";
 import PDFService from "@/services/pdfService";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -49,6 +51,7 @@ export default function Fornecedores() {
     useState<Fornecedor | null>(null);
   const [sharingFornecedor, setSharingFornecedor] = useState<Fornecedor | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -134,6 +137,16 @@ export default function Fornecedores() {
   const handleView = (fornecedor: Fornecedor) => {
     setSelectedFornecedor(fornecedor);
     setShowViewModal(true);
+  };
+
+  const handleDashboardSearch = (query: string, options?: any) => {
+    setSearchTerm(query);
+  };
+
+  const handleDashboardFilterChange = (filters: any) => {
+    if (filters.estado) {
+      setEstadoFilter(filters.estado);
+    }
   };
 
   const handleFormSubmit = async (data: any) => {
@@ -237,6 +250,13 @@ export default function Fornecedores() {
           <p className="text-gray-600">Controlo de fornecedores e parceiros</p>
         </div>
         <div className="flex items-center space-x-3">
+          <button
+            onClick={() => setShowDashboard(!showDashboard)}
+            className="btn btn-outline btn-md"
+          >
+            <BarChart className="h-4 w-4 mr-2" />
+            {showDashboard ? 'Lista' : 'Dashboard'}
+          </button>
           <button 
             className="btn btn-outline btn-md" 
             onClick={() => setShowSavedFornecedores(true)}
@@ -408,28 +428,35 @@ export default function Fornecedores() {
         </div>
       </div>
 
-      {/* Lista de Fornecedores */}
-      <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">Lista de Fornecedores</h3>
-          <p className="card-description">
-            {filteredFornecedores.length} fornecedor(es) encontrado(s)
-          </p>
-        </div>
-        <div className="card-content">
-          {filteredFornecedores.length === 0 ? (
-            <div className="text-center py-12">
-              <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Nenhum fornecedor encontrado</p>
-              <button
-                className="btn btn-primary btn-sm mt-4"
-                onClick={handleCreate}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Primeiro Fornecedor
-              </button>
-            </div>
-          ) : (
+      {/* Conteúdo Principal - Dashboard ou Lista */}
+      {showDashboard ? (
+        <FornecedoresDashboard
+          fornecedores={fornecedores}
+          onSearch={handleDashboardSearch}
+          onFilterChange={handleDashboardFilterChange}
+        />
+      ) : (
+        <div className="card">
+          <div className="card-header">
+            <h3 className="card-title">Lista de Fornecedores</h3>
+            <p className="card-description">
+              {filteredFornecedores.length} fornecedor(es) encontrado(s)
+            </p>
+          </div>
+          <div className="card-content">
+            {filteredFornecedores.length === 0 ? (
+              <div className="text-center py-12">
+                <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">Nenhum fornecedor encontrado</p>
+                <button
+                  className="btn btn-primary btn-sm mt-4"
+                  onClick={handleCreate}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar Primeiro Fornecedor
+                </button>
+              </div>
+            ) : (
             <div className="overflow-x-auto">
               <table className="table w-full">
                 <thead>
@@ -546,6 +573,7 @@ export default function Fornecedores() {
           )}
         </div>
       </div>
+      )}
 
       {/* Modal do Formulário */}
       {showForm && (

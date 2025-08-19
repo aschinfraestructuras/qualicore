@@ -81,6 +81,15 @@ interface RelatorioMateriaisOptions {
   colunas?: Record<string, boolean>;
 }
 
+interface RelatorioFornecedoresOptions {
+  titulo: string;
+  subtitulo?: string;
+  fornecedores: Fornecedor[];
+  tipo: "executivo" | "individual" | "filtrado" | "comparativo";
+  filtros?: any;
+  fornecedorEspecifico?: Fornecedor;
+}
+
 interface RelatorioObrasOptions {
   titulo: string;
   subtitulo?: string;
@@ -10744,6 +10753,281 @@ class PDFService {
       'concluido': 'Concluído'
     };
     return estados[estado as keyof typeof estados] || estado;
+  }
+
+  // ===== MÉTODOS PARA FORNECEDORES =====
+
+  public async generateFornecedoresExecutiveReport(fornecedores: Fornecedor[]): Promise<void> {
+    const options: RelatorioFornecedoresOptions = {
+      titulo: 'Relatório Executivo de Fornecedores',
+      subtitulo: 'Visão Geral e Estatísticas',
+      fornecedores,
+      tipo: 'executivo'
+    };
+    this.gerarRelatorioExecutivoFornecedores(options);
+    this.download(`relatorio-fornecedores-executivo-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateFornecedoresFilteredReport(fornecedores: Fornecedor[], filtros: any): Promise<void> {
+    const options: RelatorioFornecedoresOptions = {
+      titulo: 'Relatório Filtrado de Fornecedores',
+      subtitulo: 'Análise por Critérios Específicos',
+      fornecedores,
+      tipo: 'filtrado',
+      filtros
+    };
+    this.gerarRelatorioFiltradoFornecedores(options);
+    this.download(`relatorio-fornecedores-filtrado-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateFornecedoresComparativeReport(fornecedores: Fornecedor[]): Promise<void> {
+    const options: RelatorioFornecedoresOptions = {
+      titulo: 'Relatório Comparativo de Fornecedores',
+      subtitulo: 'Análise Comparativa e Benchmarks',
+      fornecedores,
+      tipo: 'comparativo'
+    };
+    this.gerarRelatorioComparativoFornecedores(options);
+    this.download(`relatorio-fornecedores-comparativo-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  public async generateFornecedoresIndividualReport(fornecedores: Fornecedor[]): Promise<void> {
+    if (fornecedores.length !== 1) {
+      throw new Error('Relatório individual deve conter apenas um fornecedor');
+    }
+    
+    const fornecedor = fornecedores[0];
+    const options: RelatorioFornecedoresOptions = {
+      titulo: `Relatório Individual - ${fornecedor.nome}`,
+      subtitulo: `Fornecedor: ${fornecedor.nome} | NIF: ${fornecedor.nif}`,
+      fornecedores,
+      tipo: 'individual'
+    };
+    this.gerarRelatorioIndividualFornecedor(options);
+    this.download(`relatorio-fornecedores-individual-${fornecedor.nif}-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  private gerarRelatorioExecutivoFornecedores(options: RelatorioFornecedoresOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let y = startY;
+    
+    // Estatísticas gerais
+    y = this.addEstatisticasFornecedores(options.fornecedores, y);
+    y += 20;
+    
+    // Análise por estado
+    y = this.addRelatorioExecutivoFornecedores(options.fornecedores, y);
+    
+    this.doc.setPage(this.doc.getNumberOfPages());
+  }
+
+  private gerarRelatorioFiltradoFornecedores(options: RelatorioFornecedoresOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let y = startY;
+    
+    // Filtros aplicados
+    y = this.addFiltrosFornecedores(options.filtros, y);
+    y += 20;
+    
+    // Dados filtrados
+    y = this.addRelatorioFiltradoFornecedores(options.fornecedores, y);
+    
+    this.doc.setPage(this.doc.getNumberOfPages());
+  }
+
+  private gerarRelatorioComparativoFornecedores(options: RelatorioFornecedoresOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let y = startY;
+    
+    // Análise comparativa
+    y = this.addRelatorioComparativoFornecedores(options.fornecedores, y);
+    
+    this.doc.setPage(this.doc.getNumberOfPages());
+  }
+
+  private gerarRelatorioIndividualFornecedor(options: RelatorioFornecedoresOptions): void {
+    this.doc = new jsPDF();
+    this.addProfessionalHeader(options.titulo, options.subtitulo);
+    
+    const startY = 90;
+    let y = startY;
+    
+    // Detalhes do fornecedor
+    y = this.addRelatorioIndividualFornecedor(options.fornecedores[0], y);
+    
+    this.doc.setPage(this.doc.getNumberOfPages());
+  }
+
+  private addEstatisticasFornecedores(fornecedores: Fornecedor[], startY: number): number {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Estatísticas Gerais', 20, startY);
+    
+    const total = fornecedores.length;
+    const ativos = fornecedores.filter(f => f.estado === 'ativo').length;
+    const inativos = fornecedores.filter(f => f.estado === 'inativo').length;
+    
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(107, 114, 128);
+    
+    let y = startY + 15;
+    this.doc.text(`Total de Fornecedores: ${total}`, 20, y);
+    y += 8;
+    this.doc.text(`Fornecedores Ativos: ${ativos} (${((ativos/total)*100).toFixed(1)}%)`, 20, y);
+    y += 8;
+    this.doc.text(`Fornecedores Inativos: ${inativos} (${((inativos/total)*100).toFixed(1)}%)`, 20, y);
+    
+    return y + 10;
+  }
+
+  private addRelatorioExecutivoFornecedores(fornecedores: Fornecedor[], startY: number): number {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise por Estado', 20, startY);
+    
+    // Análise por estado
+    const estados = fornecedores.reduce((acc, f) => {
+      acc[f.estado] = (acc[f.estado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(107, 114, 128);
+    
+    let y = startY + 15;
+    Object.entries(estados).forEach(([estado, count]) => {
+      this.doc.text(`${estado.charAt(0).toUpperCase() + estado.slice(1)}: ${count} fornecedores`, 20, y);
+      y += 8;
+    });
+    
+    return y + 10;
+  }
+
+  private addFiltrosFornecedores(filtros: any, startY: number): number {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Filtros Aplicados', 20, startY);
+    
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(107, 114, 128);
+    
+    let y = startY + 15;
+    Object.entries(filtros).forEach(([key, value]) => {
+      if (value) {
+        this.doc.text(`${key}: ${value}`, 20, y);
+        y += 8;
+      }
+    });
+    
+    return y + 10;
+  }
+
+  private addRelatorioFiltradoFornecedores(fornecedores: Fornecedor[], startY: number): number {
+    return this.addTabelaFornecedores(fornecedores, startY);
+  }
+
+  private addRelatorioComparativoFornecedores(fornecedores: Fornecedor[], startY: number): number {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, startY);
+    
+    // Análise por estado
+    const estados = fornecedores.reduce((acc, f) => {
+      acc[f.estado] = (acc[f.estado] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(107, 114, 128);
+    
+    let y = startY + 15;
+    Object.entries(estados).forEach(([estado, count]) => {
+      this.doc.text(`${estado.charAt(0).toUpperCase() + estado.slice(1)}: ${count} fornecedores`, 20, y);
+      y += 8;
+    });
+    
+    return y + 10;
+  }
+
+  private addRelatorioIndividualFornecedor(fornecedor: Fornecedor, startY: number): number {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Ficha Técnica do Fornecedor', 20, startY);
+    
+    // Detalhes do fornecedor
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(31, 41, 55);
+    
+    let y = startY + 20;
+    this.doc.text(`Nome: ${fornecedor.nome}`, 20, y);
+    y += 8;
+    this.doc.text(`NIF: ${fornecedor.nif}`, 20, y);
+    y += 8;
+    this.doc.text(`Estado: ${fornecedor.estado}`, 20, y);
+    y += 8;
+    this.doc.text(`Contacto: ${fornecedor.contacto}`, 20, y);
+    y += 8;
+    this.doc.text(`Email: ${fornecedor.email}`, 20, y);
+    y += 8;
+    this.doc.text(`Telefone: ${fornecedor.telefone}`, 20, y);
+    y += 8;
+    this.doc.text(`Morada: ${fornecedor.morada}`, 20, y);
+    y += 8;
+    this.doc.text(`Data de Registo: ${new Date(fornecedor.data_registo).toLocaleDateString('pt-PT')}`, 20, y);
+    
+    return y + 20;
+  }
+
+  private addTabelaFornecedores(fornecedores: Fornecedor[], startY: number = 200): number {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Dados dos Fornecedores', 20, startY);
+    
+    // Cabeçalho da tabela
+    this.doc.setFontSize(10);
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(20, startY + 10, 170, 8, 'F');
+    
+    this.doc.text('Nome', 22, startY + 16);
+    this.doc.text('NIF', 60, startY + 16);
+    this.doc.text('Estado', 90, startY + 16);
+    this.doc.text('Contacto', 120, startY + 16);
+    this.doc.text('Email', 150, startY + 16);
+    
+    // Dados da tabela
+    this.doc.setTextColor(31, 41, 55);
+    let y = startY + 25;
+    
+    fornecedores.slice(0, 20).forEach((fornecedor, index) => {
+      if (y > 270) {
+        this.doc.addPage();
+        y = 20;
+      }
+      
+      const bgColor = index % 2 === 0 ? [248, 250, 252] : [255, 255, 255];
+      this.doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+      this.doc.rect(20, y - 5, 170, 6, 'F');
+      
+      this.doc.text(fornecedor.nome || '', 22, y);
+      this.doc.text(fornecedor.nif || '', 60, y);
+      this.doc.text(fornecedor.estado || '', 90, y);
+      this.doc.text(fornecedor.contacto || '', 120, y);
+      this.doc.text(fornecedor.email || '', 150, y);
+      
+      y += 8;
+    });
+    
+    return y + 10;
   }
 }
 
