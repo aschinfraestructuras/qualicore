@@ -47,6 +47,7 @@ interface InspecaoFilterState {
   dataInspecaoInicio: string;
   dataInspecaoFim: string;
   elemento: string;
+  estado: string;
 }
 
 interface ViaFerreaFiltersProps {

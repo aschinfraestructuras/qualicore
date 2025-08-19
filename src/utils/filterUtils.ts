@@ -75,6 +75,7 @@ export interface InspecaoFilterState {
   dataInspecaoInicio: string;
   dataInspecaoFim: string;
   elemento: string;
+  estado: string;
 }
 
 export function applyFilters(data: any[], filters: FilterState): any[] {
@@ -297,6 +298,11 @@ export function applyInspecaoFilters(data: any[], filters: InspecaoFilterState):
       }
     }
 
+    // Filtro por estado
+    if (filters.estado && item.estado !== filters.estado) {
+      return false;
+    }
+
     return true;
   });
 }
@@ -306,7 +312,7 @@ export function getActiveFiltersCount(filters: FilterState | TravessaFilterState
 
   if (filters.searchTerm) count++;
   if (filters.tipo) count++;
-  if (filters.estado) count++;
+  if ('estado' in filters && filters.estado) count++;
 
   // Filtros específicos de Trilhos
   if ('fabricante' in filters && filters.fabricante) count++;
@@ -460,7 +466,8 @@ export function getDefaultInspecaoFilters(): InspecaoFilterState {
     inspector: '',
     dataInspecaoInicio: '',
     dataInspecaoFim: '',
-    elemento: ''
+    elemento: '',
+    estado: ''
   };
 }
 
