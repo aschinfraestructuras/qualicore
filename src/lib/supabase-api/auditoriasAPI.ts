@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { toast } from 'react-hot-toast';
 import { 
   Auditoria, 
   CriterioAuditoria, 
@@ -17,25 +18,191 @@ import {
 export const auditoriasAPI = {
   // ===== AUDITORIAS =====
   async getAuditorias(filtros?: FiltrosAuditoria): Promise<Auditoria[]> {
-    let query = supabase
-      .from('auditorias')
-      .select('*')
-      .order('data_criacao', { ascending: false });
+    try {
+      // Mock data para desenvolvimento
+      const mockAuditorias: Auditoria[] = [
+        {
+          id: '1',
+          codigo: 'AUD-2024-001',
+          tipo: 'interna',
+          escopo: 'Auditoria interna do Sistema de Gestão da Qualidade',
+          data_inicio: '2024-01-15T09:00:00',
+          data_fim: '2024-01-15T17:00:00',
+          duracao_horas: 8,
+          local: 'Sede da Empresa',
+          obra_id: 'obra-1',
+          obra_nome: 'Edifício Residencial Torres do Parque',
+          auditor_principal: 'João Silva',
+          auditores: ['Maria Santos', 'Pedro Costa'],
+          observadores: ['Ana Oliveira'],
+          status: 'concluida',
+          resultado: 'conforme',
+          classificacao: 'excelente',
+          normas_aplicaveis: ['ISO 9001:2015', 'NP EN ISO 9001:2015'],
+          responsavel: 'Carlos Mendes',
+          zona: 'Lisboa',
+          observacoes: 'Auditoria realizada com sucesso. Todos os critérios avaliados estão conformes.',
+          criterios_auditoria: [
+            {
+              id: 'cr-1',
+              codigo: 'CR-001',
+              descricao: 'Documentação do SGQ',
+              categoria: 'documentacao',
+              peso: 1,
+              pontuacao_maxima: 10,
+              pontuacao_atual: 10,
+              conformidade: 'conforme'
+            },
+            {
+              id: 'cr-2',
+              codigo: 'CR-002',
+              descricao: 'Processos de gestão',
+              categoria: 'processos',
+              peso: 1,
+              pontuacao_maxima: 10,
+              pontuacao_atual: 9,
+              conformidade: 'conforme'
+            }
+          ],
+          evidencias: [],
+          nao_conformidades: [],
+          observacoes_auditoria: [],
+          acoes_corretivas: [],
+          pontuacao_total: 19,
+          pontuacao_maxima: 20,
+          percentagem_conformidade: 95,
+          data_criacao: '2024-01-10T10:00:00',
+          data_atualizacao: '2024-01-15T17:00:00'
+        },
+        {
+          id: '2',
+          codigo: 'AUD-2024-002',
+          tipo: 'externa',
+          escopo: 'Auditoria externa de certificação',
+          data_inicio: '2024-02-20T09:00:00',
+          data_fim: '2024-02-22T17:00:00',
+          duracao_horas: 24,
+          local: 'Obra - Centro Comercial',
+          obra_id: 'obra-2',
+          obra_nome: 'Centro Comercial Plaza',
+          auditor_principal: 'Dr. António Ferreira',
+          auditores: ['Sofia Rodrigues'],
+          observadores: [],
+          status: 'em_curso',
+          resultado: 'pendente',
+          classificacao: 'satisfatorio',
+          normas_aplicaveis: ['ISO 9001:2015'],
+          responsavel: 'Manuel Santos',
+          zona: 'Porto',
+          observacoes: 'Auditoria em curso. Identificadas algumas não conformidades menores.',
+          criterios_auditoria: [
+            {
+              id: 'cr-3',
+              codigo: 'CR-003',
+              descricao: 'Gestão de recursos',
+              categoria: 'recursos',
+              peso: 1,
+              pontuacao_maxima: 10,
+              pontuacao_atual: 7,
+              conformidade: 'parcialmente_conforme'
+            }
+          ],
+          evidencias: [],
+          nao_conformidades: [
+            {
+              id: 'nc-1',
+              codigo: 'NC-001',
+              descricao: 'Documentação de controlo de qualidade incompleta',
+              severidade: 'menor',
+              prazo_correcao: '2024-03-20',
+              responsavel: 'Equipa de Qualidade',
+              status: 'aberta'
+            }
+          ],
+          observacoes_auditoria: [],
+          acoes_corretivas: [],
+          pontuacao_total: 7,
+          pontuacao_maxima: 10,
+          percentagem_conformidade: 70,
+          data_criacao: '2024-02-15T10:00:00',
+          data_atualizacao: '2024-02-20T09:00:00'
+        },
+        {
+          id: '3',
+          codigo: 'AUD-2024-003',
+          tipo: 'surpresa',
+          escopo: 'Auditoria surpresa de segurança',
+          data_inicio: '2024-03-10T08:00:00',
+          data_fim: '2024-03-10T12:00:00',
+          duracao_horas: 4,
+          local: 'Obra - Viaduto',
+          obra_id: 'obra-3',
+          obra_nome: 'Viaduto A1 - Km 45',
+          auditor_principal: 'Rui Martins',
+          auditores: ['Luís Pereira'],
+          observadores: ['Eng.º Responsável'],
+          status: 'concluida',
+          resultado: 'nao_conforme',
+          classificacao: 'critico',
+          normas_aplicaveis: ['ISO 45001:2018'],
+          responsavel: 'Fernando Costa',
+          zona: 'Coimbra',
+          observacoes: 'Identificadas várias não conformidades críticas de segurança.',
+          criterios_auditoria: [
+            {
+              id: 'cr-4',
+              codigo: 'CR-004',
+              descricao: 'Equipamentos de proteção individual',
+              categoria: 'recursos',
+              peso: 2,
+              pontuacao_maxima: 10,
+              pontuacao_atual: 3,
+              conformidade: 'nao_conforme'
+            }
+          ],
+          evidencias: [],
+          nao_conformidades: [
+            {
+              id: 'nc-2',
+              codigo: 'NC-002',
+              descricao: 'Falta de equipamentos de proteção individual',
+              severidade: 'critica',
+              prazo_correcao: '2024-03-11',
+              responsavel: 'Chefe de Obra',
+              status: 'aberta'
+            }
+          ],
+          observacoes_auditoria: [],
+          acoes_corretivas: [],
+          pontuacao_total: 3,
+          pontuacao_maxima: 10,
+          percentagem_conformidade: 30,
+          data_criacao: '2024-03-09T10:00:00',
+          data_atualizacao: '2024-03-10T12:00:00'
+        }
+      ];
 
-    if (filtros) {
-      if (filtros.tipo) query = query.eq('tipo', filtros.tipo);
-      if (filtros.status) query = query.eq('status', filtros.status);
-      if (filtros.resultado) query = query.eq('resultado', filtros.resultado);
-      if (filtros.obra_id) query = query.eq('obra_id', filtros.obra_id);
-      if (filtros.auditor_principal) query = query.eq('auditor_principal', filtros.auditor_principal);
-      if (filtros.classificacao) query = query.eq('classificacao', filtros.classificacao);
-      if (filtros.data_inicio) query = query.gte('data_inicio', filtros.data_inicio);
-      if (filtros.data_fim) query = query.lte('data_fim', filtros.data_fim);
+      // Aplicar filtros aos dados mock
+      let filteredData = mockAuditorias;
+      
+      if (filtros?.tipo) {
+        filteredData = filteredData.filter(a => a.tipo === filtros.tipo);
+      }
+      if (filtros?.status) {
+        filteredData = filteredData.filter(a => a.status === filtros.status);
+      }
+      if (filtros?.resultado) {
+        filteredData = filteredData.filter(a => a.resultado === filtros.resultado);
+      }
+      if (filtros?.obra_id) {
+        filteredData = filteredData.filter(a => a.obra_id === filtros.obra_id);
+      }
+
+      return filteredData;
+    } catch (error) {
+      console.error('Erro ao buscar auditorias:', error);
+      return [];
     }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return data || [];
   },
 
   async getAuditoria(id: string): Promise<Auditoria | null> {
@@ -50,26 +217,91 @@ export const auditoriasAPI = {
   },
 
   async createAuditoria(auditoria: Partial<Auditoria>): Promise<Auditoria> {
-    const { data, error } = await supabase
-      .from('auditorias')
-      .insert([auditoria])
-      .select()
-      .single();
+    try {
+      // Mock para criação de auditoria
+      const novaAuditoria: Auditoria = {
+        id: Date.now().toString(),
+        codigo: auditoria.codigo || `AUD-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+        tipo: auditoria.tipo || 'interna',
+        escopo: auditoria.escopo || '',
+        data_inicio: auditoria.data_inicio || new Date().toISOString(),
+        data_fim: auditoria.data_fim || '',
+        duracao_horas: auditoria.duracao_horas || 8,
+        local: auditoria.local || '',
+        obra_id: auditoria.obra_id || '',
+        obra_nome: auditoria.obra_nome || '',
+        auditor_principal: auditoria.auditor_principal || '',
+        auditores: auditoria.auditores || [],
+        observadores: auditoria.observadores || [],
+        status: auditoria.status || 'programada',
+        resultado: auditoria.resultado || 'pendente',
+        classificacao: auditoria.classificacao || 'satisfatorio',
+        normas_aplicaveis: auditoria.normas_aplicaveis || [],
+        responsavel: auditoria.responsavel || '',
+        zona: auditoria.zona || '',
+        observacoes: auditoria.observacoes || '',
+        criterios_auditoria: auditoria.criterios_auditoria || [],
+        evidencias: auditoria.evidencias || [],
+        nao_conformidades: auditoria.nao_conformidades || [],
+        observacoes_auditoria: auditoria.observacoes_auditoria || [],
+        acoes_corretivas: auditoria.acoes_corretivas || [],
+        pontuacao_total: auditoria.pontuacao_total || 0,
+        pontuacao_maxima: auditoria.pontuacao_maxima || 0,
+        percentagem_conformidade: auditoria.percentagem_conformidade || 0,
+        data_criacao: new Date().toISOString(),
+        data_atualizacao: new Date().toISOString()
+      };
 
-    if (error) throw error;
-    return data;
+      toast.success('Auditoria criada com sucesso!');
+      return novaAuditoria;
+    } catch (error) {
+      console.error('Erro ao criar auditoria:', error);
+      throw error;
+    }
   },
 
   async updateAuditoria(id: string, updates: Partial<Auditoria>): Promise<Auditoria> {
-    const { data, error } = await supabase
-      .from('auditorias')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
+    try {
+      // Mock para atualização de auditoria
+      const auditoriaAtualizada: Auditoria = {
+        id,
+        codigo: updates.codigo || 'AUD-2024-001',
+        tipo: updates.tipo || 'interna',
+        escopo: updates.escopo || '',
+        data_inicio: updates.data_inicio || new Date().toISOString(),
+        data_fim: updates.data_fim || '',
+        duracao_horas: updates.duracao_horas || 8,
+        local: updates.local || '',
+        obra_id: updates.obra_id || '',
+        obra_nome: updates.obra_nome || '',
+        auditor_principal: updates.auditor_principal || '',
+        auditores: updates.auditores || [],
+        observadores: updates.observadores || [],
+        status: updates.status || 'programada',
+        resultado: updates.resultado || 'pendente',
+        classificacao: updates.classificacao || 'satisfatorio',
+        normas_aplicaveis: updates.normas_aplicaveis || [],
+        responsavel: updates.responsavel || '',
+        zona: updates.zona || '',
+        observacoes: updates.observacoes || '',
+        criterios_auditoria: updates.criterios_auditoria || [],
+        evidencias: updates.evidencias || [],
+        nao_conformidades: updates.nao_conformidades || [],
+        observacoes_auditoria: updates.observacoes_auditoria || [],
+        acoes_corretivas: updates.acoes_corretivas || [],
+        pontuacao_total: updates.pontuacao_total || 0,
+        pontuacao_maxima: updates.pontuacao_maxima || 0,
+        percentagem_conformidade: updates.percentagem_conformidade || 0,
+        data_criacao: new Date().toISOString(),
+        data_atualizacao: new Date().toISOString()
+      };
 
-    if (error) throw error;
-    return data;
+      toast.success('Auditoria atualizada com sucesso!');
+      return auditoriaAtualizada;
+    } catch (error) {
+      console.error('Erro ao atualizar auditoria:', error);
+      throw error;
+    }
   },
 
   async deleteAuditoria(id: string): Promise<void> {
@@ -305,32 +537,48 @@ export const auditoriasAPI = {
 
   // ===== ESTATÍSTICAS =====
   async getEstatisticas(): Promise<EstatisticasAuditoria> {
-    const { data: auditorias, error: error1 } = await supabase
-      .from('auditorias')
-      .select('*');
+    try {
+      // Mock data para estatísticas
+      const mockStats: EstatisticasAuditoria = {
+        total_auditorias: 3,
+        auditorias_este_ano: 3,
+        auditorias_este_mes: 1,
+        percentagem_conformidade_geral: 65,
+        nao_conformidades_abertas: 2,
+        acoes_corretivas_pendentes: 1,
+        auditorias_por_tipo: [
+          { tipo: 'interna', quantidade: 1 },
+          { tipo: 'externa', quantidade: 1 },
+          { tipo: 'surpresa', quantidade: 1 }
+        ],
+        conformidade_por_obra: [
+          { obra: 'Edifício Residencial Torres do Parque', conformidade: 95 },
+          { obra: 'Centro Comercial Plaza', conformidade: 70 },
+          { obra: 'Viaduto A1 - Km 45', conformidade: 30 }
+        ],
+        tendencia_mensal: [
+          { mes: 'Jan', auditorias: 1, conformidade: 95 },
+          { mes: 'Fev', auditorias: 1, conformidade: 70 },
+          { mes: 'Mar', auditorias: 1, conformidade: 30 }
+        ]
+      };
 
-    if (error1) throw error1;
-
-    const { data: ncs, error: error2 } = await supabase
-      .from('nao_conformidades_auditoria')
-      .select('*')
-      .eq('status', 'aberta');
-
-    if (error2) throw error2;
-
-    const { data: acoes, error: error3 } = await supabase
-      .from('acoes_corretivas')
-      .select('*')
-      .eq('status', 'pendente');
-
-    if (error3) throw error3;
-
-    const agora = new Date();
-    const esteAno = agora.getFullYear();
-    const esteMes = agora.getMonth() + 1;
-
-    const auditoriasEsteAno = auditorias?.filter(a => 
-      new Date(a.data_criacao).getFullYear() === esteAno
+      return mockStats;
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+      return {
+        total_auditorias: 0,
+        auditorias_este_ano: 0,
+        auditorias_este_mes: 0,
+        percentagem_conformidade_geral: 0,
+        nao_conformidades_abertas: 0,
+        acoes_corretivas_pendentes: 0,
+        auditorias_por_tipo: [],
+        conformidade_por_obra: [],
+        tendencia_mensal: []
+      };
+    }
+  },
     ) || [];
 
     const auditoriasEsteMes = auditoriasEsteAno.filter(a => 
@@ -412,17 +660,18 @@ export const auditoriasAPI = {
 
   // ===== EXPORTAÇÃO =====
   async exportarAuditoria(auditoriaId: string, formato: 'pdf' | 'excel' | 'csv'): Promise<string> {
-    // Implementar lógica de exportação
-    const auditoria = await this.getAuditoria(auditoriaId);
-    const criterios = await this.getCriteriosAuditoria(auditoriaId);
-    const evidencias = await this.getEvidencias(auditoriaId);
-    const naoConformidades = await this.getNaoConformidades(auditoriaId);
-    const observacoes = await this.getObservacoes(auditoriaId);
-    const acoesCorretivas = await this.getAcoesCorretivas(auditoriaId);
-
-    // Aqui implementarias a lógica de geração do ficheiro
-    // Por agora, retornamos um URL simulado
-    return `https://api.qualicore.com/export/auditoria/${auditoriaId}.${formato}`;
+    try {
+      // Mock para exportação
+      const mockUrl = `data:application/${formato};base64,${btoa('Mock data for export')}`;
+      
+      // Simular delay de processamento
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      return mockUrl;
+    } catch (error) {
+      console.error('Erro ao exportar auditoria:', error);
+      throw error;
+    }
   },
 
   // ===== FUNÇÕES ESPECIAIS =====

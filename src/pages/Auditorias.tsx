@@ -49,12 +49,15 @@ import {
   AreaChart,
   Area
 } from 'recharts';
+import AuditoriaForm from '../components/forms/AuditoriaForm';
+import ExportarAuditoria from '../components/ExportarAuditoria';
 
 export default function Auditorias() {
   const [auditorias, setAuditorias] = useState<Auditoria[]>([]);
   const [filteredAuditorias, setFilteredAuditorias] = useState<Auditoria[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [selectedAuditoria, setSelectedAuditoria] = useState<Auditoria | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -177,6 +180,23 @@ export default function Auditorias() {
         toast.error('Erro ao excluir auditoria');
       }
     }
+  };
+
+  const handleSaveAuditoria = (auditoria: Auditoria) => {
+    setShowForm(false);
+    setSelectedAuditoria(null);
+    loadAuditorias();
+    loadStats();
+  };
+
+  const handleEditAuditoria = (auditoria: Auditoria) => {
+    setSelectedAuditoria(auditoria);
+    setShowForm(true);
+  };
+
+  const handleExportAuditoria = (auditoria: Auditoria) => {
+    setSelectedAuditoria(auditoria);
+    setShowExport(true);
   };
 
   if (loading) {
@@ -499,22 +519,29 @@ export default function Auditorias() {
                             setSelectedAuditoria(auditoria);
                             setShowDetails(true);
                           }}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                          title="Ver detalhes"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => {
-                            setSelectedAuditoria(auditoria);
-                            setShowForm(true);
-                          }}
-                          className="text-green-600 hover:text-green-900"
+                          onClick={() => handleEditAuditoria(auditoria)}
+                          className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                          title="Editar auditoria"
                         >
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
+                          onClick={() => handleExportAuditoria(auditoria)}
+                          className="text-purple-600 hover:text-purple-900 p-1 rounded hover:bg-purple-50"
+                          title="Exportar auditoria"
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+                        <button
                           onClick={() => handleDeleteAuditoria(auditoria.id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                          title="Excluir auditoria"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -540,7 +567,28 @@ export default function Auditorias() {
         </motion.div>
       </div>
 
-      {/* Formulário e Detalhes serão implementados em componentes separados */}
+      {/* Formulário de Nova/Editar Auditoria */}
+      {showForm && (
+        <AuditoriaForm
+          auditoria={selectedAuditoria}
+          onSave={handleSaveAuditoria}
+          onCancel={() => {
+            setShowForm(false);
+            setSelectedAuditoria(null);
+          }}
+        />
+      )}
+
+      {/* Componente de Exportação */}
+      {showExport && selectedAuditoria && (
+        <ExportarAuditoria
+          auditoria={selectedAuditoria}
+          onClose={() => {
+            setShowExport(false);
+            setSelectedAuditoria(null);
+          }}
+        />
+      )}
     </div>
   );
 }
