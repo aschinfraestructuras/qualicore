@@ -30,7 +30,7 @@ import {
   BarChart as BarChartIcon,
 } from "lucide-react";
 import { Fornecedor } from "@/types";
-import PDFService from "@/services/pdfService";
+import { PDFService } from "@/services/pdfService";
 import toast from "react-hot-toast";
 
 interface FornecedoresDashboardProps {

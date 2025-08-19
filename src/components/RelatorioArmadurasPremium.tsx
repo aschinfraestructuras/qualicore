@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Armadura } from "@/types/armaduras";
 import { Download, Printer, FileText, Filter, Calendar, Package, CheckCircle, AlertTriangle, XCircle, Clock, Hash, Truck } from "lucide-react";
 import toast from "react-hot-toast";
-import PDFService from "@/services/pdfService";
+import { PDFService } from "@/services/pdfService";
 
 interface RelatorioArmadurasPremiumProps {
   armaduras: Armadura[];

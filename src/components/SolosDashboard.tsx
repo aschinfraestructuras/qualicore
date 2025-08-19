@@ -64,7 +64,7 @@ import {
   Scale,
   Droplets
 } from 'lucide-react';
-import PDFService from '../services/pdfService';
+import { PDFService } from '../services/pdfService';
 import toast from 'react-hot-toast';
 import { CaracterizacaoSolo } from '../types/solos';
 

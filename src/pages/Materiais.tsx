@@ -1,6 +1,6 @@
 import { Material } from "@/types";
 import { useState, useEffect, useMemo, useRef } from "react";
-import PDFService from "@/services/pdfService";
+import { PDFService } from "@/services/pdfService";
 import {
   Plus,
   Package,
@@ -661,11 +661,11 @@ export default function Materiais() {
               </div>
               
               <h3 className="text-sm font-medium text-gray-600 mb-2">Em Uso</h3>
-              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.em_analise}</p>
+                              <p className="text-2xl font-bold text-gray-900 mb-1">{stats.emAnalise}</p>
               
               <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
                 <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-1000 ease-out" 
-                     style={{ width: `${(stats.em_analise / stats.total) * 100}%` }}></div>
+                     style={{ width: `${(stats.emAnalise / stats.total) * 100}%` }}></div>
               </div>
             </div>
           </div>

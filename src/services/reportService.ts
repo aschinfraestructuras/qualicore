@@ -2177,11 +2177,12 @@ export class ReportService {
 
   // Template para relatório de calibrações e equipamentos
   private templateCalibracoesEquipamentos(dados: DadosRelatorio): string {
-    const equipamentos = (dados.dados?.equipamentos as any[]) || [];
-    const calibracoes = (dados.dados?.calibracoes as any[]) || [];
-    const manutencoes = (dados.dados?.manutencoes as any[]) || [];
-    const inspecoes = (dados.dados?.inspecoes as any[]) || [];
-    const stats = dados.dados?.stats as any;
+    const dadosArray = dados.dados as any;
+    const equipamentos = (dadosArray?.equipamentos as any[]) || [];
+    const calibracoes = (dadosArray?.calibracoes as any[]) || [];
+    const manutencoes = (dadosArray?.manutencoes as any[]) || [];
+    const inspecoes = (dadosArray?.inspecoes as any[]) || [];
+    const stats = dadosArray?.stats as any;
 
     return `
       <!DOCTYPE html>
@@ -2408,13 +2409,15 @@ export class ReportService {
       periodo: `${new Date(data.options.dateRange.start).toLocaleDateString('pt-PT')} - ${new Date(data.options.dateRange.end).toLocaleDateString('pt-PT')}`,
       dataGeracao: new Date().toLocaleDateString('pt-PT'),
       geradoPor: "Sistema Qualicore",
-      dados: {
-        equipamentos: data.equipamentos,
-        calibracoes: data.calibracoes,
-        manutencoes: data.manutencoes,
-        inspecoes: data.inspecoes,
-        stats: data.stats
-      }
+      dados: [
+        {
+          equipamentos: data.equipamentos,
+          calibracoes: data.calibracoes,
+          manutencoes: data.manutencoes,
+          inspecoes: data.inspecoes,
+          stats: data.stats
+        }
+      ]
     };
 
     return reportService.templateCalibracoesEquipamentos(dados);

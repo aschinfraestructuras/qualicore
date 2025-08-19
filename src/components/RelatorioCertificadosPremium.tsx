@@ -16,7 +16,7 @@ import {
   X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import PDFService from '@/services/pdfService';
+import { PDFService } from '@/services/pdfService';
 import type { Certificado } from '@/types';
 
 interface RelatorioCertificadosPremiumProps {

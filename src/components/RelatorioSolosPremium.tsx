@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FileText, Download, X, Filter, Calendar, Calculator, TrendingUp, Users, MapPin, CheckCircle, AlertCircle, XCircle, Info, Clock, Zap, Award, Database, Globe, Compass, Scale, Droplets } from 'lucide-react';
-import PDFService from '../services/pdfService';
+import { PDFService } from '../services/pdfService';
 import { CaracterizacaoSolo } from '../types/solos';
 
 interface RelatorioSolosPremiumProps {

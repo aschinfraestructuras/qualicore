@@ -24,7 +24,7 @@ import RelatorioChecklistsPremium from "@/components/RelatorioChecklistsPremium"
 import { ShareChecklistModal } from "@/components/ShareChecklistModal";
 import { SavedChecklistsViewer } from "@/components/SavedChecklistsViewer";
 import { AnimatePresence, motion } from "framer-motion";
-import PDFService from "@/services/pdfService";
+import { PDFService } from "@/services/pdfService";
 import type { Checklist } from "@/types";
 
 export default function Checklists() {

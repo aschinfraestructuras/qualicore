@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronUp, X, CheckSquare, Square
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import PDFService from '@/services/pdfService';
+import { PDFService } from '@/services/pdfService';
 import { submissaoMateriaisAPI } from '@/lib/supabase-api/submissaoMateriaisAPI';
 import type { SubmissaoMaterial } from '@/types/submissaoMateriais';
 import {

@@ -26,7 +26,7 @@ export class ShareService {
       }
 
       // Gerar PDF do RFI
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateRFIsIndividualReport([rfi]);
 
@@ -67,7 +67,7 @@ export class ShareService {
       }
 
       // Gerar PDF da NC
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateNaoConformidadesIndividualReport([nc]);
 
@@ -108,7 +108,7 @@ export class ShareService {
       }
 
       // Gerar PDF do Fornecedor
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateFornecedoresIndividualReport([fornecedor]);
 
@@ -149,7 +149,7 @@ export class ShareService {
       }
 
       // Gerar PDF do Material
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateMateriaisIndividualReport([material]);
 
@@ -189,7 +189,7 @@ export class ShareService {
       
       if (!pdfBlob) {
         // Gerar PDF usando o método existente
-        const { PDFService } = await import('./pdfService');
+        const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
         const pdfService = new PDFService();
         await pdfService.generateRFIsIndividualReport([rfi]);
         // Como o método não retorna blob, vamos simular
@@ -247,7 +247,7 @@ export class ShareService {
       let fileUrl = '';
       
       if (!pdfBlob) {
-        const { PDFService } = await import('./pdfService');
+        const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
         const pdfService = new PDFService();
         await pdfService.generateNaoConformidadesIndividualReport([nc]);
         pdfBlob = new Blob(['PDF content'], { type: 'application/pdf' });
@@ -301,7 +301,7 @@ export class ShareService {
       let fileUrl = '';
       
       if (!pdfBlob) {
-        const { PDFService } = await import('./pdfService');
+        const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
         const pdfService = new PDFService();
         await pdfService.generateFornecedoresIndividualReport([fornecedor]);
         pdfBlob = new Blob(['PDF content'], { type: 'application/pdf' });
@@ -355,7 +355,7 @@ export class ShareService {
       let fileUrl = '';
       
       if (!pdfBlob) {
-        const { PDFService } = await import('./pdfService');
+        const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
         const pdfService = new PDFService();
         await pdfService.generateMateriaisIndividualReport([material]);
         pdfBlob = new Blob(['PDF content'], { type: 'application/pdf' });
@@ -407,7 +407,7 @@ export class ShareService {
   async downloadRFILocal(rfi: any): Promise<ShareResult> {
     try {
       // Gerar PDF usando o método existente
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateRFIsIndividualReport([rfi]);
 
@@ -439,7 +439,7 @@ export class ShareService {
    */
   async downloadNaoConformidadeLocal(nc: any): Promise<ShareResult> {
     try {
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateNaoConformidadesIndividualReport([nc]);
 
@@ -469,7 +469,7 @@ export class ShareService {
    */
   async downloadFornecedorLocal(fornecedor: any): Promise<ShareResult> {
     try {
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateFornecedoresIndividualReport([fornecedor]);
 
@@ -499,7 +499,7 @@ export class ShareService {
    */
   async downloadMaterialLocal(material: any): Promise<ShareResult> {
     try {
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateMateriaisIndividualReport([material]);
 
@@ -633,7 +633,7 @@ export class ShareService {
       }
 
       // Gerar PDF do Documento
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateDocumentosIndividualReport([documento]);
 
@@ -673,7 +673,7 @@ export class ShareService {
       
       if (!pdfBlob) {
         // Gerar PDF usando o método existente
-        const { PDFService } = await import('./pdfService');
+        const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
         const pdfService = new PDFService();
         await pdfService.generateDocumentosIndividualReport([documento]);
         // Como o método não retorna blob, vamos simular
@@ -735,7 +735,7 @@ export class ShareService {
   async downloadDocumentoLocally(documento: any): Promise<ShareResult> {
     try {
       // Gerar PDF do Documento
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateDocumentosIndividualReport([documento]);
 
@@ -1278,7 +1278,7 @@ Equipa Qualicore`;
       }
 
       // Gerar PDF do Ensaio
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateEnsaiosIndividualReport([ensaio]);
 
@@ -1318,7 +1318,7 @@ Equipa Qualicore`;
       
       if (!pdfBlob) {
         // Gerar PDF usando o método existente
-        const { PDFService } = await import('./pdfService');
+        const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
         const pdfService = new PDFService();
         await pdfService.generateEnsaiosIndividualReport([ensaio]);
         // Como o método não retorna blob, vamos simular
@@ -1380,7 +1380,7 @@ Equipa Qualicore`;
   async downloadEnsaioLocally(ensaio: any): Promise<ShareResult> {
     try {
       // Gerar PDF do Ensaio
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateEnsaiosIndividualReport([ensaio]);
 
@@ -1554,7 +1554,7 @@ Equipa Qualicore`;
       }
 
       // Gerar PDF do Checklist
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateChecklistsIndividualReport([checklist]);
 
@@ -1594,7 +1594,7 @@ Equipa Qualicore`;
       
       if (!pdfBlob) {
         // Gerar PDF usando o método existente
-        const { PDFService } = await import('./pdfService');
+        const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
         const pdfService = new PDFService();
         await pdfService.generateChecklistsIndividualReport([checklist]);
         // Como o método não retorna blob, vamos simular
@@ -1656,7 +1656,7 @@ Equipa Qualicore`;
   async downloadChecklistLocally(checklist: any): Promise<ShareResult> {
     try {
       // Gerar PDF do Checklist
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateChecklistsIndividualReport([checklist]);
 
@@ -1825,7 +1825,7 @@ Cumprimentos,`;
       }
 
       // Gerar PDF da Obra
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateObrasIndividualReport([obra]);
 
@@ -1865,7 +1865,7 @@ Cumprimentos,`;
       
       if (!pdfBlob) {
         // Gerar PDF usando o método existente
-        const { PDFService } = await import('./pdfService');
+        const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
         const pdfService = new PDFService();
         await pdfService.generateObrasIndividualReport([obra]);
         // Como o método não retorna blob, vamos simular
@@ -1927,7 +1927,7 @@ Cumprimentos,`;
   async downloadObraLocally(obra: any): Promise<ShareResult> {
     try {
       // Gerar PDF
-      const { PDFService } = await import('./pdfService');
+      const pdfModule = await import('./pdfService'); const PDFService = pdfModule.PDFService;
       const pdfService = new PDFService();
       await pdfService.generateObrasIndividualReport([obra]);
 

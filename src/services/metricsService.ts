@@ -918,8 +918,8 @@ const calcularKPIsBetonagens = (betonagens: any[]): KPIsBetonagens => {
     resistencia_media_rotura: resistenciaRotura.length > 0 ? resistenciaRotura.reduce((a, b) => a + b, 0) / resistenciaRotura.length : 0,
     ensaios_7d_pendentes: ensaios7dPendentes,
     ensaios_28d_pendentes: ensaios28dPendentes,
-    tipos_betao_distribuicao: Object.fromEntries(tiposBetao.slice(0, 5).map(([key, value]) => [key, value])),
-    obras_distribuicao: Object.fromEntries(obras.slice(0, 5).map(([key, value]) => [key, value])),
+    tipos_betao_distribuicao: Object.fromEntries(tiposBetao.slice(0, 5).map(([key, value]) => [key, Number(value)])),
+    obras_distribuicao: Object.fromEntries(obras.slice(0, 5).map(([key, value]) => [key, Number(value)])),
   };
 };
 
@@ -977,9 +977,9 @@ const calcularKPIsSolos = (solos: any[]): KPIsSolos => {
     adequados,
     inadequados,
     marginais,
-    tipos_amostra_distribuicao: Object.fromEntries(tiposAmostra.slice(0, 5).map(([key, value]) => [key, value])),
-    obras_distribuicao: Object.fromEntries(obras.slice(0, 5).map(([key, value]) => [key, value])),
-    laboratorios_distribuicao: Object.fromEntries(laboratorios.slice(0, 5).map(([key, value]) => [key, value])),
+    tipos_amostra_distribuicao: Object.fromEntries(tiposAmostra.slice(0, 5).map(([key, value]) => [key, Number(value)])),
+    obras_distribuicao: Object.fromEntries(obras.slice(0, 5).map(([key, value]) => [key, Number(value)])),
+    laboratorios_distribuicao: Object.fromEntries(laboratorios.slice(0, 5).map(([key, value]) => [key, Number(value)])),
     profundidade_media: Math.round(profundidadeMedia * 100) / 100,
     cbr_medio: Math.round(cbrMedio * 100) / 100,
     resistencia_cisalhamento_media: Math.round(resistenciaMedia * 100) / 100,

@@ -27,7 +27,7 @@ import {
   Cloud
 } from 'lucide-react';
 import { PIEInstancia } from '@/types/pie';
-import PDFService from '@/services/pdfService';
+import { PDFService } from '@/services/pdfService';
 import toast from 'react-hot-toast';
 
 interface PIECardProps {

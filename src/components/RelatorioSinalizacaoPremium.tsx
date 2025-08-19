@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronUp, X, CheckSquare, Square, MapPin, Settings, Activity
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import PDFService from '@/services/pdfService';
+import { PDFService } from '@/services/pdfService';
 import { sinalizacaoAPI } from '@/lib/supabase-api/sinalizacaoAPI';
 import type { Sinalizacao, InspecaoSinalizacao } from '@/types/sinalizacao';
 import {

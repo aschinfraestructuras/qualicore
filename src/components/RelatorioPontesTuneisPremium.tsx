@@ -6,7 +6,7 @@ import {
   TrendingUp, Activity, Shield, Gauge
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import PDFService from '../services/pdfService';
+import { PDFService } from '../services/pdfService';
 import {
   PonteTunel,
   InspecaoPontesTuneis,

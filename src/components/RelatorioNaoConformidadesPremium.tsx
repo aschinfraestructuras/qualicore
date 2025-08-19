@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X, FileText, Filter, BarChart3, AlertTriangle, Download } from "lucide-react";
 import { NaoConformidade } from "@/types";
-import PDFService from "@/services/pdfService";
+import { PDFService } from "@/services/pdfService";
 import toast from "react-hot-toast";
 
 interface RelatorioNaoConformidadesPremiumProps {

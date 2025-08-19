@@ -6,7 +6,7 @@ import {
   Shield, Camera, Bell, Lock, Users, Gauge, MapPin, Calendar
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import PDFService from '@/services/pdfService';
+import { PDFService } from '@/services/pdfService';
 import { segurancaFerroviariaAPI } from '@/lib/supabase-api/segurancaFerroviariaAPI';
 import type { SistemaSeguranca, InspecaoSeguranca } from '@/types/segurancaFerroviaria';
 import {

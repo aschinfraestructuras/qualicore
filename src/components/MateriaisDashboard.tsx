@@ -39,7 +39,7 @@ import {
   Scale,
   Award
 } from 'lucide-react';
-import PDFService from '../services/pdfService';
+import { PDFService } from '../services/pdfService';
 import toast from 'react-hot-toast';
 import { Material } from '../types';
 

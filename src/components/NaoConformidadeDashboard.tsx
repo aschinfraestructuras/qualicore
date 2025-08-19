@@ -34,7 +34,7 @@ import {
   Download,
   Share2
 } from 'lucide-react';
-import PDFService from '../services/pdfService';
+import { PDFService } from '../services/pdfService';
 import toast from 'react-hot-toast';
 
 interface NaoConformidadeDashboardProps {

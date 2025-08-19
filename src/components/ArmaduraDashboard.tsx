@@ -71,7 +71,7 @@ import {
   Ruler,
   Anchor
 } from 'lucide-react';
-import PDFService from '../services/pdfService';
+import { PDFService } from '../services/pdfService';
 import toast from 'react-hot-toast';
 import { Armadura } from '../types/armaduras';
 
@@ -137,7 +137,7 @@ export default function ArmaduraDashboard({ armaduras, onSearch, onFilterChange 
 
     // Por fornecedor
     const porFornecedor = armaduras.reduce((acc, armadura) => {
-      const fornecedor = armadura.fornecedor || 'Não especificado';
+      const fornecedor = armadura.fornecedor_id || 'Não especificado';
       acc[fornecedor] = (acc[fornecedor] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);

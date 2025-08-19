@@ -20,7 +20,7 @@ export interface AppNotification {
 }
 
 class NotificationService {
-  private notifications: Notification[] = [];
+  private notifications: AppNotification[] = [];
   private checkInterval: ReturnType<typeof setTimeout> | null = null;
 
   // Iniciar verificações automáticas
@@ -124,8 +124,8 @@ class NotificationService {
   }
 
   // Criar notificação
-  createNotification(notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) {
-    const newNotification: Notification = {
+  createNotification(notification: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) {
+    const newNotification: AppNotification = {
       ...notification,
       id: Math.random().toString(36).substr(2, 9),
       timestamp: new Date(),
@@ -166,12 +166,12 @@ class NotificationService {
   }
 
   // Obter todas as notificações
-  getNotifications(): Notification[] {
+  getNotifications(): AppNotification[] {
     return this.notifications;
   }
 
   // Obter notificações não lidas
-  getUnreadNotifications(): Notification[] {
+  getUnreadNotifications(): AppNotification[] {
     return this.notifications.filter(n => !n.read);
   }
 

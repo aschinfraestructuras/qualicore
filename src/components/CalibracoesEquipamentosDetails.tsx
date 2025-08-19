@@ -282,7 +282,7 @@ const CalibracoesEquipamentosDetails: React.FC<CalibracoesEquipamentosDetailsPro
                 <span className="text-sm text-purple-600">Vida Útil</span>
                 <Calendar className="w-4 h-4 text-purple-600" />
               </div>
-              <p className="text-lg font-semibold text-purple-900">{equipamento.vida_util} anos</p>
+              <p className="text-lg font-semibold text-purple-900">{equipamento.vida_util_anos || 'N/A'} anos</p>
             </div>
           </div>
         </div>
@@ -304,7 +304,7 @@ const CalibracoesEquipamentosDetails: React.FC<CalibracoesEquipamentosDetailsPro
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-500">Fim de Garantia:</span>
-              <span className="text-sm font-medium">{equipamento.fim_garantia ? formatDate(equipamento.fim_garantia) : 'N/A'}</span>
+              <span className="text-sm font-medium">{equipamento.garantia_ate ? formatDate(equipamento.garantia_ate) : 'N/A'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-500">Última Atualização:</span>

@@ -15,7 +15,7 @@ import {
   getInspecoes
 } from '../lib/supabase-api/calibracoesAPI';
 import { CalibracoesStats, Equipamento, Calibracao, Manutencao, Inspecao } from '../types/calibracoes';
-import PDFService from '../services/pdfService';
+import { PDFService } from '../services/pdfService';
 
 interface RelatorioCalibracoesEquipamentosPremiumProps {
   onSelecaoChange?: (equipamentosSelecionados: Equipamento[]) => void;

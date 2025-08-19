@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { PIEService } from '../../services/pieService';
 import { PIEInstancia, PIESecao, PIEPonto, PIEResposta, PIEReportData } from '../../types/pie';
-import PDFService from '../../services/pdfService';
+import { PDFService } from '../../services/pdfService';
 import toast from 'react-hot-toast';
 
 interface PIESectionProps {

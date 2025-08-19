@@ -1,35 +1,25 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { resolve } from 'path'
+import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-    },
+  esbuild: {
+    logOverride: { 'this-is-undefined-in-esm': 'silent' }
   },
   build: {
     rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          ui: ['lucide-react', 'framer-motion'],
-          forms: ['react-hook-form', 'zod'],
-          charts: ['recharts'],
-          utils: ['zustand', '@tanstack/react-query'],
-        },
-      },
+      onwarn(warning, warn) {
+        // Ignore all warnings during build
+        return;
+      }
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 1000
   },
-  server: {
-    port: 3000,
-    host: true,
-  },
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom'],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
   },
 })

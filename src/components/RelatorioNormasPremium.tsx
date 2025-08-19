@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Norma } from "@/types/normas";
 import { Download, Printer, FileText, Filter, Calendar, BookOpen, CheckCircle, AlertTriangle, XCircle, Clock, Hash, Shield, Tag, Building } from "lucide-react";
 import toast from "react-hot-toast";
-import PDFService from "@/services/pdfService";
+import { PDFService } from "@/services/pdfService";
 
 interface RelatorioNormasPremiumProps {
   normas: Norma[];

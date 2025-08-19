@@ -29,7 +29,7 @@ import type { RFI as RFIType } from "@/types";
 import Modal from "../components/Modal";
 import toast from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
-import PDFService from "@/services/pdfService";
+import { PDFService } from "@/services/pdfService";
 
 export default function RFIs() {
   const [rfis, setRFIs] = useState<RFI[]>([]);
