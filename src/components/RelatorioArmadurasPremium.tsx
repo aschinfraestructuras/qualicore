@@ -167,31 +167,45 @@ export default function RelatorioArmadurasPremium({
     setLoading(true);
     try {
       const pdfService = new PDFService();
-      const armadurasParaRelatorio = getArmadurasParaRelatorio();
       
-      const options = {
-        titulo: getTituloRelatorio(),
-        subtitulo: `Gerado em ${new Date().toLocaleDateString('pt-PT')}`,
-        armaduras: armadurasParaRelatorio,
-        tipo: tipoRelatorio,
-        filtros: filtros,
-        armaduraEspecifica: armaduraEspecifica,
-        mostrarCusto: mostrarCusto,
-        colunas: colunas,
-      };
-      
-      // Verificar se o método existe
-      if (typeof pdfService.gerarRelatorioArmaduras === 'function') {
-        pdfService.gerarRelatorioArmaduras(options);
-        toast.success(`Relatório PDF gerado com ${armadurasParaRelatorio.length} armaduras!`);
-      } else {
-        console.error("Método gerarRelatorioArmaduras não encontrado no PDFService");
-        toast.error("Erro: Método de geração de PDF não disponível");
+      // Determinar quais armaduras usar
+      const armadurasParaRelatorio = armadurasSelecionadas.size > 0 
+        ? armaduras.filter(a => armadurasSelecionadas.has(a.codigo))
+        : armaduras;
+
+      console.log(`Gerando PDF com ${armadurasParaRelatorio.length} armaduras`);
+
+      // Usar o método correto baseado no tipo de relatório
+      switch (tipoRelatorio) {
+        case 'executivo':
+          await pdfService.generateArmadurasExecutiveReport(armadurasParaRelatorio);
+          toast.success(`Relatório executivo gerado com ${armadurasParaRelatorio.length} armaduras!`);
+          break;
+        case 'comparativo':
+          await pdfService.generateArmadurasComparativeReport(armadurasParaRelatorio);
+          toast.success(`Relatório comparativo gerado com ${armadurasParaRelatorio.length} armaduras!`);
+          break;
+        case 'filtrado':
+          await pdfService.generateArmadurasFilteredReport(armadurasParaRelatorio, filtros);
+          toast.success(`Relatório filtrado gerado com ${armadurasParaRelatorio.length} armaduras!`);
+          break;
+        case 'individual':
+          if (armaduraEspecifica) {
+            await pdfService.generateArmadurasIndividualReport([armaduraEspecifica]);
+            toast.success('Relatório individual gerado com sucesso!');
+          } else {
+            toast.error('Armadura específica não fornecida para relatório individual');
+          }
+          break;
+        default:
+          // Fallback para método de teste
+          await pdfService.testArmadurasPDF(armadurasParaRelatorio);
+          toast.success(`Teste PDF gerado com ${armadurasParaRelatorio.length} armaduras!`);
       }
       
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
-      toast.error("Erro ao gerar relatório PDF");
+      toast.error("Erro ao gerar relatório PDF: " + error.message);
     } finally {
       setLoading(false);
     }
