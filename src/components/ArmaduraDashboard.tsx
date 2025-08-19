@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { 
   BarChart, 
   Bar, 
@@ -90,12 +91,28 @@ export default function ArmaduraDashboard({ armaduras, onSearch, onFilterChange 
 
   // Calcular métricas
   const calculateMetrics = () => {
-    if (!armaduras.length) return;
+    console.log('ArmaduraDashboard: Calculando métricas com', armaduras.length, 'armaduras');
+    if (!armaduras.length) {
+      console.log('ArmaduraDashboard: Nenhuma armadura encontrada');
+      setMetrics({
+        total: 0,
+        conformes: 0,
+        naoConformes: 0,
+        emAnalise: 0,
+        esteMes: 0,
+        esteAno: 0,
+        porTipo: {},
+        porFornecedor: {},
+        porZona: {},
+        evolucaoTemporal: []
+      });
+      return;
+    }
 
     const total = armaduras.length;
-    const conformes = armaduras.filter(a => a.estado === 'CONFORME').length;
-    const naoConformes = armaduras.filter(a => a.estado === 'NÃO CONFORME').length;
-    const emAnalise = armaduras.filter(a => a.estado === 'EM ANÁLISE').length;
+    const conformes = armaduras.filter(a => a.estado === 'aprovado').length;
+    const naoConformes = armaduras.filter(a => a.estado === 'reprovado').length;
+    const emAnalise = armaduras.filter(a => a.estado === 'em_analise').length;
     
     // Este mês
     const esteMes = armaduras.filter(a => {

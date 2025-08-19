@@ -359,15 +359,18 @@ export default function Armaduras() {
 
         {/* Conteúdo principal - Dashboard ou Lista */}
         {showDashboard ? (
-          <ArmaduraDashboard
-            armaduras={armaduras}
-            onSearch={(query, options) => {
-              setFilters(prev => ({ ...prev, search: query }));
-            }}
-            onFilterChange={(newFilters) => {
-              setFilters(prev => ({ ...prev, ...newFilters }));
-            }}
-          />
+          <>
+            {console.log('Armaduras page: Mostrando dashboard com', armaduras.length, 'armaduras')}
+            <ArmaduraDashboard
+              armaduras={armaduras}
+              onSearch={(query, options) => {
+                setFilters(prev => ({ ...prev, search: query }));
+              }}
+              onFilterChange={(newFilters) => {
+                setFilters(prev => ({ ...prev, ...newFilters }));
+              }}
+            />
+          </>
         ) : (
           <>
             {/* Filtros */}
