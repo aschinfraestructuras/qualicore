@@ -202,143 +202,13 @@ export default function NaoConformidadeDashboard({
 
   const renderOverviewTab = () => (
     <div className="space-y-6">
-      {/* KPIs Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="bg-white rounded-lg border p-6 shadow-sm"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total NCs</p>
-              <p className="text-2xl font-bold text-gray-900">{metrics?.total || 0}</p>
-            </div>
-            <div className="p-3 bg-blue-100 rounded-full">
-              <AlertTriangle className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-          className="bg-white rounded-lg border p-6 shadow-sm"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Pendentes</p>
-              <p className="text-2xl font-bold text-orange-600">{metrics?.pendentes || 0}</p>
-            </div>
-            <div className="p-3 bg-orange-100 rounded-full">
-              <Clock className="w-6 h-6 text-orange-600" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="bg-white rounded-lg border p-6 shadow-sm"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Resolvidas</p>
-              <p className="text-2xl font-bold text-green-600">{metrics?.resolvidas || 0}</p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.3 }}
-          className="bg-white rounded-lg border p-6 shadow-sm"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Críticas</p>
-              <p className="text-2xl font-bold text-red-600">{metrics?.criticas || 0}</p>
-            </div>
-            <div className="p-3 bg-red-100 rounded-full">
-              <Shield className="w-6 h-6 text-red-600" />
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Métricas Secundárias */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.4 }}
-          className="bg-white rounded-lg border p-6 shadow-sm"
-        >
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-purple-100 rounded-full">
-              <Calendar className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Este Mês</p>
-              <p className="text-xl font-bold text-gray-900">{metrics?.esteMes || 0}</p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.5 }}
-          className="bg-white rounded-lg border p-6 shadow-sm"
-        >
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-teal-100 rounded-full">
-              <DollarSign className="w-5 h-5 text-teal-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Custo Total</p>
-              <p className="text-xl font-bold text-gray-900">
-                €{(metrics?.custoTotal || 0).toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.6 }}
-          className="bg-white rounded-lg border p-6 shadow-sm"
-        >
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-indigo-100 rounded-full">
-              <TrendingUp className="w-5 h-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">Tempo Médio</p>
-              <p className="text-xl font-bold text-gray-900">
-                {Math.round(metrics?.tempoMedioResolucao || 0)} dias
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Evolução Temporal */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3, delay: 0.7 }}
-          className="bg-white rounded-lg border p-6 shadow-sm"
+          className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm"
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Evolução Temporal</h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -363,7 +233,7 @@ export default function NaoConformidadeDashboard({
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3, delay: 0.8 }}
-          className="bg-white rounded-lg border p-6 shadow-sm"
+          className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm"
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Por Severidade</h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -399,7 +269,7 @@ export default function NaoConformidadeDashboard({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="bg-white rounded-lg border p-6 shadow-sm"
+        className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm"
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribuição por Tipo</h3>
         <ResponsiveContainer width="100%" height={300}>
@@ -421,7 +291,7 @@ export default function NaoConformidadeDashboard({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
-        className="bg-white rounded-lg border p-6 shadow-sm"
+        className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm"
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribuição por Categoria</h3>
         <ResponsiveContainer width="100%" height={300}>
@@ -443,7 +313,7 @@ export default function NaoConformidadeDashboard({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
-        className="bg-white rounded-lg border p-6 shadow-sm"
+        className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm"
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribuição por Área Afetada</h3>
         <ResponsiveContainer width="100%" height={300}>
@@ -468,7 +338,7 @@ export default function NaoConformidadeDashboard({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="bg-white rounded-lg border p-6 shadow-sm"
+        className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm"
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Melhorias Sugeridas</h3>
         <div className="space-y-4">
@@ -512,11 +382,11 @@ export default function NaoConformidadeDashboard({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="bg-white rounded-lg border p-6 shadow-sm"
+        className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm"
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Relatórios Disponíveis</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
             <FileText className="w-5 h-5 text-blue-600" />
             <div className="text-left">
               <h4 className="font-medium text-gray-900">Relatório Executivo</h4>
@@ -524,7 +394,7 @@ export default function NaoConformidadeDashboard({
             </div>
           </button>
           
-          <button className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
             <Download className="w-5 h-5 text-green-600" />
             <div className="text-left">
               <h4 className="font-medium text-gray-900">Relatório Detalhado</h4>
@@ -532,7 +402,7 @@ export default function NaoConformidadeDashboard({
             </div>
           </button>
           
-          <button className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
             <TrendingUp className="w-5 h-5 text-purple-600" />
             <div className="text-left">
               <h4 className="font-medium text-gray-900">Relatório de Tendências</h4>
@@ -540,7 +410,7 @@ export default function NaoConformidadeDashboard({
             </div>
           </button>
           
-          <button className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
             <Share2 className="w-5 h-5 text-orange-600" />
             <div className="text-left">
               <h4 className="font-medium text-gray-900">Relatório Comparativo</h4>
@@ -552,73 +422,188 @@ export default function NaoConformidadeDashboard({
     </div>
   );
 
+  if (!metrics) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Dashboard de Não Conformidades</h2>
-          <p className="text-gray-600">Análise e monitorização de não conformidades</p>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          <form onSubmit={handleSearch} className="flex items-center space-x-2">
-            <input
-              type="text"
-              placeholder="Pesquisar NCs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard de Não Conformidades</h1>
+            <p className="text-gray-600">Análise e monitorização de não conformidades</p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <form onSubmit={handleSearch} className="flex items-center space-x-2">
+              <input
+                type="text"
+                placeholder="Pesquisar NCs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <button
+                type="submit"
+                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+            </form>
             <button
-              type="submit"
-              className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              onClick={handleExportData}
+              className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
-              <Search className="w-4 h-4" />
+              <Download className="w-4 h-4" />
             </button>
-          </form>
-          
-          <button
-            onClick={handleExportData}
-            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-xl shadow-lg"
           >
-            <Download className="w-4 h-4" />
-            <span>Exportar</span>
-          </button>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-90">Total</p>
+                <p className="text-2xl font-bold">{metrics.total}</p>
+              </div>
+              <AlertTriangle className="w-8 h-8 opacity-80" />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-xl shadow-lg"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-90">Pendentes</p>
+                <p className="text-2xl font-bold">{metrics.pendentes}</p>
+              </div>
+              <Clock className="w-8 h-8 opacity-80" />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-xl shadow-lg"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-90">Resolvidas</p>
+                <p className="text-2xl font-bold">{metrics.resolvidas}</p>
+              </div>
+              <CheckCircle className="w-8 h-8 opacity-80" />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-gradient-to-r from-red-500 to-red-600 text-white p-4 rounded-xl shadow-lg"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-90">Críticas</p>
+                <p className="text-2xl font-bold">{metrics.criticas}</p>
+              </div>
+              <Shield className="w-8 h-8 opacity-80" />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-xl shadow-lg"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-90">Este Mês</p>
+                <p className="text-2xl font-bold">{metrics.esteMes}</p>
+              </div>
+              <Calendar className="w-8 h-8 opacity-80" />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-4 rounded-xl shadow-lg"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-90">Custo Total</p>
+                <p className="text-2xl font-bold">€{(metrics.custoTotal || 0).toLocaleString()}</p>
+              </div>
+              <DollarSign className="w-8 h-8 opacity-80" />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white p-4 rounded-xl shadow-lg"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-90">Tempo Médio</p>
+                <p className="text-2xl font-bold">{Math.round(metrics.tempoMedioResolucao || 0)}d</p>
+              </div>
+              <TrendingUp className="w-8 h-8 opacity-80" />
+            </div>
+          </motion.div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          {[
-            { id: 'overview', name: 'Visão Geral', icon: TrendingUp },
-            { id: 'analytics', name: 'Análises', icon: BarChart },
-            { id: 'enhancements', name: 'Melhorias', icon: TrendingUp },
-            { id: 'reports', name: 'Relatórios', icon: FileText }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              <span>{tab.name}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 px-6">
+            {[
+              { id: 'overview', label: 'Visão Geral', icon: TrendingUp },
+              { id: 'analytics', label: 'Análises', icon: BarChart },
+              { id: 'enhancements', label: 'Melhorias', icon: TrendingUp },
+              { id: 'reports', label: 'Relatórios', icon: FileText }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
 
-      {/* Content */}
-      <div className="min-h-[400px]">
-        {activeTab === 'overview' && renderOverviewTab()}
-        {activeTab === 'analytics' && renderAnalyticsTab()}
-        {activeTab === 'enhancements' && renderEnhancementsTab()}
-        {activeTab === 'reports' && renderReportsTab()}
+        <div className="p-6">
+          {activeTab === 'overview' && renderOverviewTab()}
+          {activeTab === 'analytics' && renderAnalyticsTab()}
+          {activeTab === 'enhancements' && renderEnhancementsTab()}
+          {activeTab === 'reports' && renderReportsTab()}
+        </div>
       </div>
     </div>
   );
