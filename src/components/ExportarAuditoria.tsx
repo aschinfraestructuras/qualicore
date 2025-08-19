@@ -16,6 +16,8 @@ import {
 import { toast } from 'react-hot-toast';
 import { Auditoria } from '../types/auditorias';
 import { auditoriasAPI } from '../lib/supabase-api/auditoriasAPI';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface ExportarAuditoriaProps {
   auditoria: Auditoria;
@@ -58,15 +60,96 @@ export default function ExportarAuditoria({ auditoria, onClose }: ExportarAudito
     setLoading(true);
     
     try {
-      const url = await auditoriasAPI.exportarAuditoria(auditoria.id, formato);
-      
-      // Simular download
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `auditoria-${auditoria.codigo}-${new Date().toISOString().split('T')[0]}.${formato}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      if (formato === 'pdf') {
+        // Gerar PDF real
+        const doc = new jsPDF();
+        
+        // Título
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Relatório de Auditoria', 20, 30);
+        
+        // Informações da auditoria
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Código: ${auditoria.codigo}`, 20, 45);
+        doc.text(`Tipo: ${auditoria.tipo}`, 20, 55);
+        doc.text(`Escopo: ${auditoria.escopo}`, 20, 65);
+        doc.text(`Data Início: ${new Date(auditoria.data_inicio).toLocaleDateString('pt-PT')}`, 20, 75);
+        doc.text(`Data Fim: ${auditoria.data_fim ? new Date(auditoria.data_fim).toLocaleDateString('pt-PT') : 'N/A'}`, 20, 85);
+        doc.text(`Status: ${auditoria.status}`, 20, 95);
+        doc.text(`Resultado: ${auditoria.resultado || 'N/A'}`, 20, 105);
+        
+        // Equipa de auditoria
+        if (auditoria.equipa_auditoria && auditoria.equipa_auditoria.length > 0) {
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Equipa de Auditoria', 20, 125);
+          
+          const equipaData = auditoria.equipa_auditoria.map(membro => [
+            membro.nome,
+            membro.funcao,
+            membro.organizacao || 'N/A'
+          ]);
+          
+          autoTable(doc, {
+            head: [['Nome', 'Função', 'Organização']],
+            body: equipaData,
+            startY: 135,
+            styles: {
+              fontSize: 8,
+              cellPadding: 2
+            },
+            headStyles: {
+              fillColor: [59, 130, 246],
+              textColor: 255
+            }
+          });
+        }
+        
+        // Critérios de auditoria
+        if (auditoria.criterios && auditoria.criterios.length > 0) {
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Critérios de Auditoria', 20, doc.lastAutoTable.finalY + 20);
+          
+          const criteriosData = auditoria.criterios.map(criterio => [
+            criterio.categoria,
+            criterio.descricao,
+            criterio.peso.toString(),
+            criterio.pontuacao ? criterio.pontuacao.toString() : 'N/A'
+          ]);
+          
+          autoTable(doc, {
+            head: [['Categoria', 'Descrição', 'Peso', 'Pontuação']],
+            body: criteriosData,
+            startY: doc.lastAutoTable.finalY + 30,
+            styles: {
+              fontSize: 7,
+              cellPadding: 1
+            },
+            headStyles: {
+              fillColor: [34, 197, 94],
+              textColor: 255
+            }
+          });
+        }
+        
+        // Salvar PDF
+        doc.save(`auditoria-${auditoria.codigo}-${new Date().toISOString().split('T')[0]}.pdf`);
+        
+      } else {
+        // Para Excel e CSV, usar a API existente
+        const url = await auditoriasAPI.exportarAuditoria(auditoria.id, formato);
+        
+        // Simular download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `auditoria-${auditoria.codigo}-${new Date().toISOString().split('T')[0]}.${formato}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
       
       toast.success(`Auditoria exportada com sucesso em formato ${formato.toUpperCase()}`);
       onClose();

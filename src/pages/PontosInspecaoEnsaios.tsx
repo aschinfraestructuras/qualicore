@@ -1015,13 +1015,22 @@ const PontosInspecaoEnsaios: React.FC = () => {
                   Gestão completa de pontos de inspeção e ensaios
                 </p>
               </div>
-              <button
-                onClick={handleNewPIE}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Plano
-              </button>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => navigate('/pie/relatorios')}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Relatórios
+                </button>
+                <button
+                  onClick={handleNewPIE}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Plano
+                </button>
+              </div>
             </div>
           </div>
         </div>
