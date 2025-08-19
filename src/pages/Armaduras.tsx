@@ -27,6 +27,7 @@ import { Armadura, ArmaduraFilters, ArmaduraStats } from '@/types/armaduras';
 import ArmaduraForm from '@/components/forms/ArmaduraForm';
 import Modal from '@/components/Modal';
 import RelatorioArmadurasPremium from '@/components/RelatorioArmadurasPremium';
+import ArmaduraDashboard from '@/components/ArmaduraDashboard';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
@@ -38,6 +39,7 @@ export default function Armaduras() {
   const [showForm, setShowForm] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showRelatorio, setShowRelatorio] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
   const [selectedArmadura, setSelectedArmadura] = useState<Armadura | null>(null);
   const [tipoRelatorio, setTipoRelatorio] = useState<'executivo' | 'filtrado' | 'comparativo' | 'individual'>('executivo');
   const [armadurasSelecionadas, setArmadurasSelecionadas] = useState<Armadura[]>([]);
@@ -216,6 +218,13 @@ export default function Armaduras() {
           </div>
           <div className="flex gap-3">
             <button
+              onClick={() => setShowDashboard(!showDashboard)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium flex items-center transition-colors"
+            >
+              <BarChart3 className="w-5 h-5 mr-2" />
+              Dashboard
+            </button>
+            <button
               onClick={() => {
                 setTipoRelatorio('filtrado');
                 setShowRelatorio(true);
@@ -348,13 +357,26 @@ export default function Armaduras() {
           </motion.div>
         )}
 
-        {/* Filtros */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200"
-        >
+        {/* Conteúdo principal - Dashboard ou Lista */}
+        {showDashboard ? (
+          <ArmaduraDashboard
+            armaduras={armaduras}
+            onSearch={(query, options) => {
+              setFilters(prev => ({ ...prev, search: query }));
+            }}
+            onFilterChange={(newFilters) => {
+              setFilters(prev => ({ ...prev, ...newFilters }));
+            }}
+          />
+        ) : (
+          <>
+            {/* Filtros */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200"
+            >
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center">
               <Filter className="w-5 h-5 mr-2 text-blue-600" />
@@ -578,6 +600,8 @@ export default function Armaduras() {
             </table>
           </div>
         </motion.div>
+      </>
+        )}
       </div>
 
       {/* Modal do Formulário */}

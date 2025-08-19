@@ -105,6 +105,22 @@ interface RelatorioSolosOptions {
   filtros?: any;
 }
 
+interface RelatorioBetonagensOptions {
+  titulo: string;
+  subtitulo?: string;
+  betonagens: any[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
+interface RelatorioArmadurasOptions {
+  titulo: string;
+  subtitulo?: string;
+  armaduras: any[];
+  tipo: "executivo" | "filtrado" | "comparativo" | "individual";
+  filtros?: any;
+}
+
 interface RelatorioRFIsOptions {
   titulo: string;
   subtitulo?: string;
@@ -9927,6 +9943,347 @@ class PDFService {
     });
     
     return stats;
+  }
+
+  // ===== MÉTODOS PARA RELATÓRIOS DE ARMADURAS =====
+  
+  public async generateArmadurasExecutiveReport(armaduras: any[]): Promise<void> {
+    console.log('PDFService: Iniciando relatório executivo de armaduras com', armaduras.length, 'armaduras');
+    
+    try {
+      const options: RelatorioArmadurasOptions = {
+        titulo: 'Relatório Executivo de Armaduras',
+        subtitulo: 'Visão Geral e Indicadores de Conformidade',
+        armaduras,
+        tipo: 'executivo'
+      };
+      
+      console.log('PDFService: Gerando relatório...');
+      this.gerarRelatorioExecutivoArmaduras(options);
+      
+      console.log('PDFService: Fazendo download...');
+      this.download(`relatorio-armaduras-executivo-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+    } catch (error) {
+      console.error('PDFService: Erro ao gerar relatório executivo de armaduras:', error);
+      throw error;
+    }
+  }
+
+  public async generateArmadurasFilteredReport(armaduras: any[], filtros: any): Promise<void> {
+    console.log('PDFService: Iniciando relatório filtrado de armaduras com', armaduras.length, 'armaduras');
+    
+    try {
+      const options: RelatorioArmadurasOptions = {
+        titulo: 'Relatório Filtrado de Armaduras',
+        subtitulo: 'Dados com Filtros Aplicados',
+        armaduras,
+        tipo: 'filtrado',
+        filtros
+      };
+      
+      console.log('PDFService: Gerando relatório...');
+      this.gerarRelatorioFiltradoArmaduras(options);
+      
+      console.log('PDFService: Fazendo download...');
+      this.download(`relatorio-armaduras-filtrado-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+    } catch (error) {
+      console.error('PDFService: Erro ao gerar relatório filtrado de armaduras:', error);
+      throw error;
+    }
+  }
+
+  public async generateArmadurasComparativeReport(armaduras: any[]): Promise<void> {
+    console.log('PDFService: Iniciando relatório comparativo de armaduras com', armaduras.length, 'armaduras');
+    
+    try {
+      const options: RelatorioArmadurasOptions = {
+        titulo: 'Relatório Comparativo de Armaduras',
+        subtitulo: 'Análise Comparativa entre Períodos',
+        armaduras,
+        tipo: 'comparativo'
+      };
+      
+      console.log('PDFService: Gerando relatório...');
+      this.gerarRelatorioComparativoArmaduras(options);
+      
+      console.log('PDFService: Fazendo download...');
+      this.download(`relatorio-armaduras-comparativo-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+    } catch (error) {
+      console.error('PDFService: Erro ao gerar relatório comparativo de armaduras:', error);
+      throw error;
+    }
+  }
+
+  public async generateArmadurasIndividualReport(armadura: any): Promise<void> {
+    console.log('PDFService: Iniciando relatório individual de armadura');
+    
+    try {
+      const options: RelatorioArmadurasOptions = {
+        titulo: 'Relatório Individual de Armadura',
+        subtitulo: 'Detalhes da Armadura',
+        armaduras: [armadura],
+        tipo: 'individual'
+      };
+      
+      console.log('PDFService: Gerando relatório...');
+      this.gerarRelatorioIndividualArmaduras(options);
+      
+      console.log('PDFService: Fazendo download...');
+      this.download(`relatorio-armadura-individual-${armadura.id || new Date().toISOString().split('T')[0]}.pdf`);
+      
+    } catch (error) {
+      console.error('PDFService: Erro ao gerar relatório individual de armadura:', error);
+      throw error;
+    }
+  }
+
+  // Métodos auxiliares para relatórios de armaduras
+  private gerarRelatorioExecutivoArmaduras(options: RelatorioArmadurasOptions): void {
+    this.doc = new jsPDF();
+    this.addHeader('QUALICORE - Relatório Executivo de Armaduras');
+    
+    // Título
+    this.doc.setFontSize(20);
+    this.doc.setTextColor(59, 130, 246);
+    this.doc.text(options.titulo, 20, 40);
+    
+    if (options.subtitulo) {
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(107, 114, 128);
+      this.doc.text(options.subtitulo, 20, 50);
+    }
+    
+    // Estatísticas
+    this.addEstatisticasArmaduras(options.armaduras);
+    
+    // Tabela de dados
+    this.addTabelaArmaduras(options.armaduras);
+    
+    this.addFooter();
+  }
+
+  private gerarRelatorioFiltradoArmaduras(options: RelatorioArmadurasOptions): void {
+    this.doc = new jsPDF();
+    this.addHeader('QUALICORE - Relatório Filtrado de Armaduras');
+    
+    // Título
+    this.doc.setFontSize(20);
+    this.doc.setTextColor(59, 130, 246);
+    this.doc.text(options.titulo, 20, 40);
+    
+    if (options.subtitulo) {
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(107, 114, 128);
+      this.doc.text(options.subtitulo, 20, 50);
+    }
+    
+    // Filtros aplicados
+    if (options.filtros) {
+      this.addFiltrosArmaduras(options.filtros);
+    }
+    
+    // Tabela de dados
+    this.addTabelaArmaduras(options.armaduras);
+    
+    this.addFooter();
+  }
+
+  private gerarRelatorioComparativoArmaduras(options: RelatorioArmadurasOptions): void {
+    this.doc = new jsPDF();
+    this.addHeader('QUALICORE - Relatório Comparativo de Armaduras');
+    
+    // Título
+    this.doc.setFontSize(20);
+    this.doc.setTextColor(59, 130, 246);
+    this.doc.text(options.titulo, 20, 40);
+    
+    if (options.subtitulo) {
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(107, 114, 128);
+      this.doc.text(options.subtitulo, 20, 50);
+    }
+    
+    // Análise comparativa
+    this.addAnaliseComparativaArmaduras(options.armaduras);
+    
+    // Tabela de dados
+    this.addTabelaArmaduras(options.armaduras);
+    
+    this.addFooter();
+  }
+
+  private gerarRelatorioIndividualArmaduras(options: RelatorioArmadurasOptions): void {
+    this.doc = new jsPDF();
+    this.addHeader('QUALICORE - Relatório Individual de Armadura');
+    
+    // Título
+    this.doc.setFontSize(20);
+    this.doc.setTextColor(59, 130, 246);
+    this.doc.text(options.titulo, 20, 40);
+    
+    if (options.subtitulo) {
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(107, 114, 128);
+      this.doc.text(options.subtitulo, 20, 50);
+    }
+    
+    // Detalhes da armadura
+    if (options.armaduras.length > 0) {
+      this.addDetalhesArmadura(options.armaduras[0]);
+    }
+    
+    this.addFooter();
+  }
+
+  private addEstatisticasArmaduras(armaduras: any[]): void {
+    const total = armaduras.length;
+    const conformes = armaduras.filter(a => a.estado === 'CONFORME').length;
+    const naoConformes = armaduras.filter(a => a.estado === 'NÃO CONFORME').length;
+    const emAnalise = armaduras.filter(a => a.estado === 'EM ANÁLISE').length;
+    
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Estatísticas Gerais', 20, 80);
+    
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(107, 114, 128);
+    
+    let y = 95;
+    this.doc.text(`Total de Armaduras: ${total}`, 20, y);
+    y += 8;
+    this.doc.text(`Conformes: ${conformes} (${total > 0 ? Math.round((conformes / total) * 100) : 0}%)`, 20, y);
+    y += 8;
+    this.doc.text(`Não Conformes: ${naoConformes} (${total > 0 ? Math.round((naoConformes / total) * 100) : 0}%)`, 20, y);
+    y += 8;
+    this.doc.text(`Em Análise: ${emAnalise} (${total > 0 ? Math.round((emAnalise / total) * 100) : 0}%)`, 20, y);
+  }
+
+  private addFiltrosArmaduras(filtros: any): void {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Filtros Aplicados', 20, 130);
+    
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(107, 114, 128);
+    
+    let y = 145;
+    if (filtros.tipo) {
+      this.doc.text(`Tipo: ${filtros.tipo}`, 20, y);
+      y += 8;
+    }
+    if (filtros.estado) {
+      this.doc.text(`Estado: ${filtros.estado}`, 20, y);
+      y += 8;
+    }
+    if (filtros.zona) {
+      this.doc.text(`Zona: ${filtros.zona}`, 20, y);
+      y += 8;
+    }
+    if (filtros.fornecedor) {
+      this.doc.text(`Fornecedor: ${filtros.fornecedor}`, 20, y);
+      y += 8;
+    }
+  }
+
+  private addAnaliseComparativaArmaduras(armaduras: any[]): void {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Análise Comparativa', 20, 130);
+    
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(107, 114, 128);
+    
+    // Análise por tipo
+    const porTipo = armaduras.reduce((acc, armadura) => {
+      const tipo = armadura.tipo || 'Não especificado';
+      acc[tipo] = (acc[tipo] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    let y = 145;
+    this.doc.text('Distribuição por Tipo:', 20, y);
+    y += 8;
+    
+    Object.entries(porTipo).forEach(([tipo, quantidade]) => {
+      this.doc.text(`  ${tipo}: ${quantidade}`, 25, y);
+      y += 6;
+    });
+  }
+
+  private addTabelaArmaduras(armaduras: any[]): void {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Dados das Armaduras', 20, 200);
+    
+    // Cabeçalho da tabela
+    this.doc.setFontSize(10);
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.setFillColor(59, 130, 246);
+    this.doc.rect(20, 210, 170, 8, 'F');
+    
+    this.doc.text('ID', 22, 216);
+    this.doc.text('Tipo', 35, 216);
+    this.doc.text('Estado', 70, 216);
+    this.doc.text('Zona', 100, 216);
+    this.doc.text('Fornecedor', 130, 216);
+    this.doc.text('Data', 170, 216);
+    
+    // Dados da tabela
+    this.doc.setTextColor(31, 41, 55);
+    let y = 225;
+    
+    armaduras.slice(0, 20).forEach((armadura, index) => {
+      if (y > 270) {
+        this.doc.addPage();
+        y = 20;
+      }
+      
+      const bgColor = index % 2 === 0 ? [248, 250, 252] : [255, 255, 255];
+      this.doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+      this.doc.rect(20, y - 5, 170, 6, 'F');
+      
+      this.doc.text(armadura.id?.toString() || '', 22, y);
+      this.doc.text(armadura.tipo || '', 35, y);
+      this.doc.text(armadura.estado || '', 70, y);
+      this.doc.text(armadura.zona || '', 100, y);
+      this.doc.text(armadura.fornecedor || '', 130, y);
+      this.doc.text(new Date(armadura.created_at).toLocaleDateString('pt-BR'), 170, y);
+      
+      y += 8;
+    });
+  }
+
+  private addDetalhesArmadura(armadura: any): void {
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(31, 41, 55);
+    this.doc.text('Detalhes da Armadura', 20, 80);
+    
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(107, 114, 128);
+    
+    let y = 95;
+    this.doc.text(`ID: ${armadura.id}`, 20, y);
+    y += 8;
+    this.doc.text(`Tipo: ${armadura.tipo || 'Não especificado'}`, 20, y);
+    y += 8;
+    this.doc.text(`Estado: ${armadura.estado || 'Não especificado'}`, 20, y);
+    y += 8;
+    this.doc.text(`Zona: ${armadura.zona || 'Não especificado'}`, 20, y);
+    y += 8;
+    this.doc.text(`Fornecedor: ${armadura.fornecedor || 'Não especificado'}`, 20, y);
+    y += 8;
+    this.doc.text(`Fabricante: ${armadura.fabricante || 'Não especificado'}`, 20, y);
+    y += 8;
+    this.doc.text(`Número da Colada: ${armadura.numero_colada || 'Não especificado'}`, 20, y);
+    y += 8;
+    this.doc.text(`Número da Guia de Remessa: ${armadura.numero_guia_remessa || 'Não especificado'}`, 20, y);
+    y += 8;
+    this.doc.text(`Local de Aplicação: ${armadura.local_aplicacao || 'Não especificado'}`, 20, y);
+    y += 8;
+    this.doc.text(`Data de Criação: ${new Date(armadura.created_at).toLocaleDateString('pt-BR')}`, 20, y);
   }
 }
 
