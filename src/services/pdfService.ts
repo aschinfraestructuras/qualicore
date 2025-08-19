@@ -775,4 +775,32 @@ export class PDFService {
       throw error;
     }
   }
+
+  // Método de teste simples para armaduras
+  public async testArmadurasPDF(armaduras: Armadura[]): Promise<void> {
+    try {
+      console.log('🔍 Testando PDF de armaduras com', armaduras.length, 'armaduras');
+      
+      this.initDocument();
+      this.addHeader('Teste PDF Armaduras - Qualicore');
+      
+      this.doc.setFontSize(12);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text(`Total de armaduras: ${armaduras.length}`, 20, 60);
+      
+      if (armaduras.length > 0) {
+        this.doc.text(`Primeira armadura: ${armaduras[0].codigo}`, 20, 80);
+        this.doc.text(`Tipo: ${armaduras[0].tipo}`, 20, 100);
+        this.doc.text(`Estado: ${armaduras[0].estado}`, 20, 120);
+      }
+      
+      this.addFooter();
+      this.save('teste-armaduras-qualicore.pdf');
+      
+      console.log('✅ PDF de teste de armaduras gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar PDF de teste de armaduras:', error);
+      throw error;
+    }
+  }
 }

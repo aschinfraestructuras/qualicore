@@ -183,18 +183,33 @@ export default function ArmaduraDashboard({ armaduras, onSearch, onFilterChange 
   const handleGenerateReport = async (reportType: string) => {
     setLoading(true);
     try {
+      console.log('🔍 Iniciando geração de relatório:', reportType);
+      console.log('🔍 Armaduras disponíveis:', armaduras.length);
+      
       const pdfService = new PDFService();
+      console.log('🔍 PDFService criado:', pdfService);
+      
+      // Primeiro, vamos testar com um método simples
+      if (reportType === 'executivo') {
+        console.log('🔍 Testando com método simples primeiro...');
+        await pdfService.testArmadurasPDF(armaduras);
+        toast.success('Teste PDF de armaduras gerado com sucesso!');
+        return;
+      }
       
       switch (reportType) {
         case 'executivo':
+          console.log('🔍 Chamando generateArmadurasExecutiveReport...');
           await pdfService.generateArmadurasExecutiveReport(armaduras);
           toast.success('Relatório executivo gerado com sucesso!');
           break;
         case 'comparativo':
+          console.log('🔍 Chamando generateArmadurasComparativeReport...');
           await pdfService.generateArmadurasComparativeReport(armaduras);
           toast.success('Relatório comparativo gerado com sucesso!');
           break;
         case 'filtrado':
+          console.log('🔍 Chamando generateArmadurasFilteredReport...');
           await pdfService.generateArmadurasFilteredReport(armaduras, {});
           toast.success('Relatório filtrado gerado com sucesso!');
           break;
@@ -206,8 +221,10 @@ export default function ArmaduraDashboard({ armaduras, onSearch, onFilterChange 
           toast.error('Tipo de relatório não reconhecido');
       }
     } catch (error) {
-      console.error('Erro ao gerar relatório:', error);
-      toast.error('Erro ao gerar relatório');
+      console.error('❌ Erro ao gerar relatório:', error);
+      console.error('❌ Detalhes do erro:', error.message);
+      console.error('❌ Stack trace:', error.stack);
+      toast.error('Erro ao gerar relatório: ' + error.message);
     } finally {
       setLoading(false);
     }
