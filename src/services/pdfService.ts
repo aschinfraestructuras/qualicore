@@ -166,7 +166,7 @@ export class PDFService {
     this.doc = new jsPDF('portrait', 'mm', 'a4');
   }
 
-  // Cabeçalho premium com logotipo e dados da empresa - MELHORADO
+  // Cabeçalho premium com logotipo e dados da empresa - MUITO MELHORADO
   private addPremiumHeader(titulo: string, subtitulo?: string) {
     const { empresa, obra, design } = this.config;
     
@@ -174,51 +174,60 @@ export class PDFService {
     const primaryColor = this.hexToRgb(design.corPrimaria);
     const secondaryColor = this.hexToRgb(design.corSecundaria);
     
-    // Gradiente de fundo premium (simulado com múltiplas camadas)
+    // Fundo principal com gradiente mais elaborado
     this.doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    this.doc.rect(0, 0, 210, 70, 'F');
+    this.doc.rect(0, 0, 210, 80, 'F');
     
-    // Linha decorativa superior com gradiente
+    // Gradiente superior mais elaborado
     this.doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-    this.doc.rect(0, 0, 210, 3, 'F');
+    this.doc.rect(0, 0, 210, 5, 'F');
     
     // Linha decorativa inferior
     this.doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-    this.doc.rect(0, 67, 210, 3, 'F');
+    this.doc.rect(0, 75, 210, 5, 'F');
     
-    // Elementos decorativos geométricos
-    this.doc.setFillColor(255, 255, 255, 0.1);
-    this.doc.circle(180, 15, 8, 'F');
-    this.doc.circle(190, 25, 5, 'F');
-    this.doc.circle(185, 35, 6, 'F');
+    // Elementos decorativos geométricos mais elaborados
+    this.doc.setFillColor(255, 255, 255, 0.15);
+    this.doc.circle(175, 20, 10, 'F');
+    this.doc.circle(190, 30, 6, 'F');
+    this.doc.circle(185, 45, 8, 'F');
+    this.doc.circle(195, 15, 4, 'F');
     
-    // Logotipo (se disponível) - MELHORADO
-    if (this.logoImage) {
+    // Linhas decorativas diagonais
+    this.doc.setDrawColor(255, 255, 255, 0.2);
+    this.doc.setLineWidth(0.5);
+    this.doc.line(160, 10, 200, 10);
+    this.doc.line(165, 20, 205, 20);
+    this.doc.line(170, 30, 210, 30);
+    
+    // Logotipo (se disponível) - MUITO MELHORADO
+    if (this.logoImage && this.logoImage.complete && this.logoImage.naturalWidth > 0) {
       try {
-        const logoWidth = 35;
+        const logoWidth = 40;
         const logoHeight = (this.logoImage.height * logoWidth) / this.logoImage.width;
-        const logoY = 18;
-        const logoX = 20;
+        const logoY = 20;
+        const logoX = 25;
         
-        // Fundo circular para o logotipo
-        this.doc.setFillColor(255, 255, 255, 0.2);
-        this.doc.circle(logoX + logoWidth/2, logoY + logoHeight/2, Math.max(logoWidth, logoHeight)/2 + 2, 'F');
+        // Fundo circular mais elaborado para o logotipo
+        this.doc.setFillColor(255, 255, 255, 0.25);
+        this.doc.circle(logoX + logoWidth/2, logoY + logoHeight/2, Math.max(logoWidth, logoHeight)/2 + 3, 'F');
         
+        // Borda circular
+        this.doc.setDrawColor(255, 255, 255, 0.5);
+        this.doc.setLineWidth(1);
+        this.doc.circle(logoX + logoWidth/2, logoY + logoHeight/2, Math.max(logoWidth, logoHeight)/2 + 3, 'S');
+        
+        // Adicionar logotipo
         this.doc.addImage(this.logoImage, 'PNG', logoX, logoY, logoWidth, logoHeight);
+        
+        console.log('✅ Logotipo adicionado com sucesso:', logoWidth, 'x', logoHeight);
       } catch (error) {
-        console.log('Erro ao adicionar logotipo:', error);
-        // Fallback: texto da empresa com design melhorado
-        this.doc.setFontSize(18);
-        this.doc.setTextColor(255, 255, 255);
-        this.doc.setFont('helvetica', 'bold');
-        this.doc.text(empresa.nome, 25, 35);
+        console.log('❌ Erro ao adicionar logotipo:', error);
+        this.addCompanyTextFallback(empresa.nome, 25, 40);
       }
     } else {
       // Fallback: texto da empresa com design melhorado
-      this.doc.setFontSize(18);
-      this.doc.setTextColor(255, 255, 255);
-      this.doc.setFont('helvetica', 'bold');
-      this.doc.text(empresa.nome, 25, 35);
+      this.addCompanyTextFallback(empresa.nome, 25, 40);
     }
     
     // Informações da empresa (lado direito) - MELHORADO
@@ -254,7 +263,7 @@ export class PDFService {
     }
   }
 
-  // Rodapé premium com numeração e dados - MELHORADO
+  // Rodapé premium com numeração e dados - MUITO MELHORADO
   private addPremiumFooter() {
     const { empresa, design } = this.config;
     const pageCount = (this.doc as any).getNumberOfPages();
@@ -266,26 +275,33 @@ export class PDFService {
     for (let i = 1; i <= pageCount; i++) {
       this.doc.setPage(i);
       
-      // Fundo do rodapé com gradiente
+      // Fundo do rodapé com gradiente mais elaborado
       this.doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      this.doc.rect(0, 275, 210, 25, 'F');
+      this.doc.rect(0, 270, 210, 30, 'F');
       
       // Linha decorativa superior
       this.doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-      this.doc.rect(0, 275, 210, 3, 'F');
+      this.doc.rect(0, 270, 210, 4, 'F');
       
-      // Elementos decorativos
-      this.doc.setFillColor(255, 255, 255, 0.1);
-      this.doc.circle(30, 287, 3, 'F');
-      this.doc.circle(180, 287, 3, 'F');
+      // Elementos decorativos mais elaborados
+      this.doc.setFillColor(255, 255, 255, 0.15);
+      this.doc.circle(25, 285, 4, 'F');
+      this.doc.circle(185, 285, 4, 'F');
+      this.doc.circle(105, 285, 3, 'F');
       
-      // Informações do rodapé - MELHORADO
-      this.doc.setFontSize(8);
+      // Linhas decorativas
+      this.doc.setDrawColor(255, 255, 255, 0.3);
+      this.doc.setLineWidth(0.5);
+      this.doc.line(40, 275, 170, 275);
+      this.doc.line(40, 295, 170, 295);
+      
+      // Informações do rodapé - MUITO MELHORADO
+      this.doc.setFontSize(9);
       this.doc.setTextColor(255, 255, 255);
-      this.doc.setFont('helvetica', 'normal');
+      this.doc.setFont('helvetica', 'bold');
       
       // Página
-      this.doc.text(`📄 Página ${i} de ${pageCount}`, 20, 285);
+      this.doc.text(`📄 Página ${i} de ${pageCount}`, 20, 280);
       
       // Data e hora
       const now = new Date();
@@ -295,10 +311,15 @@ export class PDFService {
         minute: '2-digit',
         second: '2-digit'
       });
-      this.doc.text(`🕒 Gerado em: ${dataStr} às ${horaStr}`, 105, 285, { align: 'center' });
+      this.doc.text(`🕒 Gerado em: ${dataStr} às ${horaStr}`, 105, 280, { align: 'center' });
       
       // Empresa
-      this.doc.text(`🏢 ${empresa.nome} - NIF: ${empresa.nif}`, 190, 285, { align: 'right' });
+      this.doc.text(`🏢 ${empresa.nome} - NIF: ${empresa.nif}`, 190, 280, { align: 'right' });
+      
+      // Informações adicionais
+      this.doc.setFontSize(7);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text(`📧 ${empresa.email} | 📞 ${empresa.telefone}`, 105, 290, { align: 'center' });
       
       // Linha decorativa inferior
       this.doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
@@ -306,7 +327,7 @@ export class PDFService {
     }
   }
 
-  // Tabela premium com design profissional - CORRIGIDA
+  // Tabela premium com design profissional - MUITO MELHORADA
   private addPremiumTable(headers: string[], data: any[][], startY: number, title?: string) {
     const { design } = this.config;
     
@@ -315,14 +336,14 @@ export class PDFService {
       this.doc.setTextColor(design.corTexto);
       this.doc.setFont(design.fonteTitulo, 'bold');
       this.doc.text(title, 20, startY);
-      startY += 12;
+      startY += 15;
     }
     
     // Converter cores hex para RGB
     const primaryColor = this.hexToRgb(design.corPrimaria);
     const secondaryColor = this.hexToRgb(design.corSecundaria);
     
-    // Usar autoTable para tabelas profissionais com configuração melhorada
+    // Usar autoTable para tabelas profissionais com configuração MUITO melhorada
     autoTable(this.doc, {
       startY: startY,
       head: [headers],
@@ -332,36 +353,54 @@ export class PDFService {
         fillColor: primaryColor,
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 11,
-        halign: 'center'
+        fontSize: 12,
+        halign: 'center',
+        cellPadding: 6
       },
       alternateRowStyles: {
-        fillColor: [248, 250, 252]
+        fillColor: [248, 250, 252],
+        textColor: [31, 41, 55]
       },
       styles: {
-        fontSize: 9,
-        cellPadding: 4,
+        fontSize: 10,
+        cellPadding: 5,
         overflow: 'linebreak',
-        cellWidth: 'auto'
+        cellWidth: 'auto',
+        lineColor: [229, 231, 235],
+        lineWidth: 0.3
       },
       columnStyles: {
-        0: { cellWidth: 'auto' },
-        1: { cellWidth: 'auto' },
-        2: { cellWidth: 'auto' },
-        3: { cellWidth: 'auto' },
-        4: { cellWidth: 'auto' }
+        0: { cellWidth: 'auto', halign: 'left' },
+        1: { cellWidth: 'auto', halign: 'center' },
+        2: { cellWidth: 'auto', halign: 'center' },
+        3: { cellWidth: 'auto', halign: 'center' },
+        4: { cellWidth: 'auto', halign: 'center' }
       },
-      margin: { left: 15, right: 15, top: 10 },
-      tableWidth: 180, // Usar largura total da página
+      margin: { left: 20, right: 20, top: 15 },
+      tableWidth: 170, // Largura otimizada
+      pageBreak: 'auto',
+      willDrawPage: (data) => {
+        // Adicionar cabeçalho em cada página se necessário
+        if (data.pageNumber > 1) {
+          this.addPremiumHeader('Continuação', 'Página ' + data.pageNumber);
+        }
+      },
       didDrawPage: (data) => {
-        // Adicionar bordas decorativas
+        // Adicionar bordas decorativas mais elaboradas
         this.doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        this.doc.setLineWidth(0.5);
-        this.doc.rect(15, data.cursor.y - 10, 180, (data.table as any).height + 20);
+        this.doc.setLineWidth(1);
+        this.doc.rect(20, data.cursor.y - 15, 170, (data.table as any).height + 30);
+        
+        // Adicionar cantos decorativos
+        this.doc.setLineWidth(2);
+        this.doc.line(20, data.cursor.y - 15, 25, data.cursor.y - 15);
+        this.doc.line(20, data.cursor.y - 15, 20, data.cursor.y - 10);
+        this.doc.line(190, data.cursor.y - 15, 185, data.cursor.y - 15);
+        this.doc.line(190, data.cursor.y - 15, 190, data.cursor.y - 10);
       }
     });
     
-    return (this.doc as any).lastAutoTable.finalY + 20;
+    return (this.doc as any).lastAutoTable.finalY + 25;
   }
 
   // Função auxiliar para converter hex para RGB
@@ -372,6 +411,19 @@ export class PDFService {
       parseInt(result[2], 16),
       parseInt(result[3], 16)
     ] : [59, 130, 246]; // Fallback azul
+  }
+
+  // Método para adicionar texto da empresa como fallback
+  private addCompanyTextFallback(nome: string, x: number, y: number) {
+    this.doc.setFontSize(20);
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text(nome, x, y);
+    
+    // Adicionar efeito de sombra
+    this.doc.setFontSize(20);
+    this.doc.setTextColor(0, 0, 0, 0.3);
+    this.doc.text(nome, x + 1, y + 1);
   }
 
   // Adicionar gráfico de barras elaborado

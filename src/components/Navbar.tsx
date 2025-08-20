@@ -276,18 +276,18 @@ export default function Navbar() {
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full"></div>
             </button>
             
-            {/* Botão de Configuração de PDFs */}
+            {/* Botão de Configuração de PDFs - MUITO VISÍVEL */}
             <button 
               onClick={() => {
                 // Abrir modal de configuração de PDFs
                 const event = new CustomEvent('openPDFConfig');
                 window.dispatchEvent(event);
               }}
-              className="p-2 rounded-lg hover:bg-blue-50 transition-colors group relative"
+              className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               title="Configuração de PDFs"
             >
-              <Settings className="h-5 w-5 text-blue-600 group-hover:text-blue-700 group-hover:rotate-90 transition-all duration-300" />
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <Settings className="h-4 w-4" />
+              <span className="text-sm font-medium">PDF</span>
             </button>
             
             <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
