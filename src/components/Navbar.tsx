@@ -27,6 +27,7 @@ import {
   Archive,
   BarChart3,
   Eye,
+  Settings,
 } from "lucide-react";
 
 export const menuItems = [
@@ -273,6 +274,20 @@ export default function Navbar() {
             <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative">
               <Bell className="h-5 w-5 text-gray-600" />
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full"></div>
+            </button>
+            
+            {/* Botão de Configuração de PDFs */}
+            <button 
+              onClick={() => {
+                // Abrir modal de configuração de PDFs
+                const event = new CustomEvent('openPDFConfig');
+                window.dispatchEvent(event);
+              }}
+              className="p-2 rounded-lg hover:bg-blue-50 transition-colors group relative"
+              title="Configuração de PDFs"
+            >
+              <Settings className="h-5 w-5 text-blue-600 group-hover:text-blue-700 group-hover:rotate-90 transition-all duration-300" />
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </button>
             
             <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">

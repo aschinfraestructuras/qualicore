@@ -6,6 +6,19 @@ const PDFGlobalConfig: React.FC = () => {
   const [config, setConfig] = useState(PDFConfigService.getInstance().getConfig());
   const [isOpen, setIsOpen] = useState(false);
 
+  // Listener para abrir o modal quando o botão da navbar for clicado
+  useEffect(() => {
+    const handleOpenPDFConfig = () => {
+      setIsOpen(true);
+    };
+
+    window.addEventListener('openPDFConfig', handleOpenPDFConfig);
+
+    return () => {
+      window.removeEventListener('openPDFConfig', handleOpenPDFConfig);
+    };
+  }, []);
+
   const handleConfigChange = (section: string, field: string, value: string) => {
     const newConfig = {
       ...config,
@@ -21,11 +34,20 @@ const PDFGlobalConfig: React.FC = () => {
   const handleLogotipoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Verificar tamanho do ficheiro (máx 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('❌ Ficheiro muito grande. Máximo 2MB.');
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64 = e.target?.result as string;
         handleConfigChange('empresa', 'logotipo', base64);
         toast.success('✅ Logotipo carregado com sucesso!');
+      };
+      reader.onerror = () => {
+        toast.error('❌ Erro ao carregar ficheiro.');
       };
       reader.readAsDataURL(file);
     }
@@ -45,27 +67,12 @@ const PDFGlobalConfig: React.FC = () => {
 
   return (
     <>
-      {/* Botão premium para abrir configuração */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full shadow-2xl hover:shadow-3xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-110 border-2 border-white"
-        title="Configurar PDFs Globais"
-      >
-        <div className="flex flex-col items-center">
-          <svg className="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          <span className="text-xs font-semibold">PDF</span>
-        </div>
-      </button>
-
-      {/* Modal premium de configuração */}
+      {/* Modal premium de configuração - CORRIGIDO */}
       {isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden border border-gray-200">
-            {/* Header do modal */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-2xl">
+          <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col border border-gray-200">
+            {/* Header do modal - FIXO */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-2xl flex-shrink-0">
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-white bg-opacity-20 rounded-lg">
@@ -90,8 +97,8 @@ const PDFGlobalConfig: React.FC = () => {
               </div>
             </div>
             
-            <div className="p-8 overflow-y-auto max-h-[calc(95vh-120px)]">
-
+            {/* Conteúdo com scroll - CORRIGIDO */}
+            <div className="flex-1 overflow-y-auto p-8">
               {/* Dados da Empresa */}
               <div className="mb-10">
                 <div className="flex items-center mb-6">
@@ -107,99 +114,104 @@ const PDFGlobalConfig: React.FC = () => {
                 </div>
                 <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Nome da Empresa</label>
-                    <input
-                      type="text"
-                      value={config.empresa.nome}
-                      onChange={(e) => handleConfigChange('empresa', 'nome', e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
-                      placeholder="Ex: QUALICORE"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">NIF</label>
-                    <input
-                      type="text"
-                      value={config.empresa.nif}
-                      onChange={(e) => handleConfigChange('empresa', 'nif', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Morada</label>
-                    <input
-                      type="text"
-                      value={config.empresa.morada}
-                      onChange={(e) => handleConfigChange('empresa', 'morada', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
-                    <input
-                      type="text"
-                      value={config.empresa.telefone}
-                      onChange={(e) => handleConfigChange('empresa', 'telefone', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={config.empresa.email}
-                      onChange={(e) => handleConfigChange('empresa', 'email', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                    <input
-                      type="text"
-                      value={config.empresa.website}
-                      onChange={(e) => handleConfigChange('empresa', 'website', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Upload de Logotipo */}
-                <div className="mt-6">
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">🖼️ Logotipo da Empresa</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
-                    <div className="flex flex-col items-center">
-                      <svg className="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <p className="text-sm text-gray-600 mb-2">Clique para carregar o logótipo da empresa</p>
-                      <p className="text-xs text-gray-500 mb-3">Formatos aceites: PNG, JPG, SVG (máx. 2MB)</p>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Nome da Empresa</label>
                       <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleLogotipoUpload}
-                        className="hidden"
-                        id="logotipo-upload"
+                        type="text"
+                        value={config.empresa.nome}
+                        onChange={(e) => handleConfigChange('empresa', 'nome', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
+                        placeholder="Ex: QUALICORE"
                       />
-                      <label
-                        htmlFor="logotipo-upload"
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
-                      >
-                        Escolher Ficheiro
-                      </label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">NIF</label>
+                      <input
+                        type="text"
+                        value={config.empresa.nif}
+                        onChange={(e) => handleConfigChange('empresa', 'nif', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
+                        placeholder="Ex: 123456789"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Morada</label>
+                      <input
+                        type="text"
+                        value={config.empresa.morada}
+                        onChange={(e) => handleConfigChange('empresa', 'morada', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
+                        placeholder="Ex: Rua da Qualidade, 123"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Telefone</label>
+                      <input
+                        type="text"
+                        value={config.empresa.telefone}
+                        onChange={(e) => handleConfigChange('empresa', 'telefone', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
+                        placeholder="Ex: +351 123 456 789"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                      <input
+                        type="email"
+                        value={config.empresa.email}
+                        onChange={(e) => handleConfigChange('empresa', 'email', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
+                        placeholder="Ex: info@qualicore.pt"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Website</label>
+                      <input
+                        type="text"
+                        value={config.empresa.website}
+                        onChange={(e) => handleConfigChange('empresa', 'website', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
+                        placeholder="Ex: www.qualicore.pt"
+                      />
                     </div>
                   </div>
-                  {config.empresa.logotipo && (
-                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="flex items-center">
-                        <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+
+                  {/* Upload de Logotipo - MELHORADO */}
+                  <div className="mt-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">🖼️ Logotipo da Empresa</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                      <div className="flex flex-col items-center">
+                        <svg className="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <p className="text-sm text-green-700 font-medium">✅ Logótipo carregado com sucesso!</p>
+                        <p className="text-sm text-gray-600 mb-2">Clique para carregar o logótipo da empresa</p>
+                        <p className="text-xs text-gray-500 mb-3">Formatos aceites: PNG, JPG, SVG (máx. 2MB)</p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogotipoUpload}
+                          className="hidden"
+                          id="logotipo-upload"
+                        />
+                        <label
+                          htmlFor="logotipo-upload"
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+                        >
+                          Escolher Ficheiro
+                        </label>
                       </div>
                     </div>
-                  )}
-                </div>
+                    {config.empresa.logotipo && (
+                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center">
+                          <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <p className="text-sm text-green-700 font-medium">✅ Logótipo carregado com sucesso!</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -218,45 +230,47 @@ const PDFGlobalConfig: React.FC = () => {
                 </div>
                 <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Obra</label>
-                    <input
-                      type="text"
-                      value={config.obra?.nome || ''}
-                      onChange={(e) => handleConfigChange('obra', 'nome', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Nome da Obra</label>
+                      <input
+                        type="text"
+                        value={config.obra?.nome || ''}
+                        onChange={(e) => handleConfigChange('obra', 'nome', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
+                        placeholder="Ex: Construção Ponte X"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Referência</label>
+                      <input
+                        type="text"
+                        value={config.obra?.referencia || ''}
+                        onChange={(e) => handleConfigChange('obra', 'referencia', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
+                        placeholder="Ex: OBRA-2024-001"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Localização</label>
+                      <input
+                        type="text"
+                        value={config.obra?.localizacao || ''}
+                        onChange={(e) => handleConfigChange('obra', 'localizacao', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
+                        placeholder="Ex: Lisboa, Portugal"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Cliente</label>
+                      <input
+                        type="text"
+                        value={config.obra?.cliente || ''}
+                        onChange={(e) => handleConfigChange('obra', 'cliente', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white"
+                        placeholder="Ex: Cliente Principal S.A."
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Referência</label>
-                    <input
-                      type="text"
-                      value={config.obra?.referencia || ''}
-                      onChange={(e) => handleConfigChange('obra', 'referencia', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Localização</label>
-                    <input
-                      type="text"
-                      value={config.obra?.localizacao || ''}
-                      onChange={(e) => handleConfigChange('obra', 'localizacao', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
-                    <input
-                      type="text"
-                      value={config.obra?.cliente || ''}
-                      onChange={(e) => handleConfigChange('obra', 'cliente', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-              </div>
-
                 </div>
               </div>
 
@@ -275,53 +289,51 @@ const PDFGlobalConfig: React.FC = () => {
                 </div>
                 <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">Cor Primária</label>
-                    <div className="flex items-center space-x-3">
-                      <div className="relative">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">Cor Primária</label>
+                      <div className="flex items-center space-x-3">
+                        <div className="relative">
+                          <input
+                            type="color"
+                            value={config.design.corPrimaria}
+                            onChange={(e) => handleConfigChange('design', 'corPrimaria', e.target.value)}
+                            className="w-16 h-16 border-2 border-gray-200 rounded-lg cursor-pointer shadow-sm"
+                          />
+                          <div className="absolute inset-0 rounded-lg border-2 border-gray-300 pointer-events-none"></div>
+                        </div>
                         <input
-                          type="color"
+                          type="text"
                           value={config.design.corPrimaria}
                           onChange={(e) => handleConfigChange('design', 'corPrimaria', e.target.value)}
-                          className="w-16 h-16 border-2 border-gray-200 rounded-lg cursor-pointer shadow-sm"
+                          className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white font-mono text-sm"
+                          placeholder="#3B82F6"
                         />
-                        <div className="absolute inset-0 rounded-lg border-2 border-gray-300 pointer-events-none"></div>
                       </div>
-                      <input
-                        type="text"
-                        value={config.design.corPrimaria}
-                        onChange={(e) => handleConfigChange('design', 'corPrimaria', e.target.value)}
-                        className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white font-mono text-sm"
-                        placeholder="#3B82F6"
-                      />
+                      <p className="text-xs text-gray-500 mt-2">Cor principal dos cabeçalhos e elementos principais</p>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">Cor principal dos cabeçalhos e elementos principais</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">Cor Secundária</label>
-                    <div className="flex items-center space-x-3">
-                      <div className="relative">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">Cor Secundária</label>
+                      <div className="flex items-center space-x-3">
+                        <div className="relative">
+                          <input
+                            type="color"
+                            value={config.design.corSecundaria}
+                            onChange={(e) => handleConfigChange('design', 'corSecundaria', e.target.value)}
+                            className="w-16 h-16 border-2 border-gray-200 rounded-lg cursor-pointer shadow-sm"
+                          />
+                          <div className="absolute inset-0 rounded-lg border-2 border-gray-300 pointer-events-none"></div>
+                        </div>
                         <input
-                          type="color"
+                          type="text"
                           value={config.design.corSecundaria}
                           onChange={(e) => handleConfigChange('design', 'corSecundaria', e.target.value)}
-                          className="w-16 h-16 border-2 border-gray-200 rounded-lg cursor-pointer shadow-sm"
+                          className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white font-mono text-sm"
+                          placeholder="#1E40AF"
                         />
-                        <div className="absolute inset-0 rounded-lg border-2 border-gray-300 pointer-events-none"></div>
                       </div>
-                      <input
-                        type="text"
-                        value={config.design.corSecundaria}
-                        onChange={(e) => handleConfigChange('design', 'corSecundaria', e.target.value)}
-                        className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-gray-50 hover:bg-white font-mono text-sm"
-                        placeholder="#1E40AF"
-                      />
+                      <p className="text-xs text-gray-500 mt-2">Cor de destaque para elementos secundários</p>
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">Cor de destaque para elementos secundários</p>
                   </div>
-                </div>
-              </div>
-
                 </div>
               </div>
 
@@ -378,9 +390,11 @@ const PDFGlobalConfig: React.FC = () => {
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Botões de ação premium */}
-              <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+            {/* Botões de ação premium - FIXOS */}
+            <div className="bg-white p-6 rounded-b-2xl border-t border-gray-200 flex-shrink-0">
+              <div className="flex justify-between items-center">
                 <button
                   onClick={handleReset}
                   className="px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"

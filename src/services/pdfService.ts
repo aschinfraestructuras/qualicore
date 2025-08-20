@@ -166,102 +166,147 @@ export class PDFService {
     this.doc = new jsPDF('portrait', 'mm', 'a4');
   }
 
-  // Cabeçalho premium com logotipo e dados da empresa
+  // Cabeçalho premium com logotipo e dados da empresa - MELHORADO
   private addPremiumHeader(titulo: string, subtitulo?: string) {
     const { empresa, obra, design } = this.config;
     
-    // Gradiente de fundo premium (simulado com múltiplas camadas)
-    this.doc.setFillColor(design.corPrimaria);
-    this.doc.rect(0, 0, 210, 60, 'F');
+    // Converter cores hex para RGB
+    const primaryColor = this.hexToRgb(design.corPrimaria);
+    const secondaryColor = this.hexToRgb(design.corSecundaria);
     
-    // Linha decorativa superior
-    this.doc.setFillColor(design.corSecundaria);
-    this.doc.rect(0, 0, 210, 2, 'F');
+    // Gradiente de fundo premium (simulado com múltiplas camadas)
+    this.doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    this.doc.rect(0, 0, 210, 70, 'F');
+    
+    // Linha decorativa superior com gradiente
+    this.doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+    this.doc.rect(0, 0, 210, 3, 'F');
     
     // Linha decorativa inferior
-    this.doc.setFillColor(design.corSecundaria);
-    this.doc.rect(0, 58, 210, 2, 'F');
+    this.doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+    this.doc.rect(0, 67, 210, 3, 'F');
     
-    // Logotipo (se disponível) - Melhorado
+    // Elementos decorativos geométricos
+    this.doc.setFillColor(255, 255, 255, 0.1);
+    this.doc.circle(180, 15, 8, 'F');
+    this.doc.circle(190, 25, 5, 'F');
+    this.doc.circle(185, 35, 6, 'F');
+    
+    // Logotipo (se disponível) - MELHORADO
     if (this.logoImage) {
       try {
-        const logoWidth = 30;
+        const logoWidth = 35;
         const logoHeight = (this.logoImage.height * logoWidth) / this.logoImage.width;
-        const logoY = 15;
-        this.doc.addImage(this.logoImage, 'PNG', 15, logoY, logoWidth, logoHeight);
+        const logoY = 18;
+        const logoX = 20;
+        
+        // Fundo circular para o logotipo
+        this.doc.setFillColor(255, 255, 255, 0.2);
+        this.doc.circle(logoX + logoWidth/2, logoY + logoHeight/2, Math.max(logoWidth, logoHeight)/2 + 2, 'F');
+        
+        this.doc.addImage(this.logoImage, 'PNG', logoX, logoY, logoWidth, logoHeight);
       } catch (error) {
         console.log('Erro ao adicionar logotipo:', error);
-        // Fallback: texto da empresa
-        this.doc.setFontSize(20);
+        // Fallback: texto da empresa com design melhorado
+        this.doc.setFontSize(18);
         this.doc.setTextColor(255, 255, 255);
-        this.doc.text(empresa.nome, 15, 30);
+        this.doc.setFont('helvetica', 'bold');
+        this.doc.text(empresa.nome, 25, 35);
       }
     } else {
-      // Fallback: texto da empresa
-      this.doc.setFontSize(20);
+      // Fallback: texto da empresa com design melhorado
+      this.doc.setFontSize(18);
       this.doc.setTextColor(255, 255, 255);
-      this.doc.text(empresa.nome, 15, 30);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text(empresa.nome, 25, 35);
     }
     
-    // Informações da empresa (lado direito)
-    this.doc.setFontSize(10);
+    // Informações da empresa (lado direito) - MELHORADO
+    this.doc.setFontSize(9);
     this.doc.setTextColor(255, 255, 255);
-    this.doc.text(empresa.morada, 160, 20, { align: 'right' });
-    this.doc.text(empresa.telefone, 160, 25, { align: 'right' });
-    this.doc.text(empresa.email, 160, 30, { align: 'right' });
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.text(empresa.morada, 170, 20, { align: 'right' });
+    this.doc.text(empresa.telefone, 170, 26, { align: 'right' });
+    this.doc.text(empresa.email, 170, 32, { align: 'right' });
     if (empresa.website) {
-      this.doc.text(empresa.website, 160, 35, { align: 'right' });
+      this.doc.text(empresa.website, 170, 38, { align: 'right' });
     }
     
-    // Título principal (centro)
-    this.doc.setFontSize(22);
+    // Título principal (centro) - MELHORADO
+    this.doc.setFontSize(24);
     this.doc.setTextColor(255, 255, 255);
-    this.doc.text(titulo, 105, 45, { align: 'center' });
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text(titulo, 105, 50, { align: 'center' });
     
     if (subtitulo) {
       this.doc.setFontSize(12);
-      this.doc.text(subtitulo, 105, 52, { align: 'center' });
+      this.doc.setFont('helvetica', 'italic');
+      this.doc.text(subtitulo, 105, 58, { align: 'center' });
     }
     
-    // Informações da obra (centro inferior)
+    // Informações da obra (centro inferior) - MELHORADO
     if (obra) {
-      this.doc.setFontSize(9);
-      this.doc.setTextColor(255, 255, 255);
-      this.doc.text(`Obra: ${obra.nome} | Ref: ${obra.referencia}`, 105, 58, { align: 'center' });
-      this.doc.text(`Cliente: ${obra.cliente} | Local: ${obra.localizacao}`, 105, 62, { align: 'center' });
+      this.doc.setFontSize(8);
+      this.doc.setTextColor(255, 255, 255, 0.9);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text(`🏗️ Obra: ${obra.nome} | 📋 Ref: ${obra.referencia}`, 105, 65, { align: 'center' });
+      this.doc.text(`👤 Cliente: ${obra.cliente} | 📍 Local: ${obra.localizacao}`, 105, 69, { align: 'center' });
     }
   }
 
-  // Rodapé premium com numeração e dados
+  // Rodapé premium com numeração e dados - MELHORADO
   private addPremiumFooter() {
     const { empresa, design } = this.config;
     const pageCount = (this.doc as any).getNumberOfPages();
     
+    // Converter cores hex para RGB
+    const primaryColor = this.hexToRgb(design.corPrimaria);
+    const secondaryColor = this.hexToRgb(design.corSecundaria);
+    
     for (let i = 1; i <= pageCount; i++) {
       this.doc.setPage(i);
       
-      // Fundo do rodapé
-      this.doc.setFillColor(design.corPrimaria);
-      this.doc.rect(0, 280, 210, 20, 'F');
+      // Fundo do rodapé com gradiente
+      this.doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      this.doc.rect(0, 275, 210, 25, 'F');
       
       // Linha decorativa superior
-      this.doc.setFillColor(design.corSecundaria);
-      this.doc.rect(0, 280, 210, 2, 'F');
+      this.doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+      this.doc.rect(0, 275, 210, 3, 'F');
       
-      // Informações do rodapé
-      this.doc.setFontSize(9);
+      // Elementos decorativos
+      this.doc.setFillColor(255, 255, 255, 0.1);
+      this.doc.circle(30, 287, 3, 'F');
+      this.doc.circle(180, 287, 3, 'F');
+      
+      // Informações do rodapé - MELHORADO
+      this.doc.setFontSize(8);
       this.doc.setTextColor(255, 255, 255);
-      this.doc.text(`Página ${i} de ${pageCount}`, 20, 290);
-      this.doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-PT')} às ${new Date().toLocaleTimeString('pt-PT')}`, 105, 290, { align: 'center' });
-      this.doc.text(`${empresa.nome} - ${empresa.nif}`, 190, 290, { align: 'right' });
+      this.doc.setFont('helvetica', 'normal');
+      
+      // Página
+      this.doc.text(`📄 Página ${i} de ${pageCount}`, 20, 285);
+      
+      // Data e hora
+      const now = new Date();
+      const dataStr = now.toLocaleDateString('pt-PT');
+      const horaStr = now.toLocaleTimeString('pt-PT', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      this.doc.text(`🕒 Gerado em: ${dataStr} às ${horaStr}`, 105, 285, { align: 'center' });
+      
+      // Empresa
+      this.doc.text(`🏢 ${empresa.nome} - NIF: ${empresa.nif}`, 190, 285, { align: 'right' });
       
       // Linha decorativa inferior
-      this.doc.setFillColor(design.corSecundaria);
+      this.doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
       this.doc.rect(0, 298, 210, 2, 'F');
     }
   }
 
-  // Tabela premium com design profissional
+  // Tabela premium com design profissional - CORRIGIDA
   private addPremiumTable(headers: string[], data: any[][], startY: number, title?: string) {
     const { design } = this.config;
     
@@ -273,29 +318,196 @@ export class PDFService {
       startY += 12;
     }
     
-    // Usar autoTable para tabelas profissionais
+    // Converter cores hex para RGB
+    const primaryColor = this.hexToRgb(design.corPrimaria);
+    const secondaryColor = this.hexToRgb(design.corSecundaria);
+    
+    // Usar autoTable para tabelas profissionais com configuração melhorada
     autoTable(this.doc, {
       startY: startY,
       head: [headers],
       body: data,
       theme: 'grid',
       headStyles: {
-        fillColor: [59, 130, 246], // Azul padrão
+        fillColor: primaryColor,
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 11
+        fontSize: 11,
+        halign: 'center'
       },
       alternateRowStyles: {
         fillColor: [248, 250, 252]
       },
       styles: {
-        fontSize: 10,
-        cellPadding: 5
+        fontSize: 9,
+        cellPadding: 4,
+        overflow: 'linebreak',
+        cellWidth: 'auto'
       },
-      margin: { left: 20, right: 20 }
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 'auto' },
+        3: { cellWidth: 'auto' },
+        4: { cellWidth: 'auto' }
+      },
+      margin: { left: 15, right: 15, top: 10 },
+      tableWidth: 180, // Usar largura total da página
+      didDrawPage: (data) => {
+        // Adicionar bordas decorativas
+        this.doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        this.doc.setLineWidth(0.5);
+        this.doc.rect(15, data.cursor.y - 10, 180, (data.table as any).height + 20);
+      }
     });
     
-    return (this.doc as any).lastAutoTable.finalY + 15;
+    return (this.doc as any).lastAutoTable.finalY + 20;
+  }
+
+  // Função auxiliar para converter hex para RGB
+  private hexToRgb(hex: string): [number, number, number] {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+      parseInt(result[1], 16),
+      parseInt(result[2], 16),
+      parseInt(result[3], 16)
+    ] : [59, 130, 246]; // Fallback azul
+  }
+
+  // Adicionar gráfico de barras elaborado
+  private addElaborateBarChart(data: { label: string; value: number }[], startY: number, title: string) {
+    const { design } = this.config;
+    const primaryColor = this.hexToRgb(design.corPrimaria);
+    const secondaryColor = this.hexToRgb(design.corSecundaria);
+    
+    // Título do gráfico
+    this.doc.setFontSize(14);
+    this.doc.setTextColor(design.corTexto);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text(title, 20, startY);
+    startY += 15;
+    
+    const maxValue = Math.max(...data.map(d => d.value));
+    const chartWidth = 150;
+    const chartHeight = 60;
+    const barWidth = chartWidth / data.length - 5;
+    const chartX = 30;
+    const chartY = startY;
+    
+    // Fundo do gráfico
+    this.doc.setFillColor(248, 250, 252);
+    this.doc.rect(chartX - 5, chartY - 5, chartWidth + 10, chartHeight + 20, 'F');
+    
+    // Bordas do gráfico
+    this.doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    this.doc.setLineWidth(0.5);
+    this.doc.rect(chartX - 5, chartY - 5, chartWidth + 10, chartHeight + 20);
+    
+    // Desenhar barras
+    data.forEach((item, index) => {
+      const barHeight = (item.value / maxValue) * chartHeight;
+      const barX = chartX + (index * (chartWidth / data.length));
+      const barY = chartY + chartHeight - barHeight;
+      
+      // Gradiente da barra
+      this.doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      this.doc.rect(barX, barY, barWidth, barHeight, 'F');
+      
+      // Sombra da barra
+      this.doc.setFillColor(0, 0, 0, 0.1);
+      this.doc.rect(barX + 1, barY + 1, barWidth, barHeight, 'F');
+      
+      // Valor no topo da barra
+      this.doc.setFontSize(8);
+      this.doc.setTextColor(design.corTexto);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text(item.value.toString(), barX + barWidth/2, barY - 3, { align: 'center' });
+      
+      // Label abaixo da barra
+      this.doc.setFontSize(7);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text(item.label, barX + barWidth/2, chartY + chartHeight + 8, { align: 'center' });
+    });
+    
+    return startY + chartHeight + 30;
+  }
+
+  // Adicionar seção de estatísticas com ícones
+  private addStatisticsSection(stats: { icon: string; label: string; value: string }[], startY: number) {
+    const { design } = this.config;
+    const primaryColor = this.hexToRgb(design.corPrimaria);
+    
+    // Título da seção
+    this.doc.setFontSize(12);
+    this.doc.setTextColor(design.corTexto);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text('📊 Estatísticas Gerais', 20, startY);
+    startY += 15;
+    
+    // Grid de estatísticas
+    const itemsPerRow = 2;
+    const itemWidth = 85;
+    const itemHeight = 25;
+    
+    stats.forEach((stat, index) => {
+      const row = Math.floor(index / itemsPerRow);
+      const col = index % itemsPerRow;
+      const x = 20 + (col * itemWidth);
+      const y = startY + (row * itemHeight);
+      
+      // Fundo do item
+      this.doc.setFillColor(248, 250, 252);
+      this.doc.rect(x, y, itemWidth - 5, itemHeight - 5, 'F');
+      
+      // Borda
+      this.doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      this.doc.setLineWidth(0.3);
+      this.doc.rect(x, y, itemWidth - 5, itemHeight - 5);
+      
+      // Ícone
+      this.doc.setFontSize(10);
+      this.doc.text(stat.icon, x + 5, y + 8);
+      
+      // Label
+      this.doc.setFontSize(7);
+      this.doc.setTextColor(design.corTexto);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.text(stat.label, x + 15, y + 8);
+      
+      // Valor
+      this.doc.setFontSize(9);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text(stat.value, x + 15, y + 16);
+    });
+    
+    return startY + (Math.ceil(stats.length / itemsPerRow) * itemHeight) + 10;
+  }
+
+  // Adicionar assinatura profissional
+  private addProfessionalSignature(startY: number, nome: string, cargo: string) {
+    const { design } = this.config;
+    const primaryColor = this.hexToRgb(design.corPrimaria);
+    
+    const signatureX = 150;
+    const signatureY = startY;
+    
+    // Linha de assinatura
+    this.doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    this.doc.setLineWidth(1);
+    this.doc.line(signatureX, signatureY, signatureX + 50, signatureY);
+    
+    // Nome
+    this.doc.setFontSize(10);
+    this.doc.setTextColor(design.corTexto);
+    this.doc.setFont('helvetica', 'bold');
+    this.doc.text(nome, signatureX, signatureY + 8);
+    
+    // Cargo
+    this.doc.setFontSize(8);
+    this.doc.setFont('helvetica', 'italic');
+    this.doc.text(cargo, signatureX, signatureY + 15);
+    
+    return startY + 25;
   }
 
   // Gráfico de barras simples
@@ -817,47 +1029,69 @@ export class PDFService {
     return y + 10;
   }
 
-  // Métodos para relatórios de armaduras
+  // Métodos para relatórios de armaduras - PREMIUM
   public async generateArmadurasExecutiveReport(armaduras: Armadura[]): Promise<void> {
     try {
-      console.log('🔍 Gerando relatório executivo com', armaduras.length, 'armaduras');
+      console.log('🔍 Gerando relatório executivo PREMIUM com', armaduras.length, 'armaduras');
       
       this.initDocument();
-      this.addHeader('QUALICORE - Relatório Executivo de Armaduras');
+      this.addPremiumHeader('QUALICORE - Relatório Executivo de Armaduras', 'Análise Completa e Detalhada');
       
-      this.doc.setFontSize(20);
-      this.doc.setTextColor(31, 41, 55);
-      this.doc.text('Relatório Executivo de Armaduras', 20, 60);
+      let currentY = 90;
       
-      this.doc.setFontSize(16);
-      this.doc.setTextColor(107, 114, 128);
-      this.doc.text(`Total de Armaduras: ${armaduras.length}`, 20, 85);
+      // Estatísticas com ícones
+      const stats = [
+        { icon: '🔢', label: 'Total', value: armaduras.length.toString() },
+        { icon: '✅', label: 'Aprovados', value: armaduras.filter(a => a.estado === 'aprovado').length.toString() },
+        { icon: '❌', label: 'Reprovados', value: armaduras.filter(a => a.estado === 'reprovado').length.toString() },
+        { icon: '⏳', label: 'Em Análise', value: armaduras.filter(a => a.estado === 'em_analise').length.toString() }
+      ];
       
-      // Estatísticas básicas
-      const aprovados = armaduras.filter(a => a.estado === 'aprovado').length;
-      const reprovados = armaduras.filter(a => a.estado === 'reprovado').length;
-      const emAnalise = armaduras.filter(a => a.estado === 'em_analise').length;
+      currentY = this.addStatisticsSection(stats, currentY);
+      currentY += 20;
       
-      this.doc.text(`Aprovados: ${aprovados}`, 20, 110);
-      this.doc.text(`Reprovados: ${reprovados}`, 20, 130);
-      this.doc.text(`Em Análise: ${emAnalise}`, 20, 150);
+      // Gráfico de barras por estado
+      const estadoData = [
+        { label: 'Aprovados', value: armaduras.filter(a => a.estado === 'aprovado').length },
+        { label: 'Reprovados', value: armaduras.filter(a => a.estado === 'reprovado').length },
+        { label: 'Em Análise', value: armaduras.filter(a => a.estado === 'em_analise').length }
+      ];
       
-      // Lista das primeiras 5 armaduras
-      this.doc.setFontSize(18);
-      this.doc.setTextColor(31, 41, 55);
-      this.doc.text('Primeiras Armaduras:', 20, 180);
+      currentY = this.addElaborateBarChart(estadoData, currentY, 'Distribuição por Estado');
+      currentY += 20;
       
-      this.doc.setFontSize(14);
-      this.doc.setTextColor(107, 114, 128);
+      // Gráfico por tipo de armadura
+      const tipos = armaduras.reduce((acc, armadura) => {
+        acc[armadura.tipo] = (acc[armadura.tipo] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
       
-      armaduras.slice(0, 5).forEach((armadura, index) => {
-        const y = 200 + (index * 20);
-        this.doc.text(`${armadura.codigo} - ${armadura.tipo} - ${armadura.estado}`, 25, y);
-      });
+      const tipoData = Object.entries(tipos).map(([tipo, count]) => ({
+        label: tipo,
+        value: count
+      }));
       
-      this.addFooter();
-      this.save('relatorio-executivo-armaduras.pdf');
-      console.log('✅ Relatório executivo de armaduras gerado com sucesso!');
+      currentY = this.addElaborateBarChart(tipoData, currentY, 'Distribuição por Tipo');
+      currentY += 20;
+      
+      // Tabela das armaduras principais
+      const headers = ['Código', 'Tipo', 'Diâmetro', 'Estado', 'Zona'];
+      const tableData = armaduras.slice(0, 10).map(armadura => [
+        armadura.codigo,
+        armadura.tipo,
+        armadura.diametro?.toString() || 'N/A',
+        armadura.estado,
+        armadura.zona || 'N/A'
+      ]);
+      
+      currentY = this.addPremiumTable(headers, tableData, currentY, 'Principais Armaduras');
+      
+      // Assinatura profissional
+      currentY = this.addProfessionalSignature(currentY, 'Eng. Responsável', 'Diretor Técnico');
+      
+      this.addPremiumFooter();
+      this.save('relatorio-executivo-armaduras-premium.pdf');
+      console.log('✅ Relatório executivo PREMIUM de armaduras gerado com sucesso!');
     } catch (error) {
       console.error('❌ Erro ao gerar relatório executivo de armaduras:', error);
       throw error;
