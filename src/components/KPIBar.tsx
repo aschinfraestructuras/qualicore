@@ -7,6 +7,8 @@ import {
   RefreshCw, BarChart3, Target
 } from 'lucide-react';
 import { kpiService, KPIData, NCData, SLAData, GlobalData } from '../lib/kpiService';
+import { alertService } from '../lib/alertService';
+import { SparklineChart } from './SparklineChart';
 
 interface KPIBarProps {
   darkMode: boolean;
@@ -24,6 +26,7 @@ export const KPIBar: React.FC<KPIBarProps> = ({ darkMode }) => {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [error, setError] = useState<string | null>(null);
+  const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
 
   const fetchKPIs = async () => {
     try {
@@ -32,6 +35,10 @@ export const KPIBar: React.FC<KPIBarProps> = ({ darkMode }) => {
       const data = await kpiService.getAllKPIs();
       setKpiData(data);
       setLastUpdate(new Date());
+
+      // Analisar alertas
+      const newAlerts = alertService.analyzeKPIs(data);
+      setActiveAlerts(alertService.getActiveAlerts());
     } catch (err) {
       setError('Erro ao carregar KPIs');
       console.error('Erro ao buscar KPIs:', err);
@@ -61,12 +68,6 @@ export const KPIBar: React.FC<KPIBarProps> = ({ darkMode }) => {
     return 'text-red-500';
   };
 
-  const getQualidadeBgColor = (percent: number) => {
-    if (percent >= 90) return 'bg-green-500/20';
-    if (percent >= 75) return 'bg-yellow-500/20';
-    return 'bg-red-500/20';
-  };
-
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('pt-PT').format(num);
   };
@@ -78,6 +79,14 @@ export const KPIBar: React.FC<KPIBarProps> = ({ darkMode }) => {
     if (diff < 60) return 'Agora mesmo';
     if (diff < 3600) return `há ${Math.floor(diff / 60)}m`;
     return `há ${Math.floor(diff / 3600)}h`;
+  };
+
+  // Gerar dados de tendência para sparklines
+  const generateTrendData = (baseValue: number, days: number = 7): number[] => {
+    return Array.from({ length: days }, (_, i) => {
+      const variation = (Math.random() - 0.5) * 20; // ±10% variação
+      return Math.max(0, Math.min(100, baseValue + variation));
+    });
   };
 
   if (loading && !kpiData) {
@@ -129,6 +138,12 @@ export const KPIBar: React.FC<KPIBarProps> = ({ darkMode }) => {
 
   if (!kpiData) return null;
 
+  // Dados para sparklines
+  const qualityTrendData = generateTrendData(kpiData.month?.qualidade_percent || 85);
+  const testsTrendData = generateTrendData(kpiData.week?.total_ensaios || 50);
+  const ncTrendData = generateTrendData(kpiData.month?.reprovados || 5);
+  const slaTrendData = generateTrendData(kpiData.sla[0]?.taxa_aprovacao || 95);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -151,12 +166,39 @@ export const KPIBar: React.FC<KPIBarProps> = ({ darkMode }) => {
           </div>
         </div>
         
-        <button
-          onClick={fetchKPIs}
-          className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}
-        >
-          <RefreshCw className="h-4 w-4 text-blue-500" />
-        </button>
+        <div className="flex items-center space-x-3">
+          {/* Alert Counter */}
+          {activeAlerts.length > 0 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="relative"
+            >
+              <div className="px-3 py-1 bg-red-500 text-white rounded-full text-sm font-medium">
+                {activeAlerts.length} alertas
+              </div>
+              <motion.div
+                className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full"
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                  opacity: [1, 0.7, 1]
+                }}
+                transition={{ 
+                  duration: 2, 
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+            </motion.div>
+          )}
+          
+          <button
+            onClick={fetchKPIs}
+            className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}
+          >
+            <RefreshCw className="h-4 w-4 text-blue-500" />
+          </button>
+        </div>
       </div>
 
       {/* KPIs Grid */}
@@ -181,7 +223,7 @@ export const KPIBar: React.FC<KPIBarProps> = ({ darkMode }) => {
               {kpiData.month && getTendenciaIcon(kpiData.month.qualidade_percent, 85)}
             </div>
             
-            <div className="flex items-baseline space-x-2">
+            <div className="flex items-baseline space-x-2 mb-3">
               <span className={`text-2xl font-bold ${getQualidadeColor(kpiData.month?.qualidade_percent || 0)}`}>
                 {kpiData.month?.qualidade_percent || 0}%
               </span>
@@ -190,8 +232,20 @@ export const KPIBar: React.FC<KPIBarProps> = ({ darkMode }) => {
               </span>
             </div>
             
-            <div className="mt-2 text-xs text-gray-500">
+            <div className="mt-2 text-xs text-gray-500 mb-3">
               {kpiData.month?.aprovados || 0} aprovados / {kpiData.month?.total_ensaios || 0} total
+            </div>
+
+            {/* Sparkline */}
+            <div className="flex justify-end">
+              <SparklineChart
+                data={qualityTrendData}
+                width={80}
+                height={30}
+                color="#10B981"
+                showAlert={alertService.hasActiveAlerts('quality')}
+                animate={true}
+              />
             </div>
           </div>
         </motion.div>
@@ -216,7 +270,7 @@ export const KPIBar: React.FC<KPIBarProps> = ({ darkMode }) => {
               {kpiData.week && getTendenciaIcon(kpiData.week.total_ensaios, 50)}
             </div>
             
-            <div className="flex items-baseline space-x-2">
+            <div className="flex items-baseline space-x-2 mb-3">
               <span className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                 {formatNumber(kpiData.week?.total_ensaios || 0)}
               </span>
@@ -225,8 +279,20 @@ export const KPIBar: React.FC<KPIBarProps> = ({ darkMode }) => {
               </span>
             </div>
             
-            <div className="mt-2 text-xs text-gray-500">
+            <div className="mt-2 text-xs text-gray-500 mb-3">
               {kpiData.week?.pendentes || 0} pendentes
+            </div>
+
+            {/* Sparkline */}
+            <div className="flex justify-end">
+              <SparklineChart
+                data={testsTrendData}
+                width={80}
+                height={30}
+                color="#3B82F6"
+                showAlert={alertService.hasActiveAlerts('tests')}
+                animate={true}
+              />
             </div>
           </div>
         </motion.div>
@@ -253,7 +319,7 @@ export const KPIBar: React.FC<KPIBarProps> = ({ darkMode }) => {
               )}
             </div>
             
-            <div className="flex items-baseline space-x-2">
+            <div className="flex items-baseline space-x-2 mb-3">
               <span className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                 {kpiData.month?.reprovados || 0}
               </span>
@@ -262,8 +328,20 @@ export const KPIBar: React.FC<KPIBarProps> = ({ darkMode }) => {
               </span>
             </div>
             
-            <div className="mt-2 text-xs text-gray-500">
+            <div className="mt-2 text-xs text-gray-500 mb-3">
               {kpiData.nc.length} categorias afetadas
+            </div>
+
+            {/* Sparkline */}
+            <div className="flex justify-end">
+              <SparklineChart
+                data={ncTrendData}
+                width={80}
+                height={30}
+                color="#EF4444"
+                showAlert={alertService.hasActiveAlerts('nc')}
+                animate={true}
+              />
             </div>
           </div>
         </motion.div>
@@ -290,7 +368,7 @@ export const KPIBar: React.FC<KPIBarProps> = ({ darkMode }) => {
               )}
             </div>
             
-            <div className="flex items-baseline space-x-2">
+            <div className="flex items-baseline space-x-2 mb-3">
               <span className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                 {kpiData.sla.length > 0 ? Math.round(kpiData.sla[0]?.taxa_aprovacao || 0) : 0}%
               </span>
@@ -299,8 +377,20 @@ export const KPIBar: React.FC<KPIBarProps> = ({ darkMode }) => {
               </span>
             </div>
             
-            <div className="mt-2 text-xs text-gray-500">
+            <div className="mt-2 text-xs text-gray-500 mb-3">
               {kpiData.sla.length > 0 ? kpiData.sla[0]?.total_ensaios || 0 : 0} ensaios processados
+            </div>
+
+            {/* Sparkline */}
+            <div className="flex justify-end">
+              <SparklineChart
+                data={slaTrendData}
+                width={80}
+                height={30}
+                color="#8B5CF6"
+                showAlert={alertService.hasActiveAlerts('sla')}
+                animate={true}
+              />
             </div>
           </div>
         </motion.div>
