@@ -1,754 +1,546 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import {
-  BarChart3,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Package,
-  TestTube,
-  ClipboardCheck,
-  FileText,
-  Building,
-  Users,
-  Calendar,
-  Target,
-  Activity,
-  PieChart as PieChartIcon,
-  BarChart,
-  LineChart,
-  AreaChart,
-  RefreshCw,
-  Eye,
-  ArrowUpRight,
-  ArrowDownRight,
-  Sparkles,
-  Zap,
-  Shield,
-  Award,
-  Settings,
-  Database,
-  Globe,
-  Lock,
-  Target as TargetIcon,
-  Gauge,
-  TrendingDown,
-  AlertCircle,
-  Star,
-  Award as AwardIcon,
-  Trophy,
-  Medal,
-  Crown,
-  Lightbulb,
-  Rocket,
-  Flame,
-  Heart,
-  Gem,
-  Diamond,
-  Crown as CrownIcon,
-  ChevronRight,
-  Plus,
-  Filter,
-  Download,
-  Upload,
-  Bell,
-  Search,
-  Menu,
-  X,
-  Play,
-  Pause,
-  RotateCcw,
-  BarChart4,
-  PieChart,
-  LineChart as LineChartIcon,
-  Activity as ActivityIcon,
-  TrendingUp as TrendingUpIcon,
-  AlertOctagon,
-  CheckSquare,
-  FileCheck,
-  HardHat,
-  Wrench,
-  Truck,
-  Factory,
-  MapPin,
-  Building2,
-  Timer,
-  CalendarDays,
-  Clock4,
-  CalendarCheck,
-  CalendarX,
-  CalendarPlus,
-  CalendarMinus,
-  CalendarClock,
-  CalendarRange,
-  CalendarSearch,
-  CalendarHeart,
-  Train,
+  Hammer, Building, Building2, Wrench, Package, Database, Award, FileText, Truck, Bell, ClipboardCheck, AlertTriangle, AlertCircle, Upload, FileCheck,
+  RefreshCw, Globe, Shield, TestTube, Train, Zap, Eye, HardHat, CheckCircle, Clock, Target, ChevronRight, TrendingUp, Minus, Users, Settings, BookOpen, BarChart3,
+  Activity, Zap as Lightning, TrendingDown, Star, Crown, Sparkles, Rocket, Flame, Heart, Gem, Diamond, Plus, Filter, Download, Search, Menu, X, Play, Pause, RotateCcw,
+  ArrowRight, ArrowLeft, Move, GripVertical, Zap as LightningBolt, Sparkles as SparklesIcon, Star as StarIcon, Crown as CrownIcon, Globe as GlobeIcon, 
+  Calendar, MapPin, Euro, TrendingUp as TrendingUpIcon, AlertCircle as AlertCircleIcon, CheckSquare, FileText as FileTextIcon, BarChart, PieChart, LineChart, Sun, Moon,
+  Linkedin, ExternalLink, Zap as LightningIcon, Sparkles as SparklesIcon2, HelpCircle, Grid3X3, FolderOpen, Layers, LayoutDashboard
 } from "lucide-react";
-
-import {
-  BarChart as RechartsBarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart as RechartsPieChart,
-  Pie,
-  Cell,
-  LineChart as RechartsLineChart,
-  Line,
-  AreaChart as RechartsAreaChart,
-  Area,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  Legend,
-} from "recharts";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"overview" | "analytics" | "reports">("overview");
+  const [selectedObra, setSelectedObra] = useState<string>("all");
+  const [darkMode, setDarkMode] = useState(false);
+  const [showAlerts, setShowAlerts] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
 
-  // Dados reais simulados para todos os módulos
-  const realData = {
-    ensaios: { total: 45, aprovados: 38, pendentes: 5, rejeitados: 2 },
-    checklists: { total: 32, concluidos: 28, pendentes: 3, rejeitados: 1 },
-    documentos: { total: 28, aprovados: 25, pendentes: 2, rejeitados: 1 },
-    armaduras: { total: 15, aprovados: 13, pendentes: 1, rejeitados: 1 },
-    materiais: { total: 18, aprovados: 16, pendentes: 1, rejeitados: 1 },
-    fornecedores: { total: 22, aprovados: 20, pendentes: 1, rejeitados: 1 },
-    naoConformidades: { total: 5, aprovados: 3, pendentes: 1, rejeitados: 1 },
-    obras: { total: 3, aprovados: 2, pendentes: 1, rejeitados: 0 },
-    viaFerrea: { total: 10, aprovados: 9, pendentes: 1, rejeitados: 0 },
-    sinalizacao: { total: 8, aprovados: 7, pendentes: 1, rejeitados: 0 },
-    eletrificacao: { total: 7, aprovados: 6, pendentes: 1, rejeitados: 0 },
-    pontesTuneis: { total: 12, aprovados: 11, pendentes: 1, rejeitados: 0 },
-    estacoes: { total: 4, aprovados: 3, pendentes: 1, rejeitados: 0 },
-    segurancaFerroviaria: { total: 9, aprovados: 8, pendentes: 1, rejeitados: 0 },
-    controloBetonagens: { total: 14, aprovados: 12, pendentes: 2, rejeitados: 0 },
-    caracterizacaoSolos: { total: 6, aprovados: 5, pendentes: 1, rejeitados: 0 },
-    normas: { total: 25, aprovados: 22, pendentes: 2, rejeitados: 1 },
-    submissaoMateriais: { total: 11, aprovados: 10, pendentes: 1, rejeitados: 0 },
-    certificados: { total: 8, aprovados: 7, pendentes: 1, rejeitados: 0 },
-    rfis: { total: 3, aprovados: 2, pendentes: 1, rejeitados: 0 },
-    pontosInspecao: { total: 16, aprovados: 14, pendentes: 2, rejeitados: 0 },
-    registos: { total: 20, aprovados: 18, pendentes: 2, rejeitados: 0 },
-    termos: { total: 7, aprovados: 6, pendentes: 1, rejeitados: 0 }
+  // Dados reais - sem valores mock falsos
+  const qualicoreData = {
+    qualidadeGlobal: { valor: 0, tendencia: 'stable', meta: 95 },
+    naoConformidades: { total: 0, criticas: 0, pendentes: 0, resolvidas: 0 },
+    ensaios: { realizados: 0, planeados: 0, aprovados: 0, rejeitados: 0 },
+    objetivos: { atingidos: 0, total: 0, percentagem: 0 },
+    prazos: { emDia: 0, atrasados: 0, criticos: 0 },
+    custoQualidade: { valor: 0, percentagem: 0, tendencia: 'stable' },
+    eficiencia: { valor: 0, tendencia: 'stable', meta: 90 },
+    conformidadeISO: { iso9001: 0, np10005: 0, en1090: 0 }
   };
 
-  // Cálculos baseados em dados reais
-  const totalEnsaios = realData.ensaios.total;
-  const totalChecklists = realData.checklists.total;
-  const totalDocumentos = realData.documentos.total;
-  const totalArmaduras = realData.armaduras.total;
-  const totalMateriais = realData.materiais.total;
-  const totalFornecedores = realData.fornecedores.total;
-  const totalObras = realData.obras.total;
-  const totalViaFerrea = realData.viaFerrea.total;
-  const totalSinalizacao = realData.sinalizacao.total;
-  const totalEletrificacao = realData.eletrificacao.total;
-  const totalPontesTuneis = realData.pontesTuneis.total;
-  const totalEstacoes = realData.estacoes.total;
-  const totalSegurancaFerroviaria = realData.segurancaFerroviaria.total;
-  const totalControloBetonagens = realData.controloBetonagens.total;
-  const totalCaracterizacaoSolos = realData.caracterizacaoSolos.total;
-  const totalNormas = realData.normas.total;
-  const totalSubmissaoMateriais = realData.submissaoMateriais.total;
-  const totalCertificados = realData.certificados.total;
-  const totalRfis = realData.rfis.total;
-  const totalPontosInspecao = realData.pontosInspecao.total;
-  const totalRegistos = realData.registos.total;
-  const totalTermos = realData.termos.total;
+  // Alertas em tempo real
+  const alertas = [
+    { id: 1, tipo: 'info', modulo: 'Sistema', mensagem: 'Bem-vindo ao QUALICORE', tempo: 'Agora', prioridade: 'baixa' }
+  ];
 
-  const totalRegistros = Object.values(realData).reduce((sum, module) => sum + module.total, 0);
-  
-  // Calcular score de qualidade baseado em dados reais
-  const totalAprovados = Object.values(realData).reduce((sum, module) => {
-    const aprovados = 'aprovados' in module ? module.aprovados : 
-                     'concluidos' in module ? module.concluidos : 0;
-    return sum + aprovados;
-  }, 0);
-  
-  const scoreQualidade = totalRegistros > 0 ? Math.round((totalAprovados / totalRegistros) * 100) : 0;
+  // Obras disponíveis
+  const obras = [
+    { id: "all", nome: "Todas as Obras", localizacao: "Portugal", status: "ativo" },
+    { id: "setubal", nome: "Obra de Setúbal", localizacao: "Setúbal", status: "ativo" },
+    { id: "porto", nome: "Metro do Porto", localizacao: "Porto", status: "ativo" },
+    { id: "lisboa", nome: "Linha Vermelha", localizacao: "Lisboa", status: "ativo" }
+  ];
 
-  // Dados para gráficos de análise
-  const analysisData = {
-    ensaiosPorTipo: [
-      { name: 'Conformes', value: realData.ensaios.aprovados, color: '#10B981' },
-      { name: 'Pendentes', value: realData.ensaios.pendentes, color: '#F59E0B' },
-      { name: 'Rejeitados', value: realData.ensaios.rejeitados, color: '#EF4444' }
-    ],
-    performanceMensal: [
-      { mes: 'Jan', Conformidade: 85, Qualidade: 78, Segurança: 92 },
-      { mes: 'Fev', Conformidade: 88, Qualidade: 82, Segurança: 89 },
-      { mes: 'Mar', Conformidade: 92, Qualidade: 87, Segurança: 94 },
-      { mes: 'Abr', Conformidade: 89, Qualidade: 84, Segurança: 91 },
-      { mes: 'Mai', Conformidade: 94, Qualidade: 89, Segurança: 96 },
-      { mes: 'Jun', Conformidade: 91, Qualidade: 86, Segurança: 93 }
-    ],
-    tendenciasQualidade: [
-      { periodo: 'Semana 1', Ensaios: 12, Checklists: 8, Documentos: 6 },
-      { periodo: 'Semana 2', Ensaios: 15, Checklists: 10, Documentos: 8 },
-      { periodo: 'Semana 3', Ensaios: 18, Checklists: 14, Documentos: 12 },
-      { periodo: 'Semana 4', Ensaios: 22, Checklists: 18, Documentos: 15 },
-      { periodo: 'Semana 5', Ensaios: 25, Checklists: 22, Documentos: 18 },
-      { periodo: 'Semana 6', Ensaios: 28, Checklists: 26, Documentos: 22 }
-    ]
-  };
-
-  // Dados para gráfico radar
-  const radarData = [
-    { 
-      subject: 'Ensaios', 
-      Atual: totalEnsaios > 0 ? Math.round((realData.ensaios.aprovados / totalEnsaios) * 100) : 0, 
-      Anterior: 85, 
-      Meta: 98, 
-      fullMark: 100 
+  // Módulos reorganizados por fluxo de trabalho
+  const workflowSections = [
+    {
+      id: "planeamento-gestao",
+      title: "Planeamento, Gestão & Documentação",
+      subtitle: "Gestão de projetos, obras, materiais e documentação",
+      icon: HardHat,
+      color: "from-yellow-500 to-orange-500",
+      bgColor: "from-yellow-50 to-orange-50",
+      borderColor: "border-yellow-200",
+      modules: [
+        { id: "documentos", nome: "Documentos", nomeEN: "Documents", path: "/documentos", icon: FolderOpen, priority: "alta" },
+        { id: "obras", nome: "Obras", nomeEN: "Projects", path: "/obras", icon: HardHat, priority: "alta" },
+        { id: "rfis", nome: "RFIs", nomeEN: "RFIs", path: "/rfis", icon: HelpCircle, priority: "media" },
+        { id: "submissao-materiais", nome: "Submissão Materiais", nomeEN: "Material Submission", path: "/submissao-materiais", icon: Upload, priority: "media" },
+        { id: "relatorios", nome: "Relatórios", nomeEN: "Reports", path: "/relatorios", icon: BarChart3, priority: "media" },
+        { id: "rececao-obra-garantias", nome: "Receção Obra e Garantias", nomeEN: "Work Reception and Guarantees", path: "/rececao-obra-garantias", icon: Building2, priority: "alta" }
+      ]
     },
-    { 
-      subject: 'Checklists', 
-      Atual: totalChecklists > 0 ? Math.round((realData.checklists.concluidos / totalChecklists) * 100) : 0, 
-      Anterior: 78, 
-      Meta: 92, 
-      fullMark: 100 
+    {
+      id: "qualidade",
+      title: "Sistemas de Qualidade",
+      subtitle: "Gestão da qualidade e conformidade",
+      icon: Award,
+      color: "from-emerald-500 to-teal-500",
+      bgColor: "from-emerald-50 to-teal-50",
+      borderColor: "border-emerald-200",
+      modules: [
+        { id: "normas", nome: "Sistema de Normas", nomeEN: "Standards System", path: "/normas", icon: BookOpen, priority: "alta" },
+        { id: "checklists", nome: "Checklists", nomeEN: "Checklists", path: "/checklists", icon: ClipboardCheck, priority: "alta" },
+        { id: "pie", nome: "PIE - Pontos Inspeção", nomeEN: "PIE - Inspection Points", path: "/pie", icon: Eye, priority: "alta" },
+        { id: "auditorias", nome: "Auditorias", nomeEN: "Audits", path: "/auditorias", icon: FileCheck, priority: "alta" },
+        { id: "certificados", nome: "Certificados", nomeEN: "Certificates", path: "/certificados", icon: Award, priority: "media" },
+        { id: "nao-conformidades", nome: "Não Conformidades", nomeEN: "Non-Conformities", path: "/nao-conformidades", icon: AlertTriangle, priority: "alta" }
+      ]
     },
-    { 
-      subject: 'Documentos', 
-      Atual: totalDocumentos > 0 ? Math.round((realData.documentos.aprovados / totalDocumentos) * 100) : 0, 
-      Anterior: 82, 
-      Meta: 95, 
-      fullMark: 100 
+    {
+      id: "execucao",
+      title: "Execução & Controlo",
+      subtitle: "Ensaios e controlos técnicos",
+      icon: TestTube,
+      color: "from-blue-500 to-cyan-500",
+      bgColor: "from-blue-50 to-cyan-50",
+      borderColor: "border-blue-200",
+      modules: [
+        { id: "caracterizacao-solos", nome: "Caracterização Solos", nomeEN: "Soil Characterization", path: "/caracterizacao-solos", icon: Layers, priority: "media" },
+        { id: "ensaios-compactacao", nome: "Ensaios Compactação", nomeEN: "Compaction Tests", path: "/ensaios-compactacao", icon: BarChart3, priority: "alta" },
+        { id: "controlo-betonagens", nome: "Controlo Betonagens", nomeEN: "Concrete Control", path: "/controlo-betonagens", icon: Wrench, priority: "alta" },
+        { id: "armaduras", nome: "Armaduras", nomeEN: "Reinforcement", path: "/armaduras", icon: Package, priority: "alta" },
+        { id: "ensaios", nome: "Ensaios", nomeEN: "Tests", path: "/ensaios", icon: TestTube, priority: "alta" }
+      ]
     },
-    { 
-      subject: 'Armaduras', 
-      Atual: totalArmaduras > 0 ? Math.round((realData.armaduras.aprovados / totalArmaduras) * 100) : 0, 
-      Anterior: 88, 
-      Meta: 99, 
-      fullMark: 100 
+    {
+      id: "especializacao",
+      title: "Infraestrutura Ferroviária",
+      subtitle: "Especialização em via férrea",
+      icon: Train,
+      color: "from-indigo-500 to-purple-500",
+      bgColor: "from-indigo-50 to-purple-50",
+      borderColor: "border-indigo-200",
+      modules: [
+        { id: "via-ferrea", nome: "Via Férrea", nomeEN: "Railway", path: "/via-ferrea", icon: Train, priority: "alta" },
+        { id: "pontes-tuneis", nome: "Pontes & Túneis", nomeEN: "Bridges & Tunnels", path: "/pontes-tuneis", icon: Building2, priority: "alta" },
+        { id: "eletrificacao", nome: "Eletrificação", nomeEN: "Electrification", path: "/eletrificacao", icon: Zap, priority: "alta" },
+        { id: "sinalizacao", nome: "Sinalização", nomeEN: "Signaling", path: "/sinalizacao", icon: Bell, priority: "alta" },
+        { id: "estacoes", nome: "Estações", nomeEN: "Stations", path: "/estacoes", icon: Building, priority: "media" },
+        { id: "seguranca-ferroviaria", nome: "Segurança Ferroviária", nomeEN: "Railway Safety", path: "/seguranca-ferroviaria", icon: Shield, priority: "alta" }
+      ]
+    },
+    {
+      id: "recursos",
+      title: "Gestão de Recursos",
+      subtitle: "Materiais, fornecedores e equipamentos",
+      icon: Settings,
+      color: "from-purple-500 to-pink-500",
+      bgColor: "from-purple-50 to-pink-50",
+      borderColor: "border-purple-200",
+      modules: [
+        { id: "materiais", nome: "Materiais", nomeEN: "Materials", path: "/materiais", icon: Grid3X3, priority: "alta" },
+        { id: "fornecedores", nome: "Fornecedores", nomeEN: "Suppliers", path: "/fornecedores", icon: Users, priority: "media" },
+        { id: "fornecedores-avancados", nome: "Fornecedores Avançados", nomeEN: "Advanced Suppliers", path: "/fornecedores-avancados", icon: Building2, priority: "alta" },
+        { id: "calibracoes-equipamentos", nome: "Calibrações e Equipamentos", nomeEN: "Calibrations and Equipment", path: "/calibracoes-equipamentos", icon: Settings, priority: "media" }
+      ]
     }
   ];
 
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'alta': return 'from-red-500 to-orange-500';
+      case 'media': return 'from-yellow-500 to-orange-500';
+      case 'baixa': return 'from-green-500 to-emerald-500';
+      default: return 'from-gray-500 to-slate-500';
+    }
+  };
+
+  const getAlertColor = (tipo: string) => {
+    switch (tipo) {
+      case 'critico': return 'bg-red-500';
+      case 'aviso': return 'bg-yellow-500';
+      case 'info': return 'bg-blue-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  // Filtro de módulos por pesquisa
+  const filteredSections = workflowSections.map(section => ({
+    ...section,
+    modules: section.modules.filter(module => 
+      module.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      module.nomeEN.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      section.title.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  })).filter(section => section.modules.length > 0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className={`min-h-screen ${darkMode ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-black' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'} flex items-center justify-center`}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="w-20 h-20 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl"
+          >
+            <Shield className="h-10 w-10 text-white" />
+          </motion.div>
+          <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-2`}>QUALICORE</h2>
+          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Carregando sistema...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8 pt-16">
-      {/* Background Effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-40 left-40 w-80 h-80 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+    <div className={`min-h-screen ${darkMode ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-black' : 'bg-gradient-to-br from-gray-50 via-white to-gray-100'} relative overflow-hidden transition-colors duration-500`}>
+      {/* Animated Background */}
+      <div className="absolute inset-0">
+        <div className={`absolute inset-0 ${darkMode ? 'bg-gradient-to-r from-blue-900/20 via-purple-900/20 to-cyan-900/20' : 'bg-gradient-to-r from-blue-50/50 via-purple-50/50 to-cyan-50/50'}`}></div>
+        <div className="absolute top-0 left-0 w-full h-full opacity-30">
+          <motion.div
+            animate={{
+              x: [0, 100, 0],
+              y: [0, 50, 0],
+            }}
+            transition={{
+              duration: 20,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            className={`absolute top-20 left-20 w-96 h-96 ${darkMode ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20' : 'bg-gradient-to-r from-cyan-500/10 to-blue-500/10'} rounded-full blur-3xl`}
+          />
+          <motion.div
+            animate={{
+              x: [0, -100, 0],
+              y: [0, -50, 0],
+            }}
+            transition={{
+              duration: 25,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            className={`absolute top-40 right-20 w-80 h-80 ${darkMode ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20' : 'bg-gradient-to-r from-purple-500/10 to-pink-500/10'} rounded-full blur-3xl`}
+          />
+        </div>
       </div>
 
-      <div className="relative z-10">
-        {/* Header Limpo e Profissional */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div onClick={() => navigate("/dashboard")} title="Ir para o Dashboard" aria-label="Ir para o Dashboard" className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg cursor-pointer hover:scale-105 transition-transform duration-300">
-                <Shield className="h-7 w-7 text-white" />
-              </div>
-              <div className="flex items-center space-x-2">
-                <div>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-purple-800 to-pink-900 bg-clip-text text-transparent mb-2">
-                    Dashboard Qualicore
-                  </h1>
-                  <p className="text-xl text-gray-600 flex items-center">
-                    <Shield className="h-5 w-5 mr-2 text-purple-500" />
-                    Sistema de Gestão da Qualidade 2025
-                  </p>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Informações do Sistema */}
-            <div className="flex items-center space-x-4 text-sm text-gray-600">
-              <div className="flex items-center space-x-2">
-                <RefreshCw className="h-4 w-4" />
-                <span>Atualizado agora</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Globe className="h-4 w-4" />
-                <span>Portugal</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Lock className="h-4 w-4" />
-                <span>Seguro</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Users className="h-4 w-4" />
-                <a 
-                  href="https://www.linkedin.com/in/antunesmartins/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="hover:underline hover:text-blue-600 transition-colors"
-                >
-                  José Antunes
-                </a>
-              </div>
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`relative z-10 p-6 border-b ${darkMode ? 'border-gray-800' : 'border-gray-200'} transition-colors duration-500`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-6">
+            <motion.div
+              whileHover={{ scale: 1.1, rotate: 360 }}
+              transition={{ duration: 0.6 }}
+              onClick={() => navigate("/dashboard")}
+              className="relative w-16 h-16 bg-gradient-to-r from-gray-600 to-gray-800 rounded-2xl flex items-center justify-center shadow-2xl cursor-pointer overflow-hidden border-2 border-gray-400/30"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-400/20 to-gray-600/20 animate-pulse"></div>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+              />
+              <LayoutDashboard className="h-8 w-8 text-white relative z-10" />
+            </motion.div>
+            <div>
+              <motion.p
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+                className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-center`}
+              >
+                <SparklesIcon2 className="h-4 w-4 mr-2 text-gray-400" />
+                Sistema de Gestão da Qualidade - Referência Europeia
+              </motion.p>
             </div>
           </div>
-        </motion.div>
 
-        {/* Navigation Tabs */}
-        <motion.div 
+          <div className="flex items-center space-x-4">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2 rounded-lg ${darkMode ? 'bg-gray-800 text-yellow-400' : 'bg-white text-gray-700'} shadow-lg border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+            >
+              {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowAlerts(!showAlerts)}
+              className={`p-2 rounded-lg ${darkMode ? 'bg-gray-800 text-red-400' : 'bg-white text-red-600'} shadow-lg border ${darkMode ? 'border-gray-700' : 'border-gray-200'} relative`}
+            >
+              <Bell className="h-5 w-5" />
+              {alertas.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {alertas.length}
+                </span>
+              )}
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <Download className="h-4 w-4 inline mr-2" />
+              Exportar
+            </motion.button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Main Content */}
+      <div className="relative z-10 p-6">
+        {/* Filtros */}
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mb-8"
+          transition={{ delay: 0.7 }}
+          className="flex flex-wrap gap-4 mb-8"
         >
-          <div className="flex space-x-1 bg-white rounded-2xl p-1 shadow-lg">
-            {[
-              { id: "overview", label: "Visão Geral", icon: ActivityIcon },
-              { id: "analytics", label: "Análises", icon: BarChart3 },
-              { id: "reports", label: "Relatórios", icon: FileText }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-                  activeTab === tab.id
-                    ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                }`}
-              >
-                <tab.icon className="h-5 w-5" />
-                <span>{tab.label}</span>
-              </button>
-            ))}
+          <div className="relative">
+            <select
+              value={selectedObra}
+              onChange={(e) => setSelectedObra(e.target.value)}
+              className={`px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-700'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            >
+              {obras.map(obra => (
+                <option key={obra.id} value={obra.id}>
+                  {obra.nome} - {obra.localizacao}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={`px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-700'} flex items-center space-x-2`}>
+            <Search className="h-4 w-4" />
+            <input
+              type="text"
+              placeholder="Pesquisar módulos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={`bg-transparent outline-none ${darkMode ? 'text-white placeholder-gray-400' : 'text-gray-700 placeholder-gray-500'}`}
+            />
           </div>
         </motion.div>
 
-        <AnimatePresence mode="wait">
-          {activeTab === "overview" && (
-            <motion.div
-              key="overview"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-            >
-              {/* Módulos do Sistema - Acesso Direto */}
-              <motion.section 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.1 }}
-                className="mb-8"
-              >
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Módulos do Sistema</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {[
-                    // ENSAIOS E CONTROLO
-                    { name: "Ensaios", icon: TestTube, color: "from-blue-500 to-indigo-600", path: "/ensaios", count: totalEnsaios },
-                    { name: "Controlo Betonagens", icon: Wrench, color: "from-orange-400 to-orange-600", path: "/controlo-betonagens", count: totalControloBetonagens },
-                    { name: "Caracterização Solos", icon: Database, color: "from-brown-400 to-brown-600", path: "/caracterizacao-solos", count: totalCaracterizacaoSolos },
-                    { name: "Armaduras", icon: Package, color: "from-orange-500 to-red-600", path: "/armaduras", count: totalArmaduras },
-                    
-                    // QUALIDADE
-                    { name: "Sistema de Normas", icon: FileCheck, color: "from-green-400 to-green-600", path: "/normas", count: totalNormas },
-                    { name: "Submissão Materiais", icon: Upload, color: "from-blue-300 to-blue-500", path: "/submissao-materiais", count: totalSubmissaoMateriais },
-                    { name: "Certificados e Registos", icon: Award, color: "from-gold-400 to-gold-600", path: "/certificados", count: totalCertificados },
-                    { name: "Calibrações e Equipamentos", icon: Settings, color: "from-purple-400 to-purple-600", path: "/calibracoes-equipamentos", count: 0 },
-                    { name: "Auditorias SGQ", icon: Shield, color: "from-indigo-400 to-indigo-600", path: "/auditorias", count: 0 },
-                    { name: "Receção de Obra e Garantias", icon: Building2, color: "from-green-500 to-emerald-600", path: "/rececao-obra-garantias", count: 0 },
-                    { name: "Checklists", icon: ClipboardCheck, color: "from-green-500 to-emerald-600", path: "/checklists", count: totalChecklists },
-                    { name: "Não Conformidades", icon: AlertTriangle, color: "from-red-500 to-pink-600", path: "/nao-conformidades", count: realData.naoConformidades.total },
-                    
-                    // GESTÃO
-                    { name: "Obras", icon: HardHat, color: "from-yellow-500 to-orange-600", path: "/obras", count: totalObras },
-                    { name: "Materiais", icon: Building, color: "from-teal-500 to-cyan-600", path: "/materiais", count: totalMateriais },
-                    { name: "Fornecedores", icon: Truck, color: "from-indigo-500 to-purple-600", path: "/fornecedores", count: totalFornecedores },
-                    { name: "Fornecedores Avançados", icon: Building2, color: "from-blue-600 to-indigo-700", path: "/fornecedores-avancados", count: 0 },
-                    { name: "RFIs", icon: AlertCircle, color: "from-red-300 to-red-500", path: "/rfis", count: totalRfis },
-                    
-                    // INFRAESTRUTURA
-                    { name: "Via Férrea", icon: MapPin, color: "from-gray-500 to-slate-600", path: "/via-ferrea", count: totalViaFerrea },
-                    { name: "Pontes & Túneis", icon: Building, color: "from-gray-400 to-gray-600", path: "/pontes-tuneis", count: totalPontesTuneis },
-                    { name: "Estações", icon: Building, color: "from-purple-400 to-purple-600", path: "/estacoes", count: totalEstacoes },
-                    
-                    // SISTEMAS
-                    { name: "Sinalização", icon: Bell, color: "from-blue-400 to-blue-600", path: "/sinalizacao", count: totalSinalizacao },
-                    { name: "Eletrificação", icon: Zap, color: "from-yellow-400 to-yellow-600", path: "/eletrificacao", count: totalEletrificacao },
-                    { name: "Segurança Ferroviária", icon: Shield, color: "from-red-400 to-red-600", path: "/seguranca-ferroviaria", count: totalSegurancaFerroviaria },
-                    
-                    // DOCUMENTAÇÃO
-                    { name: "Documentos", icon: FileText, color: "from-purple-500 to-pink-600", path: "/documentos", count: totalDocumentos },
-                    { name: "Pontos Inspeção", icon: Eye, color: "from-cyan-400 to-cyan-600", path: "/pie", count: totalPontosInspecao }
-                  ].map((module, index) => (
-                    <motion.button
-                      key={index}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3, delay: 0.1 + index * 0.02 }}
-                      whileHover={{ y: -5, scale: 1.05 }}
-                      onClick={() => navigate(module.path)}
-                      className="group p-4 rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300 text-left"
-                    >
-                      <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${module.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}>
-                        <module.icon className="h-5 w-5 text-white" />
-                      </div>
-                      <h3 className="font-semibold text-gray-900 text-sm mb-1">{module.name}</h3>
-                      <p className="text-xs text-gray-600">{module.count} registos</p>
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.section>
-
-                                                           
-
-               {/* Métricas Principais */}
-               <motion.section 
-                 initial={{ opacity: 0, y: 20 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 transition={{ duration: 0.8, delay: 0.3 }}
-                 className="mb-8"
-               >
-                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Métricas Principais</h2>
-                
-                {/* KPI Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                  {[
-                    {
-                      title: "Score de Qualidade",
-                      value: `${scoreQualidade}%`,
-                      subtitle: "Conformidade geral",
-                      icon: Target,
-                      color: "from-green-500 to-emerald-600",
-                      trend: "+2.3%",
-                      trendColor: "text-green-600"
-                    },
-                    {
-                      title: "Total de Registos",
-                      value: totalRegistros.toString(),
-                      subtitle: "Todos os módulos",
-                      icon: Database,
-                      color: "from-blue-500 to-indigo-600",
-                      trend: "+8.5%",
-                      trendColor: "text-green-600"
-                    },
-                    {
-                      title: "Ensaios Conformes",
-                      value: `${realData.ensaios.aprovados}/${totalEnsaios}`,
-                      subtitle: "Taxa de conformidade",
-                      icon: CheckCircle,
-                      color: "from-emerald-500 to-green-600",
-                      trend: "+5.2%",
-                      trendColor: "text-green-600"
-                    },
-                    {
-                      title: "Checklists Concluídos",
-                      value: `${realData.checklists.concluidos}/${totalChecklists}`,
-                      subtitle: "Taxa de conclusão",
-                      icon: ClipboardCheck,
-                      color: "from-purple-500 to-pink-600",
-                      trend: "+3.8%",
-                      trendColor: "text-green-600"
-                    }
-                  ].map((kpi, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-                      className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${kpi.color} flex items-center justify-center`}>
-                          <kpi.icon className="h-6 w-6 text-white" />
-                        </div>
-                        <div className={`text-sm font-medium ${kpi.trendColor}`}>
-                          {kpi.trend}
-                        </div>
-                      </div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-1">{kpi.value}</h3>
-                      <p className="text-sm text-gray-600 mb-2">{kpi.title}</p>
-                      <p className="text-xs text-gray-500">{kpi.subtitle}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.section>
-
-              {/* Resumo de Performance */}
-              <motion.section 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
-                className="mb-8"
-              >
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Resumo de Performance</h2>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Métricas de Conformidade */}
-                  <div className="bg-white rounded-2xl p-6 shadow-lg">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Métricas de Conformidade</h3>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Aprovados</span>
-                        <span className="text-sm font-medium text-green-600">{totalAprovados}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Pendentes</span>
-                        <span className="text-sm font-medium text-yellow-600">{totalRegistros - totalAprovados - (totalRegistros - totalAprovados - (totalRegistros - totalAprovados))}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Rejeitados</span>
-                        <span className="text-sm font-medium text-red-600">{totalRegistros - totalAprovados - (totalRegistros - totalAprovados - (totalRegistros - totalAprovados))}</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="h-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full transition-all duration-1000" 
-                          style={{ width: `${scoreQualidade}%` }}
-                        ></div>
+        {/* Alertas */}
+        {showAlerts && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="mb-8"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Alertas em Tempo Real</h2>
+              <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{alertas.length} alertas ativos</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {alertas.map((alerta, index) => (
+                <motion.div
+                  key={alerta.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.9 + index * 0.1 }}
+                  className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-4 border ${darkMode ? 'border-gray-700' : 'border-gray-200'} shadow-lg relative overflow-hidden group hover:shadow-xl transition-all duration-300`}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="relative z-10">
+                    <div className="flex items-start space-x-3">
+                      <div className={`w-3 h-3 ${getAlertColor(alerta.tipo)} rounded-full mt-1`}></div>
+                      <div className="flex-1">
+                        <div className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{alerta.modulo}</div>
+                        <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{alerta.mensagem}</div>
+                        <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} mt-1`}>há {alerta.tempo}</div>
+                        <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Prioridade: {alerta.prioridade}</div>
                       </div>
                     </div>
                   </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
-                  {/* Performance por Módulo */}
-                  <div className="bg-white rounded-2xl p-6 shadow-lg">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance por Módulo</h3>
-                    <div className="space-y-3">
-                      {[
-                        { name: "Ensaios", count: totalEnsaios, percentage: Math.round((totalEnsaios / totalRegistros) * 100) },
-                        { name: "Checklists", count: totalChecklists, percentage: Math.round((totalChecklists / totalRegistros) * 100) },
-                        { name: "Documentos", count: totalDocumentos, percentage: Math.round((totalDocumentos / totalRegistros) * 100) },
-                        { name: "Armaduras", count: totalArmaduras, percentage: Math.round((totalArmaduras / totalRegistros) * 100) }
-                      ].map((module, index) => (
-                        <div key={index} className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">{module.name}</span>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium text-gray-900">{module.count}</span>
-                            <span className="text-xs text-gray-500">({module.percentage}%)</span>
+        {/* Workflow Sections - Reorganizado */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.0 }}
+          className="space-y-8"
+        >
+          {filteredSections.map((section, sectionIndex) => (
+            <motion.div
+              key={section.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.1 + sectionIndex * 0.1 }}
+              className={`relative overflow-hidden rounded-3xl ${darkMode ? 'bg-gray-800/30' : 'bg-white'} backdrop-blur-xl border ${darkMode ? 'border-gray-700' : 'border-gray-200'} shadow-xl group hover:shadow-2xl transition-all duration-500`}
+              onMouseEnter={() => setActiveSection(section.id)}
+              onMouseLeave={() => setActiveSection(null)}
+            >
+              {/* Background Gradient */}
+              <div className={`absolute inset-0 bg-gradient-to-r ${section.bgColor} opacity-50 group-hover:opacity-70 transition-opacity duration-500`}></div>
+              
+              {/* Section Header */}
+              <div className="relative z-10 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-16 h-16 bg-gradient-to-r ${section.color} rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                      <section.icon className="h-8 w-8 text-white" />
+                    </div>
+                    <div>
+                      <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-1`}>{section.title}</h2>
+                      <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{section.subtitle}</p>
+                    </div>
+                  </div>
+                  <div className={`text-right ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                    <div className="text-3xl font-bold">{section.modules.length}</div>
+                    <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Módulos</div>
+                  </div>
+                </div>
+
+                {/* Modules Flow - Layout Orgânico com Variação Inteligente */}
+                <div className="relative">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-fr">
+                    {section.modules.map((module, moduleIndex) => {
+                      // Determinar tamanho baseado na prioridade e posição
+                      const isPrimary = module.priority === "alta" && moduleIndex < 2;
+                      const isSecondary = module.priority === "alta" || moduleIndex < 3;
+                      const cardSize = isPrimary ? "col-span-1 row-span-2" : isSecondary ? "col-span-1 row-span-1" : "col-span-1 row-span-1";
+                      
+                      return (
+                        <motion.div
+                          key={module.id}
+                          initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          transition={{ 
+                            delay: 1.2 + sectionIndex * 0.1 + moduleIndex * 0.05,
+                            duration: 0.6,
+                            ease: "easeOut"
+                          }}
+                          whileHover={{ 
+                            scale: 1.02, 
+                            y: -5,
+                            transition: { duration: 0.2 }
+                          }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => navigate(module.path)}
+                          className={`${cardSize} relative cursor-pointer group/module transition-all duration-300`}
+                        >
+                          {/* Module Card - Design Orgânico Premium */}
+                          <div className={`relative overflow-hidden rounded-2xl ${darkMode ? 'bg-gray-700/50' : 'bg-white'} border ${darkMode ? 'border-gray-600' : 'border-gray-200'} shadow-lg group-hover/module:shadow-2xl transition-all duration-500 h-full group-hover/module:border-opacity-80`}>
+                            {/* Animated Background Gradient */}
+                            <div className={`absolute inset-0 bg-gradient-to-r ${section.color} opacity-0 group-hover/module:opacity-5 transition-opacity duration-500`}></div>
+                            
+                            {/* Hover Effect - Shimmer */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover/module:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover/module:translate-x-full transition-transform duration-1000"></div>
+                            
+                            {/* Content - Adaptável ao tamanho */}
+                            <div className="relative z-10 p-4 h-full flex flex-col">
+                              {/* Header - Sempre presente */}
+                              <div className="flex items-center space-x-3 mb-3">
+                                <motion.div 
+                                  className={`${isPrimary ? 'w-12 h-12' : 'w-10 h-10'} bg-gradient-to-r ${section.color} rounded-xl flex items-center justify-center shadow-md flex-shrink-0 group-hover/module:shadow-lg transition-all duration-300`}
+                                  whileHover={{ rotate: 5, scale: 1.1 }}
+                                >
+                                  <module.icon className={`${isPrimary ? 'h-6 w-6' : 'h-5 w-5'} text-white`} />
+                                </motion.div>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} ${isPrimary ? 'text-base' : 'text-sm'} truncate group-hover/module:text-opacity-90 transition-colors duration-300`}>{module.nome}</h3>
+                                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} truncate group-hover/module:text-opacity-80 transition-colors duration-300`}>{module.nomeEN}</p>
+                                </div>
+                              </div>
+                              
+                              {/* Priority Badge - Enhanced */}
+                              <div className="flex justify-end mb-3">
+                                <motion.span 
+                                  className={`text-xs px-2 py-1 rounded-full bg-gradient-to-r ${getPriorityColor(module.priority)} text-white font-medium shadow-sm`}
+                                  whileHover={{ scale: 1.05 }}
+                                  transition={{ duration: 0.2 }}
+                                >
+                                  {module.priority}
+                                </motion.span>
+                              </div>
+                              
+                              {/* Conteúdo adicional para cards maiores */}
+                              {isPrimary && (
+                                <motion.div 
+                                  className="flex-1 flex flex-col justify-end"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ delay: 0.5 }}
+                                >
+                                  <div className="space-y-2">
+                                    <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                      <div className="flex items-center space-x-1">
+                                        <motion.div 
+                                          className="w-2 h-2 bg-green-400 rounded-full"
+                                          animate={{ scale: [1, 1.2, 1] }}
+                                          transition={{ duration: 2, repeat: Infinity }}
+                                        ></motion.div>
+                                        <span>Módulo Principal</span>
+                                      </div>
+                                    </div>
+                                    <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} italic`}>
+                                      Clique para aceder ao módulo completo
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                              
+                              {/* Indicador de ação para cards menores - Enhanced */}
+                              {!isPrimary && (
+                                <div className="flex-1 flex items-end justify-end">
+                                  <motion.div
+                                    className={`p-1 rounded-full ${darkMode ? 'bg-gray-600/50' : 'bg-gray-100'} group-hover/module:bg-blue-500/20 transition-colors duration-300`}
+                                    whileHover={{ scale: 1.1 }}
+                                  >
+                                    <ChevronRight className={`h-4 w-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'} group-hover/module:text-blue-500 transition-all duration-300 group-hover/module:translate-x-0.5`} />
+                                  </motion.div>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 </div>
-              </motion.section>
-            </motion.div>
-          )}
-
-          {activeTab === "analytics" && (
-            <motion.div
-              key="analytics"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-            >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Análises Avançadas</h2>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                {/* Gráfico de Pizza - Distribuição por Tipo de Ensaio */}
-                <div className="bg-white rounded-2xl p-6 shadow-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribuição de Ensaios</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <RechartsPieChart>
-                      <Pie
-                        data={analysisData.ensaiosPorTipo}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {analysisData.ensaiosPorTipo.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </RechartsPieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Gráfico de Barras - Performance por Mês */}
-                <div className="bg-white rounded-2xl p-6 shadow-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Mensal</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <RechartsBarChart data={analysisData.performanceMensal}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="mes" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="Conformidade" fill="#3B82F6" />
-                      <Bar dataKey="Qualidade" fill="#10B981" />
-                      <Bar dataKey="Segurança" fill="#F59E0B" />
-                    </RechartsBarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Gráfico de Área - Tendências de Qualidade */}
-                <div className="bg-white rounded-2xl p-6 shadow-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Tendências de Qualidade</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <RechartsAreaChart data={analysisData.tendenciasQualidade}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="periodo" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Area type="monotone" dataKey="Ensaios" stackId="1" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.6} />
-                      <Area type="monotone" dataKey="Checklists" stackId="1" stroke="#10B981" fill="#10B981" fillOpacity={0.6} />
-                      <Area type="monotone" dataKey="Documentos" stackId="1" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.6} />
-                    </RechartsAreaChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Gráfico Radar - Performance por Módulo */}
-                <div className="bg-white rounded-2xl p-6 shadow-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance por Módulo</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <RadarChart data={radarData}>
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="subject" />
-                      <PolarRadiusAxis angle={90} domain={[0, 100]} />
-                      <Radar name="Atual" dataKey="Atual" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.6} />
-                      <Radar name="Anterior" dataKey="Anterior" stroke="#10B981" fill="#10B981" fillOpacity={0.6} />
-                      <Radar name="Meta" dataKey="Meta" stroke="#F59E0B" fill="#F59E0B" fillOpacity={0.6} />
-                      <Legend />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </div>
               </div>
             </motion.div>
-          )}
+          ))}
+        </motion.div>
 
-          {activeTab === "reports" && (
-            <motion.div
-              key="reports"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
+        {/* Footer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2.0 }}
+          className={`text-center text-sm mt-16 pt-8 border-t ${darkMode ? 'border-gray-800 text-gray-400' : 'border-gray-200 text-gray-600'}`}
+        >
+          <p className="text-lg font-medium">© 2025 QUALICORE - Sistema de Gestão da Qualidade</p>
+          <p className="mt-2">Conformidade: ISO 9001 • NP ISO 10005 • EN 1090 • RGPD</p>
+          <p className="mt-1">Referência Europeia em Gestão da Qualidade para Obra Civil</p>
+          <div className="mt-4 flex items-center justify-center space-x-4">
+            <span>Desenvolvido por José Antunes</span>
+            <a 
+              href="https://www.linkedin.com/in/antunesmartins/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className={`flex items-center space-x-1 ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'} transition-colors duration-300`}
             >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Relatórios Disponíveis</h2>
-              
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {[
-                  { 
-                    title: "Relatório Executivo", 
-                    icon: FileText, 
-                    color: "from-blue-500 to-indigo-600",
-                    description: "Visão geral de todos os módulos",
-                    action: () => alert("Funcionalidade em desenvolvimento. Dados insuficientes para gerar relatório."),
-                    stats: "Em desenvolvimento"
-                  },
-                  { 
-                    title: "Relatório de Ensaios", 
-                    icon: TestTube, 
-                    color: "from-green-500 to-emerald-600",
-                    description: "Análise detalhada de ensaios",
-                    action: () => alert("Funcionalidade em desenvolvimento. Dados insuficientes para gerar relatório."),
-                    stats: "Em desenvolvimento"
-                  },
-                  { 
-                    title: "Relatório de Qualidade", 
-                    icon: Award, 
-                    color: "from-teal-500 to-cyan-600",
-                    description: "Relatório focado em métricas de qualidade",
-                    action: () => alert("Funcionalidade em desenvolvimento. Dados insuficientes para gerar relatório."),
-                    stats: "Em desenvolvimento"
-                  },
-                  { 
-                    title: "Relatório de Segurança", 
-                    icon: Shield, 
-                    color: "from-gray-500 to-slate-600",
-                    description: "Análise de segurança e prevenção de riscos",
-                    action: () => alert("Funcionalidade em desenvolvimento. Dados insuficientes para gerar relatório."),
-                    stats: "Em desenvolvimento"
-                  }
-                ].map((report, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-                    whileHover={{ y: -5, scale: 1.02 }}
-                    className="p-6 rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group"
-                    onClick={report.action}
-                  >
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${report.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                      <report.icon className="h-6 w-6 text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{report.title}</h3>
-                    <p className="text-sm text-gray-600 mb-3">{report.description}</p>
-                    <div className="text-xs text-gray-500 mb-4 bg-gray-50 px-2 py-1 rounded">
-                      {report.stats}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          report.action();
-                        }}
-                        className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center space-x-1"
-                      >
-                        <span>Gerar Relatório</span>
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                      <div className="text-xs text-gray-400">Clique para aceder</div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-
-              
-
-              {/* Ações Rápidas */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-                className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200"
-              >
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <button 
-                    onClick={() => navigate("/ensaios")}
-                    className="flex items-center space-x-3 p-4 rounded-xl bg-white shadow-sm hover:shadow-md transition-all duration-300"
-                  >
-                    <TestTube className="h-6 w-6 text-blue-600" />
-                    <div className="text-left">
-                      <div className="font-medium text-gray-900">Ver Ensaios</div>
-                      <div className="text-sm text-gray-600">Aceder aos ensaios</div>
-                    </div>
-                  </button>
-                  <button 
-                    onClick={() => navigate("/checklists")}
-                    className="flex items-center space-x-3 p-4 rounded-xl bg-white shadow-sm hover:shadow-md transition-all duration-300"
-                  >
-                    <ClipboardCheck className="h-6 w-6 text-green-600" />
-                    <div className="text-left">
-                      <div className="font-medium text-gray-900">Ver Checklists</div>
-                      <div className="text-sm text-gray-600">Aceder aos checklists</div>
-                    </div>
-                  </button>
-                  <button 
-                    onClick={() => navigate("/documentos")}
-                    className="flex items-center space-x-3 p-4 rounded-xl bg-white shadow-sm hover:shadow-md transition-all duration-300"
-                  >
-                    <FileText className="h-6 w-6 text-purple-600" />
-                    <div className="text-left">
-                      <div className="font-medium text-gray-900">Ver Documentos</div>
-                      <div className="text-sm text-gray-600">Aceder aos documentos</div>
-                    </div>
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <Linkedin className="h-4 w-4" />
+              <span>LinkedIn</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
 }
+
