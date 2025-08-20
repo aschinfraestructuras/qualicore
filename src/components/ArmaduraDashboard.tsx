@@ -189,14 +189,6 @@ export default function ArmaduraDashboard({ armaduras, onSearch, onFilterChange 
       const pdfService = new PDFService();
       console.log('🔍 PDFService criado:', pdfService);
       
-      // Primeiro, vamos testar com um método simples
-      if (reportType === 'executivo') {
-        console.log('🔍 Testando com método simples primeiro...');
-        await pdfService.testArmadurasPDF(armaduras);
-        toast.success('Teste PDF de armaduras gerado com sucesso!');
-        return;
-      }
-      
       switch (reportType) {
         case 'executivo':
           console.log('🔍 Chamando generateArmadurasExecutiveReport...');
