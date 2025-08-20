@@ -45,7 +45,7 @@ import { PDFService } from "@/services/pdfService";
 import { ShareService } from "@/services/shareService";
 import { Link } from "react-router-dom";
 
-// Dados mock iniciais para demonstração
+// Dados mock iniciais para demonstração - TOTALMENTE EDITÁVEIS
 const mockObras: any[] = [
   {
     id: "1",
@@ -66,12 +66,293 @@ const mockObras: any[] = [
     fiscal_obra: "Eng. Carlos Mendes",
     engenheiro_responsavel: "Eng. Ana Costa",
     arquiteto: "Arq. Pedro Alves",
-    zonas: [],
-    fases: [],
-    equipas: [],
-    fornecedores_principais: [],
-    riscos: [],
-    indicadores: [],
+    zonas: ["Zona A - Fundações", "Zona B - Estrutura", "Zona C - Acabamentos"],
+    fases: ["Fase 1 - Fundações", "Fase 2 - Estrutura", "Fase 3 - Acabamentos"],
+    equipas: ["Equipa A - Fundações", "Equipa B - Estrutura", "Equipa C - Acabamentos"],
+    fornecedores_principais: ["Fornecedor A", "Fornecedor B", "Fornecedor C"],
+    riscos: [
+      {
+        id: "1",
+        descricao: "Atraso na entrega de materiais",
+        probabilidade: "alta",
+        impacto: "critico",
+        categoria: "fornecimento",
+        status: "ativo",
+        data_identificacao: "2024-01-20",
+        responsavel: "Eng. João Silva"
+      },
+      {
+        id: "2", 
+        descricao: "Condições meteorológicas adversas",
+        probabilidade: "media",
+        impacto: "moderado",
+        categoria: "ambiental",
+        status: "monitorizado",
+        data_identificacao: "2024-01-25",
+        responsavel: "Eng. Maria Santos"
+      }
+    ],
+    indicadores: [
+      {
+        id: "1",
+        nome: "Progresso Físico",
+        valor: 50,
+        unidade: "%",
+        data_medicao: "2024-03-15",
+        meta: 60
+      },
+      {
+        id: "2",
+        nome: "Custo por m²",
+        valor: 1200,
+        unidade: "€/m²",
+        data_medicao: "2024-03-15",
+        meta: 1100
+      }
+    ],
+    milestones: [
+      {
+        id: "1",
+        titulo: "Conclusão das Fundações",
+        descricao: "Finalização de todas as fundações da obra",
+        data_prevista: "2024-03-31",
+        data_real: "2024-03-28",
+        status: "concluida",
+        importancia: "critica",
+        responsavel: "Eng. João Silva",
+        percentual_conclusao: 100
+      },
+      {
+        id: "2",
+        titulo: "Início da Estrutura",
+        descricao: "Começo da construção da estrutura em betão",
+        data_prevista: "2024-04-15",
+        data_real: null,
+        status: "pendente",
+        importancia: "alta",
+        responsavel: "Eng. Maria Santos",
+        percentual_conclusao: 0
+      }
+    ],
+    dependencias_externas: [
+      {
+        id: "1",
+        descricao: "Aprovação da Câmara Municipal",
+        tipo: "licenciamento",
+        status: "concluida",
+        data_prevista: "2024-01-10",
+        data_real: "2024-01-08",
+        responsavel: "Arq. Pedro Alves"
+      },
+      {
+        id: "2",
+        descricao: "Ligação de Energia Elétrica",
+        tipo: "infraestrutura",
+        status: "pendente",
+        data_prevista: "2024-04-30",
+        data_real: null,
+        responsavel: "Eng. Carlos Mendes"
+      }
+    ],
+    subempreiteiros: [
+      {
+        id: "1",
+        nome: "Subempreiteiro A - Fundações",
+        especialidade: "Fundações",
+        valor_contrato: 300000,
+        data_inicio: "2024-01-20",
+        data_fim: "2024-03-31",
+        status: "concluido",
+        responsavel: "Eng. João Silva"
+      },
+      {
+        id: "2",
+        nome: "Subempreiteiro B - Estrutura",
+        especialidade: "Estruturas",
+        valor_contrato: 800000,
+        data_inicio: "2024-04-01",
+        data_fim: "2024-08-31",
+        status: "ativo",
+        responsavel: "Eng. Maria Santos"
+      }
+    ],
+    metricas_evm: {
+      id: "1",
+      pv: 1250000,
+      ev: 1250000,
+      ac: 1200000,
+      bac: 2500000,
+      spi: 1.0,
+      cpi: 1.04,
+      sv: 0,
+      cv: 50000,
+      eac: 2403846,
+      etc: 1153846,
+      vac: 96154,
+      data_criacao: "2024-01-15T09:00:00Z",
+      data_atualizacao: "2024-03-15T10:00:00Z"
+    },
+    indicadores_performance: [
+      {
+        id: "1",
+        nome: "Eficiência de Custos",
+        valor: 104,
+        unidade: "%",
+        data_medicao: "2024-03-15",
+        meta: 100,
+        categoria: "financeiro"
+      },
+      {
+        id: "2",
+        nome: "Eficiência de Cronograma",
+        valor: 100,
+        unidade: "%",
+        data_medicao: "2024-03-15",
+        meta: 100,
+        categoria: "tempo"
+      }
+    ],
+    documentacao: {
+      id: "1",
+      versao: "1.0",
+      responsavel: "Eng. João Silva",
+      data_criacao: "2024-01-15T09:00:00Z",
+      data_revisao: "2024-03-15T10:00:00Z",
+      categorias: ["Projeto", "Execução", "Qualidade", "Segurança"],
+      templates: ["Relatório Semanal", "Relatório Mensal", "Relatório de Qualidade"],
+      procedimentos_aprovacao: ["Aprovação Técnica", "Aprovação Financeira", "Aprovação Cliente"]
+    },
+    licencas_autorizacoes: [
+      {
+        id: "1",
+        tipo: "Licença de Construção",
+        numero: "LC-2024-001",
+        emissor: "Câmara Municipal de Lisboa",
+        data_emissao: "2024-01-08",
+        data_validade: "2025-01-08",
+        status: "ativa",
+        responsavel: "Arq. Pedro Alves"
+      }
+    ],
+    certificacoes_obrigatorias: [
+      {
+        id: "1",
+        nome: "Certificação ISO 9001",
+        emissor: "SGS",
+        data_emissao: "2024-02-15",
+        data_validade: "2027-02-15",
+        status: "ativa",
+        responsavel: "Eng. Ana Costa"
+      }
+    ],
+    gestao_financeira: {
+      id: "1",
+      orcamento_total: 2500000,
+      valor_executado: 1250000,
+      valor_pendente: 1250000,
+      fluxo_caixa: [
+        { mes: "Janeiro", entrada: 0, saida: 200000, saldo: -200000 },
+        { mes: "Fevereiro", entrada: 300000, saida: 400000, saldo: -300000 },
+        { mes: "Março", entrada: 500000, saida: 300000, saldo: -100000 }
+      ],
+      indicadores_financeiros: [
+        { nome: "Margem de Lucro", valor: 15, unidade: "%" },
+        { nome: "ROI", valor: 12, unidade: "%" }
+      ],
+      data_criacao: "2024-01-15T09:00:00Z",
+      data_atualizacao: "2024-03-15T10:00:00Z"
+    },
+    orcamentos_detalhados: [
+      {
+        id: "1",
+        categoria: "Fundações",
+        valor_orcamentado: 300000,
+        valor_executado: 280000,
+        percentual_execucao: 93,
+        responsavel: "Eng. João Silva"
+      },
+      {
+        id: "2",
+        categoria: "Estrutura",
+        valor_orcamentado: 800000,
+        valor_executado: 400000,
+        percentual_execucao: 50,
+        responsavel: "Eng. Maria Santos"
+      }
+    ],
+    controlo_custos: [
+      {
+        id: "1",
+        categoria: "Materiais",
+        valor_orcamentado: 500000,
+        valor_real: 480000,
+        variacao: -20000,
+        percentual_variacao: -4,
+        data_medicao: "2024-03-15"
+      }
+    ],
+    plano_qualidade: {
+      id: "1",
+      versao: "1.0",
+      responsavel: "Eng. Ana Costa",
+      data_criacao: "2024-01-15T09:00:00Z",
+      data_revisao: "2024-03-15T10:00:00Z",
+      objetivos_qualidade: ["Cumprir especificações técnicas", "Satisfazer requisitos do cliente"],
+      procedimentos_qualidade: ["Inspeção de receção", "Controle de qualidade"]
+    },
+    plano_seguranca: {
+      id: "1",
+      versao: "1.0",
+      responsavel: "Eng. Carlos Mendes",
+      data_criacao: "2024-01-15T09:00:00Z",
+      data_revisao: "2024-03-15T10:00:00Z",
+      equipamentos_protecao: ["Capacetes", "Coletes", "Botas de segurança"],
+      procedimentos_seguranca: ["Formação de segurança", "Inspeções diárias"]
+    },
+    inspecoes_qualidade: [
+      {
+        id: "1",
+        tipo: "Inspeção de Receção",
+        data: "2024-03-10",
+        responsavel: "Eng. Ana Costa",
+        resultado: "Aprovado",
+        observacoes: "Materiais conforme especificação"
+      }
+    ],
+    acidentes_incidentes: [
+      {
+        id: "1",
+        tipo: "Incidente",
+        descricao: "Queda de ferramenta",
+        data: "2024-02-15",
+        gravidade: "leve",
+        status: "resolvido",
+        responsavel: "Eng. Carlos Mendes"
+      }
+    ],
+    gestao_ambiental: {
+      id: "1",
+      versao_plano: "1.0",
+      responsavel_ambiental: "Eng. Ana Costa",
+      data_criacao: "2024-01-15T09:00:00Z",
+      data_revisao_plano: "2024-03-15T10:00:00Z",
+      objetivos_ambientais: ["Reduzir resíduos", "Minimizar impacto ambiental"],
+      impactos_ambientais: ["Geração de resíduos", "Consumo de energia"],
+      medidas_mitigacao: ["Reciclagem", "Eficiência energética"],
+      recursos_ambientais: ["Contentores de reciclagem", "Sistema de iluminação LED"],
+      monitorizacao_ambiental: ["Controlo de resíduos", "Monitorização de energia"]
+    },
+    certificacoes_ambientais: [
+      {
+        id: "1",
+        nome: "Certificação ISO 14001",
+        emissor: "SGS",
+        data_emissao: "2024-02-20",
+        data_validade: "2027-02-20",
+        status: "ativa",
+        responsavel: "Eng. Ana Costa"
+      }
+    ],
     responsavel: "Eng. João Silva",
     zona: "Lisboa",
     estado: "em_analise",
@@ -97,12 +378,197 @@ const mockObras: any[] = [
     fiscal_obra: "Eng. Luísa Ferreira",
     engenheiro_responsavel: "Eng. Manuel Santos",
     arquiteto: "Arq. Teresa Silva",
-    zonas: [],
-    fases: [],
-    equipas: [],
-    fornecedores_principais: [],
-    riscos: [],
-    indicadores: [],
+    zonas: ["Zona Norte", "Zona Sul", "Zona Central"],
+    fases: ["Fase 1 - Estrutura", "Fase 2 - Fachadas", "Fase 3 - Interiores"],
+    equipas: ["Equipa Norte", "Equipa Sul", "Equipa Central"],
+    fornecedores_principais: ["Fornecedor Norte", "Fornecedor Sul", "Fornecedor Central"],
+    riscos: [
+      {
+        id: "1",
+        descricao: "Complexidade da estrutura",
+        probabilidade: "alta",
+        impacto: "critico",
+        categoria: "tecnico",
+        status: "ativo",
+        data_identificacao: "2024-02-05",
+        responsavel: "Eng. Sofia Martins"
+      }
+    ],
+    indicadores: [
+      {
+        id: "1",
+        nome: "Progresso Físico",
+        valor: 15,
+        unidade: "%",
+        data_medicao: "2024-03-15",
+        meta: 20
+      }
+    ],
+    milestones: [
+      {
+        id: "1",
+        titulo: "Conclusão da Estrutura Principal",
+        descricao: "Finalização da estrutura em betão armado",
+        data_prevista: "2024-08-31",
+        data_real: null,
+        status: "pendente",
+        importancia: "critica",
+        responsavel: "Eng. Sofia Martins",
+        percentual_conclusao: 15
+      }
+    ],
+    dependencias_externas: [
+      {
+        id: "1",
+        descricao: "Aprovação de Licença Comercial",
+        tipo: "licenciamento",
+        status: "pendente",
+        data_prevista: "2024-05-31",
+        data_real: null,
+        responsavel: "Arq. Teresa Silva"
+      }
+    ],
+    subempreiteiros: [
+      {
+        id: "1",
+        nome: "Subempreiteiro Estrutural",
+        especialidade: "Estruturas Complexas",
+        valor_contrato: 1500000,
+        data_inicio: "2024-02-15",
+        data_fim: "2024-09-30",
+        status: "ativo",
+        responsavel: "Eng. Sofia Martins"
+      }
+    ],
+    metricas_evm: {
+      id: "2",
+      pv: 1000000,
+      ev: 750000,
+      ac: 800000,
+      bac: 5000000,
+      spi: 0.75,
+      cpi: 0.94,
+      sv: -250000,
+      cv: -50000,
+      eac: 5319149,
+      etc: 4569149,
+      vac: -319149,
+      data_criacao: "2024-02-01T10:00:00Z",
+      data_atualizacao: "2024-03-15T10:00:00Z"
+    },
+    indicadores_performance: [
+      {
+        id: "1",
+        nome: "Eficiência de Cronograma",
+        valor: 75,
+        unidade: "%",
+        data_medicao: "2024-03-15",
+        meta: 100,
+        categoria: "tempo"
+      }
+    ],
+    documentacao: {
+      id: "2",
+      versao: "1.0",
+      responsavel: "Eng. Sofia Martins",
+      data_criacao: "2024-02-01T10:00:00Z",
+      data_revisao: "2024-03-15T10:00:00Z",
+      categorias: ["Projeto", "Execução", "Qualidade"],
+      templates: ["Relatório Semanal", "Relatório Mensal"],
+      procedimentos_aprovacao: ["Aprovação Técnica", "Aprovação Cliente"]
+    },
+    licencas_autorizacoes: [
+      {
+        id: "1",
+        tipo: "Licença de Construção",
+        numero: "LC-2024-002",
+        emissor: "Câmara Municipal do Porto",
+        data_emissao: "2024-01-25",
+        data_validade: "2026-01-25",
+        status: "ativa",
+        responsavel: "Arq. Teresa Silva"
+      }
+    ],
+    certificacoes_obrigatorias: [],
+    gestao_financeira: {
+      id: "2",
+      orcamento_total: 5000000,
+      valor_executado: 750000,
+      valor_pendente: 4250000,
+      fluxo_caixa: [
+        { mes: "Fevereiro", entrada: 0, saida: 300000, saldo: -300000 },
+        { mes: "Março", entrada: 200000, saida: 450000, saldo: -550000 }
+      ],
+      indicadores_financeiros: [
+        { nome: "Margem de Lucro", valor: 18, unidade: "%" },
+        { nome: "ROI", valor: 15, unidade: "%" }
+      ],
+      data_criacao: "2024-02-01T10:00:00Z",
+      data_atualizacao: "2024-03-15T10:00:00Z"
+    },
+    orcamentos_detalhados: [
+      {
+        id: "1",
+        categoria: "Estrutura",
+        valor_orcamentado: 2000000,
+        valor_executado: 750000,
+        percentual_execucao: 37.5,
+        responsavel: "Eng. Sofia Martins"
+      }
+    ],
+    controlo_custos: [
+      {
+        id: "1",
+        categoria: "Materiais",
+        valor_orcamentado: 1000000,
+        valor_real: 800000,
+        variacao: -200000,
+        percentual_variacao: -20,
+        data_medicao: "2024-03-15"
+      }
+    ],
+    plano_qualidade: {
+      id: "2",
+      versao: "1.0",
+      responsavel: "Eng. Luísa Ferreira",
+      data_criacao: "2024-02-01T10:00:00Z",
+      data_revisao: "2024-03-15T10:00:00Z",
+      objetivos_qualidade: ["Excelência na execução", "Satisfação total do cliente"],
+      procedimentos_qualidade: ["Controle rigoroso", "Inspeções frequentes"]
+    },
+    plano_seguranca: {
+      id: "2",
+      versao: "1.0",
+      responsavel: "Eng. Ricardo Pereira",
+      data_criacao: "2024-02-01T10:00:00Z",
+      data_revisao: "2024-03-15T10:00:00Z",
+      equipamentos_protecao: ["Capacetes", "Coletes", "Botas", "Óculos"],
+      procedimentos_seguranca: ["Formação obrigatória", "Inspeções diárias", "Reuniões semanais"]
+    },
+    inspecoes_qualidade: [
+      {
+        id: "1",
+        tipo: "Inspeção de Estrutura",
+        data: "2024-03-12",
+        responsavel: "Eng. Luísa Ferreira",
+        resultado: "Aprovado com ressalvas",
+        observacoes: "Necessário reforço em algumas ligações"
+      }
+    ],
+    acidentes_incidentes: [],
+    gestao_ambiental: {
+      id: "2",
+      versao_plano: "1.0",
+      responsavel_ambiental: "Eng. Luísa Ferreira",
+      data_criacao: "2024-02-01T10:00:00Z",
+      data_revisao_plano: "2024-03-15T10:00:00Z",
+      objetivos_ambientais: ["Sustentabilidade", "Eficiência energética"],
+      impactos_ambientais: ["Consumo de energia", "Geração de resíduos"],
+      medidas_mitigacao: ["Energias renováveis", "Gestão de resíduos"],
+      recursos_ambientais: ["Painéis solares", "Sistema de reciclagem"],
+      monitorizacao_ambiental: ["Controlo de energia", "Gestão de resíduos"]
+    },
+    certificacoes_ambientais: [],
     responsavel: "Eng. Sofia Martins",
     zona: "Porto",
     estado: "em_analise",
@@ -128,12 +594,216 @@ const mockObras: any[] = [
     fiscal_obra: "Eng. João Pereira",
     engenheiro_responsavel: "Eng. Maria Silva",
     arquiteto: "Arq. Carlos Mendes",
-    zonas: [],
-    fases: [],
-    equipas: [],
-    fornecedores_principais: [],
-    riscos: [],
-    indicadores: [],
+    zonas: ["Margem Norte", "Margem Sul", "Rio"],
+    fases: ["Fase 1 - Fundações", "Fase 2 - Estrutura", "Fase 3 - Acabamentos"],
+    equipas: ["Equipa Fundações", "Equipa Estrutura", "Equipa Acabamentos"],
+    fornecedores_principais: ["Fornecedor Aço", "Fornecedor Betão", "Fornecedor Acabamentos"],
+    riscos: [
+      {
+        id: "1",
+        descricao: "Condições do rio",
+        probabilidade: "alta",
+        impacto: "moderado",
+        categoria: "ambiental",
+        status: "monitorizado",
+        data_identificacao: "2024-03-05",
+        responsavel: "Eng. António Costa"
+      }
+    ],
+    indicadores: [
+      {
+        id: "1",
+        nome: "Progresso Físico",
+        valor: 75,
+        unidade: "%",
+        data_medicao: "2024-03-15",
+        meta: 70
+      }
+    ],
+    milestones: [
+      {
+        id: "1",
+        titulo: "Conclusão da Estrutura Principal",
+        descricao: "Finalização da estrutura da ponte",
+        data_prevista: "2024-06-30",
+        data_real: "2024-06-25",
+        status: "concluida",
+        importancia: "critica",
+        responsavel: "Eng. António Costa",
+        percentual_conclusao: 100
+      }
+    ],
+    dependencias_externas: [
+      {
+        id: "1",
+        descricao: "Autorização de Trabalhos no Rio",
+        tipo: "ambiental",
+        status: "concluida",
+        data_prevista: "2024-02-15",
+        data_real: "2024-02-10",
+        responsavel: "Eng. António Costa"
+      }
+    ],
+    subempreiteiros: [
+      {
+        id: "1",
+        nome: "Subempreiteiro Estrutural",
+        especialidade: "Estruturas Metálicas",
+        valor_contrato: 400000,
+        data_inicio: "2024-03-15",
+        data_fim: "2024-07-31",
+        status: "concluido",
+        responsavel: "Eng. António Costa"
+      }
+    ],
+    metricas_evm: {
+      id: "3",
+      pv: 600000,
+      ev: 600000,
+      ac: 600000,
+      bac: 800000,
+      spi: 1.0,
+      cpi: 1.0,
+      sv: 0,
+      cv: 0,
+      eac: 800000,
+      etc: 200000,
+      vac: 0,
+      data_criacao: "2024-03-01T08:00:00Z",
+      data_atualizacao: "2024-03-15T10:00:00Z"
+    },
+    indicadores_performance: [
+      {
+        id: "1",
+        nome: "Eficiência de Cronograma",
+        valor: 100,
+        unidade: "%",
+        data_medicao: "2024-03-15",
+        meta: 100,
+        categoria: "tempo"
+      }
+    ],
+    documentacao: {
+      id: "3",
+      versao: "1.0",
+      responsavel: "Eng. António Costa",
+      data_criacao: "2024-03-01T08:00:00Z",
+      data_revisao: "2024-03-15T10:00:00Z",
+      categorias: ["Projeto", "Execução", "Ambiental"],
+      templates: ["Relatório Semanal", "Relatório Ambiental"],
+      procedimentos_aprovacao: ["Aprovação Técnica", "Aprovação Ambiental"]
+    },
+    licencas_autorizacoes: [
+      {
+        id: "1",
+        tipo: "Licença Ambiental",
+        numero: "LA-2024-003",
+        emissor: "APA",
+        data_emissao: "2024-02-10",
+        data_validade: "2025-02-10",
+        status: "ativa",
+        responsavel: "Eng. António Costa"
+      }
+    ],
+    certificacoes_obrigatorias: [],
+    gestao_financeira: {
+      id: "3",
+      orcamento_total: 800000,
+      valor_executado: 600000,
+      valor_pendente: 200000,
+      fluxo_caixa: [
+        { mes: "Março", entrada: 0, saida: 200000, saldo: -200000 },
+        { mes: "Abril", entrada: 300000, saida: 200000, saldo: -100000 },
+        { mes: "Maio", entrada: 300000, saida: 200000, saldo: 0 }
+      ],
+      indicadores_financeiros: [
+        { nome: "Margem de Lucro", valor: 12, unidade: "%" },
+        { nome: "ROI", valor: 10, unidade: "%" }
+      ],
+      data_criacao: "2024-03-01T08:00:00Z",
+      data_atualizacao: "2024-03-15T10:00:00Z"
+    },
+    orcamentos_detalhados: [
+      {
+        id: "1",
+        categoria: "Estrutura",
+        valor_orcamentado: 400000,
+        valor_executado: 300000,
+        percentual_execucao: 75,
+        responsavel: "Eng. António Costa"
+      },
+      {
+        id: "2",
+        categoria: "Acabamentos",
+        valor_orcamentado: 200000,
+        valor_executado: 150000,
+        percentual_execucao: 75,
+        responsavel: "Eng. Filipa Santos"
+      }
+    ],
+    controlo_custos: [
+      {
+        id: "1",
+        categoria: "Materiais",
+        valor_orcamentado: 300000,
+        valor_real: 300000,
+        variacao: 0,
+        percentual_variacao: 0,
+        data_medicao: "2024-03-15"
+      }
+    ],
+    plano_qualidade: {
+      id: "3",
+      versao: "1.0",
+      responsavel: "Eng. Filipa Santos",
+      data_criacao: "2024-03-01T08:00:00Z",
+      data_revisao: "2024-03-15T10:00:00Z",
+      objetivos_qualidade: ["Qualidade estrutural", "Durabilidade"],
+      procedimentos_qualidade: ["Ensaios de resistência", "Inspeções estruturais"]
+    },
+    plano_seguranca: {
+      id: "3",
+      versao: "1.0",
+      responsavel: "Eng. João Pereira",
+      data_criacao: "2024-03-01T08:00:00Z",
+      data_revisao: "2024-03-15T10:00:00Z",
+      equipamentos_protecao: ["Capacetes", "Coletes", "Botas", "Cintos"],
+      procedimentos_seguranca: ["Formação específica", "Inspeções diárias"]
+    },
+    inspecoes_qualidade: [
+      {
+        id: "1",
+        tipo: "Inspeção Estrutural",
+        data: "2024-03-14",
+        responsavel: "Eng. Filipa Santos",
+        resultado: "Aprovado",
+        observacoes: "Estrutura conforme projeto"
+      }
+    ],
+    acidentes_incidentes: [],
+    gestao_ambiental: {
+      id: "3",
+      versao_plano: "1.0",
+      responsavel_ambiental: "Eng. António Costa",
+      data_criacao: "2024-03-01T08:00:00Z",
+      data_revisao_plano: "2024-03-15T10:00:00Z",
+      objetivos_ambientais: ["Proteção do rio", "Minimizar impacto"],
+      impactos_ambientais: ["Perturbação do rio", "Geração de resíduos"],
+      medidas_mitigacao: ["Proteção do leito", "Gestão de resíduos"],
+      recursos_ambientais: ["Barreiras de proteção", "Sistema de filtros"],
+      monitorizacao_ambiental: ["Qualidade da água", "Nível do rio"]
+    },
+    certificacoes_ambientais: [
+      {
+        id: "1",
+        nome: "Certificação Ambiental",
+        emissor: "APA",
+        data_emissao: "2024-02-15",
+        data_validade: "2025-02-15",
+        status: "ativa",
+        responsavel: "Eng. António Costa"
+      }
+    ],
     responsavel: "Eng. António Costa",
     zona: "Coimbra",
     estado: "aprovado",
@@ -159,12 +829,198 @@ const mockObras: any[] = [
     fiscal_obra: "Eng. Miguel Costa",
     engenheiro_responsavel: "Eng. Pedro Santos",
     arquiteto: "Arq. Sofia Mendes",
-    zonas: [],
-    fases: [],
-    equipas: [],
-    fornecedores_principais: [],
-    riscos: [],
-    indicadores: [],
+    zonas: ["Bloco A", "Bloco B", "Bloco C", "Área Comum"],
+    fases: ["Fase 1 - Fundações", "Fase 2 - Estrutura", "Fase 3 - Acabamentos"],
+    equipas: ["Equipa Fundações", "Equipa Estrutura", "Equipa Acabamentos"],
+    fornecedores_principais: ["Fornecedor Betão", "Fornecedor Aço", "Fornecedor Acabamentos"],
+    riscos: [
+      {
+        id: "1",
+        descricao: "Atraso na entrega de materiais",
+        probabilidade: "media",
+        impacto: "moderado",
+        categoria: "fornecimento",
+        status: "monitorizado",
+        data_identificacao: "2024-04-05",
+        responsavel: "Eng. Francisco Setúbal"
+      }
+    ],
+    indicadores: [
+      {
+        id: "1",
+        nome: "Progresso Físico",
+        valor: 25,
+        unidade: "%",
+        data_medicao: "2024-03-15",
+        meta: 30
+      }
+    ],
+    milestones: [
+      {
+        id: "1",
+        titulo: "Conclusão das Fundações",
+        descricao: "Finalização de todas as fundações dos blocos",
+        data_prevista: "2024-06-30",
+        data_real: null,
+        status: "pendente",
+        importancia: "critica",
+        responsavel: "Eng. Francisco Setúbal",
+        percentual_conclusao: 60
+      }
+    ],
+    dependencias_externas: [
+      {
+        id: "1",
+        descricao: "Aprovação do Plano de Urbanização",
+        tipo: "urbanismo",
+        status: "concluida",
+        data_prevista: "2024-03-15",
+        data_real: "2024-03-10",
+        responsavel: "Arq. Sofia Mendes"
+      }
+    ],
+    subempreiteiros: [
+      {
+        id: "1",
+        nome: "Subempreiteiro Fundações",
+        especialidade: "Fundações Profundas",
+        valor_contrato: 500000,
+        data_inicio: "2024-04-15",
+        data_fim: "2024-07-31",
+        status: "ativo",
+        responsavel: "Eng. Francisco Setúbal"
+      }
+    ],
+    metricas_evm: {
+      id: "4",
+      pv: 875000,
+      ev: 875000,
+      ac: 875000,
+      bac: 3500000,
+      spi: 1.0,
+      cpi: 1.0,
+      sv: 0,
+      cv: 0,
+      eac: 3500000,
+      etc: 2625000,
+      vac: 0,
+      data_criacao: "2024-04-01T09:00:00Z",
+      data_atualizacao: "2024-03-15T10:00:00Z"
+    },
+    indicadores_performance: [
+      {
+        id: "1",
+        nome: "Eficiência de Cronograma",
+        valor: 100,
+        unidade: "%",
+        data_medicao: "2024-03-15",
+        meta: 100,
+        categoria: "tempo"
+      }
+    ],
+    documentacao: {
+      id: "4",
+      versao: "1.0",
+      responsavel: "Eng. Francisco Setúbal",
+      data_criacao: "2024-04-01T09:00:00Z",
+      data_revisao: "2024-03-15T10:00:00Z",
+      categorias: ["Projeto", "Execução", "Qualidade"],
+      templates: ["Relatório Semanal", "Relatório Mensal"],
+      procedimentos_aprovacao: ["Aprovação Técnica", "Aprovação Cliente"]
+    },
+    licencas_autorizacoes: [
+      {
+        id: "1",
+        tipo: "Licença de Construção",
+        numero: "LC-2024-004",
+        emissor: "Câmara Municipal de Setúbal",
+        data_emissao: "2024-03-10",
+        data_validade: "2026-03-10",
+        status: "ativa",
+        responsavel: "Arq. Sofia Mendes"
+      }
+    ],
+    certificacoes_obrigatorias: [],
+    gestao_financeira: {
+      id: "4",
+      orcamento_total: 3500000,
+      valor_executado: 875000,
+      valor_pendente: 2625000,
+      fluxo_caixa: [
+        { mes: "Abril", entrada: 0, saida: 300000, saldo: -300000 },
+        { mes: "Maio", entrada: 400000, saida: 300000, saldo: -200000 },
+        { mes: "Junho", entrada: 475000, saida: 275000, saldo: 0 }
+      ],
+      indicadores_financeiros: [
+        { nome: "Margem de Lucro", valor: 20, unidade: "%" },
+        { nome: "ROI", valor: 18, unidade: "%" }
+      ],
+      data_criacao: "2024-04-01T09:00:00Z",
+      data_atualizacao: "2024-03-15T10:00:00Z"
+    },
+    orcamentos_detalhados: [
+      {
+        id: "1",
+        categoria: "Fundações",
+        valor_orcamentado: 500000,
+        valor_executado: 375000,
+        percentual_execucao: 75,
+        responsavel: "Eng. Francisco Setúbal"
+      }
+    ],
+    controlo_custos: [
+      {
+        id: "1",
+        categoria: "Materiais",
+        valor_orcamentado: 800000,
+        valor_real: 875000,
+        variacao: 75000,
+        percentual_variacao: 9.4,
+        data_medicao: "2024-03-15"
+      }
+    ],
+    plano_qualidade: {
+      id: "4",
+      versao: "1.0",
+      responsavel: "Eng. Ana Setúbal",
+      data_criacao: "2024-04-01T09:00:00Z",
+      data_revisao: "2024-03-15T10:00:00Z",
+      objetivos_qualidade: ["Qualidade premium", "Satisfação do cliente"],
+      procedimentos_qualidade: ["Controle rigoroso", "Inspeções frequentes"]
+    },
+    plano_seguranca: {
+      id: "4",
+      versao: "1.0",
+      responsavel: "Eng. Miguel Costa",
+      data_criacao: "2024-04-01T09:00:00Z",
+      data_revisao: "2024-03-15T10:00:00Z",
+      equipamentos_protecao: ["Capacetes", "Coletes", "Botas", "Óculos"],
+      procedimentos_seguranca: ["Formação obrigatória", "Inspeções diárias"]
+    },
+    inspecoes_qualidade: [
+      {
+        id: "1",
+        tipo: "Inspeção de Fundações",
+        data: "2024-03-13",
+        responsavel: "Eng. Ana Setúbal",
+        resultado: "Aprovado",
+        observacoes: "Fundações conforme especificação"
+      }
+    ],
+    acidentes_incidentes: [],
+    gestao_ambiental: {
+      id: "4",
+      versao_plano: "1.0",
+      responsavel_ambiental: "Eng. Francisco Setúbal",
+      data_criacao: "2024-04-01T09:00:00Z",
+      data_revisao_plano: "2024-03-15T10:00:00Z",
+      objetivos_ambientais: ["Sustentabilidade", "Eficiência energética"],
+      impactos_ambientais: ["Consumo de energia", "Geração de resíduos"],
+      medidas_mitigacao: ["Energias renováveis", "Gestão de resíduos"],
+      recursos_ambientais: ["Painéis solares", "Sistema de reciclagem"],
+      monitorizacao_ambiental: ["Controlo de energia", "Gestão de resíduos"]
+    },
+    certificacoes_ambientais: [],
     responsavel: "Eng. Francisco Setúbal",
     zona: "Setúbal",
     estado: "em_execucao",
@@ -222,29 +1078,39 @@ export default function Obras() {
           }
         } else {
           console.log("⚠️ Nenhuma obra encontrada na Supabase, usando dados mock para demonstração");
-          setObras(mockObras);
-          setFilteredObras(mockObras);
+          
+          // Tentar carregar dados mock salvos localmente
+          const savedMockObras = localStorage.getItem('qualicore_mock_obras');
+          const obrasToUse = savedMockObras ? JSON.parse(savedMockObras) : mockObras;
+          
+          setObras(obrasToUse);
+          setFilteredObras(obrasToUse);
           setUsingRealData(false);
           toast.success("Usando dados de demonstração - conecte-se à Supabase para dados reais");
           
           // Selecionar automaticamente a primeira obra mock se não houver nenhuma selecionada
           if (!editingObra) {
-            setEditingObra(mockObras[0]);
-            console.log("🎯 Primeira obra mock selecionada automaticamente:", mockObras[0].nome);
+            setEditingObra(obrasToUse[0]);
+            console.log("🎯 Primeira obra mock selecionada automaticamente:", obrasToUse[0].nome);
           }
         }
       } catch (error) {
         console.error("❌ Erro ao carregar obras da Supabase:", error);
         console.log("🔄 Usando dados mock devido ao erro");
-        setObras(mockObras);
-        setFilteredObras(mockObras);
+        
+        // Tentar carregar dados mock salvos localmente
+        const savedMockObras = localStorage.getItem('qualicore_mock_obras');
+        const obrasToUse = savedMockObras ? JSON.parse(savedMockObras) : mockObras;
+        
+        setObras(obrasToUse);
+        setFilteredObras(obrasToUse);
         setUsingRealData(false);
         toast.error("Erro ao carregar obras - usando dados de demonstração");
         
         // Selecionar automaticamente a primeira obra mock em caso de erro
         if (!editingObra) {
-          setEditingObra(mockObras[0]);
-          console.log("🎯 Primeira obra mock selecionada automaticamente (erro):", mockObras[0].nome);
+          setEditingObra(obrasToUse[0]);
+          console.log("🎯 Primeira obra mock selecionada automaticamente (erro):", obrasToUse[0].nome);
         }
       } finally {
         setLoading(false);
@@ -270,6 +1136,14 @@ export default function Obras() {
     } catch (error) {
       console.error("Erro ao abrir modal:", error);
       toast.error("Erro ao abrir modal de edição");
+    }
+  };
+
+  // Função para salvar dados mock no localStorage
+  const saveMockObras = (obrasToSave: any[]) => {
+    if (!usingRealData) {
+      localStorage.setItem('qualicore_mock_obras', JSON.stringify(obrasToSave));
+      console.log("💾 Dados mock salvos no localStorage");
     }
   };
 
@@ -319,36 +1193,135 @@ export default function Obras() {
 
       if (editingObra) {
         // Atualizar obra existente
-        const updatedObra = await obrasAPI.update(editingObra.id, obraData);
-        if (updatedObra) {
-          setObras(
-            obras.map((o) => (o.id === editingObra.id ? updatedObra : o)),
-          );
-          toast.success("Obra atualizada com sucesso!");
+        if (usingRealData) {
+          const updatedObra = await obrasAPI.update(editingObra.id, obraData);
+          if (updatedObra) {
+            const updatedObras = obras.map((o) => (o.id === editingObra.id ? updatedObra : o));
+            setObras(updatedObras);
+            toast.success("Obra atualizada com sucesso!");
+          } else {
+            toast.error("Erro ao atualizar obra");
+          }
         } else {
-          toast.error("Erro ao atualizar obra");
+          // Atualizar obra mock
+          const updatedObra = { ...editingObra, ...obraData };
+          const updatedObras = obras.map((o) => (o.id === editingObra.id ? updatedObra : o));
+          setObras(updatedObras);
+          saveMockObras(updatedObras);
+          toast.success("Obra mock atualizada com sucesso!");
         }
       } else {
         // Criar nova obra
         console.log("Tentando criar obra com dados:", obraData);
 
-        // Verificar se o PocketBase está disponível
-        try {
-          const isAvailable = await fetch("http://localhost:8090/api/health")
-            .then(() => true)
-            .catch(() => false);
-          console.log("PocketBase disponível:", isAvailable);
-        } catch (e) {
-          console.log("Erro ao verificar PocketBase:", e);
-        }
-
-        const newObra = await obrasAPI.create(obraData);
-        console.log("Resultado da criação:", newObra);
-        if (newObra) {
-          setObras([...obras, newObra]);
-          toast.success("Obra criada com sucesso!");
+        if (usingRealData) {
+          const newObra = await obrasAPI.create(obraData);
+          console.log("Resultado da criação:", newObra);
+          if (newObra) {
+            const updatedObras = [...obras, newObra];
+            setObras(updatedObras);
+            toast.success("Obra criada com sucesso!");
+          } else {
+            toast.error("Erro ao criar obra");
+          }
         } else {
-          toast.error("Erro ao criar obra");
+          // Criar nova obra mock
+          const newObra = {
+            ...obraData,
+            id: Date.now().toString(),
+            data_criacao: new Date().toISOString(),
+            data_atualizacao: new Date().toISOString(),
+            zonas: [],
+            fases: [],
+            equipas: [],
+            fornecedores_principais: [],
+            riscos: [],
+            indicadores: [],
+            milestones: [],
+            dependencias_externas: [],
+            subempreiteiros: [],
+            metricas_evm: {
+              id: Date.now().toString(),
+              pv: 0,
+              ev: 0,
+              ac: 0,
+              bac: obraData.valor_contrato,
+              spi: 0,
+              cpi: 0,
+              sv: 0,
+              cv: 0,
+              eac: 0,
+              etc: 0,
+              vac: 0,
+              data_criacao: new Date().toISOString(),
+              data_atualizacao: new Date().toISOString()
+            },
+            indicadores_performance: [],
+            documentacao: {
+              id: Date.now().toString(),
+              versao: "1.0",
+              responsavel: obraData.responsavel_tecnico,
+              data_criacao: new Date().toISOString(),
+              data_revisao: new Date().toISOString(),
+              categorias: [],
+              templates: [],
+              procedimentos_aprovacao: []
+            },
+            licencas_autorizacoes: [],
+            certificacoes_obrigatorias: [],
+            gestao_financeira: {
+              id: Date.now().toString(),
+              orcamento_total: obraData.valor_contrato,
+              valor_executado: obraData.valor_executado || 0,
+              valor_pendente: obraData.valor_contrato - (obraData.valor_executado || 0),
+              fluxo_caixa: [],
+              indicadores_financeiros: [],
+              data_criacao: new Date().toISOString(),
+              data_atualizacao: new Date().toISOString()
+            },
+            orcamentos_detalhados: [],
+            controlo_custos: [],
+            plano_qualidade: {
+              id: Date.now().toString(),
+              versao: "1.0",
+              responsavel: obraData.responsavel_tecnico,
+              data_criacao: new Date().toISOString(),
+              data_revisao: new Date().toISOString(),
+              objetivos_qualidade: [],
+              procedimentos_qualidade: []
+            },
+            plano_seguranca: {
+              id: Date.now().toString(),
+              versao: "1.0",
+              responsavel: obraData.responsavel_tecnico,
+              data_criacao: new Date().toISOString(),
+              data_revisao: new Date().toISOString(),
+              equipamentos_protecao: [],
+              procedimentos_seguranca: []
+            },
+            inspecoes_qualidade: [],
+            acidentes_incidentes: [],
+            gestao_ambiental: {
+              id: Date.now().toString(),
+              versao_plano: "1.0",
+              responsavel_ambiental: obraData.responsavel_tecnico,
+              data_criacao: new Date().toISOString(),
+              data_revisao_plano: new Date().toISOString(),
+              objetivos_ambientais: [],
+              impactos_ambientais: [],
+              medidas_mitigacao: [],
+              recursos_ambientais: [],
+              monitorizacao_ambiental: []
+            },
+            certificacoes_ambientais: [],
+            responsavel: obraData.responsavel_tecnico,
+            zona: obraData.localizacao.split(',')[0],
+            estado: obraData.status,
+          };
+          const updatedObras = [...obras, newObra];
+          setObras(updatedObras);
+          saveMockObras(updatedObras);
+          toast.success("Obra mock criada com sucesso!");
         }
       }
       setShowModal(false);
@@ -366,21 +1339,34 @@ export default function Obras() {
     if (confirm("Tem certeza que deseja excluir esta obra?")) {
       try {
         console.log("Excluindo obra com ID:", id);
-        const success = await obrasAPI.delete(id);
-        if (success) {
-          setObras(obras.filter((o) => o.id !== id));
-          toast.success("Obra excluída com sucesso!");
+        
+        if (usingRealData) {
+          const success = await obrasAPI.delete(id);
+          if (success) {
+            const updatedObras = obras.filter((o) => o.id !== id);
+            setObras(updatedObras);
+            toast.success("Obra excluída com sucesso!");
+          } else {
+            toast.error("Erro ao excluir obra");
+          }
         } else {
-          // Se a API falhar, remover da lista local para demonstração
-          console.log("API falhou, removendo da lista local para demonstração");
-          setObras(obras.filter((o) => o.id !== id));
-          toast.success("Obra excluída com sucesso!");
+          // Excluir obra mock
+          const updatedObras = obras.filter((o) => o.id !== id);
+          setObras(updatedObras);
+          saveMockObras(updatedObras);
+          toast.success("Obra mock excluída com sucesso!");
         }
       } catch (error) {
         console.error("Erro ao excluir obra:", error);
-        // Para demonstração, remover da lista local mesmo com erro
-        setObras(obras.filter((o) => o.id !== id));
-        toast.success("Obra excluída com sucesso!");
+        if (!usingRealData) {
+          // Para demonstração, remover da lista local mesmo com erro
+          const updatedObras = obras.filter((o) => o.id !== id);
+          setObras(updatedObras);
+          saveMockObras(updatedObras);
+          toast.success("Obra mock excluída com sucesso!");
+        } else {
+          toast.error("Erro ao excluir obra");
+        }
       }
     }
   };
@@ -896,28 +1882,30 @@ export default function Obras() {
              <CronogramaObra
                milestones={editingObra?.milestones || []}
                dependencias={editingObra?.dependencias_externas || []}
-               onMilestoneChange={(milestones) => {
-                 if (editingObra) {
-                   const updatedObra = { ...editingObra, milestones };
-                   setEditingObra(updatedObra);
-                   // Update in obras list
-                   const updatedObras = obras.map(o => 
-                     o.id === editingObra.id ? updatedObra : o
-                   );
-                   setObras(updatedObras);
-                 }
-               }}
-               onDependenciaChange={(dependencias) => {
-                 if (editingObra) {
-                   const updatedObra = { ...editingObra, dependencias_externas: dependencias };
-                   setEditingObra(updatedObra);
-                   // Update in obras list
-                   const updatedObras = obras.map(o => 
-                     o.id === editingObra.id ? updatedObra : o
-                   );
-                   setObras(updatedObras);
-                 }
-               }}
+                               onMilestoneChange={(milestones) => {
+                  if (editingObra) {
+                    const updatedObra = { ...editingObra, milestones };
+                    setEditingObra(updatedObra);
+                    // Update in obras list
+                    const updatedObras = obras.map(o => 
+                      o.id === editingObra.id ? updatedObra : o
+                    );
+                    setObras(updatedObras);
+                    saveMockObras(updatedObras);
+                  }
+                }}
+                onDependenciaChange={(dependencias) => {
+                  if (editingObra) {
+                    const updatedObra = { ...editingObra, dependencias_externas: dependencias };
+                    setEditingObra(updatedObra);
+                    // Update in obras list
+                    const updatedObras = obras.map(o => 
+                      o.id === editingObra.id ? updatedObra : o
+                    );
+                    setObras(updatedObras);
+                    saveMockObras(updatedObras);
+                  }
+                }}
              />
            ) : (
              <div className="text-center py-12">
@@ -961,17 +1949,19 @@ export default function Obras() {
                      o.id === editingObra.id ? updatedObra : o
                    );
                    setObras(updatedObras);
+                   saveMockObras(updatedObras);
                  }
                }}
                onPlanoMitigacaoChange={(planoMitigacao) => {
                  if (editingObra) {
-                   const updatedObra = { ...editingObra, plano_mitigacao };
+                   const updatedObra = { ...editingObra, plano_mitigacao: planoMitigacao };
                    setEditingObra(updatedObra);
                    // Update in obras list
                    const updatedObras = obras.map(o => 
                      o.id === editingObra.id ? updatedObra : o
                    );
                    setObras(updatedObras);
+                   saveMockObras(updatedObras);
                  }
                }}
                onAuditoriasChange={(auditorias) => {
@@ -983,6 +1973,7 @@ export default function Obras() {
                      o.id === editingObra.id ? updatedObra : o
                    );
                    setObras(updatedObras);
+                   saveMockObras(updatedObras);
                  }
                }}
              />
@@ -1017,6 +2008,7 @@ export default function Obras() {
                      o.id === editingObra.id ? updatedObra : o
                    );
                    setObras(updatedObras);
+                   saveMockObras(updatedObras);
                  }
                }}
              />
