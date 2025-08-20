@@ -750,50 +750,14 @@ export default function Dashboard() {
                 ))}
               </div>
 
-              {/* Teste de PDF */}
+              {/* Teste de PDF Premium */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.7 }}
-                className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200"
+                className="mt-8"
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">🔧 Teste de Funcionalidades</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <button 
-                    onClick={async () => {
-                      try {
-                        console.log('🔍 Iniciando teste de PDF...');
-                        const { PDFService } = await import('../services/pdfService');
-                        const pdfService = new PDFService();
-                        await pdfService.testPDFGeneration();
-                        alert('✅ PDF de teste gerado com sucesso! Verifica a pasta de downloads.');
-                      } catch (error) {
-                        console.error('❌ Erro no teste de PDF:', error);
-                        alert('❌ Erro ao gerar PDF de teste: ' + error.message);
-                      }
-                    }}
-                    className="flex items-center space-x-3 p-4 rounded-xl bg-white shadow-sm hover:shadow-md transition-all duration-300"
-                  >
-                    <FileText className="h-6 w-6 text-red-600" />
-                    <div className="text-left">
-                      <div className="font-medium text-gray-900">Testar PDF</div>
-                      <div className="text-sm text-gray-600">Verificar se PDF generation funciona</div>
-                    </div>
-                  </button>
-                  <button 
-                    onClick={() => {
-                      console.log('🔍 Verificando console...');
-                      alert('Verifica o console (F12) para ver os logs de debug');
-                    }}
-                    className="flex items-center space-x-3 p-4 rounded-xl bg-white shadow-sm hover:shadow-md transition-all duration-300"
-                  >
-                    <Settings className="h-6 w-6 text-blue-600" />
-                    <div className="text-left">
-                      <div className="font-medium text-gray-900">Ver Console</div>
-                      <div className="text-sm text-gray-600">Verificar logs de debug</div>
-                    </div>
-                  </button>
-                </div>
+                <TestPDF />
               </motion.div>
 
               {/* Ações Rápidas */}
