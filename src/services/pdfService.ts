@@ -3,6 +3,59 @@ import autoTable from 'jspdf-autotable';
 import { Material, Fornecedor } from '@/types';
 import { Armadura } from '@/types/armaduras';
 
+// Configuração premium para PDFs
+interface PDFConfig {
+  empresa: {
+    nome: string;
+    logotipo?: string; // URL ou base64 do logotipo
+    morada: string;
+    telefone: string;
+    email: string;
+    website?: string;
+    nif?: string;
+  };
+  obra?: {
+    nome: string;
+    localizacao: string;
+    referencia: string;
+    cliente: string;
+  };
+  design: {
+    corPrimaria: string; // Hex color
+    corSecundaria: string;
+    corTexto: string;
+    corFundo: string;
+    fonteTitulo: string;
+    fonteTexto: string;
+  };
+}
+
+// Configuração padrão
+const DEFAULT_PDF_CONFIG: PDFConfig = {
+  empresa: {
+    nome: 'QUALICORE',
+    morada: 'Rua da Qualidade, 123',
+    telefone: '+351 123 456 789',
+    email: 'info@qualicore.pt',
+    website: 'www.qualicore.pt',
+    nif: '123456789'
+  },
+  obra: {
+    nome: 'Obra Principal',
+    localizacao: 'Lisboa, Portugal',
+    referencia: 'OBRA-2024-001',
+    cliente: 'Cliente Principal'
+  },
+  design: {
+    corPrimaria: '#3B82F6', // Azul
+    corSecundaria: '#1E40AF',
+    corTexto: '#1F2937',
+    corFundo: '#F8FAFC',
+    fonteTitulo: 'helvetica',
+    fonteTexto: 'helvetica'
+  }
+};
+
 interface MetricasReais {
   materiais: {
     taxa_aprovacao: number;
@@ -45,56 +98,220 @@ interface RelatorioArmadurasOptions {
 
 export class PDFService {
   private doc: jsPDF;
+  private config: PDFConfig;
 
-  constructor() {
+  constructor(config?: Partial<PDFConfig>) {
     this.doc = new jsPDF('portrait', 'mm', 'a4');
+    this.config = { ...DEFAULT_PDF_CONFIG, ...config };
+  }
+
+  // Método para atualizar configuração
+  public updateConfig(newConfig: Partial<PDFConfig>) {
+    this.config = { ...this.config, ...newConfig };
+  }
+
+  // Método para definir logotipo
+  public setLogotipo(logotipoUrl: string) {
+    this.config.empresa.logotipo = logotipoUrl;
+  }
+
+  // Método para definir dados da empresa
+  public setEmpresa(empresa: Partial<PDFConfig['empresa']>) {
+    this.config.empresa = { ...this.config.empresa, ...empresa };
+  }
+
+  // Método para definir dados da obra
+  public setObra(obra: PDFConfig['obra']) {
+    this.config.obra = obra;
   }
 
   private initDocument() {
     this.doc = new jsPDF('portrait', 'mm', 'a4');
   }
 
-  private addProfessionalHeader(titulo: string, subtitulo?: string) {
-    // Logo ou cabeçalho da empresa
-    this.doc.setFillColor(59, 130, 246);
-    this.doc.rect(0, 0, 210, 30, 'F');
+  // Cabeçalho premium com logotipo e dados da empresa
+  private addPremiumHeader(titulo: string, subtitulo?: string) {
+    const { empresa, obra, design } = this.config;
     
-    this.doc.setFontSize(20);
+    // Fundo do cabeçalho com gradiente
+    this.doc.setFillColor(design.corPrimaria);
+    this.doc.rect(0, 0, 210, 40, 'F');
+    
+    // Logotipo (se existir)
+    if (empresa.logotipo) {
+      try {
+        // Aqui podes adicionar o logotipo
+        // this.doc.addImage(empresa.logotipo, 'PNG', 20, 10, 30, 20);
+        this.doc.setFontSize(16);
+        this.doc.setTextColor(255, 255, 255);
+        this.doc.text('🏢', 20, 25); // Placeholder para logotipo
+      } catch (error) {
+        console.log('Logotipo não carregado, usando texto');
+      }
+    }
+    
+    // Nome da empresa
+    this.doc.setFontSize(18);
     this.doc.setTextColor(255, 255, 255);
-    this.doc.text('QUALICORE', 20, 20);
+    this.doc.text(empresa.nome, 60, 20);
     
+    // Dados da empresa
+    this.doc.setFontSize(8);
+    this.doc.text(`${empresa.morada} | ${empresa.telefone} | ${empresa.email}`, 60, 28);
+    
+    // Título do relatório
     this.doc.setFontSize(16);
-    this.doc.text(titulo, 20, 40);
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text(titulo, 105, 35, { align: 'center' });
     
+    // Subtítulo (se existir)
     if (subtitulo) {
-      this.doc.setFontSize(12);
-      this.doc.setTextColor(107, 114, 128);
-      this.doc.text(subtitulo, 20, 50);
+      this.doc.setFontSize(10);
+      this.doc.setTextColor(255, 255, 255);
+      this.doc.text(subtitulo, 105, 42, { align: 'center' });
+    }
+    
+    // Dados da obra (se existir)
+    if (obra) {
+      this.doc.setFontSize(8);
+      this.doc.setTextColor(255, 255, 255);
+      this.doc.text(`Obra: ${obra.nome} | Ref: ${obra.referencia}`, 105, 48, { align: 'center' });
     }
   }
 
-  private addProfessionalFooter() {
+  // Rodapé premium com numeração e dados
+  private addPremiumFooter() {
+    const { empresa, design } = this.config;
     const pageCount = (this.doc as any).getNumberOfPages();
-    this.doc.setFontSize(10);
-    this.doc.setTextColor(107, 114, 128);
+    
+    this.doc.setFontSize(8);
+    this.doc.setTextColor(design.corTexto);
     
     for (let i = 1; i <= pageCount; i++) {
       this.doc.setPage(i);
+      
+      // Linha separadora
+      this.doc.setDrawColor(design.corPrimaria);
+      this.doc.line(20, 280, 190, 280);
+      
+      // Numeração da página
       this.doc.text(`Página ${i} de ${pageCount}`, 20, 290);
-      this.doc.text(`Gerado em: ${new Date().toLocaleDateString()}`, 120, 290);
+      
+      // Data de geração
+      this.doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-PT')}`, 105, 290, { align: 'center' });
+      
+      // Dados da empresa
+      this.doc.text(`${empresa.nome} - ${empresa.nif}`, 190, 290, { align: 'right' });
     }
   }
 
+  // Tabela premium com design profissional
+  private addPremiumTable(headers: string[], data: any[][], startY: number, title?: string) {
+    const { design } = this.config;
+    
+    if (title) {
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(design.corTexto);
+      this.doc.text(title, 20, startY);
+      startY += 10;
+    }
+    
+    // Cabeçalho da tabela
+    this.doc.setFillColor(design.corPrimaria);
+    this.doc.rect(20, startY, 170, 8, 'F');
+    
+    this.doc.setFontSize(10);
+    this.doc.setTextColor(255, 255, 255);
+    
+    headers.forEach((header, index) => {
+      const x = 22 + (index * 30);
+      this.doc.text(header, x, startY + 6);
+    });
+    
+    // Dados da tabela
+    this.doc.setTextColor(design.corTexto);
+    this.doc.setFontSize(9);
+    
+    let y = startY + 15;
+    data.forEach((row, index) => {
+      if (y > 270) {
+        this.doc.addPage();
+        y = 50;
+      }
+      
+      // Linha alternada para melhor legibilidade
+      if (index % 2 === 0) {
+        this.doc.setFillColor(design.corFundo);
+        this.doc.rect(20, y - 2, 170, 6, 'F');
+      }
+      
+      row.forEach((cell, cellIndex) => {
+        const x = 22 + (cellIndex * 30);
+        this.doc.text(cell?.toString() || '-', x, y);
+      });
+      
+      y += 8;
+    });
+    
+    return y + 10;
+  }
+
+  // Gráfico de barras simples
+  private addBarChart(data: { label: string; value: number }[], startY: number, title: string) {
+    const { design } = this.config;
+    const maxValue = Math.max(...data.map(d => d.value));
+    
+    this.doc.setFontSize(14);
+    this.doc.setTextColor(design.corTexto);
+    this.doc.text(title, 20, startY);
+    
+    let y = startY + 15;
+    data.forEach((item, index) => {
+      const barWidth = (item.value / maxValue) * 100;
+      const barHeight = 6;
+      
+      // Barra
+      this.doc.setFillColor(design.corPrimaria);
+      this.doc.rect(20, y, barWidth, barHeight, 'F');
+      
+      // Label
+      this.doc.setFontSize(10);
+      this.doc.setTextColor(design.corTexto);
+      this.doc.text(item.label, 20, y + 8);
+      
+      // Valor
+      this.doc.text(item.value.toString(), barWidth + 25, y + 8);
+      
+      y += 15;
+    });
+    
+    return y + 10;
+  }
+
+  // Método para adicionar assinatura
+  private addSignature(startY: number, nome: string, cargo: string) {
+    const { design } = this.config;
+    
+    // Linha para assinatura
+    this.doc.setDrawColor(design.corTexto);
+    this.doc.line(20, startY, 80, startY);
+    
+    // Nome e cargo
+    this.doc.setFontSize(10);
+    this.doc.setTextColor(design.corTexto);
+    this.doc.text(nome, 20, startY + 5);
+    this.doc.text(cargo, 20, startY + 10);
+    
+    return startY + 20;
+  }
+
+  // Métodos legados para compatibilidade
   private addHeader(titulo: string) {
-    this.doc.setFontSize(20);
-    this.doc.setTextColor(59, 130, 246);
-    this.doc.text(titulo, 105, 40, { align: 'center' }); // Centralizado
+    this.addPremiumHeader(titulo);
   }
 
   private addFooter() {
-    this.doc.setFontSize(10);
-    this.doc.setTextColor(107, 114, 128);
-    this.doc.text(`Gerado em: ${new Date().toLocaleDateString()}`, 105, 290, { align: 'center' }); // Centralizado
+    this.addPremiumFooter();
   }
 
   private getTipoTextMaterial(tipo: string): string {

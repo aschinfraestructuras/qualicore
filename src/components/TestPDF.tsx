@@ -1,14 +1,44 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PDFService } from '../services/pdfService';
 import toast from 'react-hot-toast';
+import PDFConfigPanel from './PDFConfigPanel';
 
 const TestPDF: React.FC = () => {
+  const [showConfig, setShowConfig] = useState(false);
+  const [pdfConfig, setPdfConfig] = useState({
+    empresa: {
+      nome: 'QUALICORE',
+      morada: 'Rua da Qualidade, 123',
+      telefone: '+351 123 456 789',
+      email: 'info@qualicore.pt',
+      website: 'www.qualicore.pt',
+      nif: '123456789',
+      logotipo: ''
+    },
+    obra: {
+      nome: 'Obra Principal',
+      localizacao: 'Lisboa, Portugal',
+      referencia: 'OBRA-2024-001',
+      cliente: 'Cliente Principal'
+    },
+    design: {
+      corPrimaria: '#3B82F6',
+      corSecundaria: '#1E40AF',
+      corTexto: '#1F2937',
+      corFundo: '#F8FAFC'
+    }
+  });
+
+  const handleConfigChange = (newConfig: any) => {
+    setPdfConfig(newConfig);
+  };
+
   const handleTestPDF = async () => {
     try {
-      console.log('🔍 Iniciando teste de PDF...');
-      const pdfService = new PDFService();
+      console.log('🔍 Iniciando teste de PDF premium...');
+      const pdfService = new PDFService(pdfConfig);
       await pdfService.testPDFGeneration();
-      toast.success('✅ PDF de teste gerado com sucesso!');
+      toast.success('✅ PDF premium gerado com sucesso!');
     } catch (error) {
       console.error('❌ Erro no teste de PDF:', error);
       toast.error('❌ Erro ao gerar PDF de teste');
@@ -49,9 +79,9 @@ const TestPDF: React.FC = () => {
 
   const handleArmadurasReport = async () => {
     try {
-      console.log('🔍 Gerando relatório de Armaduras...');
+      console.log('🔍 Gerando relatório premium de Armaduras...');
       
-      const pdfService = new PDFService();
+      const pdfService = new PDFService(pdfConfig);
       
       // Dados simulados para teste
       const armaduras = [
@@ -91,36 +121,63 @@ const TestPDF: React.FC = () => {
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-lg">
-      <h3 className="text-lg font-semibold mb-4 text-gray-900">🔧 Teste de PDF Generation</h3>
-      <div className="space-y-3">
-        <button
-          onClick={handleTestPDF}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-        >
-          Testar PDF Completo
-        </button>
-        <button
-          onClick={handleSimplePDF}
-          className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
-        >
-          Testar PDF Simples
-        </button>
-        <button
-          onClick={handleArmadurasReport}
-          className="w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
-        >
-          Testar Relatório Armaduras
-        </button>
-        <button 
-          onClick={() => {
-            console.log('🔍 Verificando console...');
-            alert('Verifica o console (F12) para ver os logs de debug');
-          }}
-          className="w-full px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-        >
-          Ver Console (F12)
-        </button>
+    <div className="space-y-6">
+      {/* Painel de Configuração */}
+      {showConfig && (
+        <PDFConfigPanel 
+          onConfigChange={handleConfigChange}
+          initialConfig={pdfConfig}
+        />
+      )}
+
+      {/* Painel de Testes */}
+      <div className="p-6 bg-white rounded-lg shadow-lg">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">🔧 Teste de PDF Generation</h3>
+          <button
+            onClick={() => setShowConfig(!showConfig)}
+            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors text-sm"
+          >
+            {showConfig ? '🔒 Ocultar Config' : '⚙️ Configurar PDF'}
+          </button>
+        </div>
+        
+        <div className="space-y-3">
+          <button
+            onClick={handleTestPDF}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          >
+            🎨 Testar PDF Premium
+          </button>
+          <button
+            onClick={handleSimplePDF}
+            className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+          >
+            📄 Testar PDF Simples
+          </button>
+          <button
+            onClick={handleArmadurasReport}
+            className="w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+          >
+            🏗️ Testar Relatório Armaduras Premium
+          </button>
+          <button
+            onClick={() => {
+              console.log('🔍 Abre o console do navegador (F12) para ver os logs');
+              toast.success('📋 Console aberto! Verifica F12 para logs detalhados');
+            }}
+            className="w-full px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+          >
+            🔍 Ver Console (F12)
+          </button>
+        </div>
+
+        {/* Preview da Configuração Atual */}
+        <div className="mt-4 p-3 bg-gray-50 rounded-md">
+          <p className="text-sm text-gray-600">
+            <strong>Configuração atual:</strong> {pdfConfig.empresa.nome} | {pdfConfig.obra.nome}
+          </p>
+        </div>
       </div>
     </div>
   );
