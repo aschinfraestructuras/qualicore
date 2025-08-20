@@ -430,20 +430,20 @@ export class PDFService {
   private addRelatorioExecutivoFornecedores(fornecedores: Fornecedor[], startY: number): number {
     this.doc.setFontSize(16);
     this.doc.setTextColor(31, 41, 55);
-    this.doc.text('Análise por Categoria', 20, startY);
+    this.doc.text('Análise por Estado', 20, startY);
     
     this.doc.setFontSize(12);
     this.doc.setTextColor(107, 114, 128);
     
-    const porCategoria = fornecedores.reduce((acc, fornecedor) => {
-      const categoria = fornecedor.categoria || 'Não especificado';
-      acc[categoria] = (acc[categoria] || 0) + 1;
+    const porEstado = fornecedores.reduce((acc, fornecedor) => {
+      const estado = fornecedor.estado || 'Não especificado';
+      acc[estado] = (acc[estado] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
     let y = startY + 15;
-    Object.entries(porCategoria).forEach(([categoria, quantidade]) => {
-      this.doc.text(`${categoria}: ${quantidade}`, 25, y);
+    Object.entries(porEstado).forEach(([estado, quantidade]) => {
+      this.doc.text(`${estado}: ${quantidade}`, 25, y);
       y += 8;
     });
     
@@ -485,15 +485,15 @@ export class PDFService {
     this.doc.setFontSize(12);
     this.doc.setTextColor(107, 114, 128);
     
-    const porCategoria = fornecedores.reduce((acc, fornecedor) => {
-      const categoria = fornecedor.categoria || 'Não especificado';
-      acc[categoria] = (acc[categoria] || 0) + 1;
+    const porEstado = fornecedores.reduce((acc, fornecedor) => {
+      const estado = fornecedor.estado || 'Não especificado';
+      acc[estado] = (acc[estado] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
     let y = startY + 15;
-    Object.entries(porCategoria).forEach(([categoria, quantidade]) => {
-      this.doc.text(`${categoria}: ${quantidade}`, 20, y);
+    Object.entries(porEstado).forEach(([estado, quantidade]) => {
+      this.doc.text(`${estado}: ${quantidade}`, 20, y);
       y += 8;
     });
     
@@ -511,15 +511,15 @@ export class PDFService {
     let y = startY + 15;
     this.doc.text(`Nome: ${fornecedor.nome}`, 20, y);
     y += 8;
-    this.doc.text(`Categoria: ${fornecedor.categoria}`, 20, y);
+    this.doc.text(`NIF: ${fornecedor.nif}`, 20, y);
     y += 8;
-    this.doc.text(`Status: ${fornecedor.status}`, 20, y);
+    this.doc.text(`Estado: ${fornecedor.estado}`, 20, y);
     y += 8;
     this.doc.text(`Email: ${fornecedor.email}`, 20, y);
     y += 8;
     this.doc.text(`Telefone: ${fornecedor.telefone}`, 20, y);
     y += 8;
-    this.doc.text(`Endereço: ${fornecedor.endereco}`, 20, y);
+    this.doc.text(`Morada: ${fornecedor.morada}`, 20, y);
     
     return y + 20;
   }
@@ -536,8 +536,8 @@ export class PDFService {
     this.doc.rect(20, startY + 10, 170, 8, 'F');
     
     this.doc.text('Nome', 22, startY + 16);
-    this.doc.text('Categoria', 60, startY + 16);
-    this.doc.text('Status', 100, startY + 16);
+    this.doc.text('NIF', 60, startY + 16);
+    this.doc.text('Estado', 100, startY + 16);
     this.doc.text('Email', 130, startY + 16);
     
     // Dados da tabela
@@ -552,8 +552,8 @@ export class PDFService {
       }
       
       this.doc.text(fornecedor.nome?.substring(0, 20) || '-', 22, y);
-      this.doc.text(fornecedor.categoria?.substring(0, 15) || '-', 60, y);
-      this.doc.text(fornecedor.status || '-', 100, y);
+      this.doc.text(fornecedor.nif?.substring(0, 15) || '-', 60, y);
+      this.doc.text(fornecedor.estado || '-', 100, y);
       this.doc.text(fornecedor.email?.substring(0, 25) || '-', 130, y);
       
       y += 6;
