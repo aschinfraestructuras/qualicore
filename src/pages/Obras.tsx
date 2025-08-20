@@ -23,6 +23,8 @@ import {
   Edit3,
   ArrowUpRight,
   BarChart3,
+  AlertTriangle,
+  Leaf,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ObraForm from "@/components/forms/ObraForm";
@@ -30,6 +32,14 @@ import RelatorioObrasPremium from "@/components/RelatorioObrasPremium";
 import { ShareObraModal } from "@/components/ShareObraModal";
 import { SavedObrasViewer } from "@/components/SavedObrasViewer";
 import ObraDashboard from "@/components/ObraDashboard";
+import CronogramaObra from "@/components/obras/CronogramaObra";
+import GestaoRiscos from "@/components/obras/GestaoRiscos";
+import GestaoSubempreiteiros from "@/components/obras/GestaoSubempreiteiros";
+import MetricasEVMComponent from "@/components/obras/MetricasEVM";
+import DocumentacaoObraComponent from "@/components/obras/DocumentacaoObra";
+import GestaoFinanceira from "@/components/obras/GestaoFinanceira";
+import QualidadeSeguranca from "@/components/obras/QualidadeSeguranca";
+import GestaoAmbiental from "@/components/obras/GestaoAmbiental";
 import { obrasAPI } from "@/lib/supabase-api";
 import { PDFService } from "@/services/pdfService";
 import { ShareService } from "@/services/shareService";
@@ -130,10 +140,42 @@ const mockObras: any[] = [
     data_criacao: "2024-03-01T08:00:00Z",
     data_atualizacao: "2024-03-01T08:00:00Z",
   },
+  {
+    id: "4",
+    codigo: "OBR-2024-004",
+    nome: "Complexo Residencial Setúbal Bay",
+    cliente: "Setúbal Bay Development",
+    localizacao: "Setúbal, Portugal",
+    data_inicio: "2024-04-01",
+    data_fim_prevista: "2025-12-31",
+    valor_contrato: 3500000,
+    valor_executado: 875000,
+    percentual_execucao: 25,
+    status: "em_execucao",
+    tipo_obra: "residencial",
+    categoria: "grande",
+    responsavel_tecnico: "Eng. Francisco Setúbal",
+    coordenador_obra: "Eng. Ana Setúbal",
+    fiscal_obra: "Eng. Miguel Costa",
+    engenheiro_responsavel: "Eng. Pedro Santos",
+    arquiteto: "Arq. Sofia Mendes",
+    zonas: [],
+    fases: [],
+    equipas: [],
+    fornecedores_principais: [],
+    riscos: [],
+    indicadores: [],
+    responsavel: "Eng. Francisco Setúbal",
+    zona: "Setúbal",
+    estado: "em_execucao",
+    data_criacao: "2024-04-01T09:00:00Z",
+    data_atualizacao: "2024-04-01T09:00:00Z",
+  },
 ];
 
 export default function Obras() {
   const [obras, setObras] = useState<any[]>([]);
+  const [filteredObras, setFilteredObras] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [usingRealData, setUsingRealData] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -143,6 +185,7 @@ export default function Obras() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showSavedObrasViewer, setShowSavedObrasViewer] = useState(false);
   const [showDashboard, setShowDashboard] = useState(true);
+  const [activeModule, setActiveModule] = useState<'dashboard' | 'cronograma' | 'riscos' | 'subempreiteiros' | 'metricas' | 'documentacao' | 'financeiro' | 'qualidade' | 'ambiente'>('dashboard');
 
   // Filtros ativos
   const [filters, setFilters] = useState({
@@ -169,19 +212,40 @@ export default function Obras() {
         if (loadedObras && loadedObras.length > 0) {
           console.log("✅ Usando dados reais da Supabase");
           setObras(loadedObras);
+          setFilteredObras(loadedObras);
           setUsingRealData(true);
+          
+          // Selecionar automaticamente a primeira obra se não houver nenhuma selecionada
+          if (!editingObra) {
+            setEditingObra(loadedObras[0]);
+            console.log("🎯 Primeira obra selecionada automaticamente:", loadedObras[0].nome);
+          }
         } else {
           console.log("⚠️ Nenhuma obra encontrada na Supabase, usando dados mock para demonstração");
           setObras(mockObras);
+          setFilteredObras(mockObras);
           setUsingRealData(false);
           toast.success("Usando dados de demonstração - conecte-se à Supabase para dados reais");
+          
+          // Selecionar automaticamente a primeira obra mock se não houver nenhuma selecionada
+          if (!editingObra) {
+            setEditingObra(mockObras[0]);
+            console.log("🎯 Primeira obra mock selecionada automaticamente:", mockObras[0].nome);
+          }
         }
       } catch (error) {
         console.error("❌ Erro ao carregar obras da Supabase:", error);
         console.log("🔄 Usando dados mock devido ao erro");
         setObras(mockObras);
+        setFilteredObras(mockObras);
         setUsingRealData(false);
         toast.error("Erro ao carregar obras - usando dados de demonstração");
+        
+        // Selecionar automaticamente a primeira obra mock em caso de erro
+        if (!editingObra) {
+          setEditingObra(mockObras[0]);
+          console.log("🎯 Primeira obra mock selecionada automaticamente (erro):", mockObras[0].nome);
+        }
       } finally {
         setLoading(false);
       }
@@ -337,25 +401,28 @@ export default function Obras() {
 
 
   // Aplicar filtros
-  const filteredObras = obras.filter((obra) => {
-    const matchesSearch = !filters.search || 
-      obra.nome?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      obra.codigo?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      obra.cliente?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      obra.localizacao?.toLowerCase().includes(filters.search.toLowerCase());
+  useEffect(() => {
+    const filtered = obras.filter((obra) => {
+      const matchesSearch = !filters.search || 
+        obra.nome?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        obra.codigo?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        obra.cliente?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        obra.localizacao?.toLowerCase().includes(filters.search.toLowerCase());
 
-    const matchesStatus = !filters.status || obra.status === filters.status;
-    const matchesTipo = !filters.tipo_obra || obra.tipo_obra === filters.tipo_obra;
-    const matchesCategoria = !filters.categoria || obra.categoria === filters.categoria;
-    const matchesCliente = !filters.cliente || obra.cliente === filters.cliente;
-    const matchesResponsavel = !filters.responsavel_tecnico || obra.responsavel_tecnico === filters.responsavel_tecnico;
+      const matchesStatus = !filters.status || obra.status === filters.status;
+      const matchesTipo = !filters.tipo_obra || obra.tipo_obra === filters.tipo_obra;
+      const matchesCategoria = !filters.categoria || obra.categoria === filters.categoria;
+      const matchesCliente = !filters.cliente || obra.cliente === filters.cliente;
+      const matchesResponsavel = !filters.responsavel_tecnico || obra.responsavel_tecnico === filters.responsavel_tecnico;
 
-    const matchesData = !filters.dataInicio || !filters.dataFim || 
-      (obra.data_inicio >= filters.dataInicio && obra.data_inicio <= filters.dataFim);
+      const matchesData = !filters.dataInicio || !filters.dataFim || 
+        (obra.data_inicio >= filters.dataInicio && obra.data_inicio <= filters.dataFim);
 
-    return matchesSearch && matchesStatus && matchesTipo && matchesCategoria && 
-           matchesCliente && matchesResponsavel && matchesData;
-  });
+      return matchesSearch && matchesStatus && matchesTipo && matchesCategoria && 
+             matchesCliente && matchesResponsavel && matchesData;
+    });
+    setFilteredObras(filtered);
+  }, [obras, filters]);
 
   // Obter valores únicos para os filtros
   const statusUnicos = [...new Set(obras.map(o => o.status).filter(Boolean))];
@@ -534,17 +601,111 @@ export default function Obras() {
             )}
           </div>
           <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setShowDashboard(!showDashboard)}
-              className="inline-flex items-center px-4 py-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl group"
-            >
-              <BarChart3 className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
-              {showDashboard ? 'Lista' : 'Dashboard'}
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setActiveModule('dashboard')}
+                className={`inline-flex items-center px-4 py-2 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl group ${
+                  activeModule === 'dashboard'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white'
+                }`}
+              >
+                <BarChart3 className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                Dashboard
+              </button>
+              <button
+                onClick={() => setActiveModule('cronograma')}
+                className={`inline-flex items-center px-4 py-2 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl group ${
+                  activeModule === 'cronograma'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white'
+                }`}
+              >
+                <Calendar className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                Cronograma
+              </button>
+              <button
+                onClick={() => setActiveModule('riscos')}
+                className={`inline-flex items-center px-4 py-2 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl group ${
+                  activeModule === 'riscos'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white'
+                }`}
+              >
+                <AlertTriangle className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                Riscos
+              </button>
+              <button
+                onClick={() => setActiveModule('subempreiteiros')}
+                className={`inline-flex items-center px-4 py-2 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl group ${
+                  activeModule === 'subempreiteiros'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white'
+                }`}
+              >
+                <Building className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                Subempreiteiros
+              </button>
+              <button
+                onClick={() => setActiveModule('metricas')}
+                className={`inline-flex items-center px-4 py-2 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl group ${
+                  activeModule === 'metricas'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white'
+                }`}
+              >
+                <TrendingUp className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                Métricas EVM
+              </button>
+              <button
+                onClick={() => setActiveModule('documentacao')}
+                className={`inline-flex items-center px-4 py-2 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl group ${
+                  activeModule === 'documentacao'
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white'
+                }`}
+              >
+                <FileText className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                Documentação
+              </button>
+              <button
+                onClick={() => setActiveModule('financeiro')}
+                className={`inline-flex items-center px-4 py-2 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl group ${
+                  activeModule === 'financeiro'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white'
+                }`}
+              >
+                <DollarSign className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                Financeiro
+              </button>
+              <button
+                onClick={() => setActiveModule('qualidade')}
+                className={`inline-flex items-center px-4 py-2 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl group ${
+                  activeModule === 'qualidade'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white'
+                }`}
+              >
+                <CheckCircle className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                Qualidade
+              </button>
+              <button
+                onClick={() => setActiveModule('ambiente')}
+                className={`inline-flex items-center px-4 py-2 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl group ${
+                  activeModule === 'ambiente'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white'
+                }`}
+              >
+                <Leaf className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+                Ambiente
+              </button>
+            </div>
             
             <Link
               to="/obras/nova"
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
             >
               <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
               Nova Obra
@@ -718,7 +879,7 @@ export default function Obras() {
         transition={{ delay: 0.8 }}
         className="mb-6"
       >
-        {showDashboard ? (
+        {activeModule === 'dashboard' && (
           <ObraDashboard
             obras={filteredObras}
             onSearch={handleSearchObras}
@@ -728,25 +889,522 @@ export default function Obras() {
             onDeleteObra={handleDeleteObra}
             onViewObra={handleViewObra}
           />
-        ) : (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex bg-white/80 backdrop-blur-sm rounded-xl p-1 shadow-lg">
-                <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                  <Filter className="h-4 w-4" />
+        )}
+        
+                 {activeModule === 'cronograma' && (
+           editingObra ? (
+             <CronogramaObra
+               milestones={editingObra?.milestones || []}
+               dependencias={editingObra?.dependencias_externas || []}
+               onMilestoneChange={(milestones) => {
+                 if (editingObra) {
+                   const updatedObra = { ...editingObra, milestones };
+                   setEditingObra(updatedObra);
+                   // Update in obras list
+                   const updatedObras = obras.map(o => 
+                     o.id === editingObra.id ? updatedObra : o
+                   );
+                   setObras(updatedObras);
+                 }
+               }}
+               onDependenciaChange={(dependencias) => {
+                 if (editingObra) {
+                   const updatedObra = { ...editingObra, dependencias_externas: dependencias };
+                   setEditingObra(updatedObra);
+                   // Update in obras list
+                   const updatedObras = obras.map(o => 
+                     o.id === editingObra.id ? updatedObra : o
+                   );
+                   setObras(updatedObras);
+                 }
+               }}
+             />
+           ) : (
+             <div className="text-center py-12">
+               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+               <h3 className="text-lg font-medium text-gray-900 mb-2">Selecione uma Obra</h3>
+               <p className="text-gray-600">Selecione uma obra da lista para gerir o cronograma</p>
+               <div className="mt-6">
+                 <button
+                   onClick={() => setActiveModule('dashboard')}
+                   className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                 >
+                   <BarChart3 className="h-4 w-4 mr-2" />
+                   Voltar ao Dashboard
+                 </button>
+               </div>
+             </div>
+           )
+         )}
+        
+                 {activeModule === 'riscos' && (
+           editingObra ? (
+             <GestaoRiscos
+               riscos={editingObra?.riscos || []}
+               planoMitigacao={editingObra?.plano_mitigacao || {
+                 id: '1',
+                 versao: '1.0',
+                 data_criacao: new Date().toISOString(),
+                 data_revisao: new Date().toISOString(),
+                 responsavel: 'Eng. Responsável',
+                 estrategias_gerais: [],
+                 recursos_mitigacao: [],
+                 procedimentos_emergencia: []
+               }}
+               auditorias={editingObra?.auditorias_risco || []}
+               onRiscosChange={(riscos) => {
+                 if (editingObra) {
+                   const updatedObra = { ...editingObra, riscos };
+                   setEditingObra(updatedObra);
+                   // Update in obras list
+                   const updatedObras = obras.map(o => 
+                     o.id === editingObra.id ? updatedObra : o
+                   );
+                   setObras(updatedObras);
+                 }
+               }}
+               onPlanoMitigacaoChange={(planoMitigacao) => {
+                 if (editingObra) {
+                   const updatedObra = { ...editingObra, plano_mitigacao };
+                   setEditingObra(updatedObra);
+                   // Update in obras list
+                   const updatedObras = obras.map(o => 
+                     o.id === editingObra.id ? updatedObra : o
+                   );
+                   setObras(updatedObras);
+                 }
+               }}
+               onAuditoriasChange={(auditorias) => {
+                 if (editingObra) {
+                   const updatedObra = { ...editingObra, auditorias_risco: auditorias };
+                   setEditingObra(updatedObra);
+                   // Update in obras list
+                   const updatedObras = obras.map(o => 
+                     o.id === editingObra.id ? updatedObra : o
+                   );
+                   setObras(updatedObras);
+                 }
+               }}
+             />
+           ) : (
+             <div className="text-center py-12">
+               <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+               <h3 className="text-lg font-medium text-gray-900 mb-2">Selecione uma Obra</h3>
+               <p className="text-gray-600">Selecione uma obra da lista para gerir os riscos</p>
+               <div className="mt-6">
+                 <button
+                   onClick={() => setActiveModule('dashboard')}
+                   className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                 >
+                   <BarChart3 className="h-4 w-4 mr-2" />
+                   Voltar ao Dashboard
+                 </button>
+               </div>
+             </div>
+           )
+         )}
+        
+                 {activeModule === 'subempreiteiros' && (
+           editingObra ? (
+             <GestaoSubempreiteiros
+               subempreiteiros={editingObra?.subempreiteiros || []}
+               onSubempreiteirosChange={(subempreiteiros) => {
+                 if (editingObra) {
+                   const updatedObra = { ...editingObra, subempreiteiros };
+                   setEditingObra(updatedObra);
+                   // Update in obras list
+                   const updatedObras = obras.map(o => 
+                     o.id === editingObra.id ? updatedObra : o
+                   );
+                   setObras(updatedObras);
+                 }
+               }}
+             />
+           ) : (
+             <div className="text-center py-12">
+               <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+               <h3 className="text-lg font-medium text-gray-900 mb-2">Selecione uma Obra</h3>
+               <p className="text-gray-600">Selecione uma obra da lista para gerir os subempreiteiros</p>
+               <div className="mt-6">
+                 <button
+                   onClick={() => setActiveModule('dashboard')}
+                   className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                 >
+                   <BarChart3 className="h-4 w-4 mr-2" />
+                   Voltar ao Dashboard
+                 </button>
+               </div>
+             </div>
+           )
+         )}
+
+        {activeModule === 'metricas' && (
+          editingObra ? (
+            <MetricasEVMComponent
+              metricas={editingObra?.metricas_evm || {
+                id: '1',
+                pv: 0,
+                ev: 0,
+                ac: 0,
+                bac: 0,
+                spi: 0,
+                cpi: 0,
+                sv: 0,
+                cv: 0,
+                eac: 0,
+                etc: 0,
+                vac: 0,
+                data_criacao: new Date().toISOString(),
+                data_atualizacao: new Date().toISOString()
+              }}
+              indicadores={editingObra?.indicadores_performance || []}
+              onMetricasChange={(metricas) => {
+                if (editingObra) {
+                  const updatedObra = { ...editingObra, metricas_evm: metricas };
+                  setEditingObra(updatedObra);
+                  const updatedObras = obras.map(o => 
+                    o.id === editingObra.id ? updatedObra : o
+                  );
+                  setObras(updatedObras);
+                }
+              }}
+              onIndicadoresChange={(indicadores) => {
+                if (editingObra) {
+                  const updatedObra = { ...editingObra, indicadores_performance: indicadores };
+                  setEditingObra(updatedObra);
+                  const updatedObras = obras.map(o => 
+                    o.id === editingObra.id ? updatedObra : o
+                  );
+                  setObras(updatedObras);
+                }
+              }}
+            />
+          ) : (
+            <div className="text-center py-12">
+              <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Selecione uma Obra</h3>
+              <p className="text-gray-600 mb-6">Selecione uma obra da lista para ver as métricas EVM</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => setActiveModule('dashboard')}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  <Building className="h-4 w-4 mr-2" />
+                  Voltar ao Dashboard
                 </button>
-                <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                  <FileText className="h-4 w-4" />
-                </button>
-                <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                  <Cloud className="h-4 w-4" />
-                </button>
+                {obras.length > 0 && (
+                  <button
+                    onClick={() => handleEditObra(obras[0])}
+                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Selecionar Primeira Obra
+                  </button>
+                )}
               </div>
             </div>
-            <div className="text-sm text-gray-600">
-              {filteredObras.length} obra(s) encontrada(s)
+          )
+        )}
+
+        {activeModule === 'documentacao' && (
+          editingObra ? (
+            <DocumentacaoObraComponent
+              documentacao={editingObra?.documentacao || {
+                id: '1',
+                versao: '1.0',
+                responsavel: 'Eng. Responsável',
+                data_criacao: new Date().toISOString(),
+                data_revisao: new Date().toISOString(),
+                categorias: [],
+                templates: [],
+                procedimentos_aprovacao: []
+              }}
+              licencas={editingObra?.licencas_autorizacoes || []}
+              certificacoes={editingObra?.certificacoes_obrigatorias || []}
+              onDocumentacaoChange={(documentacao) => {
+                if (editingObra) {
+                  const updatedObra = { ...editingObra, documentacao };
+                  setEditingObra(updatedObra);
+                  const updatedObras = obras.map(o => 
+                    o.id === editingObra.id ? updatedObra : o
+                  );
+                  setObras(updatedObras);
+                }
+              }}
+              onLicencasChange={(licencas) => {
+                if (editingObra) {
+                  const updatedObra = { ...editingObra, licencas_autorizacoes: licencas };
+                  setEditingObra(updatedObra);
+                  const updatedObras = obras.map(o => 
+                    o.id === editingObra.id ? updatedObra : o
+                  );
+                  setObras(updatedObras);
+                }
+              }}
+              onCertificacoesChange={(certificacoes) => {
+                if (editingObra) {
+                  const updatedObra = { ...editingObra, certificacoes_obrigatorias: certificacoes };
+                  setEditingObra(updatedObra);
+                  const updatedObras = obras.map(o => 
+                    o.id === editingObra.id ? updatedObra : o
+                  );
+                  setObras(updatedObras);
+                }
+              }}
+            />
+          ) : (
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Selecione uma Obra</h3>
+              <p className="text-gray-600 mb-6">Selecione uma obra da lista para gerir a documentação</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => setActiveModule('dashboard')}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  <Building className="h-4 w-4 mr-2" />
+                  Voltar ao Dashboard
+                </button>
+                {obras.length > 0 && (
+                  <button
+                    onClick={() => handleEditObra(obras[0])}
+                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Selecionar Primeira Obra
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )
+        )}
+
+        {activeModule === 'financeiro' && (
+          editingObra ? (
+            <GestaoFinanceira
+              gestaoFinanceira={editingObra?.gestao_financeira || {
+                id: '1',
+                orcamento_total: 0,
+                valor_executado: 0,
+                valor_pendente: 0,
+                fluxo_caixa: [],
+                indicadores_financeiros: [],
+                data_criacao: new Date().toISOString(),
+                data_atualizacao: new Date().toISOString()
+              }}
+              orcamentos={editingObra?.orcamentos_detalhados || []}
+              controloCustos={editingObra?.controlo_custos || []}
+              onGestaoFinanceiraChange={(gestao) => {
+                if (editingObra) {
+                  const updatedObra = { ...editingObra, gestao_financeira: gestao };
+                  setEditingObra(updatedObra);
+                  const updatedObras = obras.map(o => 
+                    o.id === editingObra.id ? updatedObra : o
+                  );
+                  setObras(updatedObras);
+                }
+              }}
+              onOrcamentosChange={(orcamentos) => {
+                if (editingObra) {
+                  const updatedObra = { ...editingObra, orcamentos_detalhados: orcamentos };
+                  setEditingObra(updatedObra);
+                  const updatedObras = obras.map(o => 
+                    o.id === editingObra.id ? updatedObra : o
+                  );
+                  setObras(updatedObras);
+                }
+              }}
+              onControloCustosChange={(controlo) => {
+                if (editingObra) {
+                  const updatedObra = { ...editingObra, controlo_custos: controlo };
+                  setEditingObra(updatedObra);
+                  const updatedObras = obras.map(o => 
+                    o.id === editingObra.id ? updatedObra : o
+                  );
+                  setObras(updatedObras);
+                }
+              }}
+            />
+          ) : (
+            <div className="text-center py-12">
+              <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Selecione uma Obra</h3>
+              <p className="text-gray-600 mb-6">Selecione uma obra da lista para gerir as finanças</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => setActiveModule('dashboard')}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  <Building className="h-4 w-4 mr-2" />
+                  Voltar ao Dashboard
+                </button>
+                {obras.length > 0 && (
+                  <button
+                    onClick={() => handleEditObra(obras[0])}
+                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Selecionar Primeira Obra
+                  </button>
+                )}
+              </div>
+            </div>
+          )
+        )}
+
+        {activeModule === 'qualidade' && (
+          editingObra ? (
+            <QualidadeSeguranca
+              planoQualidade={editingObra?.plano_qualidade || {
+                id: '1',
+                versao: '1.0',
+                responsavel: 'Eng. Qualidade',
+                data_criacao: new Date().toISOString(),
+                data_revisao: new Date().toISOString(),
+                objetivos_qualidade: [],
+                procedimentos_qualidade: []
+              }}
+              planoSeguranca={editingObra?.plano_seguranca || {
+                id: '1',
+                versao: '1.0',
+                responsavel: 'Coord. Segurança',
+                data_criacao: new Date().toISOString(),
+                data_revisao: new Date().toISOString(),
+                equipamentos_protecao: [],
+                procedimentos_seguranca: []
+              }}
+              inspecoes={editingObra?.inspecoes_qualidade || []}
+              acidentes={editingObra?.acidentes_incidentes || []}
+              onPlanoQualidadeChange={(plano) => {
+                if (editingObra) {
+                  const updatedObra = { ...editingObra, plano_qualidade: plano };
+                  setEditingObra(updatedObra);
+                  const updatedObras = obras.map(o => 
+                    o.id === editingObra.id ? updatedObra : o
+                  );
+                  setObras(updatedObras);
+                }
+              }}
+              onPlanoSegurancaChange={(plano) => {
+                if (editingObra) {
+                  const updatedObra = { ...editingObra, plano_seguranca: plano };
+                  setEditingObra(updatedObra);
+                  const updatedObras = obras.map(o => 
+                    o.id === editingObra.id ? updatedObra : o
+                  );
+                  setObras(updatedObras);
+                }
+              }}
+              onInspecoesChange={(inspecoes) => {
+                if (editingObra) {
+                  const updatedObra = { ...editingObra, inspecoes_qualidade: inspecoes };
+                  setEditingObra(updatedObra);
+                  const updatedObras = obras.map(o => 
+                    o.id === editingObra.id ? updatedObra : o
+                  );
+                  setObras(updatedObras);
+                }
+              }}
+              onAcidentesChange={(acidentes) => {
+                if (editingObra) {
+                  const updatedObra = { ...editingObra, acidentes_incidentes: acidentes };
+                  setEditingObra(updatedObra);
+                  const updatedObras = obras.map(o => 
+                    o.id === editingObra.id ? updatedObra : o
+                  );
+                  setObras(updatedObras);
+                }
+              }}
+            />
+          ) : (
+            <div className="text-center py-12">
+              <CheckCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Selecione uma Obra</h3>
+              <p className="text-gray-600 mb-6">Selecione uma obra da lista para gerir qualidade e segurança</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => setActiveModule('dashboard')}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  <Building className="h-4 w-4 mr-2" />
+                  Voltar ao Dashboard
+                </button>
+                {obras.length > 0 && (
+                  <button
+                    onClick={() => handleEditObra(obras[0])}
+                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Selecionar Primeira Obra
+                  </button>
+                )}
+              </div>
+            </div>
+          )
+        )}
+
+        {activeModule === 'ambiente' && (
+          editingObra ? (
+            <GestaoAmbiental
+              gestaoAmbiental={editingObra?.gestao_ambiental || {
+                id: '1',
+                versao_plano: '1.0',
+                responsavel_ambiental: 'Eng. Ambiente',
+                data_criacao: new Date().toISOString(),
+                data_revisao_plano: new Date().toISOString(),
+                objetivos_ambientais: [],
+                impactos_ambientais: [],
+                medidas_mitigacao: [],
+                recursos_ambientais: [],
+                monitorizacao_ambiental: []
+              }}
+              certificacoes={editingObra?.certificacoes_ambientais || []}
+              onGestaoAmbientalChange={(gestao) => {
+                if (editingObra) {
+                  const updatedObra = { ...editingObra, gestao_ambiental: gestao };
+                  setEditingObra(updatedObra);
+                  const updatedObras = obras.map(o => 
+                    o.id === editingObra.id ? updatedObra : o
+                  );
+                  setObras(updatedObras);
+                }
+              }}
+              onCertificacoesChange={(certificacoes) => {
+                if (editingObra) {
+                  const updatedObra = { ...editingObra, certificacoes_ambientais: certificacoes };
+                  setEditingObra(updatedObra);
+                  const updatedObras = obras.map(o => 
+                    o.id === editingObra.id ? updatedObra : o
+                  );
+                  setObras(updatedObras);
+                }
+              }}
+            />
+          ) : (
+            <div className="text-center py-12">
+              <Leaf className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Selecione uma Obra</h3>
+              <p className="text-gray-600 mb-6">Selecione uma obra da lista para gerir o ambiente</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => setActiveModule('dashboard')}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  <Building className="h-4 w-4 mr-2" />
+                  Voltar ao Dashboard
+                </button>
+                {obras.length > 0 && (
+                  <button
+                    onClick={() => handleEditObra(obras[0])}
+                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Selecionar Primeira Obra
+                  </button>
+                )}
+              </div>
+            </div>
+          )
         )}
       </motion.div>
 
