@@ -331,45 +331,75 @@ export class PDFService {
 
   // Métodos para relatórios de fornecedores
   public async generateFornecedoresExecutiveReport(fornecedores: Fornecedor[]): Promise<void> {
-    this.initDocument();
-    this.addHeader('QUALICORE - Relatório Executivo de Fornecedores');
-    
-    const startY = 90;
-    let currentY = this.addEstatisticasFornecedores(fornecedores, startY);
-    currentY = this.addRelatorioExecutivoFornecedores(fornecedores, currentY);
-    
-    this.addFooter();
+    try {
+      console.log('🔍 Gerando relatório executivo de fornecedores com', fornecedores.length, 'fornecedores');
+      
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Executivo de Fornecedores');
+      
+      const startY = 90;
+      let currentY = this.addEstatisticasFornecedores(fornecedores, startY);
+      currentY = this.addRelatorioExecutivoFornecedores(fornecedores, currentY);
+      
+      this.addFooter();
+      this.save('relatorio-executivo-fornecedores.pdf');
+      console.log('✅ Relatório executivo de fornecedores gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório executivo de fornecedores:', error);
+      throw error;
+    }
   }
 
   public async generateFornecedoresFilteredReport(fornecedores: Fornecedor[], filtros: any): Promise<void> {
-    this.initDocument();
-    this.addHeader('QUALICORE - Relatório Filtrado de Fornecedores');
-    
-    const startY = 90;
-    let currentY = this.addFiltrosFornecedores(filtros, startY);
-    currentY = this.addRelatorioFiltradoFornecedores(fornecedores, currentY);
-    
-    this.addFooter();
+    try {
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Filtrado de Fornecedores');
+      
+      const startY = 90;
+      let currentY = this.addFiltrosFornecedores(filtros, startY);
+      currentY = this.addRelatorioFiltradoFornecedores(fornecedores, currentY);
+      
+      this.addFooter();
+      this.save('relatorio-filtrado-fornecedores.pdf');
+      console.log('✅ Relatório filtrado de fornecedores gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório filtrado de fornecedores:', error);
+      throw error;
+    }
   }
 
   public async generateFornecedoresComparativeReport(fornecedores: Fornecedor[]): Promise<void> {
-    this.initDocument();
-    this.addHeader('QUALICORE - Relatório Comparativo de Fornecedores');
-    
-    const startY = 90;
-    let currentY = this.addRelatorioComparativoFornecedores(fornecedores, startY);
-    
-    this.addFooter();
+    try {
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Comparativo de Fornecedores');
+      
+      const startY = 90;
+      let currentY = this.addRelatorioComparativoFornecedores(fornecedores, startY);
+      
+      this.addFooter();
+      this.save('relatorio-comparativo-fornecedores.pdf');
+      console.log('✅ Relatório comparativo de fornecedores gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório comparativo de fornecedores:', error);
+      throw error;
+    }
   }
 
   public async generateFornecedoresIndividualReport(fornecedores: Fornecedor[]): Promise<void> {
-    this.initDocument();
-    this.addHeader('QUALICORE - Relatório Individual de Fornecedor');
-    
-    const startY = 90;
-    let currentY = this.addRelatorioIndividualFornecedor(fornecedores[0], startY);
-    
-    this.addFooter();
+    try {
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Individual de Fornecedor');
+      
+      const startY = 90;
+      let currentY = this.addRelatorioIndividualFornecedor(fornecedores[0], startY);
+      
+      this.addFooter();
+      this.save('relatorio-individual-fornecedor.pdf');
+      console.log('✅ Relatório individual de fornecedor gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório individual de fornecedor:', error);
+      throw error;
+    }
   }
 
   private addEstatisticasFornecedores(fornecedores: Fornecedor[], startY: number): number {
@@ -978,6 +1008,124 @@ export class PDFService {
       console.log('✅ Relatório individual de solo gerado com sucesso!');
     } catch (error) {
       console.error('❌ Erro ao gerar relatório individual de solo:', error);
+      throw error;
+    }
+  }
+
+  // Métodos para relatórios de não conformidades
+  public async generateNaoConformidadesExecutiveReport(naoConformidades: any[]): Promise<void> {
+    try {
+      console.log('🔍 Gerando relatório executivo de não conformidades com', naoConformidades.length, 'não conformidades');
+      
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Executivo de Não Conformidades');
+      
+      this.doc.setFontSize(16);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Relatório Executivo de Não Conformidades', 20, 60);
+      
+      this.doc.setFontSize(12);
+      this.doc.setTextColor(107, 114, 128);
+      this.doc.text(`Total de Não Conformidades: ${naoConformidades.length}`, 20, 80);
+      
+      // Estatísticas básicas
+      const resolvidas = naoConformidades.filter(nc => nc.status === 'resolvida').length;
+      const pendentes = naoConformidades.filter(nc => nc.status === 'pendente').length;
+      const emAnalise = naoConformidades.filter(nc => nc.status === 'em_analise').length;
+      
+      this.doc.text(`Resolvidas: ${resolvidas}`, 20, 100);
+      this.doc.text(`Pendentes: ${pendentes}`, 20, 115);
+      this.doc.text(`Em Análise: ${emAnalise}`, 20, 130);
+      
+      // Lista das primeiras 5 não conformidades
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Primeiras Não Conformidades:', 20, 160);
+      
+      this.doc.setFontSize(10);
+      this.doc.setTextColor(107, 114, 128);
+      
+      naoConformidades.slice(0, 5).forEach((nc, index) => {
+        const y = 175 + (index * 12);
+        this.doc.text(`${nc.codigo || nc.id} - ${nc.tipo || 'N/A'} - ${nc.status || 'N/A'}`, 25, y);
+      });
+      
+      this.addFooter();
+      this.save('relatorio-executivo-nao-conformidades.pdf');
+      console.log('✅ Relatório executivo de não conformidades gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório executivo de não conformidades:', error);
+      throw error;
+    }
+  }
+
+  public async generateNaoConformidadesFilteredReport(naoConformidades: any[], filtros: any): Promise<void> {
+    try {
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Filtrado de Não Conformidades');
+      
+      this.doc.setFontSize(16);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Relatório Filtrado de Não Conformidades', 20, 60);
+      
+      this.doc.setFontSize(12);
+      this.doc.setTextColor(107, 114, 128);
+      this.doc.text(`Total de Não Conformidades Filtradas: ${naoConformidades.length}`, 20, 80);
+      
+      this.addFooter();
+      this.save('relatorio-filtrado-nao-conformidades.pdf');
+      console.log('✅ Relatório filtrado de não conformidades gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório filtrado de não conformidades:', error);
+      throw error;
+    }
+  }
+
+  public async generateNaoConformidadesComparativeReport(naoConformidades: any[]): Promise<void> {
+    try {
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Comparativo de Não Conformidades');
+      
+      this.doc.setFontSize(16);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Relatório Comparativo de Não Conformidades', 20, 60);
+      
+      this.doc.setFontSize(12);
+      this.doc.setTextColor(107, 114, 128);
+      this.doc.text(`Total de Não Conformidades: ${naoConformidades.length}`, 20, 80);
+      
+      this.addFooter();
+      this.save('relatorio-comparativo-nao-conformidades.pdf');
+      console.log('✅ Relatório comparativo de não conformidades gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório comparativo de não conformidades:', error);
+      throw error;
+    }
+  }
+
+  public async generateNaoConformidadesIndividualReport(naoConformidades: any[]): Promise<void> {
+    try {
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Individual de Não Conformidade');
+      
+      this.doc.setFontSize(16);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Relatório Individual de Não Conformidade', 20, 60);
+      
+      if (naoConformidades.length > 0) {
+        const nc = naoConformidades[0];
+        this.doc.setFontSize(12);
+        this.doc.setTextColor(107, 114, 128);
+        this.doc.text(`Código: ${nc.codigo || nc.id}`, 20, 80);
+        this.doc.text(`Tipo: ${nc.tipo || 'N/A'}`, 20, 95);
+        this.doc.text(`Status: ${nc.status || 'N/A'}`, 20, 110);
+      }
+      
+      this.addFooter();
+      this.save('relatorio-individual-nao-conformidade.pdf');
+      console.log('✅ Relatório individual de não conformidade gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório individual de não conformidade:', error);
       throw error;
     }
   }
