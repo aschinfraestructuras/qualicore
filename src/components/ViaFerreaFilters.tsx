@@ -358,7 +358,7 @@ export function ViaFerreaFilters({
             {/* Localização */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <MapPin className="h-4 w-4 mr-2" />
                   KM Inicial
                 </label>
@@ -371,7 +371,7 @@ export function ViaFerreaFilters({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <MapPin className="h-4 w-4 mr-2" />
                   KM Final
                 </label>
@@ -388,7 +388,7 @@ export function ViaFerreaFilters({
             {/* Datas */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="h-4 w-4 mr-2" />
                   Data Instalação (Início)
                 </label>
@@ -400,7 +400,7 @@ export function ViaFerreaFilters({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="h-4 w-4 mr-2" />
                   Data Instalação (Fim)
                 </label>
@@ -416,7 +416,7 @@ export function ViaFerreaFilters({
             {/* Tensão */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <Gauge className="h-4 w-4 mr-2" />
                   Tensão Mínima (MPa)
                 </label>
@@ -429,7 +429,7 @@ export function ViaFerreaFilters({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <Gauge className="h-4 w-4 mr-2" />
                   Tensão Máxima (MPa)
                 </label>
@@ -451,7 +451,7 @@ export function ViaFerreaFilters({
             {/* Localização */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <MapPin className="h-4 w-4 mr-2" />
                   KM Inicial
                 </label>
@@ -464,7 +464,7 @@ export function ViaFerreaFilters({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <MapPin className="h-4 w-4 mr-2" />
                   KM Final
                 </label>
@@ -481,7 +481,7 @@ export function ViaFerreaFilters({
             {/* Datas */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="h-4 w-4 mr-2" />
                   Data Instalação (Início)
                 </label>
@@ -493,7 +493,7 @@ export function ViaFerreaFilters({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="h-4 w-4 mr-2" />
                   Data Instalação (Fim)
                 </label>
@@ -532,7 +532,7 @@ export function ViaFerreaFilters({
             {/* Datas */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="h-4 w-4 mr-2" />
                   Data Inspeção (Início)
                 </label>
@@ -544,7 +544,7 @@ export function ViaFerreaFilters({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="h-4 w-4 mr-2" />
                   Data Inspeção (Fim)
                 </label>

@@ -260,7 +260,7 @@ export function SinalizacaoFilters({
                 {/* Localização KM */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                       <MapPin className="h-4 w-4 mr-2" />
                       KM Inicial
                     </label>
@@ -274,7 +274,7 @@ export function SinalizacaoFilters({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                       <MapPin className="h-4 w-4 mr-2" />
                       KM Final
                     </label>
@@ -292,7 +292,7 @@ export function SinalizacaoFilters({
                 {/* Data de Instalação */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                       <Calendar className="h-4 w-4 mr-2" />
                       Data de Instalação (De)
                     </label>
@@ -304,7 +304,7 @@ export function SinalizacaoFilters({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                       <Calendar className="h-4 w-4 mr-2" />
                       Data de Instalação (Até)
                     </label>
@@ -378,7 +378,7 @@ export function SinalizacaoFilters({
                 {/* Última Inspeção */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                       <Activity className="h-4 w-4 mr-2" />
                       Última Inspeção (De)
                     </label>
@@ -390,7 +390,7 @@ export function SinalizacaoFilters({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                       <Activity className="h-4 w-4 mr-2" />
                       Última Inspeção (Até)
                     </label>

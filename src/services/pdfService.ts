@@ -725,4 +725,168 @@ export class PDFService {
       console.error('Erro ao gerar relatório de não conformidades:', error);
     }
   }
+
+  // Métodos para Obras
+  public async generateObrasExecutiveReport(obras: any[]) {
+    try {
+      this.addPremiumHeader('Relatorio Executivo', 'Obras - Visao Geral');
+      
+      const stats = {
+        mesAtual: obras.length,
+        mesAnterior: 0,
+        variacao: obras.length,
+        totalGeral: obras.length
+      };
+      
+      let currentY = this.addStatisticsSection(stats, 100);
+      
+      // Tabela de obras
+      const tableData = obras.map(obra => [
+        obra.codigo || 'N/A',
+        obra.nome || 'N/A',
+        obra.cliente || 'N/A',
+        obra.localizacao || 'N/A',
+        obra.status || 'N/A',
+        `${obra.percentual_execucao || 0}%`,
+        new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_contrato || 0)
+      ]);
+      
+      this.addPremiumTable(
+        ['Codigo', 'Nome', 'Cliente', 'Localizacao', 'Status', 'Progresso', 'Valor'],
+        tableData,
+        currentY,
+        'Lista de Obras'
+      );
+      
+      this.addPremiumFooter();
+      this.save();
+    } catch (error) {
+      console.error('Erro ao gerar relatório de obras:', error);
+    }
+  }
+
+  public async generateObrasComparativeReport(obras: any[]) {
+    try {
+      this.addPremiumHeader('Relatorio Comparativo', 'Obras - Analise Comparativa');
+      
+      const stats = {
+        mesAtual: obras.length,
+        mesAnterior: 0,
+        variacao: obras.length,
+        totalGeral: obras.length
+      };
+      
+      let currentY = this.addStatisticsSection(stats, 100);
+      
+      // Tabela comparativa
+      const tableData = obras.map(obra => [
+        obra.codigo || 'N/A',
+        obra.nome || 'N/A',
+        obra.tipo_obra || 'N/A',
+        obra.categoria || 'N/A',
+        obra.status || 'N/A',
+        `${obra.percentual_execucao || 0}%`,
+        new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_contrato || 0)
+      ]);
+      
+      this.addPremiumTable(
+        ['Codigo', 'Nome', 'Tipo', 'Categoria', 'Status', 'Progresso', 'Valor'],
+        tableData,
+        currentY,
+        'Comparativo de Obras'
+      );
+      
+      this.addPremiumFooter();
+      this.save();
+    } catch (error) {
+      console.error('Erro ao gerar relatório comparativo de obras:', error);
+    }
+  }
+
+  public async generateObrasFilteredReport(obras: any[], filtros: any) {
+    try {
+      this.addPremiumHeader('Relatorio Filtrado', 'Obras - Dados Especificos');
+      
+      const stats = {
+        mesAtual: obras.length,
+        mesAnterior: 0,
+        variacao: obras.length,
+        totalGeral: obras.length
+      };
+      
+      let currentY = this.addStatisticsSection(stats, 100);
+      
+      // Tabela filtrada
+      const tableData = obras.map(obra => [
+        obra.codigo || 'N/A',
+        obra.nome || 'N/A',
+        obra.cliente || 'N/A',
+        obra.responsavel_tecnico || 'N/A',
+        obra.status || 'N/A',
+        `${obra.percentual_execucao || 0}%`,
+        new Date(obra.data_inicio || new Date()).toLocaleDateString('pt-PT')
+      ]);
+      
+      this.addPremiumTable(
+        ['Codigo', 'Nome', 'Cliente', 'Responsavel', 'Status', 'Progresso', 'Data Inicio'],
+        tableData,
+        currentY,
+        'Obras Filtradas'
+      );
+      
+      this.addPremiumFooter();
+      this.save();
+    } catch (error) {
+      console.error('Erro ao gerar relatório filtrado de obras:', error);
+    }
+  }
+
+  public async generateObrasIndividualReport(obras: any[]) {
+    try {
+      this.addPremiumHeader('Relatorio Individual', 'Obras - Detalhes Especificos');
+      
+      obras.forEach((obra, index) => {
+        if (index > 0) {
+          this.doc.addPage();
+          this.addPremiumHeader('Relatorio Individual', 'Obras - Detalhes Especificos');
+        }
+        
+        let currentY = 100;
+        
+        // Informações detalhadas
+        this.doc.setFontSize(14);
+        this.doc.setTextColor(this.config.design.corTexto);
+        this.doc.setFont('helvetica', 'bold');
+        this.doc.text(`Obra: ${obra.nome}`, 20, currentY);
+        currentY += 20;
+        
+        const details = [
+          ['Codigo', obra.codigo || 'N/A'],
+          ['Nome', obra.nome || 'N/A'],
+          ['Cliente', obra.cliente || 'N/A'],
+          ['Localizacao', obra.localizacao || 'N/A'],
+          ['Tipo', obra.tipo_obra || 'N/A'],
+          ['Categoria', obra.categoria || 'N/A'],
+          ['Status', obra.status || 'N/A'],
+          ['Progresso', `${obra.percentual_execucao || 0}%`],
+          ['Valor Contrato', new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 }).format(obra.valor_contrato || 0)],
+          ['Responsavel Tecnico', obra.responsavel_tecnico || 'N/A'],
+          ['Coordenador', obra.coordenador_obra || 'N/A'],
+          ['Fiscal', obra.fiscal_obra || 'N/A'],
+          ['Engenheiro', obra.engenheiro_responsavel || 'N/A'],
+          ['Arquiteto', obra.arquiteto || 'N/A'],
+          ['Data Inicio', new Date(obra.data_inicio || new Date()).toLocaleDateString('pt-PT')],
+          ['Data Fim Prevista', new Date(obra.data_fim_prevista || new Date()).toLocaleDateString('pt-PT')]
+        ];
+        
+        this.addPremiumTable(['Campo', 'Valor'], details, currentY, 'Detalhes da Obra');
+        
+        this.addPremiumFooter();
+      });
+      
+      this.save();
+    } catch (error) {
+      console.error('Erro ao gerar relatório individual de obras:', error);
+    }
+  }
 }

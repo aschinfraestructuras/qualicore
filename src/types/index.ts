@@ -631,11 +631,51 @@ export interface Obra extends BaseEntity {
   fiscal_obra: string;
   engenheiro_responsavel: string;
   arquiteto: string;
+  
+  // NOVOS CAMPOS DE VALOR AGREGADO
+  
+  // 1. CRONOGRAMA E GESTÃO DE PROJETOS
+  cronograma: CronogramaObra;
+  milestones: MilestoneObra[];
+  dependencias_externas: DependenciaExterna[];
+  
+  // 2. MÉTRICAS DE PERFORMANCE (EVM - Earned Value Management)
+  metricas_evm: MetricasEVM;
+  indicadores_performance: IndicadorPerformance[];
+  
+  // 3. GESTÃO DE RISCOS AVANÇADA
+  riscos: RiscoObra[];
+  plano_mitigacao: PlanoMitigacaoRiscos;
+  auditorias_risco: AuditoriaRisco[];
+  
+  // 4. DOCUMENTAÇÃO DE OBRA
+  documentacao: DocumentacaoObra;
+  licencas_autorizacoes: LicencaAutorizacao[];
+  certificacoes_obrigatorias: CertificacaoObrigatoria[];
+  
+  // 5. GESTÃO DE EQUIPAS E SUBEMPREITEIROS
+  equipas: EquipaObra[];
+  subempreiteiros: Subempreiteiro[];
+  fornecedores_principais: string[];
+  
+  // 6. GESTÃO FINANCEIRA AVANÇADA
+  gestao_financeira: GestaoFinanceiraObra;
+  orcamentos_detalhados: OrcamentoDetalhado[];
+  controlo_custos: ControloCustos[];
+  
+  // 7. GESTÃO DE QUALIDADE E SEGURANÇA
+  plano_qualidade: PlanoQualidadeObra;
+  plano_seguranca: PlanoSegurancaObra;
+  inspecoes_qualidade: InspecaoQualidade[];
+  acidentes_incidentes: AcidenteIncidente[];
+  
+  // 8. SUSTENTABILIDADE E AMBIENTE
+  gestao_ambiental: GestaoAmbientalObra;
+  certificacoes_ambientais: CertificacaoAmbiental[];
+  
+  // CAMPOS EXISTENTES
   zonas: ZonaObra[];
   fases: FaseObra[];
-  equipas: EquipaObra[];
-  fornecedores_principais: string[];
-  riscos: RiscoObra[];
   indicadores: IndicadorObra[];
   observacoes?: string;
 }
@@ -1323,4 +1363,531 @@ export interface EnsaioCompactacao {
   documents?: any[]; // Documentos carregados
   created?: string;
   updated?: string;
+}
+
+// ===== NOVAS INTERFACES PARA GESTÃO AVANÇADA DE OBRAS =====
+
+// 1. CRONOGRAMA E GESTÃO DE PROJETOS
+export interface MilestoneObra {
+  id: string;
+  nome: string;
+  descricao: string;
+  data_prevista: string;
+  data_real?: string;
+  tipo: "inicio" | "meio" | "fim" | "checkpoint" | "entrega" | "pagamento";
+  importancia: "baixa" | "media" | "alta" | "critica";
+  status: "pendente" | "concluida" | "atrasada" | "cancelada";
+  dependencias: string[];
+  responsavel: string;
+  custo_estimado?: number;
+  observacoes?: string;
+}
+
+export interface DependenciaExterna {
+  id: string;
+  descricao: string;
+  tipo: "fornecedor" | "cliente" | "autoridade" | "utilities" | "outro";
+  entidade: string;
+  data_necessaria: string;
+  data_realizada?: string;
+  status: "pendente" | "concluida" | "atrasada" | "cancelada";
+  impacto_obra: "baixo" | "medio" | "alto" | "critico";
+  responsavel_interno: string;
+  contato_externo: string;
+  observacoes?: string;
+}
+
+// 2. MÉTRICAS DE PERFORMANCE (EVM - Earned Value Management)
+export interface MetricasEVM {
+  // Valores Planeados
+  pv_total: number; // Planned Value
+  pv_atual: number;
+  
+  // Valores Ganhos
+  ev_total: number; // Earned Value
+  ev_atual: number;
+  
+  // Custos Reais
+  ac_total: number; // Actual Cost
+  ac_atual: number;
+  
+  // Índices de Performance
+  spi: number; // Schedule Performance Index
+  cpi: number; // Cost Performance Index
+  
+  // Variações
+  sv: number; // Schedule Variance
+  cv: number; // Cost Variance
+  
+  // Estimativas
+  eac: number; // Estimate at Completion
+  etc: number; // Estimate to Complete
+  vac: number; // Variance at Completion
+  
+  // Percentuais
+  percentual_completude: number;
+  percentual_tempo_decorrido: number;
+  
+  data_calculo: string;
+  responsavel: string;
+}
+
+export interface IndicadorPerformance {
+  id: string;
+  nome: string;
+  tipo: "produtividade" | "qualidade" | "seguranca" | "ambiental" | "satisfacao" | "financeiro";
+  unidade: string;
+  valor_meta: number;
+  valor_atual: number;
+  valor_anterior: number;
+  tendencia: "melhorando" | "estavel" | "piorando";
+  frequencia_medicao: "diaria" | "semanal" | "mensal";
+  responsavel: string;
+  data_ultima_medicao: string;
+  historico: MedicaoIndicador[];
+  observacoes?: string;
+}
+
+// 3. GESTÃO DE RISCOS AVANÇADA
+export interface PlanoMitigacaoRiscos {
+  id: string;
+  versao: string;
+  data_criacao: string;
+  data_revisao: string;
+  responsavel: string;
+  estrategias_gerais: EstrategiaMitigacao[];
+  recursos_mitigacao: RecursoMitigacao[];
+  procedimentos_emergencia: ProcedimentoEmergencia[];
+  observacoes?: string;
+}
+
+export interface EstrategiaMitigacao {
+  id: string;
+  categoria_risco: string;
+  estrategia: string;
+  acoes: string[];
+  responsavel: string;
+  prazo: string;
+  custo_estimado: number;
+  status: "pendente" | "em_execucao" | "concluida";
+  observacoes?: string;
+}
+
+export interface RecursoMitigacao {
+  id: string;
+  tipo: "humano" | "material" | "financeiro" | "tecnico";
+  descricao: string;
+  quantidade: number;
+  unidade: string;
+  custo_unitario: number;
+  disponibilidade: "imediata" | "24h" | "48h" | "semanal";
+  fornecedor?: string;
+  observacoes?: string;
+}
+
+export interface ProcedimentoEmergencia {
+  id: string;
+  titulo: string;
+  descricao: string;
+  tipo_emergencia: string;
+  acoes: string[];
+  responsaveis: string[];
+  contatos_emergencia: string[];
+  recursos_necessarios: string[];
+  observacoes?: string;
+}
+
+export interface AuditoriaRisco {
+  id: string;
+  data: string;
+  tipo: "preventiva" | "corretiva" | "verificacao";
+  auditor: string;
+  escopo: string;
+  riscos_avaliados: string[];
+  conformidades: string[];
+  nao_conformidades: string[];
+  acoes_corretivas: string[];
+  prazo_acoes: string;
+  responsavel_acoes: string;
+  observacoes?: string;
+}
+
+// 4. DOCUMENTAÇÃO DE OBRA
+export interface DocumentacaoObra {
+  id: string;
+  versao: string;
+  data_criacao: string;
+  data_atualizacao: string;
+  responsavel: string;
+  categorias: CategoriaDocumentacao[];
+  templates: TemplateDocumento[];
+  fluxo_aprovacao: FluxoAprovacao[];
+  observacoes?: string;
+}
+
+export interface CategoriaDocumentacao {
+  id: string;
+  nome: string;
+  descricao: string;
+  documentos_obrigatorios: string[];
+  documentos_opcionais: string[];
+  responsavel: string;
+  observacoes?: string;
+}
+
+export interface TemplateDocumento {
+  id: string;
+  nome: string;
+  categoria: string;
+  conteudo: string;
+  campos_obrigatorios: string[];
+  campos_opcionais: string[];
+  versao: string;
+  data_criacao: string;
+  responsavel: string;
+  observacoes?: string;
+}
+
+export interface FluxoAprovacao {
+  id: string;
+  documento_tipo: string;
+  etapas: EtapaAprovacao[];
+  responsavel_final: string;
+  prazo_maximo: number; // em dias
+  observacoes?: string;
+}
+
+export interface EtapaAprovacao {
+  ordem: number;
+  responsavel: string;
+  tipo: "revisao" | "aprovacao" | "visto";
+  prazo: number; // em dias
+  obrigatorio: boolean;
+  observacoes?: string;
+}
+
+export interface LicencaAutorizacao {
+  id: string;
+  tipo: "ambiental" | "urbanistica" | "construcao" | "operacao" | "outro";
+  numero: string;
+  emissor: string;
+  data_emissao: string;
+  data_validade: string;
+  status: "pendente" | "emitida" | "renovada" | "expirada" | "cancelada";
+  custo: number;
+  responsavel: string;
+  anexos?: Anexo[];
+  observacoes?: string;
+}
+
+export interface CertificacaoObrigatoria {
+  id: string;
+  nome: string;
+  tipo: "iso" | "ambiental" | "seguranca" | "qualidade" | "outro";
+  organismo: string;
+  data_obtencao: string;
+  data_validade: string;
+  status: "pendente" | "obtida" | "renovada" | "expirada";
+  custo: number;
+  responsavel: string;
+  requisitos: string[];
+  observacoes?: string;
+}
+
+// 5. GESTÃO DE EQUIPAS E SUBEMPREITEIROS
+export interface Subempreiteiro {
+  id: string;
+  nome: string;
+  nif: string;
+  tipo_servico: string;
+  especialidade: string;
+  contato_principal: string;
+  telefone: string;
+  email: string;
+  endereco: string;
+  data_contratacao: string;
+  data_fim_contrato?: string;
+  valor_contrato: number;
+  valor_executado: number;
+  percentual_execucao: number;
+  status: "ativo" | "inativo" | "concluido" | "rescisao";
+  certificacoes: string[];
+  seguros: SeguroSubempreiteiro[];
+  equipas: EquipaSubempreiteiro[];
+  observacoes?: string;
+}
+
+export interface SeguroSubempreiteiro {
+  id: string;
+  tipo: "responsabilidade_civil" | "acidentes_trabalho" | "obra" | "outro";
+  seguradora: string;
+  numero_poliza: string;
+  data_inicio: string;
+  data_fim: string;
+  valor_cobertura: number;
+  status: "ativo" | "expirado" | "cancelado";
+  observacoes?: string;
+}
+
+export interface EquipaSubempreteiro {
+  id: string;
+  nome: string;
+  lider: string;
+  especialidade: string;
+  numero_membros: number;
+  data_inicio: string;
+  data_fim?: string;
+  zona_atual?: string;
+  status: "ativa" | "inativa" | "concluida";
+  observacoes?: string;
+}
+
+// 6. GESTÃO FINANCEIRA AVANÇADA
+export interface GestaoFinanceiraObra {
+  id: string;
+  valor_contrato_total: number;
+  valor_executado_total: number;
+  valor_faturado_total: number;
+  valor_pago_total: number;
+  margem_bruta: number;
+  margem_liquida: number;
+  fluxo_caixa: FluxoCaixa[];
+  previsoes_financeiras: PrevisaoFinanceira[];
+  observacoes?: string;
+}
+
+export interface FluxoCaixa {
+  id: string;
+  data: string;
+  tipo: "entrada" | "saida";
+  categoria: string;
+  descricao: string;
+  valor: number;
+  status: "previsto" | "realizado" | "pendente";
+  responsavel: string;
+  observacoes?: string;
+}
+
+export interface PrevisaoFinanceira {
+  id: string;
+  mes: string;
+  receitas_previstas: number;
+  despesas_previstas: number;
+  saldo_previsto: number;
+  receitas_reais?: number;
+  despesas_reais?: number;
+  saldo_real?: number;
+  variacao: number;
+  observacoes?: string;
+}
+
+export interface OrcamentoDetalhado {
+  id: string;
+  categoria: string;
+  subcategoria: string;
+  descricao: string;
+  quantidade: number;
+  unidade: string;
+  preco_unitario: number;
+  preco_total: number;
+  fornecedor?: string;
+  data_necessaria: string;
+  status: "pendente" | "aprovado" | "encomendado" | "recebido";
+  observacoes?: string;
+}
+
+export interface ControloCustos {
+  id: string;
+  data: string;
+  categoria: string;
+  descricao: string;
+  custo_previsto: number;
+  custo_real: number;
+  variacao: number;
+  percentual_variacao: number;
+  responsavel: string;
+  justificativa?: string;
+  acoes_corretivas?: string[];
+  observacoes?: string;
+}
+
+// 7. GESTÃO DE QUALIDADE E SEGURANÇA
+export interface PlanoQualidadeObra {
+  id: string;
+  versao: string;
+  data_criacao: string;
+  responsavel: string;
+  objetivos_qualidade: string[];
+  procedimentos_qualidade: ProcedimentoQualidade[];
+  recursos_qualidade: RecursoQualidade[];
+  observacoes?: string;
+}
+
+export interface ProcedimentoQualidade {
+  id: string;
+  nome: string;
+  descricao: string;
+  responsavel: string;
+  frequencia: string;
+  criterios_aceitacao: string[];
+  observacoes?: string;
+}
+
+export interface RecursoQualidade {
+  id: string;
+  tipo: "humano" | "material" | "equipamento";
+  descricao: string;
+  quantidade: number;
+  responsavel: string;
+  observacoes?: string;
+}
+
+export interface PlanoSegurancaObra {
+  id: string;
+  versao: string;
+  data_criacao: string;
+  responsavel: string;
+  objetivos_seguranca: string[];
+  procedimentos_seguranca: ProcedimentoSeguranca[];
+  equipamentos_protecao: EquipamentoProtecao[];
+  formacoes_seguranca: FormacaoSeguranca[];
+  observacoes?: string;
+}
+
+export interface ProcedimentoSeguranca {
+  id: string;
+  nome: string;
+  descricao: string;
+  risco_associado: string;
+  medidas_preventivas: string[];
+  responsavel: string;
+  observacoes?: string;
+}
+
+export interface EquipamentoProtecao {
+  id: string;
+  tipo: string;
+  descricao: string;
+  quantidade: number;
+  estado: "novo" | "bom" | "regular" | "mau";
+  data_inspecao: string;
+  proxima_inspecao: string;
+  responsavel: string;
+  observacoes?: string;
+}
+
+export interface FormacaoSeguranca {
+  id: string;
+  nome: string;
+  tipo: string;
+  formador: string;
+  data: string;
+  duracao: number;
+  participantes: string[];
+  certificados: string[];
+  observacoes?: string;
+}
+
+export interface InspecaoQualidade {
+  id: string;
+  data: string;
+  tipo: "preventiva" | "corretiva" | "verificacao";
+  inspetor: string;
+  area: string;
+  criterios_avaliados: CriterioInspecao[];
+  resultado: "aprovado" | "reprovado" | "condicional";
+  acoes_corretivas?: string[];
+  prazo_acoes?: string;
+  responsavel_acoes?: string;
+  observacoes?: string;
+}
+
+export interface CriterioInspecao {
+  id: string;
+  descricao: string;
+  resultado: "conforme" | "nao_conforme" | "nao_aplicavel";
+  observacoes?: string;
+}
+
+export interface AcidenteIncidente {
+  id: string;
+  data: string;
+  tipo: "acidente" | "incidente" | "quase_acidente";
+  local: string;
+  descricao: string;
+  vitimas: VitimaAcidente[];
+  causas: string[];
+  acoes_corretivas: string[];
+  responsavel_acoes: string;
+  prazo_acoes: string;
+  status: "investigacao" | "acoes_em_execucao" | "concluido";
+  observacoes?: string;
+}
+
+export interface VitimaAcidente {
+  id: string;
+  nome: string;
+  tipo: "funcionario" | "subempreteiro" | "visitante" | "outro";
+  lesoes: string;
+  gravidade: "leve" | "moderada" | "grave" | "fatal";
+  observacoes?: string;
+}
+
+// 8. SUSTENTABILIDADE E AMBIENTE
+export interface GestaoAmbientalObra {
+  id: string;
+  versao: string;
+  data_criacao: string;
+  responsavel: string;
+  objetivos_ambientais: string[];
+  impactos_ambientais: ImpactoAmbiental[];
+  medidas_mitigacao: MedidaMitigacaoAmbiental[];
+  monitorizacao_ambiental: MonitorizacaoAmbiental[];
+  observacoes?: string;
+}
+
+export interface ImpactoAmbiental {
+  id: string;
+  descricao: string;
+  tipo: "ar" | "agua" | "solo" | "ruido" | "residuos" | "biodiversidade";
+  magnitude: "baixa" | "media" | "alta";
+  duracao: "temporaria" | "permanente";
+  medidas_mitigacao: string[];
+  observacoes?: string;
+}
+
+export interface MedidaMitigacaoAmbiental {
+  id: string;
+  descricao: string;
+  impacto_associado: string;
+  custo: number;
+  prazo: string;
+  responsavel: string;
+  status: "pendente" | "em_execucao" | "concluida";
+  observacoes?: string;
+}
+
+export interface MonitorizacaoAmbiental {
+  id: string;
+  data: string;
+  parametro: string;
+  valor_medido: number;
+  unidade: string;
+  limite_legal: number;
+  resultado: "conforme" | "nao_conforme";
+  responsavel: string;
+  observacoes?: string;
+}
+
+export interface CertificacaoAmbiental {
+  id: string;
+  nome: string;
+  organismo: string;
+  data_obtencao: string;
+  data_validade: string;
+  status: "pendente" | "obtida" | "renovada" | "expirada";
+  custo: number;
+  responsavel: string;
+  requisitos: string[];
+  observacoes?: string;
 }

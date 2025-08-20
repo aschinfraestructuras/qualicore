@@ -385,7 +385,7 @@ export function SinalizacaoForm({ isOpen, onClose, editData, onSuccess, type }: 
             {/* Localização KM */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <MapPin className="h-4 w-4 mr-2" />
                   KM Inicial
                 </label>
@@ -400,7 +400,7 @@ export function SinalizacaoForm({ isOpen, onClose, editData, onSuccess, type }: 
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <MapPin className="h-4 w-4 mr-2" />
                   KM Final
                 </label>
