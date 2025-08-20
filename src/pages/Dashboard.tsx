@@ -9,7 +9,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { KPIBar } from "../components/KPIBar";
+
+import { SGQCharts } from "../components/SGQCharts";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -327,8 +328,7 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* KPIs em Tempo Real */}
-        <KPIBar darkMode={darkMode} />
+
 
         {/* Alertas */}
         {showAlerts && (
@@ -369,154 +369,60 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* Workflow Sections - Reorganizado */}
+        {/* SGQ Global Charts */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
           className="space-y-8"
         >
-          {filteredSections.map((section, sectionIndex) => (
-            <motion.div
-              key={section.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.1 + sectionIndex * 0.1 }}
-              className={`relative overflow-hidden rounded-3xl ${darkMode ? 'bg-gray-800/30' : 'bg-white'} backdrop-blur-xl border ${darkMode ? 'border-gray-700' : 'border-gray-200'} shadow-xl group hover:shadow-2xl transition-all duration-500`}
-              onMouseEnter={() => setActiveSection(section.id)}
-              onMouseLeave={() => setActiveSection(null)}
-            >
-              {/* Background Gradient */}
-              <div className={`absolute inset-0 bg-gradient-to-r ${section.bgColor} opacity-50 group-hover:opacity-70 transition-opacity duration-500`}></div>
-              
-              {/* Section Header */}
-              <div className="relative z-10 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-16 h-16 bg-gradient-to-r ${section.color} rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                      <section.icon className="h-8 w-8 text-white" />
-                    </div>
-                    <div>
-                      <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-1`}>{section.title}</h2>
-                      <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{section.subtitle}</p>
-                    </div>
-                  </div>
-                  <div className={`text-right ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                    <div className="text-3xl font-bold">{section.modules.length}</div>
-                    <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Módulos</div>
-                  </div>
-                </div>
+          <SGQCharts darkMode={darkMode} />
+        </motion.div>
 
-                {/* Modules Flow - Layout Orgânico com Variação Inteligente */}
-                <div className="relative">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-fr">
-                    {section.modules.map((module, moduleIndex) => {
-                      // Determinar tamanho baseado na prioridade e posição
-                      const isPrimary = module.priority === "alta" && moduleIndex < 2;
-                      const isSecondary = module.priority === "alta" || moduleIndex < 3;
-                      const cardSize = isPrimary ? "col-span-1 row-span-2" : isSecondary ? "col-span-1 row-span-1" : "col-span-1 row-span-1";
-                      
-                      return (
-                        <motion.div
-                          key={module.id}
-                          initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          transition={{ 
-                            delay: 1.2 + sectionIndex * 0.1 + moduleIndex * 0.05,
-                            duration: 0.6,
-                            ease: "easeOut"
-                          }}
-                          whileHover={{ 
-                            scale: 1.02, 
-                            y: -5,
-                            transition: { duration: 0.2 }
-                          }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => navigate(module.path)}
-                          className={`${cardSize} relative cursor-pointer group/module transition-all duration-300`}
-                        >
-                          {/* Module Card - Design Orgânico Premium */}
-                          <div className={`relative overflow-hidden rounded-2xl ${darkMode ? 'bg-gray-700/50' : 'bg-white'} border ${darkMode ? 'border-gray-600' : 'border-gray-200'} shadow-lg group-hover/module:shadow-2xl transition-all duration-500 h-full group-hover/module:border-opacity-80`}>
-                            {/* Animated Background Gradient */}
-                            <div className={`absolute inset-0 bg-gradient-to-r ${section.color} opacity-0 group-hover/module:opacity-5 transition-opacity duration-500`}></div>
-                            
-                            {/* Hover Effect - Shimmer */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover/module:opacity-100 transition-opacity duration-500 transform -skew-x-12 -translate-x-full group-hover/module:translate-x-full transition-transform duration-1000"></div>
-                            
-                            {/* Content - Adaptável ao tamanho */}
-                            <div className="relative z-10 p-4 h-full flex flex-col">
-                              {/* Header - Sempre presente */}
-                              <div className="flex items-center space-x-3 mb-3">
-                                <motion.div 
-                                  className={`${isPrimary ? 'w-12 h-12' : 'w-10 h-10'} bg-gradient-to-r ${section.color} rounded-xl flex items-center justify-center shadow-md flex-shrink-0 group-hover/module:shadow-lg transition-all duration-300`}
-                                  whileHover={{ rotate: 5, scale: 1.1 }}
-                                >
-                                  <module.icon className={`${isPrimary ? 'h-6 w-6' : 'h-5 w-5'} text-white`} />
-                                </motion.div>
-                                <div className="flex-1 min-w-0">
-                                  <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} ${isPrimary ? 'text-base' : 'text-sm'} truncate group-hover/module:text-opacity-90 transition-colors duration-300`}>{module.nome}</h3>
-                                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} truncate group-hover/module:text-opacity-80 transition-colors duration-300`}>{module.nomeEN}</p>
-                                </div>
-                              </div>
-                              
-                              {/* Priority Badge - Enhanced */}
-                              <div className="flex justify-end mb-3">
-                                <motion.span 
-                                  className={`text-xs px-2 py-1 rounded-full bg-gradient-to-r ${getPriorityColor(module.priority)} text-white font-medium shadow-sm`}
-                                  whileHover={{ scale: 1.05 }}
-                                  transition={{ duration: 0.2 }}
-                                >
-                                  {module.priority}
-                                </motion.span>
-                              </div>
-                              
-                              {/* Conteúdo adicional para cards maiores */}
-                              {isPrimary && (
-                                <motion.div 
-                                  className="flex-1 flex flex-col justify-end"
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  transition={{ delay: 0.5 }}
-                                >
-                                  <div className="space-y-2">
-                                    <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                      <div className="flex items-center space-x-1">
-                                        <motion.div 
-                                          className="w-2 h-2 bg-green-400 rounded-full"
-                                          animate={{ scale: [1, 1.2, 1] }}
-                                          transition={{ duration: 2, repeat: Infinity }}
-                                        ></motion.div>
-                                        <span>Módulo Principal</span>
-                                      </div>
-                                    </div>
-                                    <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} italic`}>
-                                      Clique para aceder ao módulo completo
-                                    </div>
-                                  </div>
-                                </motion.div>
-                              )}
-                              
-                              {/* Indicador de ação para cards menores - Enhanced */}
-                              {!isPrimary && (
-                                <div className="flex-1 flex items-end justify-end">
-                                  <motion.div
-                                    className={`p-1 rounded-full ${darkMode ? 'bg-gray-600/50' : 'bg-gray-100'} group-hover/module:bg-blue-500/20 transition-colors duration-300`}
-                                    whileHover={{ scale: 1.1 }}
-                                  >
-                                    <ChevronRight className={`h-4 w-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'} group-hover/module:text-blue-500 transition-all duration-300 group-hover/module:translate-x-0.5`} />
-                                  </motion.div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
+        {/* Quick Access to Modules */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2 }}
+          className="mt-12"
+        >
+          <div className="text-center mb-8">
+            <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-2`}>
+              Acesso Rápido aos Módulos
+            </h2>
+            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Navegue diretamente para qualquer módulo do sistema
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {filteredSections.flatMap(section => 
+              section.modules.map(module => (
+                <motion.div
+                  key={module.id}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 1.4 + Math.random() * 0.5 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate(module.path)}
+                  className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800/50' : 'bg-white'} border ${darkMode ? 'border-gray-600' : 'border-gray-200'} shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group`}
+                >
+                  <div className="text-center">
+                    <motion.div 
+                      className={`w-10 h-10 bg-gradient-to-r ${section.color} rounded-lg flex items-center justify-center mx-auto mb-2`}
+                      whileHover={{ rotate: 5, scale: 1.1 }}
+                    >
+                      <module.icon className="h-5 w-5 text-white" />
+                    </motion.div>
+                    <h3 className={`text-xs font-medium ${darkMode ? 'text-white' : 'text-gray-800'} truncate`}>
+                      {module.nome}
+                    </h3>
                   </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+                </motion.div>
+              ))
+            )}
+          </div>
         </motion.div>
 
         {/* Footer */}
