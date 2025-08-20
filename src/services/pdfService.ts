@@ -534,45 +534,73 @@ export class PDFService {
 
   // Métodos para relatórios de armaduras
   public async generateArmadurasExecutiveReport(armaduras: Armadura[]): Promise<void> {
-    this.initDocument();
-    this.addHeader('QUALICORE - Relatório Executivo de Armaduras');
-    
-    const startY = 90;
-    let currentY = this.addEstatisticasArmaduras(armaduras, startY);
-    currentY = this.addRelatorioExecutivoArmaduras({ armaduras }, currentY);
-    
-    this.addFooter();
+    try {
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Executivo de Armaduras');
+      
+      const startY = 90;
+      let currentY = this.addEstatisticasArmaduras(armaduras, startY);
+      currentY = this.addRelatorioExecutivoArmaduras({ armaduras }, currentY);
+      
+      this.addFooter();
+      this.save('relatorio-executivo-armaduras.pdf');
+      console.log('✅ Relatório executivo de armaduras gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório executivo de armaduras:', error);
+      throw error;
+    }
   }
 
   public async generateArmadurasFilteredReport(armaduras: Armadura[], filtros: any): Promise<void> {
-    this.initDocument();
-    this.addHeader('QUALICORE - Relatório Filtrado de Armaduras');
-    
-    const startY = 90;
-    let currentY = this.addFiltrosArmaduras(filtros, startY);
-    currentY = this.addRelatorioFiltradoArmaduras({ armaduras }, currentY);
-    
-    this.addFooter();
+    try {
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Filtrado de Armaduras');
+      
+      const startY = 90;
+      let currentY = this.addFiltrosArmaduras(filtros, startY);
+      currentY = this.addRelatorioFiltradoArmaduras({ armaduras }, currentY);
+      
+      this.addFooter();
+      this.save('relatorio-filtrado-armaduras.pdf');
+      console.log('✅ Relatório filtrado de armaduras gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório filtrado de armaduras:', error);
+      throw error;
+    }
   }
 
   public async generateArmadurasComparativeReport(armaduras: Armadura[]): Promise<void> {
-    this.initDocument();
-    this.addHeader('QUALICORE - Relatório Comparativo de Armaduras');
-    
-    const startY = 90;
-    let currentY = this.addRelatorioComparativoArmaduras({ armaduras }, startY);
-    
-    this.addFooter();
+    try {
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Comparativo de Armaduras');
+      
+      const startY = 90;
+      let currentY = this.addRelatorioComparativoArmaduras({ armaduras }, startY);
+      
+      this.addFooter();
+      this.save('relatorio-comparativo-armaduras.pdf');
+      console.log('✅ Relatório comparativo de armaduras gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório comparativo de armaduras:', error);
+      throw error;
+    }
   }
 
   public async generateArmadurasIndividualReport(armaduras: Armadura[]): Promise<void> {
-    this.initDocument();
-    this.addHeader('QUALICORE - Relatório Individual de Armadura');
-    
-    const startY = 90;
-    let currentY = this.addRelatorioIndividualArmadura({ armaduras }, startY);
-    
-    this.addFooter();
+    try {
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Individual de Armadura');
+      
+      const startY = 90;
+      let currentY = this.addRelatorioIndividualArmadura({ armaduras }, startY);
+      
+      this.addFooter();
+      this.save('relatorio-individual-armadura.pdf');
+      console.log('✅ Relatório individual de armadura gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório individual de armadura:', error);
+      throw error;
+    }
   }
 
   private addEstatisticasArmaduras(armaduras: Armadura[], startY: number): number {
