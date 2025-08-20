@@ -183,10 +183,42 @@ export class PDFService {
     }
   }
 
-  // Métodos públicos para configuração
+  // Método para carregar logotipo
+  public async loadLogotipo(logotipoUrl: string): Promise<void> {
+    if (!logotipoUrl || !logotipoUrl.startsWith('data:image')) {
+      console.log('❌ URL do logotipo inválida');
+      return;
+    }
+
+    try {
+      // Criar uma imagem para verificar se é válida
+      const img = new Image();
+      img.src = logotipoUrl;
+      
+      await new Promise((resolve, reject) => {
+        img.onload = () => {
+          this.logoImage = img;
+          console.log('✅ Logotipo carregado com sucesso:', img.width, 'x', img.height);
+          resolve(true);
+        };
+        img.onerror = () => {
+          console.log('❌ Erro ao carregar logotipo');
+          reject(new Error('Erro ao carregar logotipo'));
+        };
+      });
+    } catch (error) {
+      console.log('❌ Erro ao processar logotipo:', error);
+    }
+  }
+
+  // Método para atualizar configuração
   public updateConfig(newConfig: Partial<PDFConfig>): void {
     this.config = { ...this.config, ...newConfig };
-    this.loadLogo();
+    
+    // Se há logotipo, carregá-lo
+    if (newConfig.empresa?.logotipo) {
+      this.loadLogotipo(newConfig.empresa.logotipo);
+    }
   }
 
   public setLogotipo(logotipoUrl: string): void {
@@ -229,21 +261,23 @@ export class PDFService {
     this.doc.circle(180, 15, 6, 'F');
     this.doc.circle(190, 60, 4, 'F');
     
-    // Logotipo melhorado
-    if (this.logoImage) {
+    // Logotipo melhorado com verificação robusta
+    if (empresa.logotipo && empresa.logotipo.startsWith('data:image')) {
       try {
-        const logoWidth = 40;
-        const logoHeight = (this.logoImage.height * logoWidth) / this.logoImage.width;
+        const logoWidth = 35;
+        const logoHeight = 35;
         const logoY = 20;
-        const logoX = 25;
+        const logoX = 20;
         
         // Fundo circular para o logotipo
-        this.doc.setFillColor(255, 255, 255, 0.2);
-        this.doc.circle(logoX + logoWidth/2, logoY + logoHeight/2, Math.max(logoWidth, logoHeight)/2 + 3, 'F');
+        this.doc.setFillColor(255, 255, 255, 0.3);
+        this.doc.circle(logoX + logoWidth/2, logoY + logoHeight/2, logoWidth/2 + 5, 'F');
         
-        this.doc.addImage(this.logoImage, 'PNG', logoX, logoY, logoWidth, logoHeight);
+        // Adicionar imagem
+        this.doc.addImage(empresa.logotipo, 'PNG', logoX, logoY, logoWidth, logoHeight);
+        console.log('✅ Logotipo adicionado com sucesso');
       } catch (error) {
-        console.log('Erro ao adicionar logotipo:', error);
+        console.log('❌ Erro ao adicionar logotipo:', error);
         this.addCompanyTextFallback(empresa.nome, 30, 40);
       }
     } else {
@@ -274,12 +308,12 @@ export class PDFService {
       this.doc.text(subtitulo, 105, 65, { align: 'center' });
     }
     
-    // Informações da obra (se disponível)
+    // Informações da obra (se disponível) - SEM EMOJIS para evitar caracteres estranhos
     if (obra) {
       this.doc.setFontSize(9);
       this.doc.setFont('helvetica', 'normal');
-      this.doc.text(`🏗️ Obra: ${obra.nome}`, 105, 70, { align: 'center' });
-      this.doc.text(`📍 ${obra.localizacao} | 👤 ${obra.cliente}`, 105, 75, { align: 'center' });
+      this.doc.text(`Obra: ${obra.nome}`, 105, 70, { align: 'center' });
+      this.doc.text(`${obra.localizacao} | Cliente: ${obra.cliente}`, 105, 75, { align: 'center' });
     }
   }
 
@@ -316,7 +350,7 @@ export class PDFService {
       this.doc.circle(25, 290, 3, 'F');
       this.doc.circle(185, 290, 3, 'F');
       
-      // Texto do rodapé
+      // Texto do rodapé SEM EMOJIS
       this.doc.setFontSize(8);
       this.doc.setTextColor(255, 255, 255);
       this.doc.setFont('helvetica', 'normal');
@@ -329,9 +363,9 @@ export class PDFService {
         minute: '2-digit'
       });
       
-      this.doc.text(`${empresa.nome} | 📞 ${empresa.telefone} | 📧 ${empresa.email}`, 20, 290);
-      this.doc.text(`📄 Página ${i} de ${pageCount} | 🕒 Gerado em ${currentTime}`, 20, 295);
-      this.doc.text(`🏢 ${empresa.morada}`, 20, 300);
+      this.doc.text(`${empresa.nome} | Tel: ${empresa.telefone} | Email: ${empresa.email}`, 20, 290);
+      this.doc.text(`Pagina ${i} de ${pageCount} | Gerado em ${currentTime}`, 20, 295);
+      this.doc.text(`Endereco: ${empresa.morada}`, 20, 300);
     }
   }
 
@@ -342,14 +376,13 @@ export class PDFService {
     if (title) {
       this.doc.setFontSize(16);
       this.doc.setTextColor(design.corTexto);
-      this.doc.setFont(design.fonteTitulo, 'bold');
+      this.doc.setFont('helvetica', 'bold');
       this.doc.text(title, 20, startY);
       startY += 15;
     }
     
     // Converter cores hex para RGB
     const primaryColor = this.hexToRgb(design.corPrimaria);
-    const secondaryColor = this.hexToRgb(design.corSecundaria);
     
     // Usar autoTable com configuração MUITO melhorada
     autoTable(this.doc, {
@@ -361,31 +394,34 @@ export class PDFService {
         fillColor: primaryColor,
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 11,
+        fontSize: 10,
         halign: 'center',
-        cellPadding: 6
+        cellPadding: 5
       },
       alternateRowStyles: {
         fillColor: [248, 250, 252],
         textColor: [31, 41, 55]
       },
       styles: {
-        fontSize: 9,
-        cellPadding: 4,
+        fontSize: 8,
+        cellPadding: 3,
         overflow: 'linebreak',
         cellWidth: 'auto',
         lineColor: [229, 231, 235],
-        lineWidth: 0.3
+        lineWidth: 0.2
       },
       columnStyles: {
-        0: { cellWidth: 'auto', halign: 'left' },
-        1: { cellWidth: 'auto', halign: 'center' },
-        2: { cellWidth: 'auto', halign: 'center' },
-        3: { cellWidth: 'auto', halign: 'center' },
-        4: { cellWidth: 'auto', halign: 'center' }
+        0: { cellWidth: 30, halign: 'left' },
+        1: { cellWidth: 25, halign: 'center' },
+        2: { cellWidth: 20, halign: 'center' },
+        3: { cellWidth: 20, halign: 'center' },
+        4: { cellWidth: 25, halign: 'center' },
+        5: { cellWidth: 25, halign: 'center' },
+        6: { cellWidth: 30, halign: 'left' },
+        7: { cellWidth: 30, halign: 'left' }
       },
-      margin: { left: 15, right: 15, top: 10 },
-      tableWidth: 180,
+      margin: { left: 10, right: 10, top: 5 },
+      tableWidth: 190,
       pageBreak: 'auto',
       willDrawPage: (data) => {
         // Adicionar cabeçalho em cada página se necessário
@@ -393,7 +429,6 @@ export class PDFService {
           this.addPremiumHeader('Continuação', 'Página ' + data.pageNumber);
         }
       }
-      // Removido didDrawPage que estava causando erro com jsPDF.rect
     });
     
     return (this.doc as any).lastAutoTable.finalY + 20;
@@ -460,7 +495,7 @@ export class PDFService {
     return startY + chartHeight + 20;
   }
 
-  // Seção de estatísticas
+  // Seção de estatísticas SEM EMOJIS
   private addStatisticsSection(stats: { label: string; value: string; icon: string }[], startY: number) {
     const { design } = this.config;
     const primaryColor = this.hexToRgb(design.corPrimaria);
@@ -468,7 +503,7 @@ export class PDFService {
     this.doc.setFontSize(14);
     this.doc.setTextColor(design.corTexto);
     this.doc.setFont('helvetica', 'bold');
-    this.doc.text('📊 Estatísticas Principais', 20, startY);
+    this.doc.text('Estatisticas Principais', 20, startY);
     startY += 15;
     
     const cardWidth = 85;
@@ -490,22 +525,17 @@ export class PDFService {
       this.doc.setLineWidth(0.5);
       this.doc.rect(x, y, cardWidth, cardHeight);
       
-      // Ícone
-      this.doc.setFontSize(12);
-      this.doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      this.doc.text(stat.icon, x + 5, y + 8);
-      
-      // Valor
+      // Valor (sem ícone para evitar caracteres estranhos)
       this.doc.setFontSize(16);
       this.doc.setFont('helvetica', 'bold');
       this.doc.setTextColor(design.corTexto);
-      this.doc.text(stat.value, x + 20, y + 8);
+      this.doc.text(stat.value, x + 5, y + 12);
       
       // Label
       this.doc.setFontSize(8);
       this.doc.setFont('helvetica', 'normal');
       this.doc.setTextColor(107, 114, 128);
-      this.doc.text(stat.label, x + 5, y + 20);
+      this.doc.text(stat.label, x + 5, y + 25);
     });
     
     return startY + (Math.ceil(stats.length / cardsPerRow) * (cardHeight + 10)) + 10;
