@@ -40,40 +40,67 @@ const PDFGlobalConfig: React.FC = () => {
   useEffect(() => {
     const loadObras = async () => {
       try {
-        // Mock data - em produção, integrar com API real
+        // Primeiro tentar carregar obras reais do módulo obras
+        const { obrasAPI } = await import('../lib/supabase-api');
+        const obrasReais = await obrasAPI.getAll();
+        
+        if (obrasReais && obrasReais.length > 0) {
+          console.log('✅ Carregando obras reais:', obrasReais);
+          const obrasFormatadas = obrasReais.map((obra: any) => ({
+            id: obra.id,
+            codigo: obra.codigo,
+            nome: obra.nome,
+            cliente: obra.cliente,
+            localizacao: obra.localizacao,
+            responsavel_tecnico: obra.responsavel_tecnico,
+            coordenador_obra: obra.coordenador_obra,
+            fiscal_obra: obra.fiscal_obra,
+            engenheiro_responsavel: obra.engenheiro_responsavel,
+            arquiteto: obra.arquiteto,
+            valor_contrato: obra.valor_contrato || 0,
+            percentual_execucao: obra.percentual_execucao || 0
+          }));
+          setObras(obrasFormatadas);
+        } else {
+          // Fallback para dados mock se não houver obras reais
+          const mockObras: Obra[] = [
+            {
+              id: "1",
+              codigo: "1000",
+              nome: "Linha do Sado - Setúbal",
+              cliente: "Infraestruturas de Portugal",
+              localizacao: "Setúbal",
+              responsavel_tecnico: "Mario Cristiano",
+              coordenador_obra: "Eng. Maria Santos",
+              fiscal_obra: "Eng. Carlos Mendes",
+              engenheiro_responsavel: "Eng. Ana Costa",
+              arquiteto: "Arq. Pedro Alves",
+              valor_contrato: 17500000,
+              percentual_execucao: 0
+            }
+          ];
+          setObras(mockObras);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar obras:', error);
+        // Fallback para Linha do Sado - Setúbal
         const mockObras: Obra[] = [
           {
             id: "1",
-            codigo: "OBR-2024-001",
-            nome: "Edifício Residencial Solar",
-            cliente: "Construtora ABC",
-            localizacao: "Lisboa, Portugal",
-            responsavel_tecnico: "Eng. João Silva",
+            codigo: "1000", 
+            nome: "Linha do Sado - Setúbal",
+            cliente: "Infraestruturas de Portugal",
+            localizacao: "Setúbal",
+            responsavel_tecnico: "Mario Cristiano",
             coordenador_obra: "Eng. Maria Santos",
             fiscal_obra: "Eng. Carlos Mendes",
             engenheiro_responsavel: "Eng. Ana Costa",
             arquiteto: "Arq. Pedro Alves",
-            valor_contrato: 2500000,
-            percentual_execucao: 50
-          },
-          {
-            id: "2",
-            codigo: "OBR-2024-002",
-            nome: "Centro Comercial Plaza",
-            cliente: "Desenvolvimento XYZ",
-            localizacao: "Porto, Portugal",
-            responsavel_tecnico: "Eng. Sofia Martins",
-            coordenador_obra: "Eng. Ricardo Pereira",
-            fiscal_obra: "Eng. Luísa Ferreira",
-            engenheiro_responsavel: "Eng. Manuel Santos",
-            arquiteto: "Arq. Teresa Silva",
-            valor_contrato: 5000000,
-            percentual_execucao: 15
+            valor_contrato: 17500000,
+            percentual_execucao: 0
           }
         ];
         setObras(mockObras);
-      } catch (error) {
-        console.error('Erro ao carregar obras:', error);
       }
     };
 

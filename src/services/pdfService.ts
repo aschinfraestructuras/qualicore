@@ -892,7 +892,264 @@ export class PDFService {
     this.addPremiumFooter();
   }
 
-  // ... existing code ...
+  // Método para baixar o PDF
+  private save(filename?: string): void {
+    const defaultFilename = `relatorio-${new Date().toISOString().split('T')[0]}.pdf`;
+    this.doc.save(filename || defaultFilename);
+  }
 
-  // ... existing code ...
+  public async generateArmadurasExecutiveReport(armaduras: Armadura[]): Promise<void> {
+    try {
+      // Criar novo documento
+      this.doc = new jsPDF('portrait', 'mm', 'a4');
+      
+      // Adicionar cabeçalho premium
+      this.addPremiumHeader('Relatório Executivo', 'Armaduras - Visão Geral');
+      
+      let currentY = 90;
+      
+      // Estatísticas principais
+      const stats = [
+        { label: 'Total de Armaduras', value: armaduras.length.toString(), icon: '📊' },
+        { label: 'Aprovadas', value: armaduras.filter(a => a.estado === 'aprovado').length.toString(), icon: '✅' },
+        { label: 'Pendentes', value: armaduras.filter(a => a.estado === 'pendente').length.toString(), icon: '⏳' },
+        { label: 'Peso Total', value: `${armaduras.reduce((sum, a) => sum + a.peso_total, 0).toFixed(2)} kg`, icon: '⚖️' }
+      ];
+      
+      currentY = this.addStatisticsSection(stats, currentY) + 10;
+      
+      // Distribuição por estado
+      const estadoData = armaduras.reduce((acc, a) => {
+        acc[a.estado] = (acc[a.estado] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const chartData = Object.entries(estadoData).map(([estado, count]) => ({
+        label: estado.charAt(0).toUpperCase() + estado.slice(1),
+        value: count
+      }));
+      
+      if (chartData.length > 0) {
+        currentY = this.addElaborateBarChart(chartData, currentY, 'Distribuição por Estado') + 10;
+      }
+      
+      // Tabela resumida das armaduras
+      const headers = ['Código', 'Tipo', 'Diâmetro', 'Quantidade', 'Estado', 'Localização'];
+      const tableData = armaduras.slice(0, 20).map(a => [
+        a.codigo,
+        a.tipo,
+        `${a.diametro}mm`,
+        a.quantidade.toString(),
+        a.estado,
+        a.local_aplicacao
+      ]);
+      
+      currentY = this.addPremiumTable(headers, tableData, currentY, 'Armaduras Principais (Top 20)') + 20;
+      
+      // Assinatura
+      this.addProfessionalSignature(currentY, 'Responsável Técnico', 'Engenheiro Civil');
+      
+      // Adicionar rodapé
+      this.addPremiumFooter();
+      
+      // Salvar
+      this.save('relatorio-executivo-armaduras-premium.pdf');
+      
+    } catch (error) {
+      console.error('Erro ao gerar relatório executivo de armaduras:', error);
+      throw error;
+    }
+  }
+
+  public async generateArmadurasComparativeReport(armaduras: Armadura[]): Promise<void> {
+    try {
+      // Criar novo documento
+      this.doc = new jsPDF('portrait', 'mm', 'a4');
+      
+      // Adicionar cabeçalho premium
+      this.addPremiumHeader('Relatório Comparativo', 'Armaduras - Análise Temporal');
+      
+      let currentY = 90;
+      
+      // Análise temporal (últimos 2 meses)
+      const hoje = new Date();
+      const mesAtual = hoje.getMonth();
+      const anoAtual = hoje.getFullYear();
+      
+      const armadurasMesAtual = armaduras.filter(a => {
+        const data = new Date(a.created_at);
+        return data.getMonth() === mesAtual && data.getFullYear() === anoAtual;
+      });
+      
+      const armadurasMesAnterior = armaduras.filter(a => {
+        const data = new Date(a.created_at);
+        const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
+        const anoAnterior = mesAtual === 0 ? anoAtual - 1 : anoAtual;
+        return data.getMonth() === mesAnterior && data.getFullYear() === anoAnterior;
+      });
+      
+      // Estatísticas comparativas
+      const statsComparativas = [
+        { label: 'Mês Atual', value: armadurasMesAtual.length.toString(), icon: '📊' },
+        { label: 'Mês Anterior', value: armadurasMesAnterior.length.toString(), icon: '📈' },
+        { label: 'Variação', value: `${armadurasMesAtual.length - armadurasMesAnterior.length > 0 ? '+' : ''}${armadurasMesAtual.length - armadurasMesAnterior.length}`, icon: '📊' },
+        { label: 'Total Geral', value: armaduras.length.toString(), icon: '🎯' }
+      ];
+      
+      currentY = this.addStatisticsSection(statsComparativas, currentY) + 10;
+      
+      // Tabela completa
+      const headers = ['Código', 'Tipo', 'Diâmetro', 'Quantidade', 'Peso', 'Estado', 'Data'];
+      const tableData = armaduras.map(a => [
+        a.codigo,
+        a.tipo,
+        `${a.diametro}mm`,
+        a.quantidade.toString(),
+        `${a.peso_total}kg`,
+        a.estado,
+        new Date(a.created_at).toLocaleDateString('pt-PT')
+      ]);
+      
+      this.addPremiumTable(headers, tableData, currentY, 'Comparativo Detalhado de Armaduras');
+      
+      // Adicionar rodapé
+      this.addPremiumFooter();
+      
+      // Salvar
+      this.save('relatorio-comparativo-armaduras.pdf');
+      
+    } catch (error) {
+      console.error('Erro ao gerar relatório comparativo de armaduras:', error);
+      throw error;
+    }
+  }
+
+  public async generateArmadurasFilteredReport(armaduras: Armadura[], filtros: any): Promise<void> {
+    try {
+      // Criar novo documento
+      this.doc = new jsPDF('portrait', 'mm', 'a4');
+      
+      // Adicionar cabeçalho premium
+      this.addPremiumHeader('Relatório Filtrado', 'Armaduras - Dados Específicos');
+      
+      let currentY = 90;
+      
+      // Informações dos filtros aplicados
+      if (filtros && Object.keys(filtros).length > 0) {
+        this.doc.setFontSize(12);
+        this.doc.setTextColor('#374151');
+        this.doc.setFont('helvetica', 'bold');
+        this.doc.text('🔍 Filtros Aplicados:', 20, currentY);
+        currentY += 15;
+        
+        this.doc.setFontSize(10);
+        this.doc.setFont('helvetica', 'normal');
+        Object.entries(filtros).forEach(([key, value]) => {
+          if (value) {
+            this.doc.text(`• ${key}: ${value}`, 25, currentY);
+            currentY += 10;
+          }
+        });
+        currentY += 10;
+      }
+      
+      // Estatísticas dos dados filtrados
+      const stats = [
+        { label: 'Registros Filtrados', value: armaduras.length.toString(), icon: '📊' },
+        { label: 'Aprovadas', value: armaduras.filter(a => a.estado === 'aprovado').length.toString(), icon: '✅' },
+        { label: 'Peso Total', value: `${armaduras.reduce((sum, a) => sum + a.peso_total, 0).toFixed(2)} kg`, icon: '⚖️' },
+        { label: 'Diferentes Tipos', value: new Set(armaduras.map(a => a.tipo)).size.toString(), icon: '🔗' }
+      ];
+      
+      currentY = this.addStatisticsSection(stats, currentY) + 10;
+      
+      // Tabela detalhada
+      const headers = ['Código', 'Tipo', 'Diâmetro', 'Quantidade', 'Peso Total', 'Estado', 'Localização', 'Responsável'];
+      const tableData = armaduras.map(a => [
+        a.codigo,
+        a.tipo,
+        `${a.diametro}mm`,
+        a.quantidade.toString(),
+        `${a.peso_total}kg`,
+        a.estado,
+        a.local_aplicacao,
+        a.responsavel
+      ]);
+      
+      this.addPremiumTable(headers, tableData, currentY, 'Dados Detalhados das Armaduras');
+      
+      // Adicionar rodapé
+      this.addPremiumFooter();
+      
+      // Salvar
+      this.save('relatorio-filtrado-armaduras.pdf');
+      
+    } catch (error) {
+      console.error('Erro ao gerar relatório filtrado de armaduras:', error);
+      throw error;
+    }
+  }
+
+  public async generateArmadurasIndividualReport(armaduras: Armadura[]): Promise<void> {
+    try {
+      const armadura = armaduras[0]; // Pegar a primeira armadura
+      if (!armadura) {
+        throw new Error('Nenhuma armadura fornecida para o relatório individual');
+      }
+      
+      // Criar novo documento
+      this.doc = new jsPDF('portrait', 'mm', 'a4');
+      
+      // Adicionar cabeçalho premium
+      this.addPremiumHeader('Relatório Individual', `Armadura ${armadura.codigo}`);
+      
+      let currentY = 90;
+      
+      // Detalhes da armadura
+      this.doc.setFontSize(14);
+      this.doc.setTextColor('#374151');
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('📋 Informações Detalhadas', 20, currentY);
+      currentY += 20;
+      
+      const detalhes = [
+        ['Código:', armadura.codigo],
+        ['Tipo:', armadura.tipo],
+        ['Diâmetro:', `${armadura.diametro}mm`],
+        ['Quantidade:', armadura.quantidade.toString()],
+        ['Peso Total:', `${armadura.peso_total}kg`],
+        ['Fabricante:', armadura.fabricante],
+        ['Número da Colada:', armadura.numero_colada],
+        ['Estado:', armadura.estado],
+        ['Local de Aplicação:', armadura.local_aplicacao],
+        ['Responsável:', armadura.responsavel],
+        ['Data de Receção:', new Date(armadura.data_rececao).toLocaleDateString('pt-PT')],
+        ['Data de Criação:', new Date(armadura.created_at).toLocaleDateString('pt-PT')]
+      ];
+      
+      this.doc.setFontSize(10);
+      this.doc.setFont('helvetica', 'normal');
+      detalhes.forEach(([label, value]) => {
+        this.doc.setFont('helvetica', 'bold');
+        this.doc.text(label, 20, currentY);
+        this.doc.setFont('helvetica', 'normal');
+        this.doc.text(value, 70, currentY);
+        currentY += 12;
+      });
+      
+      // Assinatura
+      currentY += 20;
+      this.addProfessionalSignature(currentY, 'Responsável Técnico', 'Engenheiro Civil');
+      
+      // Adicionar rodapé
+      this.addPremiumFooter();
+      
+      // Salvar
+      this.save(`relatorio-individual-armadura-${armadura.codigo}.pdf`);
+      
+    } catch (error) {
+      console.error('Erro ao gerar relatório individual de armaduras:', error);
+      throw error;
+    }
+  }
 }
