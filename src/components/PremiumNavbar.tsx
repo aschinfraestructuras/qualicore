@@ -1119,6 +1119,34 @@ ${searchResults.join('\n\n')}
                   </div>
                 )}
               </div>
+
+              {/* Botão de Configuração de PDFs - SUPER VISÍVEL */}
+              <button 
+                onClick={() => {
+                  console.log('🎯 Botão PDF CONFIG clicado!');
+                  toast.success('🎯 Abrindo configuração de PDFs...', {
+                    icon: '📄',
+                    duration: 2000,
+                    style: {
+                      background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
+                      color: 'white',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }
+                  });
+                  // Abrir modal de configuração de PDFs
+                  const event = new CustomEvent('openPDFConfig');
+                  window.dispatchEvent(event);
+                }}
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 border-2 border-white rounded-xl"
+                title="Configuração de PDFs"
+                style={{ zIndex: 9999 }}
+              >
+                <Settings className="h-5 w-5" />
+                <span className="text-sm font-bold">PDF CONFIG</span>
+              </button>
             </div>
           </div>
         </div>
