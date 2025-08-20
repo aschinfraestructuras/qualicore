@@ -392,13 +392,8 @@ export class PDFService {
         if (data.pageNumber > 1) {
           this.addPremiumHeader('Continuação', 'Página ' + data.pageNumber);
         }
-      },
-      didDrawPage: (data) => {
-        // Adicionar bordas decorativas
-        this.doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        this.doc.setLineWidth(1);
-        this.doc.rect(10, data.cursor.y - 5, 190, (data.table as any).height + 10);
       }
+      // Removido didDrawPage que estava causando erro com jsPDF.rect
     });
     
     return (this.doc as any).lastAutoTable.finalY + 20;
@@ -735,13 +730,8 @@ export class PDFService {
         if (data.pageNumber > 1) {
           this.addPremiumHeader('Continuação', 'Página ' + data.pageNumber);
         }
-      },
-      didDrawPage: (data) => {
-        // Adicionar bordas decorativas
-        this.doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        this.doc.setLineWidth(1);
-        this.doc.rect(10, data.cursor.y - 5, 190, (data.table as any).height + 10);
       }
+      // Removido didDrawPage que estava causando erro com jsPDF.rect
     });
     
     return (this.doc as any).lastAutoTable.finalY + 20;
