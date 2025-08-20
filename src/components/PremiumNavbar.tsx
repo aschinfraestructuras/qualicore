@@ -1120,33 +1120,35 @@ ${searchResults.join('\n\n')}
                 )}
               </div>
 
-              {/* Botão de Configuração de PDFs - SUPER VISÍVEL */}
-              <button 
-                onClick={() => {
-                  console.log('🎯 Botão PDF CONFIG clicado!');
-                  toast.success('🎯 Abrindo configuração de PDFs...', {
-                    icon: '📄',
-                    duration: 2000,
-                    style: {
-                      background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
-                      color: 'white',
-                      borderRadius: '12px',
-                      padding: '16px',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }
-                  });
-                  // Abrir modal de configuração de PDFs
-                  const event = new CustomEvent('openPDFConfig');
-                  window.dispatchEvent(event);
-                }}
-                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 border-2 border-white rounded-xl"
-                title="Configuração de PDFs"
-                style={{ zIndex: 9999 }}
-              >
-                <Settings className="h-5 w-5" />
-                <span className="text-sm font-bold">PDF CONFIG</span>
-              </button>
+                             {/* Botão de Configuração de PDFs - PREMIUM */}
+               <button 
+                 onClick={() => {
+                   console.log('🎯 Botão PDF CONFIG clicado!');
+                   toast.success('🎯 Abrindo configuração de PDFs...', {
+                     icon: '📄',
+                     duration: 2000,
+                     style: {
+                       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                       color: 'white',
+                       borderRadius: '12px',
+                       padding: '16px',
+                       fontSize: '14px',
+                       fontWeight: '600'
+                     }
+                   });
+                   // Abrir modal de configuração de PDFs
+                   const event = new CustomEvent('openPDFConfig');
+                   window.dispatchEvent(event);
+                 }}
+                 className="p-2.5 bg-gradient-to-r from-slate-600 to-slate-700 text-white hover:from-slate-700 hover:to-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110 rounded-xl border border-slate-500/30 backdrop-blur-sm group relative overflow-hidden"
+                 title="Configuração de Relatórios"
+               >
+                 <div className="relative z-10">
+                   <Settings className="h-4 w-4 group-hover:rotate-90 transition-transform duration-300" />
+                 </div>
+                 <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                 <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-sm"></div>
+               </button>
             </div>
           </div>
         </div>

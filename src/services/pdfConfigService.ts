@@ -94,6 +94,10 @@ class PDFConfigService {
     localStorage.removeItem(this.STORAGE_KEY);
     this.config = this.loadFromStorage();
   }
+
+  public getDefaultConfig(): PDFConfig {
+    return this.loadFromStorage();
+  }
 }
 
 export default PDFConfigService;
