@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { KPIBar } from "../components/KPIBar";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -51,9 +52,9 @@ export default function Dashboard() {
       title: "Planeamento, Gestão & Documentação",
       subtitle: "Gestão de projetos, obras, materiais e documentação",
       icon: HardHat,
-      color: "from-yellow-500 to-orange-500",
-      bgColor: "from-yellow-50 to-orange-50",
-      borderColor: "border-yellow-200",
+      color: "from-slate-600 to-gray-700",
+      bgColor: "from-slate-50 to-gray-50",
+      borderColor: "border-slate-200",
       modules: [
         { id: "documentos", nome: "Documentos", nomeEN: "Documents", path: "/documentos", icon: FolderOpen, priority: "alta" },
         { id: "obras", nome: "Obras", nomeEN: "Projects", path: "/obras", icon: HardHat, priority: "alta" },
@@ -325,6 +326,9 @@ export default function Dashboard() {
             />
           </div>
         </motion.div>
+
+        {/* KPIs em Tempo Real */}
+        <KPIBar darkMode={darkMode} />
 
         {/* Alertas */}
         {showAlerts && (
