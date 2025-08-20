@@ -863,4 +863,122 @@ export class PDFService {
       throw error;
     }
   }
+
+  // Métodos para relatórios de solos
+  public async generateSolosExecutiveReport(solos: any[]): Promise<void> {
+    try {
+      console.log('🔍 Gerando relatório executivo de solos com', solos.length, 'solos');
+      
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Executivo de Solos');
+      
+      this.doc.setFontSize(16);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Relatório Executivo de Solos', 20, 60);
+      
+      this.doc.setFontSize(12);
+      this.doc.setTextColor(107, 114, 128);
+      this.doc.text(`Total de Solos: ${solos.length}`, 20, 80);
+      
+      // Estatísticas básicas
+      const aprovados = solos.filter(s => s.estado === 'aprovado').length;
+      const reprovados = solos.filter(s => s.estado === 'reprovado').length;
+      const emAnalise = solos.filter(s => s.estado === 'em_analise').length;
+      
+      this.doc.text(`Aprovados: ${aprovados}`, 20, 100);
+      this.doc.text(`Reprovados: ${reprovados}`, 20, 115);
+      this.doc.text(`Em Análise: ${emAnalise}`, 20, 130);
+      
+      // Lista dos primeiros 5 solos
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Primeiros Solos:', 20, 160);
+      
+      this.doc.setFontSize(10);
+      this.doc.setTextColor(107, 114, 128);
+      
+      solos.slice(0, 5).forEach((solo, index) => {
+        const y = 175 + (index * 12);
+        this.doc.text(`${solo.codigo || solo.id} - ${solo.tipo || 'N/A'} - ${solo.estado || 'N/A'}`, 25, y);
+      });
+      
+      this.addFooter();
+      this.save('relatorio-executivo-solos.pdf');
+      console.log('✅ Relatório executivo de solos gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório executivo de solos:', error);
+      throw error;
+    }
+  }
+
+  public async generateSolosFilteredReport(solos: any[], filtros: any): Promise<void> {
+    try {
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Filtrado de Solos');
+      
+      this.doc.setFontSize(16);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Relatório Filtrado de Solos', 20, 60);
+      
+      this.doc.setFontSize(12);
+      this.doc.setTextColor(107, 114, 128);
+      this.doc.text(`Total de Solos Filtrados: ${solos.length}`, 20, 80);
+      
+      this.addFooter();
+      this.save('relatorio-filtrado-solos.pdf');
+      console.log('✅ Relatório filtrado de solos gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório filtrado de solos:', error);
+      throw error;
+    }
+  }
+
+  public async generateSolosComparativeReport(solos: any[]): Promise<void> {
+    try {
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Comparativo de Solos');
+      
+      this.doc.setFontSize(16);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Relatório Comparativo de Solos', 20, 60);
+      
+      this.doc.setFontSize(12);
+      this.doc.setTextColor(107, 114, 128);
+      this.doc.text(`Total de Solos: ${solos.length}`, 20, 80);
+      
+      this.addFooter();
+      this.save('relatorio-comparativo-solos.pdf');
+      console.log('✅ Relatório comparativo de solos gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório comparativo de solos:', error);
+      throw error;
+    }
+  }
+
+  public async generateSolosIndividualReport(solos: any[]): Promise<void> {
+    try {
+      this.initDocument();
+      this.addHeader('QUALICORE - Relatório Individual de Solo');
+      
+      this.doc.setFontSize(16);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Relatório Individual de Solo', 20, 60);
+      
+      if (solos.length > 0) {
+        const solo = solos[0];
+        this.doc.setFontSize(12);
+        this.doc.setTextColor(107, 114, 128);
+        this.doc.text(`Código: ${solo.codigo || solo.id}`, 20, 80);
+        this.doc.text(`Tipo: ${solo.tipo || 'N/A'}`, 20, 95);
+        this.doc.text(`Estado: ${solo.estado || 'N/A'}`, 20, 110);
+      }
+      
+      this.addFooter();
+      this.save('relatorio-individual-solo.pdf');
+      console.log('✅ Relatório individual de solo gerado com sucesso!');
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório individual de solo:', error);
+      throw error;
+    }
+  }
 }
