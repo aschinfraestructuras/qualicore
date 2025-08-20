@@ -87,7 +87,7 @@ import {
   CalendarHeart,
   Train,
 } from "lucide-react";
-import TestPDF from '../components/TestPDF';
+
 import {
   BarChart as RechartsBarChart,
   Bar,
@@ -402,15 +402,7 @@ export default function Dashboard() {
                 </div>
               </motion.section>
 
-                                                           {/* Teste de Funcionalidades - VISÍVEL */}
-                <motion.section 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
-                  className="mb-8"
-                >
-                  <TestPDF />
-                </motion.section>
+                                                           
 
                {/* Métricas Principais */}
                <motion.section 
@@ -710,15 +702,7 @@ export default function Dashboard() {
                 ))}
               </div>
 
-              {/* Teste de PDF Premium */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.7 }}
-                className="mt-8"
-              >
-                <TestPDF />
-              </motion.div>
+              
 
               {/* Ações Rápidas */}
               <motion.div

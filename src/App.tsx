@@ -72,6 +72,7 @@ import { AnalyticsDashboard } from "./components/AnalyticsDashboard";
 import { AuditDashboard } from "./components/AuditDashboard";
 import { RealTimeUpdates } from "./lib/real-time-updates";
 import { UIEnhancements } from "./lib/ui-enhancements";
+import PDFGlobalConfig from "./components/PDFGlobalConfig";
 
 function App() {
   const { user, loading } = useAuthStore();
@@ -765,6 +766,9 @@ function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      
+      {/* Configuração Global de PDFs */}
+      <PDFGlobalConfig />
     </div>
   </QueryClientProvider>
   );

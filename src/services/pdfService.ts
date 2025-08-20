@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Material, Fornecedor } from '@/types';
 import { Armadura } from '@/types/armaduras';
+import PDFConfigService from './pdfConfigService';
 
 // Configuração premium para PDFs
 interface PDFConfig {
@@ -99,28 +100,48 @@ interface RelatorioArmadurasOptions {
 export class PDFService {
   private doc: jsPDF;
   private config: PDFConfig;
+  private logoImage?: HTMLImageElement;
 
   constructor(config?: Partial<PDFConfig>) {
     this.doc = new jsPDF('portrait', 'mm', 'a4');
-    this.config = { ...DEFAULT_PDF_CONFIG, ...config };
+    // Usar configuração global se não for fornecida
+    const globalConfig = PDFConfigService.getInstance().getConfig();
+    this.config = config ? { ...globalConfig, ...config } : globalConfig;
+    this.loadLogo();
   }
 
-  // Método para atualizar configuração
+  private async loadLogo() {
+    if (this.config.empresa.logotipo) {
+      try {
+        this.logoImage = new Image();
+        this.logoImage.crossOrigin = 'anonymous';
+        this.logoImage.src = this.config.empresa.logotipo;
+        await new Promise((resolve, reject) => {
+          this.logoImage!.onload = resolve;
+          this.logoImage!.onerror = reject;
+        });
+      } catch (error) {
+        console.log('Erro ao carregar logotipo:', error);
+      }
+    }
+  }
+
   public updateConfig(newConfig: Partial<PDFConfig>) {
     this.config = { ...this.config, ...newConfig };
+    if (newConfig.empresa?.logotipo) {
+      this.loadLogo();
+    }
   }
 
-  // Método para definir logotipo
   public setLogotipo(logotipoUrl: string) {
     this.config.empresa.logotipo = logotipoUrl;
+    this.loadLogo();
   }
 
-  // Método para definir dados da empresa
   public setEmpresa(empresa: Partial<PDFConfig['empresa']>) {
     this.config.empresa = { ...this.config.empresa, ...empresa };
   }
 
-  // Método para definir dados da obra
   public setObra(obra: PDFConfig['obra']) {
     this.config.obra = obra;
   }
@@ -133,49 +154,50 @@ export class PDFService {
   private addPremiumHeader(titulo: string, subtitulo?: string) {
     const { empresa, obra, design } = this.config;
     
-    // Fundo do cabeçalho com gradiente
+    // Cabeçalho com gradiente
     this.doc.setFillColor(design.corPrimaria);
-    this.doc.rect(0, 0, 210, 40, 'F');
+    this.doc.rect(0, 0, 210, 45, 'F');
     
-    // Logotipo (se existir)
-    if (empresa.logotipo) {
+    // Linha decorativa
+    this.doc.setFillColor(design.corSecundaria);
+    this.doc.rect(0, 45, 210, 3, 'F');
+    
+    // Logotipo (se disponível)
+    if (this.logoImage) {
       try {
-        // Aqui podes adicionar o logotipo
-        // this.doc.addImage(empresa.logotipo, 'PNG', 20, 10, 30, 20);
-        this.doc.setFontSize(16);
-        this.doc.setTextColor(255, 255, 255);
-        this.doc.text('🏢', 20, 25); // Placeholder para logotipo
+        const logoWidth = 25;
+        const logoHeight = (this.logoImage.height * logoWidth) / this.logoImage.width;
+        this.doc.addImage(this.logoImage, 'PNG', 20, 10, logoWidth, logoHeight);
       } catch (error) {
-        console.log('Logotipo não carregado, usando texto');
+        console.log('Erro ao adicionar logotipo:', error);
       }
     }
     
-    // Nome da empresa
-    this.doc.setFontSize(18);
+    // Informações da empresa
+    this.doc.setFontSize(16);
     this.doc.setTextColor(255, 255, 255);
     this.doc.text(empresa.nome, 60, 20);
     
-    // Dados da empresa
     this.doc.setFontSize(8);
-    this.doc.text(`${empresa.morada} | ${empresa.telefone} | ${empresa.email}`, 60, 28);
+    this.doc.text(`${empresa.morada} | ${empresa.telefone}`, 60, 28);
+    this.doc.text(`${empresa.email} | ${empresa.website}`, 60, 33);
     
-    // Título do relatório
-    this.doc.setFontSize(16);
+    // Título principal
+    this.doc.setFontSize(18);
     this.doc.setTextColor(255, 255, 255);
-    this.doc.text(titulo, 105, 35, { align: 'center' });
+    this.doc.text(titulo, 105, 40, { align: 'center' });
     
-    // Subtítulo (se existir)
     if (subtitulo) {
       this.doc.setFontSize(10);
-      this.doc.setTextColor(255, 255, 255);
-      this.doc.text(subtitulo, 105, 42, { align: 'center' });
+      this.doc.text(subtitulo, 105, 47, { align: 'center' });
     }
     
-    // Dados da obra (se existir)
+    // Informações da obra
     if (obra) {
       this.doc.setFontSize(8);
       this.doc.setTextColor(255, 255, 255);
-      this.doc.text(`Obra: ${obra.nome} | Ref: ${obra.referencia}`, 105, 48, { align: 'center' });
+      this.doc.text(`Obra: ${obra.nome} | Ref: ${obra.referencia}`, 105, 53, { align: 'center' });
+      this.doc.text(`Cliente: ${obra.cliente} | Local: ${obra.localizacao}`, 105, 58, { align: 'center' });
     }
   }
 
@@ -190,17 +212,13 @@ export class PDFService {
     for (let i = 1; i <= pageCount; i++) {
       this.doc.setPage(i);
       
-      // Linha separadora
+      // Linha decorativa no rodapé
       this.doc.setDrawColor(design.corPrimaria);
       this.doc.line(20, 280, 190, 280);
       
-      // Numeração da página
+      // Informações do rodapé
       this.doc.text(`Página ${i} de ${pageCount}`, 20, 290);
-      
-      // Data de geração
-      this.doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-PT')}`, 105, 290, { align: 'center' });
-      
-      // Dados da empresa
+      this.doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-PT')} às ${new Date().toLocaleTimeString('pt-PT')}`, 105, 290, { align: 'center' });
       this.doc.text(`${empresa.nome} - ${empresa.nif}`, 190, 290, { align: 'right' });
     }
   }
@@ -222,7 +240,6 @@ export class PDFService {
     
     this.doc.setFontSize(10);
     this.doc.setTextColor(255, 255, 255);
-    
     headers.forEach((header, index) => {
       const x = 22 + (index * 30);
       this.doc.text(header, x, startY + 6);
@@ -231,15 +248,15 @@ export class PDFService {
     // Dados da tabela
     this.doc.setTextColor(design.corTexto);
     this.doc.setFontSize(9);
-    
     let y = startY + 15;
+    
     data.forEach((row, index) => {
       if (y > 270) {
         this.doc.addPage();
         y = 50;
       }
       
-      // Linha alternada para melhor legibilidade
+      // Linhas alternadas
       if (index % 2 === 0) {
         this.doc.setFillColor(design.corFundo);
         this.doc.rect(20, y - 2, 170, 6, 'F');
@@ -274,12 +291,10 @@ export class PDFService {
       this.doc.setFillColor(design.corPrimaria);
       this.doc.rect(20, y, barWidth, barHeight, 'F');
       
-      // Label
+      // Texto
       this.doc.setFontSize(10);
       this.doc.setTextColor(design.corTexto);
       this.doc.text(item.label, 20, y + 8);
-      
-      // Valor
       this.doc.text(item.value.toString(), barWidth + 25, y + 8);
       
       y += 15;
@@ -292,11 +307,9 @@ export class PDFService {
   private addSignature(startY: number, nome: string, cargo: string) {
     const { design } = this.config;
     
-    // Linha para assinatura
     this.doc.setDrawColor(design.corTexto);
     this.doc.line(20, startY, 80, startY);
     
-    // Nome e cargo
     this.doc.setFontSize(10);
     this.doc.setTextColor(design.corTexto);
     this.doc.text(nome, 20, startY + 5);
