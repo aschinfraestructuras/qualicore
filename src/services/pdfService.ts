@@ -535,12 +535,40 @@ export class PDFService {
   // Métodos para relatórios de armaduras
   public async generateArmadurasExecutiveReport(armaduras: Armadura[]): Promise<void> {
     try {
+      console.log('🔍 Gerando relatório executivo com', armaduras.length, 'armaduras');
+      
       this.initDocument();
       this.addHeader('QUALICORE - Relatório Executivo de Armaduras');
       
-      const startY = 90;
-      let currentY = this.addEstatisticasArmaduras(armaduras, startY);
-      currentY = this.addRelatorioExecutivoArmaduras({ armaduras }, currentY);
+      this.doc.setFontSize(16);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Relatório Executivo de Armaduras', 20, 60);
+      
+      this.doc.setFontSize(12);
+      this.doc.setTextColor(107, 114, 128);
+      this.doc.text(`Total de Armaduras: ${armaduras.length}`, 20, 80);
+      
+      // Estatísticas básicas
+      const aprovados = armaduras.filter(a => a.estado === 'aprovado').length;
+      const reprovados = armaduras.filter(a => a.estado === 'reprovado').length;
+      const emAnalise = armaduras.filter(a => a.estado === 'em_analise').length;
+      
+      this.doc.text(`Aprovados: ${aprovados}`, 20, 100);
+      this.doc.text(`Reprovados: ${reprovados}`, 20, 115);
+      this.doc.text(`Em Análise: ${emAnalise}`, 20, 130);
+      
+      // Lista das primeiras 5 armaduras
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(31, 41, 55);
+      this.doc.text('Primeiras Armaduras:', 20, 160);
+      
+      this.doc.setFontSize(10);
+      this.doc.setTextColor(107, 114, 128);
+      
+      armaduras.slice(0, 5).forEach((armadura, index) => {
+        const y = 175 + (index * 12);
+        this.doc.text(`${armadura.codigo} - ${armadura.tipo} - ${armadura.estado}`, 25, y);
+      });
       
       this.addFooter();
       this.save('relatorio-executivo-armaduras.pdf');
