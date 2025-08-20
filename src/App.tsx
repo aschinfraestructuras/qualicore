@@ -82,22 +82,14 @@ function App() {
     // Verificar autenticação ao carregar a app
     useAuthStore.getState().checkUser();
     
-    // Setup security and monitoring
-    SecurityService.setupSessionTimeout(30); // 30 minutos
-    ErrorTrackingService.setupGlobalErrorHandler();
-    PerformanceMonitor.setupPerformanceMonitoring();
-    
-    // Setup performance optimizations
-    PerformanceOptimizer.setupAutoOptimizations();
-    
-    // Initialize advanced analytics
-    PerformanceAnalyzer.initialize();
-    
-    // Setup real-time updates
-    RealTimeUpdates.setupAutoRefresh(30000); // 30 segundos
-    
-    // Initialize UI enhancements
-    UIEnhancements.initialize();
+    // Setup básico apenas - serviços avançados desativados temporariamente
+    // SecurityService.setupSessionTimeout(30); // 30 minutos
+    // ErrorTrackingService.setupGlobalErrorHandler();
+    // PerformanceMonitor.setupPerformanceMonitoring();
+    // PerformanceOptimizer.setupAutoOptimizations();
+    // PerformanceAnalyzer.initialize();
+    // RealTimeUpdates.setupAutoRefresh(30000); // 30 segundos
+    // UIEnhancements.initialize();
   }, []);
 
   if (loading) {

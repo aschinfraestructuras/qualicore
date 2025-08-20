@@ -110,34 +110,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ loading: true });
 
-      // Primeiro, verificar se há uma sessão ativa
+      // Verificar sessão de forma mais simples
       const {
         data: { session },
-        error: sessionError,
+        error,
       } = await supabase.auth.getSession();
 
-      if (sessionError) {
-        console.error("Erro ao verificar sessão:", sessionError);
+      if (error) {
+        console.log("Sem sessão ativa - utilizador não autenticado");
         set({ user: null, loading: false });
         return;
       }
 
       if (session?.user) {
+        console.log("Utilizador autenticado:", session.user.email);
         set({ user: session.user, loading: false });
       } else {
-        // Se não há sessão, tentar obter usuário
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
-
-        if (error) {
-          console.error("Erro ao verificar usuário:", error);
-          set({ user: null, loading: false });
-          return;
-        }
-
-        set({ user, loading: false });
+        console.log("Nenhuma sessão ativa");
+        set({ user: null, loading: false });
       }
 
       // Configurar listener para mudanças de autenticação
@@ -146,7 +136,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ user: session?.user || null, loading: false });
       });
     } catch (error) {
-      console.error("Erro ao verificar usuário:", error);
+      console.log("Erro ao verificar utilizador (não crítico):", error);
       set({ user: null, loading: false });
     }
   },
