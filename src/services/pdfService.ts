@@ -115,13 +115,29 @@ export class PDFService {
       try {
         this.logoImage = new Image();
         this.logoImage.crossOrigin = 'anonymous';
-        this.logoImage.src = this.config.empresa.logotipo;
+        
+        // Se for base64, usar diretamente
+        if (this.config.empresa.logotipo.startsWith('data:')) {
+          this.logoImage.src = this.config.empresa.logotipo;
+        } else {
+          // Se for URL, tentar carregar
+          this.logoImage.src = this.config.empresa.logotipo;
+        }
+        
         await new Promise((resolve, reject) => {
-          this.logoImage!.onload = resolve;
-          this.logoImage!.onerror = reject;
+          this.logoImage!.onload = () => {
+            console.log('Logótipo carregado com sucesso:', this.logoImage?.width, 'x', this.logoImage?.height);
+            resolve(true);
+          };
+          this.logoImage!.onerror = (error) => {
+            console.log('Erro ao carregar logotipo:', error);
+            this.logoImage = undefined;
+            reject(error);
+          };
         });
       } catch (error) {
         console.log('Erro ao carregar logotipo:', error);
+        this.logoImage = undefined;
       }
     }
   }
@@ -154,50 +170,65 @@ export class PDFService {
   private addPremiumHeader(titulo: string, subtitulo?: string) {
     const { empresa, obra, design } = this.config;
     
-    // Cabeçalho com gradiente
+    // Gradiente de fundo premium (simulado com múltiplas camadas)
     this.doc.setFillColor(design.corPrimaria);
-    this.doc.rect(0, 0, 210, 45, 'F');
+    this.doc.rect(0, 0, 210, 60, 'F');
     
-    // Linha decorativa
+    // Linha decorativa superior
     this.doc.setFillColor(design.corSecundaria);
-    this.doc.rect(0, 45, 210, 3, 'F');
+    this.doc.rect(0, 0, 210, 2, 'F');
     
-    // Logotipo (se disponível)
+    // Linha decorativa inferior
+    this.doc.setFillColor(design.corSecundaria);
+    this.doc.rect(0, 58, 210, 2, 'F');
+    
+    // Logotipo (se disponível) - Melhorado
     if (this.logoImage) {
       try {
-        const logoWidth = 25;
+        const logoWidth = 30;
         const logoHeight = (this.logoImage.height * logoWidth) / this.logoImage.width;
-        this.doc.addImage(this.logoImage, 'PNG', 20, 10, logoWidth, logoHeight);
+        const logoY = 15;
+        this.doc.addImage(this.logoImage, 'PNG', 15, logoY, logoWidth, logoHeight);
       } catch (error) {
         console.log('Erro ao adicionar logotipo:', error);
+        // Fallback: texto da empresa
+        this.doc.setFontSize(20);
+        this.doc.setTextColor(255, 255, 255);
+        this.doc.text(empresa.nome, 15, 30);
       }
+    } else {
+      // Fallback: texto da empresa
+      this.doc.setFontSize(20);
+      this.doc.setTextColor(255, 255, 255);
+      this.doc.text(empresa.nome, 15, 30);
     }
     
-    // Informações da empresa
-    this.doc.setFontSize(16);
+    // Informações da empresa (lado direito)
+    this.doc.setFontSize(10);
     this.doc.setTextColor(255, 255, 255);
-    this.doc.text(empresa.nome, 60, 20);
+    this.doc.text(empresa.morada, 160, 20, { align: 'right' });
+    this.doc.text(empresa.telefone, 160, 25, { align: 'right' });
+    this.doc.text(empresa.email, 160, 30, { align: 'right' });
+    if (empresa.website) {
+      this.doc.text(empresa.website, 160, 35, { align: 'right' });
+    }
     
-    this.doc.setFontSize(8);
-    this.doc.text(`${empresa.morada} | ${empresa.telefone}`, 60, 28);
-    this.doc.text(`${empresa.email} | ${empresa.website}`, 60, 33);
-    
-    // Título principal
-    this.doc.setFontSize(18);
+    // Título principal (centro)
+    this.doc.setFontSize(22);
     this.doc.setTextColor(255, 255, 255);
-    this.doc.text(titulo, 105, 40, { align: 'center' });
+    this.doc.text(titulo, 105, 45, { align: 'center' });
     
     if (subtitulo) {
-      this.doc.setFontSize(10);
-      this.doc.text(subtitulo, 105, 47, { align: 'center' });
+      this.doc.setFontSize(12);
+      this.doc.text(subtitulo, 105, 52, { align: 'center' });
     }
     
-    // Informações da obra
+    // Informações da obra (centro inferior)
     if (obra) {
-      this.doc.setFontSize(8);
+      this.doc.setFontSize(9);
       this.doc.setTextColor(255, 255, 255);
-      this.doc.text(`Obra: ${obra.nome} | Ref: ${obra.referencia}`, 105, 53, { align: 'center' });
-      this.doc.text(`Cliente: ${obra.cliente} | Local: ${obra.localizacao}`, 105, 58, { align: 'center' });
+      this.doc.text(`Obra: ${obra.nome} | Ref: ${obra.referencia}`, 105, 58, { align: 'center' });
+      this.doc.text(`Cliente: ${obra.cliente} | Local: ${obra.localizacao}`, 105, 62, { align: 'center' });
     }
   }
 
@@ -206,20 +237,27 @@ export class PDFService {
     const { empresa, design } = this.config;
     const pageCount = (this.doc as any).getNumberOfPages();
     
-    this.doc.setFontSize(8);
-    this.doc.setTextColor(design.corTexto);
-    
     for (let i = 1; i <= pageCount; i++) {
       this.doc.setPage(i);
       
-      // Linha decorativa no rodapé
-      this.doc.setDrawColor(design.corPrimaria);
-      this.doc.line(20, 280, 190, 280);
+      // Fundo do rodapé
+      this.doc.setFillColor(design.corPrimaria);
+      this.doc.rect(0, 280, 210, 20, 'F');
+      
+      // Linha decorativa superior
+      this.doc.setFillColor(design.corSecundaria);
+      this.doc.rect(0, 280, 210, 2, 'F');
       
       // Informações do rodapé
+      this.doc.setFontSize(9);
+      this.doc.setTextColor(255, 255, 255);
       this.doc.text(`Página ${i} de ${pageCount}`, 20, 290);
       this.doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-PT')} às ${new Date().toLocaleTimeString('pt-PT')}`, 105, 290, { align: 'center' });
       this.doc.text(`${empresa.nome} - ${empresa.nif}`, 190, 290, { align: 'right' });
+      
+      // Linha decorativa inferior
+      this.doc.setFillColor(design.corSecundaria);
+      this.doc.rect(0, 298, 210, 2, 'F');
     }
   }
 
@@ -228,49 +266,36 @@ export class PDFService {
     const { design } = this.config;
     
     if (title) {
-      this.doc.setFontSize(14);
+      this.doc.setFontSize(16);
       this.doc.setTextColor(design.corTexto);
+      this.doc.setFont(design.fonteTitulo, 'bold');
       this.doc.text(title, 20, startY);
-      startY += 10;
+      startY += 12;
     }
     
-    // Cabeçalho da tabela
-    this.doc.setFillColor(design.corPrimaria);
-    this.doc.rect(20, startY, 170, 8, 'F');
-    
-    this.doc.setFontSize(10);
-    this.doc.setTextColor(255, 255, 255);
-    headers.forEach((header, index) => {
-      const x = 22 + (index * 30);
-      this.doc.text(header, x, startY + 6);
+    // Usar autoTable para tabelas profissionais
+    autoTable(this.doc, {
+      startY: startY,
+      head: [headers],
+      body: data,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [59, 130, 246], // Azul padrão
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 11
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252]
+      },
+      styles: {
+        fontSize: 10,
+        cellPadding: 5
+      },
+      margin: { left: 20, right: 20 }
     });
     
-    // Dados da tabela
-    this.doc.setTextColor(design.corTexto);
-    this.doc.setFontSize(9);
-    let y = startY + 15;
-    
-    data.forEach((row, index) => {
-      if (y > 270) {
-        this.doc.addPage();
-        y = 50;
-      }
-      
-      // Linhas alternadas
-      if (index % 2 === 0) {
-        this.doc.setFillColor(design.corFundo);
-        this.doc.rect(20, y - 2, 170, 6, 'F');
-      }
-      
-      row.forEach((cell, cellIndex) => {
-        const x = 22 + (cellIndex * 30);
-        this.doc.text(cell?.toString() || '-', x, y);
-      });
-      
-      y += 8;
-    });
-    
-    return y + 10;
+    return (this.doc as any).lastAutoTable.finalY + 15;
   }
 
   // Gráfico de barras simples
