@@ -47,11 +47,11 @@ export class PDFService {
   private doc: jsPDF;
 
   constructor() {
-    this.doc = new jsPDF();
+    this.doc = new jsPDF('portrait', 'mm', 'a4');
   }
 
   private initDocument() {
-    this.doc = new jsPDF();
+    this.doc = new jsPDF('portrait', 'mm', 'a4');
   }
 
   private addProfessionalHeader(titulo: string, subtitulo?: string) {
@@ -88,13 +88,13 @@ export class PDFService {
   private addHeader(titulo: string) {
     this.doc.setFontSize(20);
     this.doc.setTextColor(59, 130, 246);
-    this.doc.text(titulo, 20, 40);
+    this.doc.text(titulo, 105, 40, { align: 'center' }); // Centralizado
   }
 
   private addFooter() {
     this.doc.setFontSize(10);
     this.doc.setTextColor(107, 114, 128);
-    this.doc.text(`Gerado em: ${new Date().toLocaleDateString()}`, 20, 290);
+    this.doc.text(`Gerado em: ${new Date().toLocaleDateString()}`, 105, 290, { align: 'center' }); // Centralizado
   }
 
   private getTipoTextMaterial(tipo: string): string {
@@ -540,33 +540,33 @@ export class PDFService {
       this.initDocument();
       this.addHeader('QUALICORE - Relatório Executivo de Armaduras');
       
-      this.doc.setFontSize(16);
+      this.doc.setFontSize(20);
       this.doc.setTextColor(31, 41, 55);
       this.doc.text('Relatório Executivo de Armaduras', 20, 60);
       
-      this.doc.setFontSize(12);
+      this.doc.setFontSize(16);
       this.doc.setTextColor(107, 114, 128);
-      this.doc.text(`Total de Armaduras: ${armaduras.length}`, 20, 80);
+      this.doc.text(`Total de Armaduras: ${armaduras.length}`, 20, 85);
       
       // Estatísticas básicas
       const aprovados = armaduras.filter(a => a.estado === 'aprovado').length;
       const reprovados = armaduras.filter(a => a.estado === 'reprovado').length;
       const emAnalise = armaduras.filter(a => a.estado === 'em_analise').length;
       
-      this.doc.text(`Aprovados: ${aprovados}`, 20, 100);
-      this.doc.text(`Reprovados: ${reprovados}`, 20, 115);
-      this.doc.text(`Em Análise: ${emAnalise}`, 20, 130);
+      this.doc.text(`Aprovados: ${aprovados}`, 20, 110);
+      this.doc.text(`Reprovados: ${reprovados}`, 20, 130);
+      this.doc.text(`Em Análise: ${emAnalise}`, 20, 150);
       
       // Lista das primeiras 5 armaduras
-      this.doc.setFontSize(14);
+      this.doc.setFontSize(18);
       this.doc.setTextColor(31, 41, 55);
-      this.doc.text('Primeiras Armaduras:', 20, 160);
+      this.doc.text('Primeiras Armaduras:', 20, 180);
       
-      this.doc.setFontSize(10);
+      this.doc.setFontSize(14);
       this.doc.setTextColor(107, 114, 128);
       
       armaduras.slice(0, 5).forEach((armadura, index) => {
-        const y = 175 + (index * 12);
+        const y = 200 + (index * 20);
         this.doc.text(`${armadura.codigo} - ${armadura.tipo} - ${armadura.estado}`, 25, y);
       });
       
@@ -586,7 +586,7 @@ export class PDFService {
       
       const startY = 90;
       let currentY = this.addFiltrosArmaduras(filtros, startY);
-      currentY = this.addRelatorioFiltradoArmaduras({ armaduras }, currentY);
+      currentY = this.addTabelaArmaduras(armaduras, currentY);
       
       this.addFooter();
       this.save('relatorio-filtrado-armaduras.pdf');
@@ -604,6 +604,7 @@ export class PDFService {
       
       const startY = 90;
       let currentY = this.addRelatorioComparativoArmaduras({ armaduras }, startY);
+      currentY = this.addTabelaArmaduras(armaduras, currentY);
       
       this.addFooter();
       this.save('relatorio-comparativo-armaduras.pdf');
@@ -621,6 +622,7 @@ export class PDFService {
       
       const startY = 90;
       let currentY = this.addRelatorioIndividualArmadura({ armaduras }, startY);
+      currentY = this.addTabelaArmaduras(armaduras, currentY);
       
       this.addFooter();
       this.save('relatorio-individual-armadura.pdf');
@@ -767,18 +769,19 @@ export class PDFService {
     this.doc.setTextColor(31, 41, 55);
     this.doc.text('Dados das Armaduras', 20, startY);
     
-    // Cabeçalho da tabela
+    // Cabeçalho da tabela - usando largura completa
     this.doc.setFontSize(10);
     this.doc.setTextColor(255, 255, 255);
     this.doc.setFillColor(59, 130, 246);
-    this.doc.rect(20, startY + 10, 170, 8, 'F');
+    this.doc.rect(20, startY + 10, 570, 8, 'F'); // Largura completa: 570
     
     this.doc.text('Código', 22, startY + 16);
-    this.doc.text('Tipo', 45, startY + 16);
-    this.doc.text('Diâmetro', 70, startY + 16);
-    this.doc.text('Estado', 95, startY + 16);
-    this.doc.text('Fabricante', 120, startY + 16);
-    this.doc.text('Peso (kg)', 155, startY + 16);
+    this.doc.text('Tipo', 80, startY + 16);
+    this.doc.text('Diâmetro', 140, startY + 16);
+    this.doc.text('Estado', 200, startY + 16);
+    this.doc.text('Fabricante', 280, startY + 16);
+    this.doc.text('Peso (kg)', 400, startY + 16);
+    this.doc.text('Zona', 480, startY + 16);
     
     // Dados da tabela
     this.doc.setTextColor(31, 41, 55);
@@ -792,11 +795,12 @@ export class PDFService {
       }
       
       this.doc.text(armadura.codigo, 22, y);
-      this.doc.text(armadura.tipo, 45, y);
-      this.doc.text(`${armadura.diametro}mm`, 70, y);
-      this.doc.text(armadura.estado, 95, y);
-      this.doc.text(armadura.fabricante || '-', 120, y);
-      this.doc.text(armadura.peso_total?.toString() || '-', 155, y);
+      this.doc.text(armadura.tipo, 80, y);
+      this.doc.text(`${armadura.diametro}mm`, 140, y);
+      this.doc.text(armadura.estado, 200, y);
+      this.doc.text(armadura.fabricante || '-', 280, y);
+      this.doc.text(armadura.peso_total?.toString() || '-', 400, y);
+      this.doc.text(armadura.zona || '-', 480, y);
       
       y += 6;
     });
