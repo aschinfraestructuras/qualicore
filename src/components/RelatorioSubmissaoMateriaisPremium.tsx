@@ -97,19 +97,24 @@ export default function RelatorioSubmissaoMateriaisPremium({
       const pdfService = new PDFService();
       const submissoesParaRelatorio = getSubmissoesParaRelatorio();
       
-      if (typeof pdfService.gerarRelatorioSubmissaoMateriais === 'function') {
-        await pdfService.gerarRelatorioSubmissaoMateriais({
-          tipo: tipoRelatorio,
-          submissoes: submissoesParaRelatorio,
-          filtros: Object.keys(filtros).filter(key => filtros[key as keyof typeof filtros] !== ''),
-          titulo: `Relatório de Submissões de Materiais - ${tipoRelatorio.toUpperCase()}`,
-          incluirEstatisticas: true,
-          incluirGraficos: true
-        });
-        toast.success('Relatório gerado com sucesso!');
-      } else {
-        toast.error('Método de relatório não disponível');
+      switch (tipoRelatorio) {
+        case 'executivo':
+          await pdfService.generateSubmissaoMateriaisPerformanceReport(submissoesParaRelatorio);
+          break;
+        case 'comparativo':
+          await pdfService.generateSubmissaoMateriaisTrendsReport(submissoesParaRelatorio);
+          break;
+        case 'individual':
+          // Para relatórios individuais, gerar um relatório de performance
+          await pdfService.generateSubmissaoMateriaisPerformanceReport(submissoesParaRelatorio);
+          break;
+        case 'filtrado':
+        default:
+          await pdfService.generateSubmissaoMateriaisAnomaliesReport(submissoesParaRelatorio);
+          break;
       }
+      
+      toast.success('Relatório gerado com sucesso!');
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);
       toast.error('Erro ao gerar relatório');

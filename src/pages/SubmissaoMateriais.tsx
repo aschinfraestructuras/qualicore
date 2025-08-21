@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Search, Filter, Download, Plus, Package, AlertCircle, CheckCircle, Clock, Star, Eye, Edit, Trash2, FileText, Calendar, Tag, Building, Zap, Shield, Layers, Settings, Bell, ChevronDown, ChevronUp, X, TrendingUp, TrendingDown, Users, Target, AlertTriangle, CheckSquare, Clock as ClockIcon, DollarSign, CalendarDays
+  Search, Filter, Download, Plus, Package, AlertCircle, CheckCircle, Clock, Star, Eye, Edit, Trash2, FileText, Calendar, Tag, Building, Zap, Shield, Layers, Settings, Bell, ChevronDown, ChevronUp, X, TrendingUp, TrendingDown, Users, Target, AlertTriangle, CheckSquare, Clock as ClockIcon, DollarSign, CalendarDays, BarChart3, RefreshCw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { submissaoMateriaisAPI } from '../lib/supabase-api/submissaoMateriaisAPI';
+import { submissaoMateriaisCache } from '../lib/submissao-materiais-cache';
 import SubmissaoMateriaisForms from '../components/SubmissaoMateriaisForms';
+import { SubmissaoMateriaisDashboard } from '../components/SubmissaoMateriaisDashboard';
 import RelatorioSubmissaoMateriaisPremium from '../components/RelatorioSubmissaoMateriaisPremium';
 import Modal from '../components/Modal';
 import type {
@@ -33,6 +35,7 @@ export default function SubmissaoMateriais() {
   const [showRelatorio, setShowRelatorio] = useState(false);
   const [tipoRelatorio, setTipoRelatorio] = useState('filtrado');
   const [submissoesSelecionadas, setSubmissoesSelecionadas] = useState<SubmissaoMaterial[]>([]);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   useEffect(() => {
     loadSubmissoes();
@@ -47,10 +50,11 @@ export default function SubmissaoMateriais() {
     }
   }, [searchTerm, filtros]);
 
-  const loadSubmissoes = async () => {
+  const loadSubmissoes = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      const data = await submissaoMateriaisAPI.submissoes.getAll();
+      const data = await submissaoMateriaisCache.getAllSubmissoes(forceRefresh);
+      console.log("📋 Submissões carregadas (cache):", data);
       setSubmissoes(data);
     } catch (error) {
       console.error('Erro ao carregar submissões:', error);
@@ -167,7 +171,7 @@ export default function SubmissaoMateriais() {
   };
 
   const handleFormSuccess = () => {
-    loadSubmissoes();
+    loadSubmissoes(true); // Force refresh
     loadEstatisticas();
   };
 
@@ -204,6 +208,13 @@ export default function SubmissaoMateriais() {
             </div>
             <div className="flex items-center space-x-3">
               <button
+                onClick={() => setShowDashboard(!showDashboard)}
+                className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 flex items-center space-x-2"
+              >
+                <BarChart3 className="h-4 w-4" />
+                <span>{showDashboard ? 'Voltar à Lista' : 'Dashboard'}</span>
+              </button>
+              <button
                 onClick={() => handleExport('csv')}
                 className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center space-x-2"
               >
@@ -226,6 +237,18 @@ export default function SubmissaoMateriais() {
               >
                 <Plus className="h-4 w-4" />
                 <span>Nova Submissão</span>
+              </button>
+              <button
+                onClick={() => {
+                  submissaoMateriaisCache.clear();
+                  toast.success("Cache limpo com sucesso!");
+                  loadSubmissoes(true);
+                }}
+                className="btn btn-outline flex items-center space-x-2"
+                title="Limpar cache e recarregar dados"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span>Limpar Cache</span>
               </button>
             </div>
           </div>
@@ -306,8 +329,24 @@ export default function SubmissaoMateriais() {
         </div>
       )}
 
-      {/* Filtros e Pesquisa */}
-      <div className="px-4 sm:px-6 lg:px-8 pb-6">
+      {/* Dashboard ou Lista */}
+      {showDashboard ? (
+        <div className="px-4 sm:px-6 lg:px-8 pb-6">
+          <SubmissaoMateriaisDashboard
+            submissoes={submissoes}
+            onSearch={(query, options) => {
+              setSearchTerm(query);
+              // Implementar lógica de pesquisa avançada se necessário
+            }}
+            onFilterChange={(filters) => {
+              setFiltros(filters);
+            }}
+          />
+        </div>
+      ) : (
+        <>
+          {/* Filtros e Pesquisa */}
+          <div className="px-4 sm:px-6 lg:px-8 pb-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
             <div className="flex-1 max-w-lg">
@@ -716,6 +755,9 @@ export default function SubmissaoMateriais() {
             </div>
           </motion.div>
                  </div>
+       )}
+
+         </>
        )}
 
        {/* Form Modal */}

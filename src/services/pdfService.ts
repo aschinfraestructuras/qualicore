@@ -1204,6 +1204,332 @@ export class PDFService {
     }
   }
 
+  // ===== RELATÓRIOS SUBMISSÃO DE MATERIAIS =====
+  
+  public async generateSubmissaoMateriaisPerformanceReport(submissoes: any[]): Promise<void> {
+    try {
+      this.addPremiumHeader('Relatório de Performance', 'Submissão de Materiais');
+      
+      let currentY = 100;
+      
+      // Estatísticas gerais
+      const total = submissoes.length;
+      const aprovadas = submissoes.filter(s => s.estado === 'aprovado').length;
+      const rejeitadas = submissoes.filter(s => s.estado === 'rejeitado').length;
+      const pendentes = submissoes.filter(s => s.estado === 'pendente' || s.estado === 'submetido').length;
+      const emRevisao = submissoes.filter(s => s.estado === 'em_revisao' || s.estado === 'aguardando_aprovacao').length;
+      const urgentes = submissoes.filter(s => s.urgencia === 'urgente').length;
+      const criticas = submissoes.filter(s => s.prioridade === 'critica').length;
+      
+      const taxaAprovacao = total > 0 ? (aprovadas / total) * 100 : 0;
+      
+      // Calcular tempo médio de aprovação
+      const aprovadasComData = submissoes.filter(s => s.estado === 'aprovado' && s.data_aprovacao && s.data_submissao);
+      const tempoMedioAprovacao = aprovadasComData.length > 0 
+        ? aprovadasComData.reduce((acc, s) => {
+            const dataSubmissao = new Date(s.data_submissao);
+            const dataAprovacao = new Date(s.data_aprovacao);
+            return acc + (dataAprovacao.getTime() - dataSubmissao.getTime()) / (1000 * 60 * 60 * 24);
+          }, 0) / aprovadasComData.length
+        : 0;
+      
+      // Impacto total
+      const impactoCustoTotal = submissoes.reduce((acc, s) => acc + (s.impacto_custo || 0), 0);
+      const impactoPrazoTotal = submissoes.reduce((acc, s) => acc + (s.impacto_prazo || 0), 0);
+      
+      // Análise por tipo
+      const tipoStats = submissoes.reduce((acc, s) => {
+        acc[s.tipo_material] = (acc[s.tipo_material] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const chartData = Object.entries(tipoStats).map(([tipo, count]) => ({
+        label: tipo,
+        value: count as number
+      }));
+      
+      // Adicionar estatísticas
+      this.doc.setFontSize(16);
+      this.doc.setFont(undefined, 'bold');
+      this.doc.text('Estatísticas de Performance', 50, currentY);
+      currentY += 30;
+      
+      this.doc.setFontSize(12);
+      this.doc.setFont(undefined, 'normal');
+      
+      const stats = [
+        ['Total de Submissões', total.toString()],
+        ['Aprovadas', `${aprovadas} (${taxaAprovacao.toFixed(1)}%)`],
+        ['Rejeitadas', rejeitadas.toString()],
+        ['Pendentes', pendentes.toString()],
+        ['Em Revisão', emRevisao.toString()],
+        ['Urgentes', urgentes.toString()],
+        ['Críticas', criticas.toString()],
+        ['Tempo Médio Aprovação', `${tempoMedioAprovacao.toFixed(1)} dias`],
+        ['Impacto Total Custo', `${impactoCustoTotal.toLocaleString('pt-PT')}€`],
+        ['Impacto Total Prazo', `${impactoPrazoTotal} dias`]
+      ];
+      
+      this.addTable(stats, 50, currentY, 500);
+      currentY += stats.length * 20 + 40;
+      
+      // Gráfico de distribuição por tipo
+      if (chartData.length > 0) {
+        this.doc.setFontSize(14);
+        this.doc.setFont(undefined, 'bold');
+        this.doc.text('Distribuição por Tipo de Material', 50, currentY);
+        currentY += 30;
+        
+        this.addPieChart(chartData, 50, currentY, 200);
+        currentY += 150;
+      }
+      
+      // KPIs principais
+      this.doc.setFontSize(14);
+      this.doc.setFont(undefined, 'bold');
+      this.doc.text('KPIs Principais', 50, currentY);
+      currentY += 30;
+      
+      this.doc.setFontSize(12);
+      this.doc.setFont(undefined, 'normal');
+      
+      const kpis = [
+        ['Taxa de Aprovação', `${taxaAprovacao.toFixed(1)}%`],
+        ['Tempo Médio de Aprovação', `${tempoMedioAprovacao.toFixed(1)} dias`],
+        ['Taxa de Urgência', `${((urgentes / total) * 100).toFixed(1)}%`],
+        ['Taxa de Críticas', `${((criticas / total) * 100).toFixed(1)}%`]
+      ];
+      
+      this.addTable(kpis, 50, currentY, 300);
+      
+      this.addFooter();
+      this.doc.save('relatorio_performance_submissao_materiais.pdf');
+      
+    } catch (error) {
+      console.error('Erro ao gerar relatório de performance:', error);
+      throw error;
+    }
+  }
+  
+  public async generateSubmissaoMateriaisTrendsReport(submissoes: any[]): Promise<void> {
+    try {
+      this.addPremiumHeader('Análise de Tendências', 'Submissão de Materiais');
+      
+      let currentY = 100;
+      
+      // Calcular tendências mensais
+      const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      const trends = [];
+      
+      for (let i = 5; i >= 0; i--) {
+        const monthIndex = new Date().getMonth() - i;
+        const monthName = months[monthIndex < 0 ? monthIndex + 12 : monthIndex];
+        
+        const monthSubmissoes = submissoes.filter(s => {
+          const submissaoDate = new Date(s.data_submissao);
+          return submissaoDate.getMonth() === monthIndex && submissaoDate.getFullYear() === new Date().getFullYear();
+        });
+        
+        const total = monthSubmissoes.length;
+        const aprovadas = monthSubmissoes.filter(s => s.estado === 'aprovado').length;
+        const pendentes = monthSubmissoes.filter(s => s.estado === 'pendente' || s.estado === 'submetido').length;
+        
+        trends.push({
+          mes: monthName,
+          total,
+          aprovadas,
+          pendentes,
+          taxaAprovacao: total > 0 ? (aprovadas / total) * 100 : 0
+        });
+      }
+      
+      // Adicionar análise de tendências
+      this.doc.setFontSize(16);
+      this.doc.setFont(undefined, 'bold');
+      this.doc.text('Análise de Tendências Mensais', 50, currentY);
+      currentY += 30;
+      
+      this.doc.setFontSize(12);
+      this.doc.setFont(undefined, 'normal');
+      
+      const trendData = trends.map(t => [
+        t.mes,
+        t.total.toString(),
+        t.aprovadas.toString(),
+        t.pendentes.toString(),
+        `${t.taxaAprovacao.toFixed(1)}%`
+      ]);
+      
+      this.addTable([
+        ['Mês', 'Total', 'Aprovadas', 'Pendentes', 'Taxa Aprovação'],
+        ...trendData
+      ], 50, currentY, 500);
+      currentY += (trendData.length + 1) * 20 + 40;
+      
+      // Análise de padrões
+      this.doc.setFontSize(14);
+      this.doc.setFont(undefined, 'bold');
+      this.doc.text('Análise de Padrões', 50, currentY);
+      currentY += 30;
+      
+      this.doc.setFontSize(12);
+      this.doc.setFont(undefined, 'normal');
+      
+      const avgMonthly = trends.reduce((acc, t) => acc + t.total, 0) / trends.length;
+      const avgApprovalRate = trends.reduce((acc, t) => acc + t.taxaAprovacao, 0) / trends.length;
+      
+      const patterns = [
+        ['Média Mensal de Submissões', avgMonthly.toFixed(1)],
+        ['Taxa Média de Aprovação', `${avgApprovalRate.toFixed(1)}%`],
+        ['Mês com Mais Submissões', trends.reduce((max, t) => t.total > max.total ? t : max).mes],
+        ['Mês com Menos Submissões', trends.reduce((min, t) => t.total < min.total ? t : min).mes]
+      ];
+      
+      this.addTable(patterns, 50, currentY, 400);
+      
+      this.addFooter();
+      this.doc.save('relatorio_tendencias_submissao_materiais.pdf');
+      
+    } catch (error) {
+      console.error('Erro ao gerar relatório de tendências:', error);
+      throw error;
+    }
+  }
+  
+  public async generateSubmissaoMateriaisAnomaliesReport(submissoes: any[]): Promise<void> {
+    try {
+      this.addPremiumHeader('Relatório de Anomalias', 'Submissão de Materiais');
+      
+      let currentY = 100;
+      
+      // Deteção de anomalias
+      const anomalias = [];
+      
+      // Submissões urgentes há muito tempo
+      const urgentesAntigas = submissoes.filter(s => {
+        const dataSubmissao = new Date(s.data_submissao);
+        const daysDiff = (new Date().getTime() - dataSubmissao.getTime()) / (1000 * 3600 * 24);
+        return s.urgencia === 'urgente' && daysDiff > 7 && s.estado !== 'aprovado';
+      });
+      
+      urgentesAntigas.forEach(s => {
+        anomalias.push({
+          tipo: 'Urgente Antiga',
+          descricao: `Submissão urgente há ${Math.floor((new Date().getTime() - new Date(s.data_submissao).getTime()) / (1000 * 3600 * 24))} dias`,
+          prioridade: 'alta',
+          submissao: s
+        });
+      });
+      
+      // Submissões com alto impacto
+      const altoImpacto = submissoes.filter(s => {
+        return (s.impacto_custo && s.impacto_custo > 50000) || (s.impacto_prazo && s.impacto_prazo > 30);
+      });
+      
+      altoImpacto.forEach(s => {
+        anomalias.push({
+          tipo: 'Alto Impacto',
+          descricao: `Impacto: Custo ${s.impacto_custo || 0}€, Prazo ${s.impacto_prazo || 0} dias`,
+          prioridade: 'alta',
+          submissao: s
+        });
+      });
+      
+      // Submissões sem documentação
+      const semDocumentacao = submissoes.filter(s => {
+        return !s.documentos_anexos || s.documentos_anexos.length === 0;
+      });
+      
+      semDocumentacao.forEach(s => {
+        anomalias.push({
+          tipo: 'Sem Documentação',
+          descricao: 'Submissão sem documentos anexos',
+          prioridade: 'media',
+          submissao: s
+        });
+      });
+      
+      // Adicionar resumo de anomalias
+      this.doc.setFontSize(16);
+      this.doc.setFont(undefined, 'bold');
+      this.doc.text('Resumo de Anomalias Detetadas', 50, currentY);
+      currentY += 30;
+      
+      this.doc.setFontSize(12);
+      this.doc.setFont(undefined, 'normal');
+      
+      const resumo = [
+        ['Tipo de Anomalia', 'Quantidade', 'Prioridade'],
+        ['Urgentes Antigas', urgentesAntigas.length.toString(), 'Alta'],
+        ['Alto Impacto', altoImpacto.length.toString(), 'Alta'],
+        ['Sem Documentação', semDocumentacao.length.toString(), 'Média']
+      ];
+      
+      this.addTable(resumo, 50, currentY, 400);
+      currentY += (resumo.length) * 20 + 40;
+      
+      // Detalhes das anomalias
+      if (anomalias.length > 0) {
+        this.doc.setFontSize(14);
+        this.doc.setFont(undefined, 'bold');
+        this.doc.text('Detalhes das Anomalias', 50, currentY);
+        currentY += 30;
+        
+        this.doc.setFontSize(10);
+        this.doc.setFont(undefined, 'normal');
+        
+        anomalias.forEach((anomalia, index) => {
+          if (currentY > 700) {
+            this.doc.addPage();
+            currentY = 50;
+          }
+          
+          this.doc.setFont(undefined, 'bold');
+          this.doc.text(`${index + 1}. ${anomalia.tipo}`, 50, currentY);
+          currentY += 15;
+          
+          this.doc.setFont(undefined, 'normal');
+          this.doc.text(`Descrição: ${anomalia.descricao}`, 60, currentY);
+          currentY += 15;
+          
+          this.doc.text(`Submissão: ${anomalia.submissao.codigo} - ${anomalia.submissao.titulo}`, 60, currentY);
+          currentY += 15;
+          
+          this.doc.text(`Prioridade: ${anomalia.prioridade}`, 60, currentY);
+          currentY += 25;
+        });
+      }
+      
+      // Recomendações
+      this.doc.setFontSize(14);
+      this.doc.setFont(undefined, 'bold');
+      this.doc.text('Recomendações', 50, currentY);
+      currentY += 30;
+      
+      this.doc.setFontSize(12);
+      this.doc.setFont(undefined, 'normal');
+      
+      const recomendacoes = [
+        'Revisar submissões urgentes pendentes há mais de 7 dias',
+        'Analisar submissões com alto impacto financeiro ou de prazo',
+        'Solicitar documentação para submissões sem anexos',
+        'Implementar alertas automáticos para anomalias'
+      ];
+      
+      recomendacoes.forEach((rec, index) => {
+        this.doc.text(`${index + 1}. ${rec}`, 50, currentY);
+        currentY += 20;
+      });
+      
+      this.addFooter();
+      this.doc.save('relatorio_anomalias_submissao_materiais.pdf');
+      
+    } catch (error) {
+      console.error('Erro ao gerar relatório de anomalias:', error);
+      throw error;
+    }
+  }
+
   public async generateRFIsIndividualReport(rfis: any[]): Promise<void> {
     try {
       if (rfis.length === 0) {
@@ -1477,5 +1803,62 @@ export class PDFService {
     });
     
     return anomalias;
+  }
+
+  // Métodos auxiliares para relatórios de Submissão de Materiais
+  private addTable(data: string[][], x: number, y: number, width: number) {
+    const cellHeight = 20;
+    const cellWidth = width / data[0].length;
+    
+    data.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        const cellX = x + (colIndex * cellWidth);
+        const cellY = y + (rowIndex * cellHeight);
+        
+        // Draw cell border
+        this.doc.rect(cellX, cellY, cellWidth, cellHeight, 'S');
+        
+        // Add text
+        this.doc.setFontSize(10);
+        this.doc.text(cell, cellX + 5, cellY + 12);
+      });
+    });
+  }
+
+  private addPieChart(data: { label: string; value: number }[], x: number, y: number, size: number) {
+    const total = data.reduce((sum, item) => sum + item.value, 0);
+    
+    data.forEach((item, index) => {
+      const color = this.getChartColor(index);
+      
+      // Draw pie slice (simplified as rectangle for now)
+      this.doc.setFillColor(color.r, color.g, color.b);
+      this.doc.rect(x + (index * 30), y, 20, 20, 'F');
+      
+      // Add label
+      this.doc.setFontSize(8);
+      this.doc.setTextColor(0, 0, 0);
+      this.doc.text(`${item.label}: ${item.value}`, x + (index * 30), y + 25);
+    });
+  }
+
+  private getChartColor(index: number) {
+    const colors = [
+      { r: 59, g: 130, b: 246 },   // Blue
+      { r: 16, g: 185, b: 129 },   // Green
+      { r: 245, g: 158, b: 11 },   // Yellow
+      { r: 239, g: 68, b: 68 },    // Red
+      { r: 139, g: 92, b: 246 },   // Purple
+      { r: 236, g: 72, b: 153 },   // Pink
+    ];
+    return colors[index % colors.length];
+  }
+
+  private addFooter() {
+    const pageHeight = this.doc.internal.pageSize.height;
+    this.doc.setFontSize(10);
+    this.doc.setTextColor(128, 128, 128);
+    this.doc.text(`Gerado em ${new Date().toLocaleDateString('pt-PT')}`, 50, pageHeight - 20);
+    this.doc.text('Qualicore - Sistema de Gestão', 400, pageHeight - 20);
   }
 }
