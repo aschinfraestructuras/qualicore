@@ -472,7 +472,7 @@ export class PDFService {
       
       const chartData = Object.entries(tipoStats).map(([tipo, count]) => ({
         label: tipo,
-        value: count
+        value: count as number
       }));
       
       currentY = this.addProfessionalBarChart(chartData, currentY, 'Distribuicao por Tipo');
@@ -887,6 +887,136 @@ export class PDFService {
       this.save();
     } catch (error) {
       console.error('Erro ao gerar relatório individual de obras:', error);
+    }
+  }
+
+  public async generateDocumentosIndividualReport(documentos: any[]) {
+    try {
+      this.addPremiumHeader('Relatorio Individual', 'Documentos - Detalhes Especificos');
+      
+      documentos.forEach((documento, index) => {
+        if (index > 0) {
+          this.doc.addPage();
+          this.addPremiumHeader('Relatorio Individual', 'Documentos - Detalhes Especificos');
+        }
+        
+        let currentY = 100;
+        
+        // Informações detalhadas
+        this.doc.setFontSize(14);
+        this.doc.setTextColor(this.config.design.corTexto);
+        this.doc.setFont('helvetica', 'bold');
+        this.doc.text(`Documento: ${documento.codigo}`, 20, currentY);
+        currentY += 20;
+        
+        const details = [
+          ['Codigo', documento.codigo || 'N/A'],
+          ['Tipo', documento.tipo || 'N/A'],
+          ['Versao', documento.versao || 'N/A'],
+          ['Estado', documento.estado || 'N/A'],
+          ['Responsavel', documento.responsavel || 'N/A'],
+          ['Zona', documento.zona || 'N/A'],
+          ['Data Validade', new Date(documento.data_validade || new Date()).toLocaleDateString('pt-PT')],
+          ['Data Criacao', new Date(documento.created || documento.data_criacao || new Date()).toLocaleDateString('pt-PT')],
+          ['Data Atualizacao', new Date(documento.updated || documento.data_atualizacao || new Date()).toLocaleDateString('pt-PT')],
+          ['Observacoes', documento.observacoes || 'N/A']
+        ];
+        
+        this.addPremiumTable(['Campo', 'Valor'], details, currentY, 'Detalhes do Documento');
+        
+        this.addPremiumFooter();
+      });
+      
+      this.save();
+    } catch (error) {
+      console.error('Erro ao gerar relatório individual de documentos:', error);
+    }
+  }
+
+  public async generateDocumentosExecutiveReport(documentos: any[]) {
+    try {
+      this.addPremiumHeader('Relatorio Executivo', 'Documentos - Visao Geral');
+      
+      const stats = {
+        mesAtual: documentos.length,
+        mesAnterior: 0,
+        variacao: documentos.length,
+        totalGeral: documentos.length
+      };
+      
+      let currentY = this.addStatisticsSection(stats, 100);
+      
+      // Gráfico de distribuição por tipo
+      const tipoStats = documentos.reduce((acc: Record<string, number>, documento) => {
+        acc[documento.tipo] = (acc[documento.tipo] || 0) + 1;
+        return acc;
+      }, {});
+      
+      const chartData = Object.entries(tipoStats).map(([tipo, count]) => ({
+        label: tipo,
+        value: count
+      }));
+      
+      currentY = this.addProfessionalBarChart(chartData, currentY, 'Distribuicao por Tipo');
+      
+      // Tabela principal
+      const tableData = documentos.slice(0, 10).map(documento => [
+        documento.codigo || 'N/A',
+        documento.tipo || 'N/A',
+        documento.estado || 'N/A',
+        documento.responsavel || 'N/A',
+        documento.zona || 'N/A',
+        new Date(documento.data_validade || new Date()).toLocaleDateString('pt-PT')
+      ]);
+      
+      this.addPremiumTable(
+        ['Codigo', 'Tipo', 'Estado', 'Responsavel', 'Zona', 'Data Validade'],
+        tableData,
+        currentY,
+        'Documentos Principais'
+      );
+      
+      this.addPremiumFooter();
+      this.save();
+    } catch (error) {
+      console.error('Erro ao gerar relatório executivo de documentos:', error);
+    }
+  }
+
+  public async generateDocumentosFilteredReport(documentos: any[], filtros: any) {
+    try {
+      this.addPremiumHeader('Relatorio Filtrado', 'Documentos - Dados Especificos');
+      
+      const stats = {
+        mesAtual: documentos.length,
+        mesAnterior: 0,
+        variacao: documentos.length,
+        totalGeral: documentos.length
+      };
+      
+      let currentY = this.addStatisticsSection(stats, 100);
+      
+      // Tabela filtrada
+      const tableData = documentos.map(documento => [
+        documento.codigo || 'N/A',
+        documento.tipo || 'N/A',
+        documento.estado || 'N/A',
+        documento.responsavel || 'N/A',
+        documento.zona || 'N/A',
+        new Date(documento.data_validade || new Date()).toLocaleDateString('pt-PT')
+      ]);
+      
+      this.addPremiumTable(
+        ['Codigo', 'Tipo', 'Estado', 'Responsavel', 'Zona', 'Data Validade'],
+        tableData,
+        currentY,
+        'Documentos Filtrados'
+      );
+      
+      this.addPremiumFooter();
+      this.save();
+    } catch (error) {
+      console.error('Erro ao gerar relatório filtrado de documentos:', error);
     }
   }
 }

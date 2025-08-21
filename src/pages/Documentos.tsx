@@ -20,6 +20,12 @@ import {
   Share2,
   Cloud,
   X,
+  BarChart3,
+  Calendar,
+  Users,
+  Shield,
+  Award,
+  TrendingUp,
 } from "lucide-react";
 
 import { documentosAPI } from "@/lib/supabase-api";
@@ -30,6 +36,7 @@ import DocumentoForm from "@/components/forms/DocumentoForm";
 import RelatorioDocumentosPremium from "@/components/RelatorioDocumentosPremium";
 import { ShareDocumentoModal } from "@/components/ShareDocumentoModal";
 import { SavedDocumentosViewer } from "@/components/SavedDocumentosViewer";
+import { DocumentoDashboard } from "@/components/DocumentoDashboard";
 import { PDFService } from "@/services/pdfService";
 import type { Documento } from "@/types";
 
@@ -262,16 +269,30 @@ const statusOptions = [
 ];
 
 export default function Documentos() {
-  const [documentos, setDocumentos] = useState<any[]>([]); // Changed to any[] as Documento type is removed
-  const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterEstado, setFilterEstado] = useState("");
-  const [filterTipo, setFilterTipo] = useState("");
-  const [filterZona, setFilterZona] = useState("");
-  const [filterResponsavel, setFilterResponsavel] = useState("");
-  const [filterDataCriacao, setFilterDataCriacao] = useState("");
-  const [filterDataValidade, setFilterDataValidade] = useState("");
-  const [filterVersao, setFilterVersao] = useState("");
+  const [documentos, setDocumentos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingDocumento, setEditingDocumento] = useState<any>(null);
+  const [showRelatorioPremium, setShowRelatorioPremium] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showSavedDocumentosViewer, setShowSavedDocumentosViewer] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [showRelatorioPremiumModal, setShowRelatorioPremiumModal] = useState(false);
+  const [sharingDocumento, setSharingDocumento] = useState<any>(null);
+  const [showDocumentsModal, setShowDocumentsModal] = useState(false);
+
+  // Filtros ativos
+  const [filters, setFilters] = useState({
+    search: "",
+    tipo: "",
+    estado: "",
+    zona: "",
+    responsavel: "",
+    versao: "",
+    dataInicio: "",
+    dataFim: "",
+  });
   const [sortBy, setSortBy] = useState("data_criacao");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
@@ -281,14 +302,7 @@ export default function Documentos() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [editingDocument, setEditingDocument] = useState<any | null>(null); // Changed to any
-  const [viewingDocument, setViewingDocument] = useState<any | null>(null); // Changed to any
-  const [showFilters, setShowFilters] = useState(false);
-  const [showRelatorioPremiumModal, setShowRelatorioPremiumModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [showSavedDocumentos, setShowSavedDocumentos] = useState(false);
-  const [showDocumentsModal, setShowDocumentsModal] = useState(false);
-  const [sharingDocumento, setSharingDocumento] = useState<Documento | null>(null);
+  const [viewingDocument, setViewingDocument] = useState<Documento | null>(null);
   const [selectedDocumento, setSelectedDocumento] = useState<Documento | null>(null);
 
   useEffect(() => {
@@ -308,22 +322,23 @@ export default function Documentos() {
     }
   };
 
-  const filteredDocumentos = (documentos || []).filter((doc) => {
-    const matchesSearch =
-      doc.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.responsavel.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.zona.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.observacoes?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesEstado = !filterEstado || doc.estado === filterEstado;
-    const matchesTipo = !filterTipo || doc.tipo === filterTipo;
-    const matchesZona = !filterZona || doc.zona.includes(filterZona);
-    const matchesResponsavel = !filterResponsavel || doc.responsavel.toLowerCase().includes(filterResponsavel.toLowerCase());
-    const matchesDataCriacao = !filterDataCriacao || doc.created?.includes(filterDataCriacao);
-    const matchesDataValidade = !filterDataValidade || doc.data_validade?.includes(filterDataValidade);
-    const matchesVersao = !filterVersao || doc.versao?.includes(filterVersao);
+  // Aplicar filtros
+  const filteredDocumentos = documentos.filter((documento) => {
+    const matchesSearch = !filters.search || 
+      documento.codigo?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      documento.tipo?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      documento.responsavel?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      documento.zona?.toLowerCase().includes(filters.search.toLowerCase());
 
-    return matchesSearch && matchesEstado && matchesTipo && matchesZona && 
-           matchesResponsavel && matchesDataCriacao && matchesDataValidade && matchesVersao;
+    const matchesTipo = !filters.tipo || documento.tipo === filters.tipo;
+    const matchesEstado = !filters.estado || documento.estado === filters.estado;
+    const matchesZona = !filters.zona || documento.zona === filters.zona;
+    const matchesResponsavel = !filters.responsavel || documento.responsavel === filters.responsavel;
+    
+    const matchesData = !filters.dataInicio || !filters.dataFim || 
+      (documento.data_validade >= filters.dataInicio && documento.data_validade <= filters.dataFim);
+
+    return matchesSearch && matchesTipo && matchesEstado && matchesZona && matchesResponsavel && matchesData;
   });
 
   const sortedDocumentos = [...filteredDocumentos].sort((a, b) => {
@@ -342,14 +357,16 @@ export default function Documentos() {
   const versoesUnicas = [...new Set(documentos.map(d => d.versao).filter(Boolean))];
 
   const clearFilters = () => {
-    setSearchTerm("");
-    setFilterEstado("");
-    setFilterTipo("");
-    setFilterZona("");
-    setFilterResponsavel("");
-    setFilterDataCriacao("");
-    setFilterDataValidade("");
-    setFilterVersao("");
+    setFilters({
+      search: "",
+      tipo: "",
+      estado: "",
+      zona: "",
+      responsavel: "",
+      versao: "",
+      dataInicio: "",
+      dataFim: "",
+    });
   };
 
   const getEstadoInfo = (estado: string) => {
@@ -456,16 +473,16 @@ export default function Documentos() {
   };
 
   const handleEditDocument = async (data: any) => {
-    if (!editingDocument) {
-      console.log("❌ editingDocument é null!");
+    if (!editingDocumento) {
+      console.log("❌ editingDocumento é null!");
       return;
     }
     
     try {
       console.log("🚀 handleEditDocument chamado!");
       console.log("📁 Dados recebidos para edição:", data);
-      console.log("📁 Documento sendo editado:", editingDocument);
-      console.log("📁 ID do documento:", editingDocument.id);
+      console.log("📁 Documento sendo editado:", editingDocumento);
+      console.log("📁 ID do documento:", editingDocumento.id);
 
       // Corrigir campos UUID vazios para null
       const uuidFields = [
@@ -534,16 +551,16 @@ export default function Documentos() {
       console.log("Dados corrigidos para edição:", docData);
 
       const updatedDocument = await documentosAPI.update(
-        editingDocument.id,
+        editingDocumento.id,
         docData,
       );
       setDocumentos((prev) =>
         prev.map((doc) =>
-          doc.id === editingDocument.id ? updatedDocument : doc,
+          doc.id === editingDocumento.id ? updatedDocument : doc,
         ),
       );
       setShowEditModal(false);
-      setEditingDocument(null);
+      setEditingDocumento(null);
       toast.success("Documento atualizado com sucesso!");
     } catch (error) {
       console.error("Erro detalhado:", error);
@@ -559,7 +576,7 @@ export default function Documentos() {
 
   const handleEditClick = (document: any) => {
     console.log("🚀 Clicou no botão Editar documento:", document);
-    setEditingDocument(document);
+    setEditingDocumento(document);
     setShowEditModal(true);
   };
 
@@ -687,8 +704,6 @@ export default function Documentos() {
       };
       
       const pdfService = new PDFService();
-
-      
       await pdfService.generateDocumentosIndividualReport([documentoData]);
       toast.success("Relatório individual gerado com sucesso!");
     } catch (error) {
@@ -697,598 +712,805 @@ export default function Documentos() {
     }
   };
 
+  const handleGenerateRelatorioExecutivo = async () => {
+    try {
+      const pdfService = new PDFService();
+      await pdfService.generateDocumentosExecutiveReport(filteredDocumentos);
+      toast.success("Relatório executivo gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar relatório executivo:", error);
+      toast.error("Erro ao gerar relatório");
+    }
+  };
+
+  const handleGenerateRelatorioFiltrado = async () => {
+    try {
+      const pdfService = new PDFService();
+      await pdfService.generateDocumentosFilteredReport(filteredDocumentos, filters);
+      toast.success("Relatório filtrado gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar relatório filtrado:", error);
+      toast.error("Erro ao gerar relatório");
+    }
+  };
+
+  // Calcular estatísticas
+  const stats = {
+    total: filteredDocumentos.length,
+    aprovados: filteredDocumentos.filter((d) => d.estado === "aprovado").length,
+    em_analise: filteredDocumentos.filter((d) => d.estado === "em_analise").length,
+    pendentes: filteredDocumentos.filter((d) => d.estado === "pendente").length,
+    reprovados: filteredDocumentos.filter((d) => d.estado === "reprovado").length,
+    vencidos: filteredDocumentos.filter((d) => new Date(d.data_validade) < new Date()).length,
+  };
+
   if (loading) {
     return (
-      <div className="space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6"
-        >
-          <div className="flex items-center space-x-4">
-            <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-glow">
-              <FileText className="h-8 w-8 text-white" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl animate-pulse">
+              <FileText className="h-10 w-10 text-white" />
             </div>
+            <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full animate-bounce"></div>
+          </div>
+          <p className="text-gray-600 mt-6 font-medium text-lg">Carregando documentos...</p>
+          <div className="mt-4 flex justify-center">
+            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state quando não há documentos
+  if (documentos.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8 pt-16">
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 font-display">
-                Documentos
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-purple-800 to-pink-900 bg-clip-text text-transparent mb-2">
+                Gestão de Documentos
               </h1>
-              <p className="text-gray-600 mt-1">
-                Gestão completa de documentação técnica
+              <p className="text-xl text-gray-600 flex items-center">
+                <FileText className="h-5 w-5 mr-2 text-purple-500" />
+                Controlo documental e gestão de conformidade em tempo real
               </p>
             </div>
           </div>
         </motion.div>
 
-        <div>Carregando...</div>
+        {/* Empty State */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex items-center justify-center min-h-[60vh]"
+        >
+          <div className="text-center max-w-md">
+            <div className="relative mb-8">
+              <div className="w-32 h-32 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full flex items-center justify-center mx-auto">
+                <FileText className="h-16 w-16 text-purple-500" />
+              </div>
+              <div className="absolute -top-4 -right-4 w-8 h-8 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full flex items-center justify-center">
+                <Plus className="h-4 w-4 text-white" />
+              </div>
+            </div>
+            
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Nenhum Documento Encontrado
+            </h2>
+            
+            <p className="text-gray-600 mb-8 leading-relaxed">
+              Comece a criar documentos para organizar a sua gestão documental. 
+              O sistema irá ajudá-lo a manter o controlo de conformidade com as normas europeias.
+            </p>
+            
+            <div className="space-y-4">
+              <button
+                onClick={() => setShowForm(true)}
+                className="w-full inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
+              >
+                <Plus className="h-5 w-5 mr-3 group-hover:rotate-90 transition-transform duration-300" />
+                Criar Primeiro Documento
+              </button>
+              
+              <div className="flex items-center justify-center space-x-6 text-sm text-gray-500">
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                  <span>Conformidade EN/ISO</span>
+                </div>
+                <div className="flex items-center">
+                  <BarChart3 className="h-4 w-4 mr-2 text-blue-500" />
+                  <span>Relatórios Avançados</span>
+                </div>
+                <div className="flex items-center">
+                  <Shield className="h-4 w-4 mr-2 text-purple-500" />
+                  <span>Controlo Documental</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Modal de Formulário */}
+        {showForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Novo Documento
+                  </h2>
+                  <button
+                    onClick={() => setShowForm(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-6">
+                <DocumentoForm
+                  onSubmit={handleCreateDocument}
+                  onCancel={() => setShowForm(false)}
+                  initialData={undefined}
+                  isEditing={false}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in pt-8">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8 pt-16">
+      {/* Header Premium */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6"
+        className="mb-8"
       >
-        <div className="flex items-center space-x-4">
-          <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-glow">
-            <FileText className="h-8 w-8 text-white" />
-          </div>
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 font-display">
-              Documentos
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-purple-800 to-pink-900 bg-clip-text text-transparent mb-2">
+              Gestão de Documentos
             </h1>
-            <p className="text-gray-600 mt-1">
-              Gestão completa de documentação técnica
+            <p className="text-xl text-gray-600 flex items-center">
+              <FileText className="h-5 w-5 mr-2 text-purple-500" />
+              Controlo documental e gestão de conformidade em tempo real
             </p>
           </div>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => setShowSavedDocumentos(true)}
-            className="btn btn-outline btn-md"
-          >
-            <Cloud className="h-4 w-4 mr-2" />
-            Documentos Salvos
-          </button>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="btn btn-outline btn-md"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Importar
-          </button>
-          <button
-            onClick={() => {
-              console.log("🚀 Clicou no botão Novo Documento!");
-              setShowCreateModal(true);
-            }}
-            className="btn btn-primary btn-md"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Documento
-          </button>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowDashboard(!showDashboard)}
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
+            >
+              <BarChart3 className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
+              {showDashboard ? 'Lista' : 'Dashboard'}
+            </button>
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
+            >
+              <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
+              Novo Documento
+            </button>
+          </div>
         </div>
       </motion.div>
 
-      {/* Botão de Filtros */}
-      <div className="flex items-center space-x-4">
-        <button
-          onClick={() => setShowRelatorioPremiumModal(true)}
-          className="btn btn-secondary btn-md"
-        >
-          <FileText className="h-4 w-4 mr-2" />
-          Relatórios
-        </button>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`p-2 rounded-lg shadow-soft hover:shadow-md transition-all ${
-            showFilters
-              ? "bg-primary-100 text-primary-600"
-              : "bg-white text-gray-600"
-          }`}
-          title="Filtros"
-        >
-          <Filter className="h-5 w-5" />
-        </button>
-      </div>
-
-      {/* Stats Cards */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-4 gap-6"
-      >
-        {[
-          {
-            label: "Total",
-            value: (documentos || []).length,
-            icon: FileText,
-            color: "bg-gradient-to-br from-blue-500 to-blue-600",
-          },
-          {
-            label: "Aprovados",
-            value: (documentos || []).filter((d) => d.estado === "aprovado")
-              .length,
-            icon: CheckCircle,
-            color: "bg-gradient-to-br from-green-500 to-green-600",
-          },
-          {
-            label: "Pendentes",
-            value: (documentos || []).filter((d) => d.estado === "pendente")
-              .length,
-            icon: Clock,
-            color: "bg-gradient-to-br from-warning-500 to-warning-600",
-          },
-          {
-            label: "Em Análise",
-            value: (documentos || []).filter((d) => d.estado === "em_analise")
-              .length,
-            icon: AlertTriangle,
-            color: "bg-gradient-to-br from-info-500 to-info-600",
-          },
-        ].map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div key={stat.label} className="stat-card">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="stat-value">{stat.value}</div>
-                  <div className="stat-label">{stat.label}</div>
-                </div>
-                <div className={`p-3 rounded-xl ${stat.color} shadow-glow`}>
-                  <Icon className="h-6 w-6 text-white" />
+      {/* Dashboard ou Lista */}
+      {showDashboard ? (
+        <DocumentoDashboard documentos={filteredDocumentos} darkMode={false} />
+      ) : (
+        <>
+          {/* Stats Cards - Ultra Premium */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8"
+          >
+            {/* Total de Documentos */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="group cursor-pointer relative"
+            >
+              <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-rose-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-t-3xl"></div>
+                <div className="absolute top-4 right-4 w-2 h-2 bg-purple-400 rounded-full opacity-0 group-hover:opacity-100 animate-ping"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <FileText className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                      <TrendingUp className="h-3 w-3" />
+                      <span>+{stats.total}</span>
+                    </div>
+                  </div>
+                  
+                  <h3 className="text-sm font-medium text-gray-600 mb-2">Total de Documentos</h3>
+                  <p className="text-2xl font-bold text-gray-900 mb-1">{stats.total}</p>
+                  
+                  <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                    <div className="h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-1000 ease-out" 
+                         style={{ width: `${(stats.total / 100) * 100}%` }}></div>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </motion.div>
+            </motion.div>
 
-      {/* Filtros Ativos */}
-      <AnimatePresence>
-        {showFilters && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="card"
-          >
-            <div className="card-header">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Filter className="h-5 w-5 text-gray-500" />
-                  <h3 className="card-title">Filtros</h3>
+            {/* Documentos Aprovados */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="group cursor-pointer relative"
+            >
+              <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-t-3xl"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <CheckCircle className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                  
+                  <h3 className="text-sm font-medium text-gray-600 mb-2">Aprovados</h3>
+                  <p className="text-2xl font-bold text-gray-900 mb-1">{stats.aprovados}</p>
+                  
+                  <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                    <div className="h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full transition-all duration-1000 ease-out" 
+                         style={{ width: `${stats.total > 0 ? (stats.aprovados / stats.total) * 100 : 0}%` }}></div>
+                  </div>
                 </div>
+              </div>
+            </motion.div>
+
+            {/* Documentos Em Análise */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="group cursor-pointer relative"
+            >
+              <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-amber-500/5 to-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-amber-500 rounded-t-3xl"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <Clock className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                  
+                  <h3 className="text-sm font-medium text-gray-600 mb-2">Em Análise</h3>
+                  <p className="text-2xl font-bold text-gray-900 mb-1">{stats.em_analise}</p>
+                  
+                  <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                    <div className="h-1 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-1000 ease-out" 
+                         style={{ width: `${stats.total > 0 ? (stats.em_analise / stats.total) * 100 : 0}%` }}></div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Documentos Pendentes */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="group cursor-pointer relative"
+            >
+              <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-t-3xl"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <Upload className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                  
+                  <h3 className="text-sm font-medium text-gray-600 mb-2">Pendentes</h3>
+                  <p className="text-2xl font-bold text-gray-900 mb-1">{stats.pendentes}</p>
+                  
+                  <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                    <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-1000 ease-out" 
+                         style={{ width: `${stats.total > 0 ? (stats.pendentes / stats.total) * 100 : 0}%` }}></div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Documentos Vencidos */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+              className="group cursor-pointer relative"
+            >
+              <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-rose-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-rose-500 rounded-t-3xl"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-rose-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <AlertTriangle className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                  
+                  <h3 className="text-sm font-medium text-gray-600 mb-2">Vencidos</h3>
+                  <p className="text-2xl font-bold text-gray-900 mb-1">{stats.vencidos}</p>
+                  
+                  <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                    <div className="h-1 bg-gradient-to-r from-red-500 to-rose-500 rounded-full transition-all duration-1000 ease-out" 
+                         style={{ width: `${stats.total > 0 ? (stats.vencidos / stats.total) * 100 : 0}%` }}></div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* Filtros Ativos */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="card"
+              >
+                <div className="card-header">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Filter className="h-5 w-5 text-gray-500" />
+                      <h3 className="card-title">Filtros</h3>
+                    </div>
+                    <button
+                      onClick={() => setShowFilters(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <XCircle className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+                <div className="card-content">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Search */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Pesquisar documentos..."
+                        value={filters.search}
+                        onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                        className="input pl-10"
+                      />
+                    </div>
+
+                    {/* Tipo Filter */}
+                    <select
+                      value={filters.tipo}
+                      onChange={(e) => setFilters({ ...filters, tipo: e.target.value })}
+                      className="select"
+                    >
+                      <option value="">Todos os tipos</option>
+                      {documentTypes.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Estado Filter */}
+                    <select
+                      value={filters.estado}
+                      onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
+                      className="select"
+                    >
+                      <option value="">Todos os estados</option>
+                      {statusOptions.map((status) => (
+                        <option key={status.value} value={status.value}>
+                          {status.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Zona Filter */}
+                    <select
+                      value={filters.zona}
+                      onChange={(e) => setFilters({ ...filters, zona: e.target.value })}
+                      className="select"
+                    >
+                      <option value="">Todas as zonas</option>
+                      {Array.from(new Set(documentos.map((d) => d.zona))).map(
+                        (zona) => (
+                          <option key={zona} value={zona}>
+                            {zona}
+                          </option>
+                        ),
+                      )}
+                    </select>
+
+                    {/* Responsável Filter */}
+                    <select
+                      value={filters.responsavel}
+                      onChange={(e) => setFilters({ ...filters, responsavel: e.target.value })}
+                      className="select"
+                    >
+                      <option value="">Todos os responsáveis</option>
+                      {responsaveisUnicos.map((responsavel) => (
+                        <option key={responsavel} value={responsavel}>
+                          {responsavel}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Versão Filter */}
+                    <select
+                      value={filters.versao}
+                      onChange={(e) => setFilters({ ...filters, versao: e.target.value })}
+                      className="select"
+                    >
+                      <option value="">Todas as versões</option>
+                      {versoesUnicas.map((versao) => (
+                        <option key={versao} value={versao}>
+                          {versao}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Data Criação */}
+                    <input
+                      type="date"
+                      value={filters.dataInicio}
+                      onChange={(e) => setFilters({ ...filters, dataInicio: e.target.value })}
+                      className="input"
+                      placeholder="Data de criação"
+                    />
+
+                    {/* Data Validade */}
+                    <input
+                      type="date"
+                      value={filters.dataFim}
+                      onChange={(e) => setFilters({ ...filters, dataFim: e.target.value })}
+                      className="input"
+                      placeholder="Data de validade"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Actions Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => setShowFilters(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  onClick={() => setViewMode("table")}
+                  className={`p-2 rounded-lg transition-colors ${
+                    viewMode === "table"
+                      ? "bg-primary-100 text-primary-600"
+                      : "text-gray-400 hover:text-gray-600"
+                  }`}
                 >
-                  <XCircle className="h-5 w-5" />
+                  <FileText className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-2 rounded-lg transition-colors ${
+                    viewMode === "grid"
+                      ? "bg-primary-100 text-primary-600"
+                      : "text-gray-400 hover:text-gray-600"
+                  }`}
+                >
+                  <FileIcon className="h-5 w-5" />
                 </button>
               </div>
+
+              <span className="text-sm text-gray-600">
+                {sortedDocumentos.length} documento(s) encontrado(s)
+              </span>
             </div>
-            <div className="card-content">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Pesquisar documentos..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="input pl-10"
-                  />
+
+            <div className="flex items-center space-x-3">
+              {selectedDocuments.length > 0 && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">
+                    {selectedDocuments.length} selecionado(s)
+                  </span>
+                  <button
+                    onClick={() => handleBulkAction("export")}
+                    className="btn btn-outline btn-sm"
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Exportar
+                  </button>
+                  <button
+                    onClick={() => handleBulkAction("delete")}
+                    className="btn btn-danger btn-sm"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Eliminar
+                  </button>
                 </div>
+              )}
 
-                {/* Tipo Filter */}
-                <select
-                  value={filterTipo}
-                  onChange={(e) => setFilterTipo(e.target.value)}
-                  className="select"
-                >
-                  <option value="">Todos os tipos</option>
-                  {documentTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
+              <button onClick={handleExport} className="btn btn-secondary btn-sm">
+                <Download className="h-4 w-4 mr-1" />
+                Exportar Todos
+              </button>
+            </div>
+          </motion.div>
 
-                {/* Estado Filter */}
-                <select
-                  value={filterEstado}
-                  onChange={(e) => setFilterEstado(e.target.value)}
-                  className="select"
-                >
-                  <option value="">Todos os estados</option>
-                  {statusOptions.map((status) => (
-                    <option key={status.value} value={status.value}>
-                      {status.label}
-                    </option>
-                  ))}
-                </select>
+          {/* Documents Table */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="card"
+          >
+            <div className="card-content p-0">
+              <div className="overflow-x-auto">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th className="w-12">
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedDocuments.length === sortedDocumentos.length
+                          }
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedDocuments(
+                                sortedDocumentos.map((d) => d.id),
+                              );
+                            } else {
+                              setSelectedDocuments([]);
+                            }
+                          }}
+                          className="rounded border-gray-300"
+                        />
+                      </th>
+                      <th>
+                        <button
+                          onClick={() => {
+                            setSortBy("codigo");
+                            setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                          }}
+                          className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
+                        >
+                          <span>Código</span>
+                          <ArrowUpDown className="h-4 w-4" />
+                        </button>
+                      </th>
+                      <th>Tipo</th>
+                      <th>Versão</th>
+                      <th>Responsável</th>
+                      <th>Zona</th>
+                      <th>
+                        <button
+                          onClick={() => {
+                            setSortBy("estado");
+                            setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                          }}
+                          className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
+                        >
+                          <span>Estado</span>
+                          <ArrowUpDown className="h-4 w-4" />
+                        </button>
+                      </th>
+                      <th>Data Validade</th>
+                      <th>
+                        <button
+                          onClick={() => {
+                            setSortBy("data_criacao");
+                            setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                          }}
+                          className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
+                        >
+                          <span>Criado</span>
+                          <ArrowUpDown className="h-4 w-4" />
+                        </button>
+                      </th>
+                      <th className="w-20">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <AnimatePresence>
+                      {sortedDocumentos.length === 0 ? (
+                        <tr>
+                          <td colSpan={9} className="py-12">
+                            <div>Nenhum documento encontrado</div>
+                          </td>
+                        </tr>
+                      ) : (
+                        sortedDocumentos.map((doc, index) => {
+                          const tipoInfo = getTipoInfo(doc.tipo);
+                          const estadoInfo = getEstadoInfo(doc.estado);
+                          const TipoIcon = tipoInfo.icon;
 
-                {/* Zona Filter */}
-                <select
-                  value={filterZona}
-                  onChange={(e) => setFilterZona(e.target.value)}
-                  className="select"
-                >
-                  <option value="">Todas as zonas</option>
-                  {Array.from(new Set(documentos.map((d) => d.zona))).map(
-                    (zona) => (
-                      <option key={zona} value={zona}>
-                        {zona}
-                      </option>
-                    ),
-                  )}
-                </select>
-
-                {/* Responsável Filter */}
-                <select
-                  value={filterResponsavel}
-                  onChange={(e) => setFilterResponsavel(e.target.value)}
-                  className="select"
-                >
-                  <option value="">Todos os responsáveis</option>
-                  {responsaveisUnicos.map((responsavel) => (
-                    <option key={responsavel} value={responsavel}>
-                      {responsavel}
-                    </option>
-                  ))}
-                </select>
-
-                {/* Versão Filter */}
-                <select
-                  value={filterVersao}
-                  onChange={(e) => setFilterVersao(e.target.value)}
-                  className="select"
-                >
-                  <option value="">Todas as versões</option>
-                  {versoesUnicas.map((versao) => (
-                    <option key={versao} value={versao}>
-                      {versao}
-                    </option>
-                  ))}
-                </select>
-
-                {/* Data Criação */}
-                <input
-                  type="date"
-                  value={filterDataCriacao}
-                  onChange={(e) => setFilterDataCriacao(e.target.value)}
-                  className="input"
-                  placeholder="Data de criação"
-                />
-
-                {/* Data Validade */}
-                <input
-                  type="date"
-                  value={filterDataValidade}
-                  onChange={(e) => setFilterDataValidade(e.target.value)}
-                  className="input"
-                  placeholder="Data de validade"
-                />
+                          return (
+                            <motion.tr
+                              key={doc.id}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3, delay: index * 0.05 }}
+                              className="hover:bg-gray-50/50"
+                            >
+                              <td>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedDocuments.includes(doc.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedDocuments([
+                                        ...selectedDocuments,
+                                        doc.id,
+                                      ]);
+                                    } else {
+                                      setSelectedDocuments(
+                                        selectedDocuments.filter(
+                                          (id) => id !== doc.id,
+                                        ),
+                                      );
+                                    }
+                                  }}
+                                  className="rounded border-gray-300"
+                                />
+                              </td>
+                              <td>
+                                <div className="flex items-center space-x-2">
+                                  <TipoIcon
+                                    className={`h-4 w-4 ${tipoInfo.color}`}
+                                  />
+                                  <span className="font-medium text-gray-900">
+                                    {doc.codigo}
+                                  </span>
+                                </div>
+                              </td>
+                              <td>
+                                <span className="text-sm text-gray-700">
+                                  {tipoInfo.label}
+                                </span>
+                              </td>
+                              <td>
+                                <span className="text-sm font-medium text-gray-900">
+                                  {doc.versao}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="flex items-center space-x-2">
+                                  <div className="h-6 w-6 rounded-full bg-gradient-primary flex items-center justify-center">
+                                    <span className="text-xs font-bold text-white">
+                                      {doc.responsavel
+                                        .split(" ")
+                                        .map((n) => n[0])
+                                        .join("")}
+                                    </span>
+                                  </div>
+                                  <span className="text-sm text-gray-700">
+                                    {doc.responsavel}
+                                  </span>
+                                </div>
+                              </td>
+                              <td>
+                                <span className="text-sm text-gray-700">
+                                  {doc.zona}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`badge ${estadoInfo.color}`}>
+                                  {estadoInfo.label}
+                                </span>
+                              </td>
+                              <td>
+                                <span className="text-sm text-gray-700">
+                                  {doc.data_validade
+                                    ? new Date(
+                                        doc.data_validade,
+                                      ).toLocaleDateString("pt-BR")
+                                    : "-"}
+                                </span>
+                              </td>
+                              <td>
+                                <span className="text-sm text-gray-500">
+                                  {new Date(doc.data_criacao).toLocaleDateString(
+                                    "pt-BR",
+                                  )}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="flex items-center space-x-1">
+                                  <button
+                                    onClick={() => handleEditClick(doc)}
+                                    className="btn btn-xs btn-outline mr-2"
+                                    title="Editar"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      // Implementar impressão
+                                      toast.success(
+                                        "Funcionalidade de impressão em desenvolvimento",
+                                      );
+                                    }}
+                                    className="btn btn-xs btn-outline mr-2"
+                                    title="Imprimir"
+                                  >
+                                    <Printer className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleGenerateRelatorioIndividual(doc)}
+                                    className="btn btn-xs btn-outline mr-2"
+                                    title="Gerar Relatório Individual"
+                                  >
+                                    <FileText className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleShare(doc)}
+                                    className="btn btn-xs btn-outline mr-2"
+                                    title="Compartilhar"
+                                  >
+                                    <Share2 className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleViewDocuments(doc)}
+                                    className="btn btn-xs btn-primary mr-2"
+                                    title="Ver Documentos"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(doc.id)}
+                                    className="btn btn-xs btn-danger"
+                                    title="Eliminar"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </motion.tr>
+                          );
+                        })
+                      )}
+                    </AnimatePresence>
+                  </tbody>
+                </table>
               </div>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Actions Bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-      >
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setViewMode("table")}
-              className={`p-2 rounded-lg transition-colors ${
-                viewMode === "table"
-                  ? "bg-primary-100 text-primary-600"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              <FileText className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-lg transition-colors ${
-                viewMode === "grid"
-                  ? "bg-primary-100 text-primary-600"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              <FileIcon className="h-5 w-5" />
-            </button>
-          </div>
-
-          <span className="text-sm text-gray-600">
-            {sortedDocumentos.length} documento(s) encontrado(s)
-          </span>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          {selectedDocuments.length > 0 && (
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">
-                {selectedDocuments.length} selecionado(s)
-              </span>
-              <button
-                onClick={() => handleBulkAction("export")}
-                className="btn btn-outline btn-sm"
-              >
-                <Download className="h-4 w-4 mr-1" />
-                Exportar
-              </button>
-              <button
-                onClick={() => handleBulkAction("delete")}
-                className="btn btn-danger btn-sm"
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Eliminar
-              </button>
-            </div>
-          )}
-
-          <button onClick={handleExport} className="btn btn-secondary btn-sm">
-            <Download className="h-4 w-4 mr-1" />
-            Exportar Todos
-          </button>
-        </div>
-      </motion.div>
-
-      {/* Documents Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-        className="card"
-      >
-        <div className="card-content p-0">
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th className="w-12">
-                    <input
-                      type="checkbox"
-                      checked={
-                        selectedDocuments.length === sortedDocumentos.length
-                      }
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedDocuments(
-                            sortedDocumentos.map((d) => d.id),
-                          );
-                        } else {
-                          setSelectedDocuments([]);
-                        }
-                      }}
-                      className="rounded border-gray-300"
-                    />
-                  </th>
-                  <th>
-                    <button
-                      onClick={() => {
-                        setSortBy("codigo");
-                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                      }}
-                      className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
-                    >
-                      <span>Código</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </button>
-                  </th>
-                  <th>Tipo</th>
-                  <th>Versão</th>
-                  <th>Responsável</th>
-                  <th>Zona</th>
-                  <th>
-                    <button
-                      onClick={() => {
-                        setSortBy("estado");
-                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                      }}
-                      className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
-                    >
-                      <span>Estado</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </button>
-                  </th>
-                  <th>Data Validade</th>
-                  <th>
-                    <button
-                      onClick={() => {
-                        setSortBy("data_criacao");
-                        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-                      }}
-                      className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
-                    >
-                      <span>Criado</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </button>
-                  </th>
-                  <th className="w-20">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {sortedDocumentos.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} className="py-12">
-                        <div>Nenhum documento encontrado</div>
-                      </td>
-                    </tr>
-                  ) : (
-                    sortedDocumentos.map((doc, index) => {
-                      const tipoInfo = getTipoInfo(doc.tipo);
-                      const estadoInfo = getEstadoInfo(doc.estado);
-                      const TipoIcon = tipoInfo.icon;
-
-                      return (
-                        <motion.tr
-                          key={doc.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.05 }}
-                          className="hover:bg-gray-50/50"
-                        >
-                          <td>
-                            <input
-                              type="checkbox"
-                              checked={selectedDocuments.includes(doc.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedDocuments([
-                                    ...selectedDocuments,
-                                    doc.id,
-                                  ]);
-                                } else {
-                                  setSelectedDocuments(
-                                    selectedDocuments.filter(
-                                      (id) => id !== doc.id,
-                                    ),
-                                  );
-                                }
-                              }}
-                              className="rounded border-gray-300"
-                            />
-                          </td>
-                          <td>
-                            <div className="flex items-center space-x-2">
-                              <TipoIcon
-                                className={`h-4 w-4 ${tipoInfo.color}`}
-                              />
-                              <span className="font-medium text-gray-900">
-                                {doc.codigo}
-                              </span>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="text-sm text-gray-700">
-                              {tipoInfo.label}
-                            </span>
-                          </td>
-                          <td>
-                            <span className="text-sm font-medium text-gray-900">
-                              {doc.versao}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="flex items-center space-x-2">
-                              <div className="h-6 w-6 rounded-full bg-gradient-primary flex items-center justify-center">
-                                <span className="text-xs font-bold text-white">
-                                  {doc.responsavel
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")}
-                                </span>
-                              </div>
-                              <span className="text-sm text-gray-700">
-                                {doc.responsavel}
-                              </span>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="text-sm text-gray-700">
-                              {doc.zona}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`badge ${estadoInfo.color}`}>
-                              {estadoInfo.label}
-                            </span>
-                          </td>
-                          <td>
-                            <span className="text-sm text-gray-700">
-                              {doc.data_validade
-                                ? new Date(
-                                    doc.data_validade,
-                                  ).toLocaleDateString("pt-BR")
-                                : "-"}
-                            </span>
-                          </td>
-                          <td>
-                            <span className="text-sm text-gray-500">
-                              {new Date(doc.data_criacao).toLocaleDateString(
-                                "pt-BR",
-                              )}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="flex items-center space-x-1">
-                              <button
-                                onClick={() => handleEditClick(doc)}
-                                className="btn btn-xs btn-outline mr-2"
-                                title="Editar"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  // Implementar impressão
-                                  toast.success(
-                                    "Funcionalidade de impressão em desenvolvimento",
-                                  );
-                                }}
-                                className="btn btn-xs btn-outline mr-2"
-                                title="Imprimir"
-                              >
-                                <Printer className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleGenerateRelatorioIndividual(doc)}
-                                className="btn btn-xs btn-outline mr-2"
-                                title="Gerar Relatório Individual"
-                              >
-                                <FileText className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleShare(doc)}
-                                className="btn btn-xs btn-outline mr-2"
-                                title="Compartilhar"
-                              >
-                                <Share2 className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleViewDocuments(doc)}
-                                className="btn btn-xs btn-primary mr-2"
-                                title="Ver Documentos"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(doc.id)}
-                                className="btn btn-xs btn-danger"
-                                title="Eliminar"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </motion.tr>
-                      );
-                    })
-                  )}
-                </AnimatePresence>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </motion.div>
+        </>
+      )}
 
       {/* Modals */}
 
@@ -1319,7 +1541,7 @@ export default function Documentos() {
       )}
 
       {/* Edit Modal */}
-      {showEditModal && editingDocument && (
+      {showEditModal && editingDocumento && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4">
           <div className="bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto max-w-4xl w-full">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -1329,7 +1551,7 @@ export default function Documentos() {
               <button
                 onClick={() => {
                   setShowEditModal(false);
-                  setEditingDocument(null);
+                  setEditingDocumento(null);
                 }}
                 className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
                 title="Fechar"
@@ -1342,9 +1564,9 @@ export default function Documentos() {
                 onSubmit={handleEditDocument}
                 onCancel={() => {
                   setShowEditModal(false);
-                  setEditingDocument(null);
+                  setEditingDocumento(null);
                 }}
-                initialData={editingDocument as any}
+                initialData={editingDocumento as any}
                 isEditing={true}
               />
             </div>
@@ -1533,10 +1755,10 @@ export default function Documentos() {
        )}
 
         {/* Saved Documents Modal */}
-        {showSavedDocumentos && (
+        {showSavedDocumentosViewer && (
           <SavedDocumentosViewer
-            isOpen={showSavedDocumentos}
-            onClose={() => setShowSavedDocumentos(false)}
+            isOpen={showSavedDocumentosViewer}
+            onClose={() => setShowSavedDocumentosViewer(false)}
           />
         )}
 

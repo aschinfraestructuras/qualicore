@@ -536,10 +536,10 @@ export const SGQCharts: React.FC<SGQChartsProps> = ({ darkMode }) => {
         className="text-center"
       >
         <h2 className={`text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-3`}>
-          Sistema de Gestão de Qualidade
+          Métricas Globais
         </h2>
         <p className={`text-xl ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-          Métricas globais do sistema QUALICORE
+          Indicadores de performance e qualidade
         </p>
       </motion.div>
 

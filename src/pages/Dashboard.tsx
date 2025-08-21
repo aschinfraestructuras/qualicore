@@ -160,6 +160,19 @@ export default function Dashboard() {
     )
   })).filter(section => section.modules.length > 0);
 
+  // Contador de módulos filtrados
+  const totalModules = filteredSections.flatMap(section => section.modules).length;
+  const totalAllModules = workflowSections.flatMap(section => section.modules).length;
+
+  // Função para limpar filtros
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedObra("all");
+  };
+
+  // Função para verificar se há filtros ativos
+  const hasActiveFilters = searchTerm !== "" || selectedObra !== "all";
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -182,7 +195,7 @@ export default function Dashboard() {
           >
             <Shield className="h-10 w-10 text-white" />
           </motion.div>
-          <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-2`}>QUALICORE</h2>
+          <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-2`}>Carregando...</h2>
           <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Carregando sistema...</p>
         </motion.div>
       </div>
@@ -226,110 +239,140 @@ export default function Dashboard() {
       <motion.div
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`relative z-10 p-6 border-b ${darkMode ? 'border-gray-800' : 'border-gray-200'} transition-colors duration-500`}
+        className={`relative z-10 ${darkMode ? 'bg-gradient-to-r from-gray-900/95 via-gray-800/95 to-gray-900/95' : 'bg-gradient-to-r from-white/95 via-blue-50/95 to-white/95'} backdrop-blur-xl border-b ${darkMode ? 'border-gray-700/50' : 'border-blue-200/50'} transition-colors duration-500`}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-6">
-            <motion.div
-              whileHover={{ scale: 1.1, rotate: 360 }}
-              transition={{ duration: 0.6 }}
-              onClick={() => navigate("/dashboard")}
-              className="relative w-16 h-16 bg-gradient-to-r from-gray-600 to-gray-800 rounded-2xl flex items-center justify-center shadow-2xl cursor-pointer overflow-hidden border-2 border-gray-400/30"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-400/20 to-gray-600/20 animate-pulse"></div>
+        <div className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
               <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-              />
-              <LayoutDashboard className="h-8 w-8 text-white relative z-10" />
-            </motion.div>
-            <div>
-              <motion.p
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-                className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-center`}
+                whileHover={{ scale: 1.1, rotate: 360 }}
+                transition={{ duration: 0.6 }}
+                onClick={() => navigate("/dashboard")}
+                className="relative w-16 h-16 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-2xl flex items-center justify-center shadow-2xl cursor-pointer overflow-hidden border-2 border-blue-400/30"
               >
-                <SparklesIcon2 className="h-4 w-4 mr-2 text-gray-400" />
-                Sistema de Gestão da Qualidade - Referência Europeia
-              </motion.p>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-cyan-400/20 animate-pulse"></div>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                />
+                <LayoutDashboard className="h-8 w-8 text-white relative z-10" />
+              </motion.div>
+              <div>
+                <motion.p
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'} flex items-center`}
+                >
+                  <SparklesIcon2 className="h-4 w-4 mr-2 text-blue-400" />
+                  Sistema de Gestão da Qualidade - Referência Europeia
+                </motion.p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-3 rounded-xl ${darkMode ? 'bg-gray-800/80 text-yellow-400' : 'bg-white/80 text-gray-700'} shadow-lg border ${darkMode ? 'border-gray-700/50' : 'border-gray-200/50'} backdrop-blur-sm transition-all duration-300 hover:shadow-xl`}
+              >
+                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowAlerts(!showAlerts)}
+                className={`p-3 rounded-xl ${darkMode ? 'bg-gray-800/80 text-red-400' : 'bg-white/80 text-red-600'} shadow-lg border ${darkMode ? 'border-gray-700/50' : 'border-gray-200/50'} backdrop-blur-sm transition-all duration-300 hover:shadow-xl relative`}
+              >
+                <Bell className="h-5 w-5" />
+                {alertas.length > 0 && (
+                  <motion.span 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full flex items-center justify-center shadow-lg"
+                  >
+                    {alertas.length}
+                  </motion.span>
+                )}
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm"
+              >
+                <Download className="h-4 w-4 inline mr-2" />
+                Exportar
+              </motion.button>
             </div>
           </div>
-
-          <div className="flex items-center space-x-4">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 rounded-lg ${darkMode ? 'bg-gray-800 text-yellow-400' : 'bg-white text-gray-700'} shadow-lg border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
-            >
-              {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowAlerts(!showAlerts)}
-              className={`p-2 rounded-lg ${darkMode ? 'bg-gray-800 text-red-400' : 'bg-white text-red-600'} shadow-lg border ${darkMode ? 'border-gray-700' : 'border-gray-200'} relative`}
-            >
-              <Bell className="h-5 w-5" />
-              {alertas.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                  {alertas.length}
-                </span>
-              )}
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              <Download className="h-4 w-4 inline mr-2" />
-              Exportar
-            </motion.button>
-          </div>
         </div>
-      </motion.div>
 
-      {/* Main Content */}
-      <div className="relative z-10 p-6">
-        {/* Filtros */}
+        {/* Enhanced Filters Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="flex flex-wrap gap-4 mb-8"
+          className="px-6 pb-6"
         >
-          <div className="relative">
-            <select
-              value={selectedObra}
-              onChange={(e) => setSelectedObra(e.target.value)}
-              className={`px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-700'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
-            >
-              {obras.map(obra => (
-                <option key={obra.id} value={obra.id}>
-                  {obra.nome} - {obra.localizacao}
-                </option>
-              ))}
-            </select>
-          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="relative group">
+              <div className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl blur opacity-20 group-hover:opacity-30 transition-opacity duration-300`}></div>
+              <select
+                value={selectedObra}
+                onChange={(e) => setSelectedObra(e.target.value)}
+                className={`relative px-4 py-3 rounded-xl border-2 ${darkMode ? 'bg-gray-800/80 border-gray-600 text-white' : 'bg-white/80 border-gray-200 text-gray-700'} focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 backdrop-blur-sm transition-all duration-300 min-w-[200px]`}
+              >
+                {obras.map(obra => (
+                  <option key={obra.id} value={obra.id}>
+                    {obra.nome} - {obra.localizacao}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div className={`px-4 py-2 rounded-lg border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-700'} flex items-center space-x-2`}>
-            <Search className="h-4 w-4" />
-            <input
-              type="text"
-              placeholder="Pesquisar módulos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className={`bg-transparent outline-none ${darkMode ? 'text-white placeholder-gray-400' : 'text-gray-700 placeholder-gray-500'}`}
-            />
+            <div className="relative group flex-1 max-w-md">
+              <div className={`absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur opacity-20 group-hover:opacity-30 transition-opacity duration-300`}></div>
+              <div className={`relative px-4 py-3 rounded-xl border-2 ${darkMode ? 'bg-gray-800/80 border-gray-600' : 'bg-white/80 border-gray-200'} flex items-center space-x-3 backdrop-blur-sm transition-all duration-300 group-hover:border-purple-500 focus-within:border-purple-500 focus-within:ring-4 focus-within:ring-purple-500/20`}>
+                <Search className={`h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                <input
+                  type="text"
+                  placeholder="Pesquisar módulos, funcionalidades..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`flex-1 bg-transparent outline-none ${darkMode ? 'text-white placeholder-gray-400' : 'text-gray-700 placeholder-gray-500'}`}
+                />
+                {searchTerm && (
+                  <motion.button
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    onClick={() => setSearchTerm("")}
+                    className={`p-1 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors duration-200`}
+                  >
+                    <X className="h-4 w-4 text-gray-400" />
+                  </motion.button>
+                )}
+              </div>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={clearFilters}
+              className={`px-6 py-3 rounded-xl border-2 ${darkMode ? 'bg-gray-800/80 border-gray-600 text-gray-300' : 'bg-white/80 border-gray-200 text-gray-700'} backdrop-blur-sm transition-all duration-300 hover:border-blue-500 hover:text-blue-600 flex items-center space-x-2 ${hasActiveFilters ? 'border-blue-500' : 'border-gray-600'}`}
+            >
+              <Filter className="h-4 w-4" />
+              <span>Limpar Filtros</span>
+            </motion.button>
           </div>
         </motion.div>
+      </motion.div>
 
-
-
+      {/* Main Content */}
+      <div className="relative z-10 p-6">
         {/* Alertas */}
         {showAlerts && (
           <motion.div
@@ -369,11 +412,36 @@ export default function Dashboard() {
           </motion.div>
         )}
 
+        {/* Dashboard Title Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="text-center mb-12"
+        >
+          <motion.h1
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.0 }}
+            className={`text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent mb-4`}
+          >
+            Dashboard Executivo
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2 }}
+            className={`text-xl ${darkMode ? 'text-gray-300' : 'text-gray-600'} max-w-2xl mx-auto`}
+          >
+            Visão geral das métricas e indicadores de qualidade
+          </motion.p>
+        </motion.div>
+
         {/* SGQ Global Charts */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
+          transition={{ delay: 1.0 }}
           className="space-y-8"
         >
           <SGQCharts darkMode={darkMode} />
@@ -383,46 +451,151 @@ export default function Dashboard() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
-          className="mt-12"
+          transition={{ delay: 1.4 }}
+          className="mt-16"
         >
-          <div className="text-center mb-8">
-            <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-2`}>
+          <div className="text-center mb-12">
+            <h2 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-3`}>
               Acesso Rápido aos Módulos
             </h2>
-            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'} max-w-2xl mx-auto`}>
               Navegue diretamente para qualquer módulo do sistema
             </p>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {filteredSections.flatMap(section => 
-              section.modules.map(module => (
-                <motion.div
-                  key={module.id}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 1.4 + Math.random() * 0.5 }}
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate(module.path)}
-                  className={`p-4 rounded-xl ${darkMode ? 'bg-gray-800/50' : 'bg-white'} border ${darkMode ? 'border-gray-600' : 'border-gray-200'} shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group`}
-                >
-                  <div className="text-center">
-                    <motion.div 
-                      className={`w-10 h-10 bg-gradient-to-r ${section.color} rounded-lg flex items-center justify-center mx-auto mb-2`}
-                      whileHover={{ rotate: 5, scale: 1.1 }}
-                    >
-                      <module.icon className="h-5 w-5 text-white" />
-                    </motion.div>
-                    <h3 className={`text-xs font-medium ${darkMode ? 'text-white' : 'text-gray-800'} truncate`}>
-                      {module.nome}
-                    </h3>
+            
+            {/* Feedback dos filtros */}
+            {hasActiveFilters && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`mt-6 p-4 rounded-xl ${darkMode ? 'bg-blue-900/20 border border-blue-700/30' : 'bg-blue-50 border border-blue-200'} max-w-md mx-auto`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Filter className={`h-4 w-4 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                    <span className={`text-sm font-medium ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>
+                      Filtros ativos: {totalModules} de {totalAllModules} módulos
+                    </span>
                   </div>
-                </motion.div>
-              ))
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={clearFilters}
+                    className={`px-3 py-1 rounded-lg text-xs font-medium ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'} transition-colors duration-200`}
+                  >
+                    Limpar
+                  </motion.button>
+                </div>
+                {(searchTerm || selectedObra !== "all") && (
+                  <div className={`text-xs mt-2 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                    {searchTerm && `Pesquisa: "${searchTerm}"`}
+                    {searchTerm && selectedObra !== "all" && " • "}
+                    {selectedObra !== "all" && `Obra: ${obras.find(o => o.id === selectedObra)?.nome}`}
+                  </div>
+                )}
+              </motion.div>
             )}
           </div>
+
+          {/* Categorias de Módulos */}
+          <div className="space-y-8">
+            {filteredSections.map((section, sectionIndex) => (
+              <motion.div
+                key={section.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.6 + sectionIndex * 0.1 }}
+                className="space-y-4"
+              >
+                {/* Cabeçalho da Categoria */}
+                <div className="flex items-center space-x-4 mb-6">
+                  <div className={`w-12 h-12 bg-gradient-to-r ${section.color} rounded-xl flex items-center justify-center shadow-lg`}>
+                    <section.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                      {section.title}
+                    </h3>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {section.subtitle}
+                    </p>
+                  </div>
+                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                  <span className={`text-sm font-medium px-3 py-1 rounded-full ${darkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
+                    {section.modules.length} módulos
+                  </span>
+                </div>
+
+                {/* Grid de Módulos da Categoria */}
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {section.modules.map((module, moduleIndex) => (
+                    <motion.div
+                      key={module.id}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 1.8 + sectionIndex * 0.1 + moduleIndex * 0.05 }}
+                      whileHover={{ scale: 1.05, y: -4 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => navigate(module.path)}
+                      className={`relative p-5 rounded-2xl ${darkMode ? 'bg-gray-800/60' : 'bg-white/80'} border-2 ${darkMode ? 'border-gray-700/50' : 'border-gray-200/50'} shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group backdrop-blur-sm overflow-hidden`}
+                    >
+                      {/* Background Gradient */}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${section.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                      
+                      {/* Priority Badge */}
+                      {module.priority === 'alta' && (
+                        <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                      )}
+                      
+                      <div className="relative z-10 text-center">
+                        <motion.div 
+                          className={`w-12 h-12 bg-gradient-to-r ${section.color} rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:shadow-xl transition-all duration-300`}
+                          whileHover={{ rotate: 5, scale: 1.1 }}
+                        >
+                          <module.icon className="h-6 w-6 text-white" />
+                        </motion.div>
+                        <h4 className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-1 leading-tight`}>
+                          {module.nome}
+                        </h4>
+                        <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}>
+                          {module.nomeEN}
+                        </div>
+                      </div>
+
+                      {/* Hover Effect */}
+                      <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-blue-400/30 transition-all duration-300"></div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Mensagem quando não há resultados */}
+          {filteredSections.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-16"
+            >
+              <div className={`w-20 h-20 bg-gradient-to-r from-gray-400 to-gray-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl`}>
+                <Search className="h-10 w-10 text-white" />
+              </div>
+              <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-3`}>
+                Nenhum módulo encontrado
+              </h3>
+              <p className={`text-base ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-6 max-w-md mx-auto`}>
+                Tente ajustar os filtros ou pesquisar por outro termo
+              </p>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={clearFilters}
+                className={`px-8 py-3 rounded-xl font-medium bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg hover:shadow-xl transition-all duration-300`}
+              >
+                Limpar Filtros
+              </motion.button>
+            </motion.div>
+          )}
         </motion.div>
 
         {/* Footer */}
