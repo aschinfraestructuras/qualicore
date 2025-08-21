@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { Shield, ArrowRight, Sparkles, CheckCircle, Zap, BarChart3, Users, Award, Play, Star, Globe, Lock, Building, TestTube, FileText, ClipboardCheck, Target, TrendingUp, Settings, Database, Target as TargetIcon, Award as AwardIcon, Trophy, Medal, Crown, Lightbulb, Rocket, Flame, Heart, Gem, Diamond, Crown as CrownIcon, CheckSquare, Award as AwardIcon2, Star as StarIcon, Zap as ZapIcon } from "lucide-react";
+import { ArrowRight, Sparkles, CheckCircle, Zap, BarChart3, Users, Award, Play, Star, Globe, Lock, Building, TestTube, FileText, ClipboardCheck, Target, TrendingUp, Settings, Database, Target as TargetIcon, Award as AwardIcon, Trophy, Medal, Crown, Lightbulb, Rocket, Flame, Heart, Gem, Diamond, Crown as CrownIcon, CheckSquare, Award as AwardIcon2, Star as StarIcon, Zap as ZapIcon } from "lucide-react";
 import { motion } from "framer-motion";
+import QualicoreLogo from "../components/QualicoreLogo";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ export default function Landing() {
   const qualityCertifications = [
     { icon: AwardIcon, name: "ISO 9001", color: "from-blue-500 to-indigo-600" },
     { icon: TargetIcon, name: "ISO 14001", color: "from-green-500 to-emerald-600" },
-    { icon: Shield, name: "OHSAS 18001", color: "from-purple-500 to-pink-600" },
+    { icon: AwardIcon, name: "OHSAS 18001", color: "from-purple-500 to-pink-600" },
     { icon: Crown, name: "Excelência", color: "from-yellow-500 to-orange-600" }
   ];
 
@@ -98,24 +99,7 @@ export default function Landing() {
             className="flex items-center space-x-3"
             whileHover={{ scale: 1.05 }}
           >
-            <motion.div 
-              className="h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 flex items-center justify-center shadow-2xl logo-animate"
-              animate={{ 
-                boxShadow: [
-                  "0 0 20px rgba(59, 130, 246, 0.3)",
-                  "0 0 40px rgba(59, 130, 246, 0.6)",
-                  "0 0 20px rgba(59, 130, 246, 0.3)"
-                ]
-              }}
-              transition={{ 
-                boxShadow: { duration: 2, repeat: Infinity },
-              }}
-            >
-              <Shield className="h-6 w-6 text-white" />
-            </motion.div>
-            <span className="text-2xl md:text-3xl font-bold gradient-text-animate">
-              Qualicore
-            </span>
+            <QualicoreLogo size="lg" variant="full" animated={true} />
           </motion.div>
           
           <div className="flex items-center space-x-4">
@@ -347,10 +331,8 @@ export default function Landing() {
         >
           <div className="max-w-7xl mx-auto text-center">
             <div className="flex items-center justify-center mb-4">
-              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center mr-3 logo-animate">
-                <Shield className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-2xl md:text-3xl font-bold">Qualicore</span>
+              <QualicoreLogo size="md" variant="icon" animated={true} />
+              <span className="text-2xl md:text-3xl font-bold ml-3">Qualicore</span>
             </div>
             <p className="text-gray-300 mb-4 text-base md:text-lg">
               Sistema de Gestão da Qualidade para Construção Civil

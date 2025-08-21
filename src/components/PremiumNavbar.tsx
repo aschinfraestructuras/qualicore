@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useAppStore } from "@/stores/appStore";
 import toast from "react-hot-toast";
+import QualicoreLogo from "./QualicoreLogo";
 
 interface PremiumNavbarProps {
   onToggleSidebar: () => void;
@@ -463,10 +464,7 @@ ${searchResults.join('\n\n')}
               </button>
               
               <Link to="/dashboard" className="flex items-center space-x-3 group">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300 relative overflow-hidden">
-                  <span className="text-white font-bold text-lg relative z-10">Q</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-indigo-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </div>
+                <QualicoreLogo size="md" variant="icon" animated={true} />
                 <div>
                   <h1 className="text-xl font-bold bg-gradient-to-r from-blue-200 via-purple-200 to-indigo-200 bg-clip-text text-transparent group-hover:from-blue-100 group-hover:via-purple-100 group-hover:to-indigo-100 transition-all duration-300">
                     Qualicore

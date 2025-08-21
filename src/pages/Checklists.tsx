@@ -16,6 +16,8 @@ import {
   Clock,
   TrendingUp,
   Award,
+  BarChart3,
+  RefreshCw,
 } from "lucide-react";
 import { checklistsAPI } from "@/lib/supabase-api";
 import toast from "react-hot-toast";
@@ -26,6 +28,8 @@ import { SavedChecklistsViewer } from "@/components/SavedChecklistsViewer";
 import { AnimatePresence, motion } from "framer-motion";
 import { PDFService } from "@/services/pdfService";
 import type { Checklist } from "@/types";
+import ChecklistsDashboard from "@/components/ChecklistsDashboard";
+import { checklistsCache } from "@/lib/checklists-cache";
 
 export default function Checklists() {
   const [checklists, setChecklists] = useState<any[]>([]);
@@ -34,6 +38,7 @@ export default function Checklists() {
   const [editingChecklist, setEditingChecklist] = useState<any | null>(null);
   const [showRelatorios, setShowRelatorios] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
   
   // Sharing states
   const [showShareModal, setShowShareModal] = useState(false);
@@ -57,10 +62,14 @@ export default function Checklists() {
     loadChecklists();
   }, []);
 
-  const loadChecklists = async () => {
+  const loadChecklists = async (forceRefresh = false) => {
     try {
       setLoading(true);
       const data = await checklistsAPI.getAll();
+      
+      // Armazenar no cache
+      checklistsCache.set('all_checklists', data);
+      
       setChecklists(data);
     } catch (error) {
       console.error("Erro ao carregar checklists:", error);
@@ -158,7 +167,7 @@ export default function Checklists() {
   const handleIndividualReport = async (checklist: any) => {
     try {
       // Converter para o tipo Checklist esperado pelo PDFService
-      const checklistData: Checklist = {
+      const checklistData: any = {
         id: checklist.id,
         codigo: checklist.codigo,
         titulo: checklist.tipo || checklist.codigo,
@@ -309,6 +318,30 @@ export default function Checklists() {
             </p>
           </div>
           <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowDashboard(!showDashboard)}
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              {showDashboard ? 'Voltar à Lista' : 'Dashboard'}
+            </button>
+            
+            <button
+              onClick={() => checklistsCache.clear()}
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl group"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Limpar Cache
+            </button>
+            
+            <button
+              onClick={() => setShowRelatorios(true)}
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Relatórios
+            </button>
+            
             <button
               onClick={() => setShowForm(true)}
               className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-xl hover:from-emerald-600 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
@@ -478,20 +511,30 @@ export default function Checklists() {
         </motion.div>
       </motion.div>
 
-      {/* Botão de Filtros */}
-      <div className="flex items-center space-x-4">
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`p-2 rounded-lg shadow-soft hover:shadow-md transition-all ${
-            showFilters
-              ? "bg-primary-100 text-primary-600"
-              : "bg-white text-gray-600"
-          }`}
-          title="Filtros"
-        >
-          <Filter className="h-5 w-5" />
-        </button>
-      </div>
+      {/* Conteúdo Principal */}
+      {showDashboard ? (
+        <ChecklistsDashboard 
+          checklists={checklists} 
+          onRefresh={() => loadChecklists(true)} 
+        />
+      ) : (
+        <>
+          {/* Botão de Filtros */}
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`p-2 rounded-lg shadow-soft hover:shadow-md transition-all ${
+                showFilters
+                  ? "bg-primary-100 text-primary-600"
+                  : "bg-white text-gray-600"
+              }`}
+              title="Filtros"
+            >
+              <Filter className="h-5 w-5" />
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Filtros Ativos */}
       <AnimatePresence>

@@ -1854,11 +1854,266 @@ export class PDFService {
     return colors[index % colors.length];
   }
 
+  private addHeader(title: string) {
+    // Logo
+    if (this.logoImage) {
+      this.doc.addImage(this.logoImage, 'PNG', 20, 10, 30, 15);
+    }
+    
+    // Title
+    this.doc.setFontSize(20);
+    this.doc.setTextColor(30, 64, 175);
+    this.doc.text(title, 60, 20);
+    
+    // Company info
+    this.doc.setFontSize(10);
+    this.doc.setTextColor(107, 114, 128);
+    this.doc.text(this.config.empresa.nome, 60, 30);
+    this.doc.text(this.config.empresa.email, 60, 35);
+    
+    // Date
+    this.doc.text(`Data: ${new Date().toLocaleDateString('pt-PT')}`, 400, 20);
+  }
+
   private addFooter() {
     const pageHeight = this.doc.internal.pageSize.height;
     this.doc.setFontSize(10);
     this.doc.setTextColor(128, 128, 128);
     this.doc.text(`Gerado em ${new Date().toLocaleDateString('pt-PT')}`, 50, pageHeight - 20);
     this.doc.text('Qualicore - Sistema de Gestão', 400, pageHeight - 20);
+  }
+
+  // Métodos para relatórios de Checklists
+  async generateChecklistsPerformanceReport(data: {
+    checklists: any[];
+    kpis: any;
+    trends: any;
+    anomalies: any[];
+  }) {
+    this.doc = new jsPDF('portrait', 'mm', 'a4');
+    
+    // Header
+    this.addHeader('Relatório de Performance - Checklists');
+    
+    // KPIs Section
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(30, 64, 175);
+    this.doc.text('KPIs Principais', 20, 60);
+    
+    const kpiData = [
+      ['Métrica', 'Valor', 'Status'],
+      ['Total Checklists', data.kpis.total.toString(), 'Ativo'],
+      ['Taxa Conformidade', `${data.kpis.taxaConformidade.toFixed(1)}%`, data.kpis.taxaConformidade > 80 ? 'Bom' : 'Atenção'],
+      ['Taxa Completude', `${data.kpis.taxaCompletude.toFixed(1)}%`, data.kpis.taxaCompletude > 70 ? 'Bom' : 'Atenção'],
+      ['Tendência', `${data.trends.crescimentoMensal.toFixed(1)}%`, data.trends.tendencia === 'crescente' ? 'Positiva' : 'Negativa']
+    ];
+    
+    autoTable(this.doc, {
+      startY: 70,
+      head: [kpiData[0]],
+      body: kpiData.slice(1),
+      theme: 'grid',
+      headStyles: { fillColor: [30, 64, 175] }
+    });
+    
+    // Status Distribution
+    this.doc.setFontSize(14);
+    this.doc.setTextColor(30, 64, 175);
+    this.doc.text('Distribuição por Status', 20, 140);
+    
+    const statusData = [
+      ['Status', 'Quantidade', 'Percentagem'],
+      ['Completados', data.kpis.completados.toString(), `${((data.kpis.completados / data.kpis.total) * 100).toFixed(1)}%`],
+      ['Em Progresso', data.kpis.emProgresso.toString(), `${((data.kpis.emProgresso / data.kpis.total) * 100).toFixed(1)}%`],
+      ['Pendentes', data.kpis.pendentes.toString(), `${((data.kpis.pendentes / data.kpis.total) * 100).toFixed(1)}%`]
+    ];
+    
+    autoTable(this.doc, {
+      startY: 150,
+      head: [statusData[0]],
+      body: statusData.slice(1),
+      theme: 'grid',
+      headStyles: { fillColor: [30, 64, 175] }
+    });
+    
+    // Anomalies Section
+    if (data.anomalies.length > 0) {
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(239, 68, 68);
+      this.doc.text('Anomalias Detectadas', 20, 220);
+      
+      const anomalyData = data.anomalies.map(anomaly => [
+        anomaly.type,
+        anomaly.severity,
+        anomaly.message
+      ]);
+      
+      autoTable(this.doc, {
+        startY: 230,
+        head: [['Tipo', 'Severidade', 'Descrição']],
+        body: anomalyData,
+        theme: 'grid',
+        headStyles: { fillColor: [239, 68, 68] }
+      });
+    }
+    
+    this.addFooter();
+    this.doc.save('relatorio-performance-checklists.pdf');
+  }
+
+  async generateChecklistsTrendsReport(data: {
+    checklists: any[];
+    trends: any;
+    recommendations: any[];
+  }) {
+    this.doc = new jsPDF('portrait', 'mm', 'a4');
+    
+    // Header
+    this.addHeader('Relatório de Tendências - Checklists');
+    
+    // Trends Section
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(30, 64, 175);
+    this.doc.text('Análise de Tendências', 20, 60);
+    
+    const trendsData = [
+      ['Métrica', 'Valor', 'Interpretação'],
+      ['Crescimento Mensal', `${data.trends.crescimentoMensal.toFixed(1)}%`, data.trends.crescimentoMensal > 0 ? 'Positivo' : 'Negativo'],
+      ['Crescimento Semanal', `${data.trends.crescimentoSemanal.toFixed(1)}%`, data.trends.crescimentoSemanal > 0 ? 'Positivo' : 'Negativo'],
+      ['Média Diária', `${data.trends.mediaDiaria.toFixed(1)}`, 'Checklists por dia'],
+      ['Tendência Geral', data.trends.tendencia, data.trends.tendencia === 'crescente' ? 'Melhorando' : 'Piorando']
+    ];
+    
+    autoTable(this.doc, {
+      startY: 70,
+      head: [trendsData[0]],
+      body: trendsData.slice(1),
+      theme: 'grid',
+      headStyles: { fillColor: [30, 64, 175] }
+    });
+    
+    // Recommendations Section
+    if (data.recommendations.length > 0) {
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(16, 185, 129);
+      this.doc.text('Recomendações', 20, 140);
+      
+      const recData = data.recommendations.map(rec => [
+        rec.title,
+        rec.priority,
+        rec.description
+      ]);
+      
+      autoTable(this.doc, {
+        startY: 150,
+        head: [['Título', 'Prioridade', 'Descrição']],
+        body: recData,
+        theme: 'grid',
+        headStyles: { fillColor: [16, 185, 129] }
+      });
+    }
+    
+    this.addFooter();
+    this.doc.save('relatorio-tendencias-checklists.pdf');
+  }
+
+  async generateChecklistsAnomaliesReport(data: {
+    checklists: any[];
+    anomalies: any[];
+    recommendations: any[];
+  }) {
+    this.doc = new jsPDF('portrait', 'mm', 'a4');
+    
+    // Header
+    this.addHeader('Relatório de Anomalias - Checklists');
+    
+    // Anomalies Section
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(239, 68, 68);
+    this.doc.text('Anomalias Detectadas', 20, 60);
+    
+    if (data.anomalies.length > 0) {
+      const anomalyData = data.anomalies.map(anomaly => [
+        anomaly.type,
+        anomaly.severity,
+        anomaly.message,
+        anomaly.recommendation
+      ]);
+      
+      autoTable(this.doc, {
+        startY: 70,
+        head: [['Tipo', 'Severidade', 'Mensagem', 'Recomendação']],
+        body: anomalyData,
+        theme: 'grid',
+        headStyles: { fillColor: [239, 68, 68] }
+      });
+    } else {
+      this.doc.setFontSize(12);
+      this.doc.setTextColor(16, 185, 129);
+      this.doc.text('Nenhuma anomalia detectada - Sistema funcionando normalmente', 20, 80);
+    }
+    
+    // Recommendations Section
+    if (data.recommendations.length > 0) {
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(16, 185, 129);
+      this.doc.text('Recomendações de Melhoria', 20, 140);
+      
+      const recData = data.recommendations.map(rec => [
+        rec.title,
+        rec.priority,
+        rec.impact,
+        rec.effort
+      ]);
+      
+      autoTable(this.doc, {
+        startY: 150,
+        head: [['Título', 'Prioridade', 'Impacto', 'Esforço']],
+        body: recData,
+        theme: 'grid',
+        headStyles: { fillColor: [16, 185, 129] }
+      });
+    }
+    
+    this.addFooter();
+    this.doc.save('relatorio-anomalias-checklists.pdf');
+  }
+
+  async generateChecklistsIndividualReport(checklists: any[]): Promise<void> {
+    this.doc = new jsPDF('portrait', 'mm', 'a4');
+    
+    // Header
+    this.addHeader('Relatório Individual - Checklists');
+    
+    // Individual Checklist Details
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(30, 64, 175);
+    this.doc.text('Detalhes do Checklist', 20, 60);
+    
+    checklists.forEach((checklist, index) => {
+      const startY = 70 + (index * 120);
+      
+      // Basic Info
+      this.doc.setFontSize(12);
+      this.doc.setTextColor(0, 0, 0);
+      this.doc.text(`Código: ${checklist.codigo}`, 20, startY);
+      this.doc.text(`Título: ${checklist.titulo}`, 20, startY + 10);
+      this.doc.text(`Status: ${checklist.status}`, 20, startY + 20);
+      this.doc.text(`Responsável: ${checklist.responsavel}`, 20, startY + 30);
+      this.doc.text(`Zona: ${checklist.zona}`, 20, startY + 40);
+      this.doc.text(`Estado: ${checklist.estado}`, 20, startY + 50);
+      
+      if (checklist.observacoes) {
+        this.doc.text(`Observações: ${checklist.observacoes}`, 20, startY + 60);
+      }
+      
+      // Add page break if needed
+      if (startY > 250) {
+        this.doc.addPage();
+      }
+    });
+    
+    this.addFooter();
+    this.doc.save('relatorio-individual-checklists.pdf');
   }
 }

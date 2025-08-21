@@ -1,0 +1,33 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="faviconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e40af" />
+      <stop offset="50%" stop-color="#3730a3" />
+      <stop offset="100%" stop-color="#fbbf24" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Hexágono de fundo -->
+  <polygon
+    points="50,5 85,27.5 85,72.5 50,95 15,72.5 15,27.5"
+    fill="url(#faviconGradient)"
+    stroke="url(#faviconGradient)"
+    stroke-width="2"
+  />
+  
+  <!-- Elemento interno - Q estilizado -->
+  <path
+    d="M30 35 Q30 25 40 25 L60 25 Q70 25 70 35 L70 45 Q70 55 60 55 L50 55 L45 65 L35 55 L40 55 Q30 55 30 45 Z"
+    fill="white"
+    opacity="0.9"
+  />
+  
+  <!-- Ponto do Q -->
+  <circle
+    cx="65"
+    cy="50"
+    r="3"
+    fill="white"
+    opacity="0.9"
+  />
+</svg>
