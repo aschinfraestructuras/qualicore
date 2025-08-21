@@ -37,8 +37,11 @@ import RelatorioDocumentosPremium from "@/components/RelatorioDocumentosPremium"
 import { ShareDocumentoModal } from "@/components/ShareDocumentoModal";
 import { SavedDocumentosViewer } from "@/components/SavedDocumentosViewer";
 import { DocumentoDashboard } from "@/components/DocumentoDashboard";
+import DocumentoRelatorioForm from "@/components/DocumentoRelatorioForm";
 import { PDFService } from "@/services/pdfService";
+import { ExcelService } from "@/services/excelService";
 import type { Documento } from "@/types";
+import { supabase } from "@/lib/supabase";
 
 // Dados mockados mais realistas
 const mockDocumentos = [
@@ -281,6 +284,7 @@ export default function Documentos() {
   const [showRelatorioPremiumModal, setShowRelatorioPremiumModal] = useState(false);
   const [sharingDocumento, setSharingDocumento] = useState<any>(null);
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
+  const [showRelatorioForm, setShowRelatorioForm] = useState(false);
 
   // Filtros ativos
   const [filters, setFilters] = useState({
@@ -299,7 +303,6 @@ export default function Documentos() {
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
 
   // Estados para modais
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingDocument, setViewingDocument] = useState<Documento | null>(null);
@@ -379,110 +382,68 @@ export default function Documentos() {
 
   const handleCreateDocument = async (data: any) => {
     try {
-      console.log("Dados recebidos do formulário:", data);
-
-      // Corrigir campos UUID vazios para null
-      const uuidFields = [
-        "relacionado_obra_id",
-        "relacionado_zona_id",
-        "relacionado_ensaio_id",
-        "relacionado_material_id",
-        "relacionado_fornecedor_id",
-        "relacionado_checklist_id",
-      ];
-      const docData = { ...data };
-
-      // Limpar todos os campos UUID vazios ou inválidos
-      uuidFields.forEach((field) => {
-        if (
-          docData[field] === "" ||
-          docData[field] === undefined ||
-          docData[field] === null
-        ) {
-          docData[field] = null;
-        }
-      });
-
-      // Limpar arrays vazios
-      const arrayFields = [
-        "palavras_chave",
-        "distribuicao",
-        "responsabilidades",
-        "recursos_necessarios",
-        "criterios_aceitacao",
-        "registros_obrigatorios",
-        "normas_referencia",
-        "equipamentos_necessarios",
-        "acoes_nao_conformidade",
-        "objetivos_qualidade",
-        "responsabilidades_qualidade",
-        "recursos_qualidade",
-        "controlos_qualidade",
-        "indicadores_qualidade",
-        "auditorias_planeadas",
-        "acoes_melhoria",
-      ];
-
-      arrayFields.forEach((field) => {
-        if (!Array.isArray(docData[field]) || docData[field].length === 0) {
-          docData[field] = [];
-        }
-      });
-
-      // Limpeza adicional para campos UUID inválidos
-      uuidFields.forEach((field) => {
-        if (typeof docData[field] === 'string' && !docData[field].match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-          console.log(`🔧 Limpando campo UUID inválido: ${field} = "${docData[field]}"`);
-          docData[field] = null;
-        }
-      });
-
-      // Limpar campos de data vazios
-      const dateFields = [
-        "data_validade",
-        "data_aprovacao", 
-        "data_revisao",
-        "data_solicitacao",
-        "data_resposta"
-      ];
-      dateFields.forEach((field) => {
-        if (docData[field] === "" || docData[field] === undefined || docData[field] === null) {
-          console.log(`🔧 Limpando campo de data vazio: ${field} = "${docData[field]}"`);
-          docData[field] = null;
-        }
-      });
-
-      console.log("Dados corrigidos para envio:", docData);
-      console.log("🔍 Verificando campos UUID:", {
-        relacionado_obra_id: docData.relacionado_obra_id,
-        relacionado_zona_id: docData.relacionado_zona_id,
-        relacionado_ensaio_id: docData.relacionado_ensaio_id,
-        relacionado_material_id: docData.relacionado_material_id,
-        relacionado_fornecedor_id: docData.relacionado_fornecedor_id,
-        relacionado_checklist_id: docData.relacionado_checklist_id,
-      });
-
+      // Validar dados obrigatórios
+      if (!data.codigo || !data.tipo || !data.versao || !data.responsavel || !data.zona) {
+        toast.error("Por favor, preencha todos os campos obrigatórios");
+        return;
+      }
+      
+      // Simplificar - apenas enviar os dados essenciais
+      const docData = {
+        codigo: data.codigo,
+        tipo: data.tipo,
+        versao: data.versao,
+        responsavel: data.responsavel,
+        zona: data.zona,
+        estado: data.estado || "pendente",
+        classificacao_confidencialidade: data.classificacao_confidencialidade || "publico",
+        observacoes: data.observacoes || "",
+        data_validade: data.data_validade || null,
+        data_aprovacao: data.data_aprovacao || null,
+        data_revisao: data.data_revisao || null,
+        aprovador: data.aprovador || "",
+        revisor: data.revisor || "",
+        categoria: data.categoria || "",
+        documents: data.documents || []
+      };
+      
+      // Mostrar loading
+      const loadingToast = toast.loading("Criando documento...");
+      
       const newDocument = await documentosAPI.create(docData);
-      setDocumentos((prev) => [newDocument, ...prev]);
-      setShowCreateModal(false);
-      toast.success("Documento criado com sucesso!");
+      
+      // Fechar loading
+      toast.dismiss(loadingToast);
+      
+      if (newDocument) {
+        setDocumentos((prev) => [newDocument, ...prev]);
+        setShowForm(false);
+        toast.success("Documento criado com sucesso!");
+      } else {
+        toast.error("Erro ao criar documento");
+      }
     } catch (error) {
-      console.error("Erro detalhado:", error);
-      toast.error("Erro ao criar documento");
+      // Mostrar erro mais específico
+      if (error instanceof Error) {
+        if (error.message.includes("não autenticado")) {
+          toast.error("Erro de autenticação. Por favor, faça login novamente.");
+        } else if (error.message.includes("código")) {
+          toast.error("Código do documento já existe. Tente gerar um novo código.");
+        } else {
+          toast.error(`Erro ao criar documento: ${error.message}`);
+        }
+      } else {
+        toast.error("Erro desconhecido ao criar documento");
+      }
     }
   };
 
   const handleEditDocument = async (data: any) => {
     if (!editingDocumento) {
-      console.log("❌ editingDocumento é null!");
       return;
     }
     
     try {
-      console.log("🚀 handleEditDocument chamado!");
-      console.log("📁 Dados recebidos para edição:", data);
-      console.log("📁 Documento sendo editado:", editingDocumento);
-      console.log("📁 ID do documento:", editingDocumento.id);
 
       // Corrigir campos UUID vazios para null
       const uuidFields = [
@@ -535,7 +496,6 @@ export default function Documentos() {
       // Limpeza adicional para campos UUID inválidos
       uuidFields.forEach((field) => {
         if (typeof docData[field] === 'string' && !docData[field].match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-          console.log(`🔧 Limpando campo UUID inválido: ${field} = "${docData[field]}"`);
           docData[field] = null;
         }
       });
@@ -543,12 +503,9 @@ export default function Documentos() {
       // Limpar campos de data vazios
       ["data_validade", "data_aprovacao", "data_revisao", "data_solicitacao", "data_resposta"].forEach((field) => {
         if (docData[field] === "" || docData[field] === undefined || docData[field] === null) {
-          console.log(`🔧 Limpando campo de data vazio: ${field} = "${docData[field]}"`);
           docData[field] = null;
         }
       });
-
-      console.log("Dados corrigidos para edição:", docData);
 
       const updatedDocument = await documentosAPI.update(
         editingDocumento.id,
@@ -575,7 +532,6 @@ export default function Documentos() {
   };
 
   const handleEditClick = (document: any) => {
-    console.log("🚀 Clicou no botão Editar documento:", document);
     setEditingDocumento(document);
     setShowEditModal(true);
   };
@@ -733,6 +689,93 @@ export default function Documentos() {
       toast.error("Erro ao gerar relatório");
     }
   };
+
+  const handleGenerateReport = async (config: any) => {
+    try {
+      // Se for formato 'config', abrir modal de configuração
+      if (config.formato === 'config') {
+        setShowRelatorioPremiumModal(true);
+        return;
+      }
+
+      // Filtrar documentos baseado na configuração
+      let documentosFiltrados = documentos;
+      
+      // Aplicar filtros de período
+      if (config.periodo?.inicio && config.periodo?.fim) {
+        documentosFiltrados = documentosFiltrados.filter(doc => {
+          const docDate = new Date(doc.created);
+          const inicio = new Date(config.periodo.inicio);
+          const fim = new Date(config.periodo.fim);
+          return docDate >= inicio && docDate <= fim;
+        });
+      }
+      
+      // Aplicar filtros de tipo
+      if (config.filtros?.tipo?.length > 0) {
+        documentosFiltrados = documentosFiltrados.filter(doc => 
+          config.filtros.tipo.includes(doc.tipo)
+        );
+      }
+      
+      // Aplicar filtros de estado
+      if (config.filtros?.estado?.length > 0) {
+        documentosFiltrados = documentosFiltrados.filter(doc => 
+          config.filtros.estado.includes(doc.estado)
+        );
+      }
+      
+      // Gerar relatório baseado no formato
+      if (config.formato === 'excel') {
+        const excelService = new ExcelService();
+        
+        switch (config.tipo) {
+          case 'executivo':
+            await excelService.generateDocumentosExecutiveReport(documentosFiltrados, config);
+            break;
+          case 'detalhado':
+            await excelService.generateDocumentosDetailedReport(documentosFiltrados, config);
+            break;
+          case 'vencimentos':
+            await excelService.generateDocumentosVencimentosReport(documentosFiltrados, config);
+            break;
+          default:
+            await excelService.generateDocumentosDetailedReport(documentosFiltrados, config);
+        }
+      } else {
+        // Formato PDF
+        const pdfService = new PDFService();
+        
+        switch (config.tipo) {
+          case 'executivo':
+            await pdfService.generateDocumentosExecutiveReport(documentosFiltrados);
+            break;
+          case 'detalhado':
+            await pdfService.generateDocumentosFilteredReport(documentosFiltrados, config.filtros);
+            break;
+          case 'vencimentos':
+            const documentosVencimento = documentosFiltrados.filter(doc => {
+              const dataValidade = new Date(doc.data_validade);
+              const hoje = new Date();
+              const diffTime = dataValidade.getTime() - hoje.getTime();
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              return diffDays <= 30; // Documentos que vencem em 30 dias
+            });
+            await pdfService.generateDocumentosFilteredReport(documentosVencimento, { ...config.filtros, vencimento: true });
+            break;
+          default:
+            await pdfService.generateDocumentosFilteredReport(documentosFiltrados, config.filtros);
+        }
+      }
+      
+      toast.success("Relatório gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar relatório:", error);
+      toast.error("Erro ao gerar relatório");
+    }
+  };
+
+
 
   // Calcular estatísticas
   const stats = {
@@ -898,6 +941,9 @@ export default function Documentos() {
               <BarChart3 className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
               {showDashboard ? 'Lista' : 'Dashboard'}
             </button>
+            
+
+            
             <button
               onClick={() => setShowForm(true)}
               className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
@@ -911,7 +957,11 @@ export default function Documentos() {
 
       {/* Dashboard ou Lista */}
       {showDashboard ? (
-        <DocumentoDashboard documentos={filteredDocumentos} darkMode={false} />
+        <DocumentoDashboard 
+          documentos={filteredDocumentos} 
+          darkMode={false} 
+          onGenerateReport={handleGenerateReport}
+        />
       ) : (
         <>
           {/* Stats Cards - Ultra Premium */}
@@ -1514,31 +1564,7 @@ export default function Documentos() {
 
       {/* Modals */}
 
-      {/* Create Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4">
-          <div className="bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto max-w-4xl w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">
-                Novo Documento
-              </h2>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="p-2 rounded-xl hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
-                title="Fechar"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            <div className="p-6">
-              <DocumentoForm
-                onSubmit={handleCreateDocument}
-                onCancel={() => setShowCreateModal(false)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Edit Modal */}
       {showEditModal && editingDocumento && (
@@ -1841,6 +1867,54 @@ export default function Documentos() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Relatório */}
+        {showRelatorioForm && (
+          <DocumentoRelatorioForm
+            isOpen={showRelatorioForm}
+            onClose={() => setShowRelatorioForm(false)}
+            onGenerateReport={handleGenerateReport}
+            documentos={documentos}
+            darkMode={false}
+          />
+        )}
+
+
+
+        {/* Modal de Novo Documento */}
+        {showForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Novo Documento
+                  </h2>
+                  <button
+                    onClick={() => {
+                      console.log("🔘 Fechando modal de novo documento");
+                      setShowForm(false);
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-6">
+                <DocumentoForm
+                  onSubmit={handleCreateDocument}
+                  onCancel={() => {
+                    console.log("🔘 Cancelando novo documento");
+                    setShowForm(false);
+                  }}
+                  initialData={undefined}
+                  isEditing={false}
+                />
               </div>
             </div>
           </div>

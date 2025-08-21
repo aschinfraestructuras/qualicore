@@ -242,16 +242,7 @@ export default function DocumentoForm({
   const watchedTipo = watch("tipo");
   const watchedEstado = watch("estado");
 
-  // Log do estado do formulário
-  useEffect(() => {
-    console.log("🔍 Estado do formulário:", { isValid, errors });
-    if (!isValid && Object.keys(errors).length > 0) {
-      console.log("❌ ERROS QUE INVALIDAM O FORMULÁRIO:");
-      Object.keys(errors).forEach(key => {
-        console.log(`  - ${key}:`, errors[key]);
-      });
-    }
-  }, [isValid, errors]);
+
 
   // Gerar código automaticamente se não existir
   useEffect(() => {
@@ -261,33 +252,37 @@ export default function DocumentoForm({
   }, []);
 
   const onSubmitForm = async (data: DocumentoFormData) => {
-    console.log("🚀🚀🚀 onSubmitForm CHAMADO!");
-    console.log("📁 Dados do formulário:", data);
-    console.log("📁 Documents:", documents);
-    console.log("📁 isEditing:", isEditing);
-    setIsSubmitting(true);
     try {
-      // Enviar apenas os campos essenciais
-      const docData: any = {
+      // Validar dados obrigatórios
+      if (!data.codigo || !data.tipo || !data.versao || !data.responsavel || !data.zona) {
+        toast.error("Por favor, preencha todos os campos obrigatórios");
+        return;
+      }
+      
+      const docData = {
         codigo: data.codigo,
         tipo: data.tipo,
         versao: data.versao,
         responsavel: data.responsavel,
         zona: data.zona,
-        estado: data.estado,
-        classificacao_confidencialidade: data.classificacao_confidencialidade,
+        estado: data.estado || "pendente",
+        classificacao_confidencialidade: data.classificacao_confidencialidade || "publico",
         documents: documents,
-        // Incluir todos os outros campos do initialData se existirem
-        ...initialData
+        observacoes: data.observacoes || "",
+        data_validade: data.data_validade || null,
+        data_aprovacao: data.data_aprovacao || null,
+        data_revisao: data.data_revisao || null,
+        aprovador: data.aprovador || "",
+        revisor: data.revisor || "",
+        categoria: data.categoria || ""
       };
-      console.log("📁 Chamando onSubmit com dados:", docData);
-      onSubmit(docData);
-      console.log("📁 onSubmit chamado com sucesso!");
-      toast.success(
-        isEditing
-          ? "Documento atualizado com sucesso!"
-          : "Documento criado com sucesso!",
-      );
+      
+      // Mostrar loading no botão
+      setIsSubmitting(true);
+      
+      await onSubmit(docData);
+      
+      // Sucesso - o componente pai vai fechar o modal
     } catch (error) {
       toast.error("Erro ao salvar documento");
     } finally {
@@ -587,19 +582,8 @@ export default function DocumentoForm({
         </button>
         <button
           type="submit"
-          // disabled={!isValid || isSubmitting}
           className="btn btn-primary btn-md"
-          onClick={(e) => {
-            console.log("🚀 CLIQUE NO BOTÃO DETECTADO!");
-            console.log("📁 isValid:", isValid);
-            console.log("📁 isSubmitting:", isSubmitting);
-            console.log("📁 errors:", errors);
-            
-            // Forçar submissão
-            e.preventDefault();
-            console.log("🚀 Forçando submissão do formulário...");
-            handleSubmit(onSubmitForm)();
-          }}
+          onClick={() => console.log("🔘 Botão submit clicado")}
         >
           {isSubmitting ? (
             <div className="flex items-center space-x-2">

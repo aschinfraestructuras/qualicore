@@ -17,9 +17,10 @@ import { AnimatePresence } from 'framer-motion';
 interface DocumentoDashboardProps {
   documentos: any[];
   darkMode?: boolean;
+  onGenerateReport?: (config: any) => void;
 }
 
-export const DocumentoDashboard: React.FC<DocumentoDashboardProps> = ({ documentos, darkMode = false }) => {
+export const DocumentoDashboard: React.FC<DocumentoDashboardProps> = ({ documentos, darkMode = false, onGenerateReport }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'reports' | 'insights'>('overview');
   const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
 
@@ -66,115 +67,350 @@ export const DocumentoDashboard: React.FC<DocumentoDashboardProps> = ({ document
     return acc;
   }, {} as Record<string, number>);
 
-  // Dados de tendência temporal (simulados)
-  const dadosTendencia = [
-    { mes: 'Jan', documentos: 45, aprovados: 38 },
-    { mes: 'Fev', documentos: 52, aprovados: 44 },
-    { mes: 'Mar', documentos: 48, aprovados: 41 },
-    { mes: 'Abr', documentos: 61, aprovados: 53 },
-    { mes: 'Mai', documentos: 55, aprovados: 47 },
-    { mes: 'Jun', documentos: 67, aprovados: 58 }
-  ];
+  // Dados de tendência temporal (calculados dos documentos reais)
+  const dadosTendencia = React.useMemo(() => {
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const hoje = new Date();
+    const dados = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      const mes = meses[data.getMonth()];
+      const documentosMes = documentos.filter(d => {
+        const docDate = new Date(d.created);
+        return docDate.getMonth() === data.getMonth() && docDate.getFullYear() === data.getFullYear();
+      });
+      const aprovadosMes = documentosMes.filter(d => d.estado === 'aprovado');
+      
+      dados.push({
+        mes,
+        documentos: documentosMes.length,
+        aprovados: aprovadosMes.length
+      });
+    }
+    
+    return dados;
+  }, [documentos]);
 
-  // Componente de gráfico de pizza premium
+  // Dados por responsável
+  const dadosPorResponsavel = documentos.reduce((acc, doc) => {
+    acc[doc.responsavel] = (acc[doc.responsavel] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Dados de vencimento por mês
+  const dadosVencimento = React.useMemo(() => {
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const hoje = new Date();
+    const dados = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      const mes = meses[data.getMonth()];
+      const vencimentosMes = documentos.filter(d => {
+        const dataValidade = new Date(d.data_validade);
+        return dataValidade.getMonth() === data.getMonth() && dataValidade.getFullYear() === data.getFullYear();
+      });
+      
+      dados.push({
+        mes,
+        vencimentos: vencimentosMes.length,
+        vencidos: vencimentosMes.filter(d => new Date(d.data_validade) < hoje).length
+      });
+    }
+    
+    return dados;
+  }, [documentos]);
+
+  // Componente de gráfico de pizza premium avançado
   const PremiumPieChart = ({ data, title, colors }: { data: Record<string, number>, title: string, colors: string[] }) => {
-    const total = Object.values(data).reduce((sum, value) => sum + value, 0);
-    const items = Object.entries(data).map(([key, value], index) => ({
-      name: key,
-      value,
-      percentage: total > 0 ? Math.round((value / total) * 100) : 0,
-      color: colors[index % colors.length]
-    }));
-
+    const entries = Object.entries(data).slice(0, 5);
+    const total = entries.reduce((sum, [_, value]) => sum + value, 0);
+    
+    let currentAngle = 0;
+    const radius = 60;
+    const centerX = 100;
+    const centerY = 100;
+    
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className={`p-6 rounded-3xl ${darkMode ? 'bg-gray-800/60' : 'bg-white/80'} backdrop-blur-xl shadow-xl border ${darkMode ? 'border-gray-700/50' : 'border-gray-200/30'} relative overflow-hidden`}
+        whileHover={{ scale: 1.02 }}
+        className={`p-6 rounded-3xl ${darkMode ? 'bg-gray-800/60' : 'bg-white/80'} backdrop-blur-xl shadow-xl border ${darkMode ? 'border-gray-700/50' : 'border-gray-200/30'} relative overflow-hidden group`}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-rose-500/5 opacity-0 hover:opacity-100 transition-opacity duration-500"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-rose-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-t-3xl"></div>
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-6">
             <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
               {title}
             </h3>
-            <PieChart className="h-5 w-5 text-purple-500" />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-3">
-              {items.map((item, index) => (
-                <div key={item.name} className="flex items-center space-x-3">
-                  <div 
-                    className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: item.color }}
-                  ></div>
-                  <div className="flex-1">
-                    <div className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {item.name}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {item.value} ({item.percentage}%)
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center space-x-2">
+              <PieChart className="h-5 w-5 text-purple-500" />
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
             </div>
-            
+          </div>
+
+          <div className="flex items-center justify-center mb-6">
             <div className="relative">
-              <div className="w-32 h-32 mx-auto relative">
-                {/* Gráfico de pizza SVG */}
-                <svg width="128" height="128" viewBox="0 0 128 128" className="transform -rotate-90">
-                  <circle
-                    cx="64"
-                    cy="64"
-                    r="60"
-                    fill="none"
-                    stroke="#e5e7eb"
-                    strokeWidth="8"
-                  />
-                  {items.map((item, index) => {
-                    const percentage = item.percentage / 100;
-                    const circumference = 2 * Math.PI * 60;
-                    const strokeDasharray = circumference * percentage;
-                    const strokeDashoffset = circumference * (1 - percentage);
-                    const previousPercentages = items
-                      .slice(0, index)
-                      .reduce((sum, prevItem) => sum + prevItem.percentage / 100, 0);
-                    const rotation = previousPercentages * 360;
-                    
-                    return (
-                      <circle
-                        key={item.name}
-                        cx="64"
-                        cy="64"
-                        r="60"
-                        fill="none"
-                        stroke={item.color}
-                        strokeWidth="8"
-                        strokeDasharray={strokeDasharray}
-                        strokeDashoffset={strokeDashoffset}
-                        transform={`rotate(${rotation} 64 64)`}
-                        className="transition-all duration-1000 ease-out"
-                      />
-                    );
-                  })}
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                      {total}
-                    </div>
-                    <div className="text-xs text-gray-500">Total</div>
-                  </div>
+              <svg width="200" height="200" viewBox="0 0 200 200" className="transform -rotate-90">
+                {/* Definições de gradiente */}
+                <defs>
+                  <linearGradient id="centerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.8" />
+                    <stop offset="100%" stopColor="#ec4899" stopOpacity="0.6" />
+                  </linearGradient>
+                </defs>
+                
+                {entries.map(([label, value], index) => {
+                  const percentage = total > 0 ? (value / total) * 100 : 0;
+                  const angle = (percentage / 100) * 360;
+                  const startAngle = currentAngle;
+                  const endAngle = currentAngle + angle;
+                  
+                  const x1 = centerX + radius * Math.cos((startAngle * Math.PI) / 180);
+                  const y1 = centerY + radius * Math.sin((startAngle * Math.PI) / 180);
+                  const x2 = centerX + radius * Math.cos((endAngle * Math.PI) / 180);
+                  const y2 = centerY + radius * Math.sin((endAngle * Math.PI) / 180);
+                  
+                  const largeArcFlag = angle > 180 ? 1 : 0;
+                  
+                  const pathData = [
+                    `M ${centerX} ${centerY}`,
+                    `L ${x1} ${y1}`,
+                    `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                    'Z'
+                  ].join(' ');
+                  
+                  currentAngle += angle;
+                  
+                  return (
+                    <motion.path
+                      key={label}
+                      d={pathData}
+                      fill={colors[index % colors.length]}
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.8, delay: index * 0.1 }}
+                      className="group-hover:opacity-80 transition-opacity duration-300 cursor-pointer"
+                      style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}
+                    />
+                  );
+                })}
+                
+                {/* Círculo central com gradiente */}
+                <circle
+                  cx={centerX}
+                  cy={centerY}
+                  r="25"
+                  fill={darkMode ? '#374151' : '#f8fafc'}
+                  className="drop-shadow-lg"
+                />
+                <circle
+                  cx={centerX}
+                  cy={centerY}
+                  r="20"
+                  fill="url(#centerGradient)"
+                  className="drop-shadow-lg"
+                />
+              </svg>
+              
+              {/* Total no centro */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                    {total}
+                  </p>
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Total
+                  </p>
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Legenda */}
+          <div className="space-y-3">
+            {entries.map(([label, value], index) => {
+              const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+              return (
+                <motion.div
+                  key={label}
+                  className="flex items-center justify-between group/item"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div 
+                      className="w-4 h-4 rounded-full shadow-sm"
+                      style={{ backgroundColor: colors[index % colors.length] }}
+                    />
+                    <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} group-hover/item:text-purple-600 transition-colors`}>
+                      {label}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className={`text-sm font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                      {value}
+                    </span>
+                    <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      ({percentage}%)
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </motion.div>
     );
   };
+
+           // Componente de gráfico de linha premium avançado
+         const PremiumLineChart = ({ data, title, color }: { data: any[], title: string, color: string }) => {
+           const maxValue = Math.max(...data.map(d => Math.max(d.documentos || 0, d.aprovados || 0, d.vencimentos || 0, d.vencidos || 0)));
+           
+           return (
+             <motion.div
+               initial={{ opacity: 0, scale: 0.9 }}
+               animate={{ opacity: 1, scale: 1 }}
+               whileHover={{ scale: 1.02 }}
+               className={`p-6 rounded-3xl ${darkMode ? 'bg-gray-800/60' : 'bg-white/80'} backdrop-blur-xl shadow-xl border ${darkMode ? 'border-gray-700/50' : 'border-gray-200/30'} relative overflow-hidden group`}
+             >
+               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-t-3xl"></div>
+               <div className="relative z-10">
+                 <div className="flex items-center justify-between mb-6">
+                   <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                     {title}
+                   </h3>
+                   <div className="flex items-center space-x-2">
+                     <TrendingUp className="h-5 w-5 text-indigo-500" />
+                     <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
+                   </div>
+                 </div>
+       
+                 <div className="relative h-48">
+                   <svg width="100%" height="100%" viewBox="0 0 400 200" className="absolute inset-0">
+                     {/* Grid lines com gradiente */}
+                     <defs>
+                       <linearGradient id="gridGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                         <stop offset="0%" stopColor={darkMode ? "#374151" : "#e5e7eb"} stopOpacity="0.3" />
+                         <stop offset="100%" stopColor={darkMode ? "#374151" : "#e5e7eb"} stopOpacity="0.1" />
+                       </linearGradient>
+                     </defs>
+                     
+                     {[0, 1, 2, 3, 4].map((i) => (
+                       <line
+                         key={i}
+                         x1="0"
+                         y1={40 + i * 40}
+                         x2="400"
+                         y2={40 + i * 40}
+                         stroke="url(#gridGradient)"
+                         strokeWidth="1"
+                       />
+                     ))}
+                     
+                     {/* Área sob a linha com gradiente */}
+                     {data.length > 1 && (
+                       <defs>
+                         <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                           <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+                           <stop offset="100%" stopColor={color} stopOpacity="0.05" />
+                         </linearGradient>
+                       </defs>
+                     )}
+                     
+                     {/* Área sob a linha */}
+                     {data.length > 1 && maxValue > 0 && (
+                       <path
+                         d={data.map((item, index) => {
+                           const x = (index / (data.length - 1)) * 360 + 20;
+                           const y = 180 - ((item.documentos || 0) / maxValue) * 140;
+                           return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
+                         }).join(' ') + ` L ${(data.length - 1) / (data.length - 1) * 360 + 20} 180 L 20 180 Z`}
+                         fill="url(#areaGradient)"
+                       />
+                     )}
+                     
+                     {/* Line chart com animação */}
+                     {data.map((item, index) => {
+                       const x = (index / (data.length - 1)) * 360 + 20;
+                       const y1 = maxValue > 0 ? 180 - ((item.documentos || 0) / maxValue) * 140 : 180;
+                       const y2 = maxValue > 0 ? 180 - ((item.aprovados || 0) / maxValue) * 140 : 180;
+                       
+                       if (index > 0) {
+                         const prevItem = data[index - 1];
+                         const prevX = ((index - 1) / (data.length - 1)) * 360 + 20;
+                         const prevY1 = maxValue > 0 ? 180 - ((prevItem.documentos || 0) / maxValue) * 140 : 180;
+                         const prevY2 = maxValue > 0 ? 180 - ((prevItem.aprovados || 0) / maxValue) * 140 : 180;
+                         
+                         return (
+                           <g key={index}>
+                             <line
+                               x1={prevX}
+                               y1={prevY1}
+                               x2={x}
+                               y2={y1}
+                               stroke={color}
+                               strokeWidth="3"
+                               fill="none"
+                               strokeLinecap="round"
+                             />
+                             <line
+                               x1={prevX}
+                               y1={prevY2}
+                               x2={x}
+                               y2={y2}
+                               stroke="#10B981"
+                               strokeWidth="3"
+                               fill="none"
+                               strokeLinecap="round"
+                             />
+                           </g>
+                         );
+                       }
+                       return null;
+                     })}
+                     
+                     {/* Data points com animação */}
+                     {data.map((item, index) => {
+                       const x = (index / (data.length - 1)) * 360 + 20;
+                       const y1 = maxValue > 0 ? 180 - ((item.documentos || 0) / maxValue) * 140 : 180;
+                       const y2 = maxValue > 0 ? 180 - ((item.aprovados || 0) / maxValue) * 140 : 180;
+                       
+                       return (
+                         <g key={index}>
+                           <circle cx={x} cy={y1} r="5" fill={color} className="group-hover:r-6 transition-all duration-300" />
+                           <circle cx={x} cy={y1} r="8" fill={color} opacity="0.2" className="group-hover:opacity-0.4 transition-opacity duration-300" />
+                           <circle cx={x} cy={y2} r="5" fill="#10B981" className="group-hover:r-6 transition-all duration-300" />
+                           <circle cx={x} cy={y2} r="8" fill="#10B981" opacity="0.2" className="group-hover:opacity-0.4 transition-opacity duration-300" />
+                           <text x={x} y="195" textAnchor="middle" className={`text-xs font-medium ${darkMode ? 'fill-gray-400' : 'fill-gray-600'}`}>
+                             {item.mes}
+                           </text>
+                         </g>
+                       );
+                     })}
+                   </svg>
+                 </div>
+                 
+                 <div className="flex items-center justify-center space-x-6 mt-4">
+                   <div className="flex items-center space-x-2">
+                     <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: color }}></div>
+                     <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Total</span>
+                   </div>
+                   <div className="flex items-center space-x-2">
+                     <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
+                     <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Aprovados</span>
+                   </div>
+                 </div>
+               </div>
+             </motion.div>
+           );
+         };
 
   // Componente de gráfico de barras premium
   const PremiumBarChart = ({ data, title, color }: { data: Record<string, number>, title: string, color: string }) => {
@@ -443,7 +679,23 @@ export const DocumentoDashboard: React.FC<DocumentoDashboardProps> = ({ document
             exit={{ opacity: 0, y: -20 }}
             className="space-y-8"
           >
+            {/* Gráficos de tendência temporal */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <PremiumLineChart
+                data={dadosTendencia}
+                title="Tendência de Documentos (6 meses)"
+                color="#3B82F6"
+              />
+              
+              <PremiumLineChart
+                data={dadosVencimento}
+                title="Vencimentos por Mês"
+                color="#EF4444"
+              />
+            </div>
+
+            {/* Gráficos de distribuição */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <PremiumBarChart
                 data={dadosPorZona}
                 title="Documentos por Zona"
@@ -454,6 +706,12 @@ export const DocumentoDashboard: React.FC<DocumentoDashboardProps> = ({ document
                 data={dadosPorTipo}
                 title="Distribuição por Tipo"
                 colors={['#8B5CF6', '#F97316', '#14B8A6', '#EF4444', '#10B981']}
+              />
+
+              <PremiumBarChart
+                data={dadosPorResponsavel}
+                title="Documentos por Responsável"
+                color="bg-gradient-to-r from-emerald-500 to-green-500"
               />
             </div>
           </motion.div>
@@ -469,9 +727,24 @@ export const DocumentoDashboard: React.FC<DocumentoDashboardProps> = ({ document
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { title: 'Relatório Executivo', icon: FileText, color: 'from-blue-500 to-indigo-500' },
-                { title: 'Relatório Detalhado', icon: BarChart3, color: 'from-purple-500 to-pink-500' },
-                { title: 'Relatório de Vencimentos', icon: Calendar, color: 'from-emerald-500 to-green-500' }
+                { 
+                  title: 'Relatório Executivo', 
+                  icon: FileText, 
+                  color: 'from-blue-500 to-indigo-500',
+                  tipo: 'executivo'
+                },
+                { 
+                  title: 'Relatório Detalhado', 
+                  icon: BarChart3, 
+                  color: 'from-purple-500 to-pink-500',
+                  tipo: 'detalhado'
+                },
+                { 
+                  title: 'Relatório de Vencimentos', 
+                  icon: Calendar, 
+                  color: 'from-emerald-500 to-green-500',
+                  tipo: 'vencimentos'
+                }
               ].map((report, index) => (
                 <motion.div
                   key={report.title}
@@ -492,14 +765,68 @@ export const DocumentoDashboard: React.FC<DocumentoDashboardProps> = ({ document
                       Gere relatórios detalhados e personalizados
                     </p>
                     <div className="flex justify-center space-x-2">
-                      <button className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
-                        <DownloadIcon className="h-4 w-4 text-gray-600" />
+                      <button 
+                        onClick={() => onGenerateReport?.({
+                          tipo: report.tipo,
+                          titulo: report.title,
+                          periodo: {
+                            inicio: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                            fim: new Date().toISOString().split('T')[0]
+                          },
+                          filtros: {},
+                          incluirGraficos: true,
+                          incluirTabelas: true,
+                          incluirEstatisticas: true,
+                          formato: 'pdf'
+                        })}
+                        className={`p-2 rounded-lg transition-colors ${
+                          darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'
+                        }`}
+                        title="Gerar PDF"
+                      >
+                        <FileText className="h-4 w-4" />
                       </button>
-                      <button className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
-                        <Printer className="h-4 w-4 text-gray-600" />
+                      <button 
+                        onClick={() => onGenerateReport?.({
+                          tipo: report.tipo,
+                          titulo: report.title,
+                          periodo: {
+                            inicio: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                            fim: new Date().toISOString().split('T')[0]
+                          },
+                          filtros: {},
+                          incluirGraficos: true,
+                          incluirTabelas: true,
+                          incluirEstatisticas: true,
+                          formato: 'excel'
+                        })}
+                        className={`p-2 rounded-lg transition-colors ${
+                          darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
+                        }`}
+                        title="Gerar Excel"
+                      >
+                        <BarChart3 className="h-4 w-4" />
                       </button>
-                      <button className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
-                        <Share2 className="h-4 w-4 text-gray-600" />
+                      <button 
+                        onClick={() => onGenerateReport?.({
+                          tipo: 'personalizado',
+                          titulo: report.title,
+                          periodo: {
+                            inicio: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                            fim: new Date().toISOString().split('T')[0]
+                          },
+                          filtros: {},
+                          incluirGraficos: true,
+                          incluirTabelas: true,
+                          incluirEstatisticas: true,
+                          formato: 'config'
+                        })}
+                        className={`p-2 rounded-lg transition-colors ${
+                          darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'
+                        }`}
+                        title="Configurar Relatório"
+                      >
+                        <Settings className="h-4 w-4" />
                       </button>
                     </div>
                   </div>

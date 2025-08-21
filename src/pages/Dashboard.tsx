@@ -1,7 +1,7 @@
 import {
   Hammer, Building, Building2, Wrench, Package, Database, Award, FileText, Truck, Bell, ClipboardCheck, AlertTriangle, AlertCircle, Upload, FileCheck,
   RefreshCw, Globe, Shield, TestTube, Train, Zap, Eye, HardHat, CheckCircle, Clock, Target, ChevronRight, TrendingUp, Minus, Users, Settings, BookOpen, BarChart3,
-  Activity, Zap as Lightning, TrendingDown, Star, Crown, Sparkles, Rocket, Flame, Heart, Gem, Diamond, Plus, Filter, Download, Search, Menu, X, Play, Pause, RotateCcw,
+  Activity, Zap as Lightning, TrendingDown, Star, Crown, Sparkles, Rocket, Flame, Heart, Gem, Diamond, Plus, Download, Menu, Play, Pause, RotateCcw,
   ArrowRight, ArrowLeft, Move, GripVertical, Zap as LightningBolt, Sparkles as SparklesIcon, Star as StarIcon, Crown as CrownIcon, Globe as GlobeIcon, 
   Calendar, MapPin, Euro, TrendingUp as TrendingUpIcon, AlertCircle as AlertCircleIcon, CheckSquare, FileText as FileTextIcon, BarChart, PieChart, LineChart, Sun, Moon,
   Linkedin, ExternalLink, Zap as LightningIcon, Sparkles as SparklesIcon2, HelpCircle, Grid3X3, FolderOpen, Layers, LayoutDashboard
@@ -14,10 +14,8 @@ import { SGQCharts } from "../components/SGQCharts";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [selectedObra, setSelectedObra] = useState<string>("all");
   const [darkMode, setDarkMode] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
@@ -38,13 +36,7 @@ export default function Dashboard() {
     { id: 1, tipo: 'info', modulo: 'Sistema', mensagem: 'Bem-vindo ao QUALICORE', tempo: 'Agora', prioridade: 'baixa' }
   ];
 
-  // Obras disponíveis
-  const obras = [
-    { id: "all", nome: "Todas as Obras", localizacao: "Portugal", status: "ativo" },
-    { id: "setubal", nome: "Obra de Setúbal", localizacao: "Setúbal", status: "ativo" },
-    { id: "porto", nome: "Metro do Porto", localizacao: "Porto", status: "ativo" },
-    { id: "lisboa", nome: "Linha Vermelha", localizacao: "Lisboa", status: "ativo" }
-  ];
+
 
   // Módulos reorganizados por fluxo de trabalho
   const workflowSections = [
@@ -150,28 +142,9 @@ export default function Dashboard() {
     }
   };
 
-  // Filtro de módulos por pesquisa
-  const filteredSections = workflowSections.map(section => ({
-    ...section,
-    modules: section.modules.filter(module => 
-      module.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      module.nomeEN.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      section.title.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  })).filter(section => section.modules.length > 0);
 
-  // Contador de módulos filtrados
-  const totalModules = filteredSections.flatMap(section => section.modules).length;
-  const totalAllModules = workflowSections.flatMap(section => section.modules).length;
 
-  // Função para limpar filtros
-  const clearFilters = () => {
-    setSearchTerm("");
-    setSelectedObra("all");
-  };
 
-  // Função para verificar se há filtros ativos
-  const hasActiveFilters = searchTerm !== "" || selectedObra !== "all";
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -311,64 +284,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Enhanced Filters Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="px-6 pb-6"
-        >
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="relative group">
-              <div className={`absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl blur opacity-20 group-hover:opacity-30 transition-opacity duration-300`}></div>
-              <select
-                value={selectedObra}
-                onChange={(e) => setSelectedObra(e.target.value)}
-                className={`relative px-4 py-3 rounded-xl border-2 ${darkMode ? 'bg-gray-800/80 border-gray-600 text-white' : 'bg-white/80 border-gray-200 text-gray-700'} focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 backdrop-blur-sm transition-all duration-300 min-w-[200px]`}
-              >
-                {obras.map(obra => (
-                  <option key={obra.id} value={obra.id}>
-                    {obra.nome} - {obra.localizacao}
-                  </option>
-                ))}
-              </select>
-            </div>
 
-            <div className="relative group flex-1 max-w-md">
-              <div className={`absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur opacity-20 group-hover:opacity-30 transition-opacity duration-300`}></div>
-              <div className={`relative px-4 py-3 rounded-xl border-2 ${darkMode ? 'bg-gray-800/80 border-gray-600' : 'bg-white/80 border-gray-200'} flex items-center space-x-3 backdrop-blur-sm transition-all duration-300 group-hover:border-purple-500 focus-within:border-purple-500 focus-within:ring-4 focus-within:ring-purple-500/20`}>
-                <Search className={`h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                <input
-                  type="text"
-                  placeholder="Pesquisar módulos, funcionalidades..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`flex-1 bg-transparent outline-none ${darkMode ? 'text-white placeholder-gray-400' : 'text-gray-700 placeholder-gray-500'}`}
-                />
-                {searchTerm && (
-                  <motion.button
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    onClick={() => setSearchTerm("")}
-                    className={`p-1 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors duration-200`}
-                  >
-                    <X className="h-4 w-4 text-gray-400" />
-                  </motion.button>
-                )}
-              </div>
-            </div>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={clearFilters}
-              className={`px-6 py-3 rounded-xl border-2 ${darkMode ? 'bg-gray-800/80 border-gray-600 text-gray-300' : 'bg-white/80 border-gray-200 text-gray-700'} backdrop-blur-sm transition-all duration-300 hover:border-blue-500 hover:text-blue-600 flex items-center space-x-2 ${hasActiveFilters ? 'border-blue-500' : 'border-gray-600'}`}
-            >
-              <Filter className="h-4 w-4" />
-              <span>Limpar Filtros</span>
-            </motion.button>
-          </div>
-        </motion.div>
       </motion.div>
 
       {/* Main Content */}
@@ -461,44 +377,12 @@ export default function Dashboard() {
             <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'} max-w-2xl mx-auto`}>
               Navegue diretamente para qualquer módulo do sistema
             </p>
-            
-            {/* Feedback dos filtros */}
-            {hasActiveFilters && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`mt-6 p-4 rounded-xl ${darkMode ? 'bg-blue-900/20 border border-blue-700/30' : 'bg-blue-50 border border-blue-200'} max-w-md mx-auto`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Filter className={`h-4 w-4 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                    <span className={`text-sm font-medium ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>
-                      Filtros ativos: {totalModules} de {totalAllModules} módulos
-                    </span>
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={clearFilters}
-                    className={`px-3 py-1 rounded-lg text-xs font-medium ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'} transition-colors duration-200`}
-                  >
-                    Limpar
-                  </motion.button>
-                </div>
-                {(searchTerm || selectedObra !== "all") && (
-                  <div className={`text-xs mt-2 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                    {searchTerm && `Pesquisa: "${searchTerm}"`}
-                    {searchTerm && selectedObra !== "all" && " • "}
-                    {selectedObra !== "all" && `Obra: ${obras.find(o => o.id === selectedObra)?.nome}`}
-                  </div>
-                )}
-              </motion.div>
-            )}
+
           </div>
 
           {/* Categorias de Módulos */}
           <div className="space-y-8">
-            {filteredSections.map((section, sectionIndex) => (
+            {workflowSections.map((section, sectionIndex) => (
               <motion.div
                 key={section.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -570,32 +454,7 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* Mensagem quando não há resultados */}
-          {filteredSections.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-16"
-            >
-              <div className={`w-20 h-20 bg-gradient-to-r from-gray-400 to-gray-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl`}>
-                <Search className="h-10 w-10 text-white" />
-              </div>
-              <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-3`}>
-                Nenhum módulo encontrado
-              </h3>
-              <p className={`text-base ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-6 max-w-md mx-auto`}>
-                Tente ajustar os filtros ou pesquisar por outro termo
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={clearFilters}
-                className={`px-8 py-3 rounded-xl font-medium bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg hover:shadow-xl transition-all duration-300`}
-              >
-                Limpar Filtros
-              </motion.button>
-            </motion.div>
-          )}
+
         </motion.div>
 
         {/* Footer */}

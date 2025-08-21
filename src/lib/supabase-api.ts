@@ -24,14 +24,24 @@ const handleError = (error: any, operation: string) => {
 };
 
 const getCurrentUser = async () => {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error || !user) {
-    throw new Error("Usuário não autenticado");
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    
+    if (error) {
+      throw new Error(`Erro de autenticação: ${error.message}`);
+    }
+    
+    if (!user) {
+      throw new Error("Usuário não autenticado. Por favor, faça login novamente.");
+    }
+    
+    return user;
+  } catch (error) {
+    throw error;
   }
-  return user;
 };
 
 // =====================================================
@@ -770,17 +780,47 @@ export const documentosAPI = {
   ): Promise<Documento | null> => {
     try {
       const user = await getCurrentUser();
+      
+      // Validar dados obrigatórios
+      if (!documento.codigo || !documento.tipo || !documento.versao || !documento.responsavel || !documento.zona) {
+        throw new Error("Dados obrigatórios em falta");
+      }
+      
+      const insertData = { 
+        ...documento, 
+        user_id: user.id,
+        estado: documento.estado || "pendente",
+        classificacao_confidencialidade: documento.classificacao_confidencialidade || "publico"
+      };
+      
       const { data, error } = await supabase
         .from("documentos")
-        .insert([{ ...documento, user_id: user.id }])
+        .insert([insertData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Tratar erros específicos
+        if (error.code === '23505') {
+          throw new Error("Código do documento já existe");
+        } else if (error.code === '23514') {
+          throw new Error("Dados inválidos - verifique os campos obrigatórios");
+        } else {
+          throw error;
+        }
+      }
+      
+      if (!data) {
+        throw new Error("Nenhum documento foi criado");
+      }
+      
       return data;
     } catch (error) {
-      handleError(error, "criar documento");
-      return null;
+      if (error instanceof Error) {
+        throw error;
+      } else {
+        throw new Error("Erro desconhecido ao criar documento");
+      }
     }
   },
 
@@ -789,13 +829,7 @@ export const documentosAPI = {
     documento: UpdateDto<"documentos">,
   ): Promise<Documento | null> => {
     try {
-      console.log("🚀 documentosAPI.update chamado!");
-      console.log("📁 ID:", id);
-      console.log("📁 Dados:", documento);
-      
       const user = await getCurrentUser();
-      console.log("📁 User:", user.id);
-      
       const { data, error } = await supabase
         .from("documentos")
         .update(documento)
@@ -804,15 +838,9 @@ export const documentosAPI = {
         .select()
         .single();
 
-      if (error) {
-        console.log("❌ Erro na API:", error);
-        throw error;
-      }
-      
-      console.log("✅ Documento atualizado com sucesso:", data);
+      if (error) throw error;
       return data;
     } catch (error) {
-      console.log("❌ Erro capturado:", error);
       handleError(error, "atualizar documento");
       return null;
     }
