@@ -24,10 +24,13 @@ import {
   ChevronUp,
   Grid,
   List,
-  Cloud
+  Cloud,
+  RefreshCw
 } from 'lucide-react';
 import { PIEInstancia } from '@/types/pie';
 import { PDFService } from '@/services/pdfService';
+import { pieCache } from '@/lib/pie-cache';
+import PIEDashboard from '@/components/PIEDashboard';
 import toast from 'react-hot-toast';
 
 interface PIECardProps {
@@ -869,6 +872,7 @@ const PontosInspecaoEnsaios: React.FC = () => {
   const [showSavedPIE, setShowSavedPIE] = useState(false);
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [selectedPIE, setSelectedPIE] = useState<any>(null);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   // Mock data for demonstration
   const mockPies: PIEInstancia[] = [
@@ -922,12 +926,32 @@ const PontosInspecaoEnsaios: React.FC = () => {
     }
   ];
 
-  useEffect(() => {
-    // Simular carregamento de dados
-    setTimeout(() => {
-      setPies(mockPies);
+  const loadPIEs = async (forceRefresh = false) => {
+    try {
+      // Tentar obter do cache primeiro
+      let cachedPies = pieCache.getAllPIEs();
+      
+      if (!cachedPies || forceRefresh) {
+        // Simular carregamento de dados da API
+        setTimeout(() => {
+          const data = mockPies;
+          setPies(data);
+          pieCache.setAllPIEs(data);
+          setLoading(false);
+        }, 1000);
+      } else {
+        setPies(cachedPies);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar PIEs:', error);
+      toast.error('Erro ao carregar dados');
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  useEffect(() => {
+    loadPIEs();
   }, []);
 
   const filteredPies = pies.filter(pie => {
@@ -1017,6 +1041,22 @@ const PontosInspecaoEnsaios: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <button
+                  onClick={() => setShowDashboard(!showDashboard)}
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-300 shadow-lg hover:shadow-xl group"
+                >
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  {showDashboard ? 'Voltar à Lista' : 'Dashboard'}
+                </button>
+                
+                <button
+                  onClick={() => pieCache.clear()}
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl group"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Limpar Cache
+                </button>
+                
+                <button
                   onClick={() => navigate('/pie/relatorios')}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
@@ -1085,7 +1125,15 @@ const PontosInspecaoEnsaios: React.FC = () => {
           </div>
         </div>
 
-        {/* Search and Filters */}
+        {/* Dashboard ou Lista */}
+        {showDashboard ? (
+          <PIEDashboard 
+            pies={pies} 
+            onRefresh={() => loadPIEs(true)} 
+          />
+        ) : (
+          <>
+            {/* Search and Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Search */}
@@ -1316,6 +1364,8 @@ const PontosInspecaoEnsaios: React.FC = () => {
             pie={selectedPIE}
             onClose={() => setSelectedPIE(null)}
           />
+        )}
+          </>
         )}
       </div>
     </div>

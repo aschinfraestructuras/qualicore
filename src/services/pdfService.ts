@@ -2116,4 +2116,202 @@ export class PDFService {
     this.addFooter();
     this.doc.save('relatorio-individual-checklists.pdf');
   }
+
+  // Métodos para relatórios de PIE
+  async generatePIEPerformanceReport(data: {
+    pies: any[];
+    kpis: any;
+    trends: any;
+    anomalies: any[];
+  }) {
+    this.doc = new jsPDF('portrait', 'mm', 'a4');
+    
+    // Header
+    this.addHeader('Relatório de Performance - PIE');
+    
+    // KPIs Section
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(30, 64, 175);
+    this.doc.text('KPIs Principais', 20, 60);
+    
+    const kpiData = [
+      ['Métrica', 'Valor', 'Status'],
+      ['Total PIEs', data.kpis.total.toString(), 'Ativo'],
+      ['Taxa Conclusão', `${data.kpis.taxaConclusao.toFixed(1)}%`, data.kpis.taxaConclusao > 70 ? 'Bom' : 'Atenção'],
+      ['Taxa Aprovação', `${data.kpis.taxaAprovacao.toFixed(1)}%`, data.kpis.taxaAprovacao > 80 ? 'Bom' : 'Atenção'],
+      ['Tendência', `${data.trends.crescimentoMensal.toFixed(1)}%`, data.trends.tendencia === 'crescente' ? 'Positiva' : 'Negativa']
+    ];
+    
+    autoTable(this.doc, {
+      startY: 70,
+      head: [kpiData[0]],
+      body: kpiData.slice(1),
+      theme: 'grid',
+      headStyles: { fillColor: [30, 64, 175] }
+    });
+    
+    // Status Distribution
+    this.doc.setFontSize(14);
+    this.doc.setTextColor(30, 64, 175);
+    this.doc.text('Distribuição por Status', 20, 140);
+    
+    const statusData = [
+      ['Status', 'Quantidade', 'Percentagem'],
+      ['Em Andamento', data.kpis.emAndamento.toString(), `${((data.kpis.emAndamento / data.kpis.total) * 100).toFixed(1)}%`],
+      ['Concluídos', data.kpis.concluidos.toString(), `${((data.kpis.concluidos / data.kpis.total) * 100).toFixed(1)}%`],
+      ['Aprovados', data.kpis.aprovados.toString(), `${((data.kpis.aprovados / data.kpis.total) * 100).toFixed(1)}%`],
+      ['Reprovados', data.kpis.reprovados.toString(), `${((data.kpis.reprovados / data.kpis.total) * 100).toFixed(1)}%`]
+    ];
+    
+    autoTable(this.doc, {
+      startY: 150,
+      head: [statusData[0]],
+      body: statusData.slice(1),
+      theme: 'grid',
+      headStyles: { fillColor: [30, 64, 175] }
+    });
+    
+    // Anomalies Section
+    if (data.anomalies.length > 0) {
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(239, 68, 68);
+      this.doc.text('Anomalias Detectadas', 20, 220);
+      
+      const anomalyData = data.anomalies.map(anomaly => [
+        anomaly.type,
+        anomaly.severity,
+        anomaly.message
+      ]);
+      
+      autoTable(this.doc, {
+        startY: 230,
+        head: [['Tipo', 'Severidade', 'Descrição']],
+        body: anomalyData,
+        theme: 'grid',
+        headStyles: { fillColor: [239, 68, 68] }
+      });
+    }
+    
+    this.addFooter();
+    this.doc.save('relatorio-performance-pie.pdf');
+  }
+
+  async generatePIETrendsReport(data: {
+    pies: any[];
+    trends: any;
+    recommendations: any[];
+  }) {
+    this.doc = new jsPDF('portrait', 'mm', 'a4');
+    
+    // Header
+    this.addHeader('Relatório de Tendências - PIE');
+    
+    // Trends Section
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(30, 64, 175);
+    this.doc.text('Análise de Tendências', 20, 60);
+    
+    const trendsData = [
+      ['Métrica', 'Valor', 'Interpretação'],
+      ['Crescimento Mensal', `${data.trends.crescimentoMensal.toFixed(1)}%`, data.trends.crescimentoMensal > 0 ? 'Positivo' : 'Negativo'],
+      ['Crescimento Semanal', `${data.trends.crescimentoSemanal.toFixed(1)}%`, data.trends.crescimentoSemanal > 0 ? 'Positivo' : 'Negativo'],
+      ['Média Diária', `${data.trends.mediaDiaria.toFixed(1)}`, 'PIEs por dia'],
+      ['Tendência Geral', data.trends.tendencia, data.trends.tendencia === 'crescente' ? 'Melhorando' : 'Piorando']
+    ];
+    
+    autoTable(this.doc, {
+      startY: 70,
+      head: [trendsData[0]],
+      body: trendsData.slice(1),
+      theme: 'grid',
+      headStyles: { fillColor: [30, 64, 175] }
+    });
+    
+    // Recommendations Section
+    if (data.recommendations.length > 0) {
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(16, 185, 129);
+      this.doc.text('Recomendações', 20, 140);
+      
+      const recData = data.recommendations.map(rec => [
+        rec.title,
+        rec.priority,
+        rec.impact,
+        rec.effort
+      ]);
+      
+      autoTable(this.doc, {
+        startY: 150,
+        head: [['Título', 'Prioridade', 'Impacto', 'Esforço']],
+        body: recData,
+        theme: 'grid',
+        headStyles: { fillColor: [16, 185, 129] }
+      });
+    }
+    
+    this.addFooter();
+    this.doc.save('relatorio-tendencias-pie.pdf');
+  }
+
+  async generatePIEAnomaliesReport(data: {
+    pies: any[];
+    anomalies: any[];
+    recommendations: any[];
+  }) {
+    this.doc = new jsPDF('portrait', 'mm', 'a4');
+    
+    // Header
+    this.addHeader('Relatório de Anomalias - PIE');
+    
+    // Anomalies Section
+    this.doc.setFontSize(16);
+    this.doc.setTextColor(239, 68, 68);
+    this.doc.text('Anomalias Detectadas', 20, 60);
+    
+    if (data.anomalies.length > 0) {
+      const anomalyData = data.anomalies.map(anomaly => [
+        anomaly.type,
+        anomaly.severity,
+        anomaly.message,
+        anomaly.recommendation
+      ]);
+      
+      autoTable(this.doc, {
+        startY: 70,
+        head: [['Tipo', 'Severidade', 'Mensagem', 'Recomendação']],
+        body: anomalyData,
+        theme: 'grid',
+        headStyles: { fillColor: [239, 68, 68] }
+      });
+    } else {
+      this.doc.setFontSize(12);
+      this.doc.setTextColor(16, 185, 129);
+      this.doc.text('Nenhuma anomalia detectada - Sistema funcionando normalmente', 20, 80);
+    }
+    
+    // Recommendations Section
+    if (data.recommendations.length > 0) {
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(16, 185, 129);
+      this.doc.text('Recomendações de Melhoria', 20, 140);
+      
+      const recData = data.recommendations.map(rec => [
+        rec.title,
+        rec.priority,
+        rec.impact,
+        rec.effort
+      ]);
+      
+      autoTable(this.doc, {
+        startY: 150,
+        head: [['Título', 'Prioridade', 'Impacto', 'Esforço']],
+        body: recData,
+        theme: 'grid',
+        headStyles: { fillColor: [16, 185, 129] }
+      });
+    }
+    
+    this.addFooter();
+    this.doc.save('relatorio-anomalias-pie.pdf');
+  }
 }
