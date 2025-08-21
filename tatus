@@ -18,3 +18,8 @@
 [33mf3111faf[m Corrigido erro de import do obrasAPI - agora usa supabase-api.ts
 [33m7174112a[m feat: implement major PDF system improvements - professional design, obra integration, and enhanced configuration
 [33m5177b2e9[m feat: add PDF configuration button to PremiumNavbar - now visible in the correct navbar
+[33mcb02d702[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m feat: Replicar estilo premium do módulo Ensaios para Documentos - Dashboard avançado com analytics, gráficos profissionais, relatórios com filtros e impressão PDF - Design único e premium sem repetição de elementos
+[33m452bf084[m  ULTRA PREMIUM: Removida barra KPIs + Gráficos Ultra-Profissionais
+[33mc9493d6f[m  FASE 1 COMPLETA: Gráficos Interativos + Alertas Inteligentes - Sparklines animados com cores dinâmicas e sistema de alertas em tempo real
+[33m5004009d[m  Implementação completa dos KPIs em tempo real - Dashboard premium com métricas reais do Supabase
+[33mf8b494ea[m Fix CSP headers and redesign dashboard with organic layout

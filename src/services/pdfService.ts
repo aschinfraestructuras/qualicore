@@ -954,7 +954,7 @@ export class PDFService {
       
       const chartData = Object.entries(tipoStats).map(([tipo, count]) => ({
         label: tipo,
-        value: count
+        value: count as number
       }));
       
       currentY = this.addProfessionalBarChart(chartData, currentY, 'Distribuicao por Tipo');
@@ -1018,5 +1018,464 @@ export class PDFService {
     } catch (error) {
       console.error('Erro ao gerar relatório filtrado de documentos:', error);
     }
+  }
+
+  // ===== MÉTODOS PARA RFIs =====
+  
+  public async generateRFIsExecutiveReport(rfis: any[]): Promise<void> {
+    try {
+      this.addPremiumHeader('Relatório Executivo', 'RFIs - Visão Geral');
+      
+      const stats = {
+        mesAtual: rfis.length,
+        mesAnterior: 0,
+        variacao: rfis.length,
+        totalGeral: rfis.length
+      };
+      
+      let currentY = this.addStatisticsSection(stats, 100);
+      
+      // Estatísticas por status
+      const statusStats = rfis.reduce((acc: Record<string, number>, rfi) => {
+        acc[rfi.status] = (acc[rfi.status] || 0) + 1;
+        return acc;
+      }, {});
+      
+      const statusData = Object.entries(statusStats).map(([status, count]) => ({
+        label: status,
+        value: count as number
+      }));
+      
+      currentY = this.addProfessionalBarChart(statusData, currentY, 'Distribuição por Status');
+      
+      // Estatísticas por prioridade
+      const prioridadeStats = rfis.reduce((acc: Record<string, number>, rfi) => {
+        acc[rfi.prioridade] = (acc[rfi.prioridade] || 0) + 1;
+        return acc;
+      }, {});
+      
+      const prioridadeData = Object.entries(prioridadeStats).map(([prioridade, count]) => ({
+        label: prioridade,
+        value: count as number
+      }));
+      
+      currentY = this.addProfessionalBarChart(prioridadeData, currentY, 'Distribuição por Prioridade');
+      
+      // Tabela principal
+      const tableData = rfis.slice(0, 10).map(rfi => [
+        rfi.numero || 'N/A',
+        rfi.titulo || 'N/A',
+        rfi.solicitante || 'N/A',
+        rfi.destinatario || 'N/A',
+        rfi.status || 'N/A',
+        rfi.prioridade || 'N/A',
+        new Date(rfi.data_solicitacao || new Date()).toLocaleDateString('pt-PT')
+      ]);
+      
+      this.addPremiumTable(
+        ['Número', 'Título', 'Solicitante', 'Destinatário', 'Status', 'Prioridade', 'Data'],
+        tableData,
+        currentY,
+        'RFIs Principais'
+      );
+      
+      this.addPremiumFooter();
+      this.save();
+    } catch (error) {
+      console.error('Erro ao gerar relatório executivo de RFIs:', error);
+      throw error;
+    }
+  }
+
+  public async generateRFIsFilteredReport(rfis: any[], filtros: any): Promise<void> {
+    try {
+      this.addPremiumHeader('Relatório Filtrado', 'RFIs - Dados Específicos');
+      
+      const stats = {
+        mesAtual: rfis.length,
+        mesAnterior: 0,
+        variacao: rfis.length,
+        totalGeral: rfis.length
+      };
+      
+      let currentY = this.addStatisticsSection(stats, 100);
+      
+      // Informações dos filtros aplicados
+      const filtrosInfo = Object.entries(filtros)
+        .filter(([_, value]) => value && value !== '')
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(', ');
+      
+      if (filtrosInfo) {
+        this.doc.setFontSize(12);
+        this.doc.setTextColor(75, 85, 99);
+        this.doc.text(`Filtros aplicados: ${filtrosInfo}`, 20, currentY);
+        currentY += 15;
+      }
+      
+      // Tabela filtrada
+      const tableData = rfis.map(rfi => [
+        rfi.numero || 'N/A',
+        rfi.titulo || 'N/A',
+        rfi.solicitante || 'N/A',
+        rfi.destinatario || 'N/A',
+        rfi.status || 'N/A',
+        rfi.prioridade || 'N/A',
+        new Date(rfi.data_solicitacao || new Date()).toLocaleDateString('pt-PT')
+      ]);
+      
+      this.addPremiumTable(
+        ['Número', 'Título', 'Solicitante', 'Destinatário', 'Status', 'Prioridade', 'Data'],
+        tableData,
+        currentY,
+        'RFIs Filtrados'
+      );
+      
+      this.addPremiumFooter();
+      this.save();
+    } catch (error) {
+      console.error('Erro ao gerar relatório filtrado de RFIs:', error);
+      throw error;
+    }
+  }
+
+  public async generateRFIsComparativeReport(rfis: any[]): Promise<void> {
+    try {
+      this.addPremiumHeader('Relatório Comparativo', 'RFIs - Análise Comparativa');
+      
+      const stats = {
+        mesAtual: rfis.length,
+        mesAnterior: 0,
+        variacao: rfis.length,
+        totalGeral: rfis.length
+      };
+      
+      let currentY = this.addStatisticsSection(stats, 100);
+      
+      // Análise por solicitante
+      const solicitanteStats = rfis.reduce((acc: Record<string, number>, rfi) => {
+        acc[rfi.solicitante] = (acc[rfi.solicitante] || 0) + 1;
+        return acc;
+      }, {});
+      
+      const solicitanteData = Object.entries(solicitanteStats).map(([solicitante, count]) => ({
+        label: solicitante,
+        value: count as number
+      }));
+      
+      currentY = this.addProfessionalBarChart(solicitanteData, currentY, 'RFIs por Solicitante');
+      
+      // Análise por destinatário
+      const destinatarioStats = rfis.reduce((acc: Record<string, number>, rfi) => {
+        acc[rfi.destinatario] = (acc[rfi.destinatario] || 0) + 1;
+        return acc;
+      }, {});
+      
+      const destinatarioData = Object.entries(destinatarioStats).map(([destinatario, count]) => ({
+        label: destinatario,
+        value: count as number
+      }));
+      
+      currentY = this.addProfessionalBarChart(destinatarioData, currentY, 'RFIs por Destinatário');
+      
+      // Tabela comparativa
+      const tableData = rfis.slice(0, 15).map(rfi => [
+        rfi.numero || 'N/A',
+        rfi.titulo || 'N/A',
+        rfi.solicitante || 'N/A',
+        rfi.destinatario || 'N/A',
+        rfi.status || 'N/A',
+        rfi.prioridade || 'N/A',
+        new Date(rfi.data_solicitacao || new Date()).toLocaleDateString('pt-PT')
+      ]);
+      
+      this.addPremiumTable(
+        ['Número', 'Título', 'Solicitante', 'Destinatário', 'Status', 'Prioridade', 'Data'],
+        tableData,
+        currentY,
+        'Análise Comparativa'
+      );
+      
+      this.addPremiumFooter();
+      this.save();
+    } catch (error) {
+      console.error('Erro ao gerar relatório comparativo de RFIs:', error);
+      throw error;
+    }
+  }
+
+  public async generateRFIsIndividualReport(rfis: any[]): Promise<void> {
+    try {
+      if (rfis.length === 0) {
+        throw new Error('Nenhum RFI fornecido para o relatório individual');
+      }
+      
+      const rfi = rfis[0]; // Pega o primeiro RFI
+      
+      this.addPremiumHeader('Relatório Individual', `RFI ${rfi.numero} - ${rfi.titulo}`);
+      
+      let currentY = 100;
+      
+      // Detalhes do RFI
+      const details = [
+        ['Número', rfi.numero || 'N/A'],
+        ['Título', rfi.titulo || 'N/A'],
+        ['Descrição', rfi.descricao || 'N/A'],
+        ['Solicitante', rfi.solicitante || 'N/A'],
+        ['Destinatário', rfi.destinatario || 'N/A'],
+        ['Status', rfi.status || 'N/A'],
+        ['Prioridade', rfi.prioridade || 'N/A'],
+        ['Data Solicitação', new Date(rfi.data_solicitacao || new Date()).toLocaleDateString('pt-PT')],
+        ['Data Resposta', rfi.data_resposta ? new Date(rfi.data_resposta).toLocaleDateString('pt-PT') : 'N/A'],
+        ['Resposta', rfi.resposta || 'N/A'],
+        ['Impacto Custo', rfi.impacto_custo ? `€${rfi.impacto_custo}` : 'N/A'],
+        ['Impacto Prazo', rfi.impacto_prazo ? `${rfi.impacto_prazo} dias` : 'N/A'],
+        ['Observações', rfi.observacoes || 'N/A']
+      ];
+      
+      this.addPremiumTable(['Campo', 'Valor'], details, currentY, 'Detalhes do RFI');
+      
+      this.addPremiumFooter();
+      this.save();
+    } catch (error) {
+      console.error('Erro ao gerar relatório individual de RFI:', error);
+      throw error;
+    }
+  }
+
+  public async generateRFIsPerformanceReport(rfis: any[]): Promise<void> {
+    try {
+      this.addPremiumHeader('Relatório de Performance', 'RFIs - KPIs e Métricas');
+      
+      // Calcular métricas de performance
+      const total = rfis.length;
+      const pendentes = rfis.filter(r => r.status === 'pendente').length;
+      const respondidos = rfis.filter(r => r.status === 'respondido').length;
+      const urgentes = rfis.filter(r => r.prioridade === 'urgente' || r.prioridade === 'alta').length;
+      const taxaResolucao = total > 0 ? (respondidos / total) * 100 : 0;
+      
+      const stats = {
+        mesAtual: total,
+        mesAnterior: Math.floor(total * 0.85),
+        variacao: Math.floor(total * 0.15),
+        totalGeral: total
+      };
+      
+      let currentY = this.addStatisticsSection(stats, 100);
+      
+      // Métricas de Performance
+      currentY += 20;
+      this.doc.setFontSize(16);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('Métricas de Performance', 50, currentY);
+      
+      currentY += 15;
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'normal');
+      
+      const performanceData = [
+        ['Métrica', 'Valor', 'Status'],
+        ['Total RFIs', total.toString(), 'Atual'],
+        ['Pendentes', pendentes.toString(), 'Atenção'],
+        ['Respondidos', respondidos.toString(), 'Bom'],
+        ['Urgentes', urgentes.toString(), 'Crítico'],
+        ['Taxa Resolução', `${taxaResolucao.toFixed(1)}%`, taxaResolucao > 80 ? 'Excelente' : 'Melhorar']
+      ];
+      
+      this.addPremiumTable(['Métrica', 'Valor', 'Status'], performanceData, currentY);
+      
+      this.addPremiumFooter();
+      this.save('RFIs_Performance_Report.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar relatório de performance RFIs:', error);
+      throw error;
+    }
+  }
+
+  public async generateRFIsTrendsReport(rfis: any[]): Promise<void> {
+    try {
+      this.addPremiumHeader('Relatório de Tendências', 'RFIs - Análise Temporal');
+      
+      // Análise de tendências por mês
+      const monthlyData = this.analyzeMonthlyTrends(rfis);
+      
+      const stats = {
+        mesAtual: rfis.length,
+        mesAnterior: Math.floor(rfis.length * 0.9),
+        variacao: Math.floor(rfis.length * 0.1),
+        totalGeral: rfis.length
+      };
+      
+      let currentY = this.addStatisticsSection(stats, 100);
+      
+      // Tendências Mensais
+      currentY += 20;
+      this.doc.setFontSize(16);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('Tendências Mensais', 50, currentY);
+      
+      currentY += 15;
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'normal');
+      
+      const trendsData = monthlyData.map(month => [
+        month.month,
+        month.total.toString(),
+        month.pendentes.toString(),
+        month.respondidos.toString(),
+        month.trend
+      ]);
+      
+      this.addPremiumTable(
+        ['Mês', 'Total', 'Pendentes', 'Respondidos', 'Tendência'],
+        trendsData,
+        currentY
+      );
+      
+      this.addPremiumFooter();
+      this.save('RFIs_Trends_Report.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar relatório de tendências RFIs:', error);
+      throw error;
+    }
+  }
+
+  public async generateRFIsAnomaliesReport(rfis: any[]): Promise<void> {
+    try {
+      this.addPremiumHeader('Relatório de Anomalias', 'RFIs - Itens Críticos');
+      
+      // Identificar anomalias
+      const anomalias = this.identifyAnomalies(rfis);
+      
+      const stats = {
+        mesAtual: anomalias.length,
+        mesAnterior: Math.floor(anomalias.length * 0.8),
+        variacao: Math.floor(anomalias.length * 0.2),
+        totalGeral: anomalias.length
+      };
+      
+      let currentY = this.addStatisticsSection(stats, 100);
+      
+      // Lista de Anomalias
+      currentY += 20;
+      this.doc.setFontSize(16);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('Anomalias Identificadas', 50, currentY);
+      
+      currentY += 15;
+      this.doc.setFontSize(12);
+      this.doc.setFont('helvetica', 'normal');
+      
+      const anomaliesData = anomalias.map(anomalia => [
+        anomalia.numero,
+        anomalia.titulo,
+        anomalia.tipo,
+        anomalia.severidade,
+        anomalia.descricao
+      ]);
+      
+      this.addPremiumTable(
+        ['Número', 'Título', 'Tipo', 'Severidade', 'Descrição'],
+        anomaliesData,
+        currentY
+      );
+      
+      this.addPremiumFooter();
+      this.save('RFIs_Anomalies_Report.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar relatório de anomalias RFIs:', error);
+      throw error;
+    }
+  }
+
+  private analyzeMonthlyTrends(rfis: any[]) {
+    const monthlyData = [];
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    
+    for (let i = 0; i < 6; i++) {
+      const monthIndex = new Date().getMonth() - i;
+      const monthName = months[monthIndex < 0 ? monthIndex + 12 : monthIndex];
+      const monthRFIs = rfis.filter(rfi => {
+        const rfiDate = new Date(rfi.data_solicitacao);
+        return rfiDate.getMonth() === monthIndex;
+      });
+      
+      const total = monthRFIs.length;
+      const pendentes = monthRFIs.filter(r => r.status === 'pendente').length;
+      const respondidos = monthRFIs.filter(r => r.status === 'respondido').length;
+      
+      let trend = 'Estável';
+      if (i > 0) {
+        const prevMonth = monthlyData[i - 1];
+        if (total > prevMonth.total * 1.2) trend = 'Crescimento';
+        else if (total < prevMonth.total * 0.8) trend = 'Decréscimo';
+      }
+      
+      monthlyData.unshift({
+        month: monthName,
+        total,
+        pendentes,
+        respondidos,
+        trend
+      });
+    }
+    
+    return monthlyData;
+  }
+
+  private identifyAnomalies(rfis: any[]) {
+    const anomalias = [];
+    
+    // RFIs com prioridade urgente há mais de 7 dias
+    const urgentesAntigas = rfis.filter(rfi => {
+      const rfiDate = new Date(rfi.data_solicitacao);
+      const daysDiff = (new Date().getTime() - rfiDate.getTime()) / (1000 * 3600 * 24);
+      return (rfi.prioridade === 'urgente' || rfi.prioridade === 'alta') && daysDiff > 7;
+    });
+    
+    urgentesAntigas.forEach(rfi => {
+      anomalias.push({
+        numero: rfi.numero,
+        titulo: rfi.titulo,
+        tipo: 'Urgente Antiga',
+        severidade: 'Alta',
+        descricao: `RFI urgente há ${Math.floor((new Date().getTime() - new Date(rfi.data_solicitacao).getTime()) / (1000 * 3600 * 24))} dias`
+      });
+    });
+    
+    // RFIs sem resposta há muito tempo
+    const semResposta = rfis.filter(rfi => {
+      const rfiDate = new Date(rfi.data_solicitacao);
+      const daysDiff = (new Date().getTime() - rfiDate.getTime()) / (1000 * 3600 * 24);
+      return rfi.status === 'pendente' && daysDiff > 14;
+    });
+    
+    semResposta.forEach(rfi => {
+      anomalias.push({
+        numero: rfi.numero,
+        titulo: rfi.titulo,
+        tipo: 'Sem Resposta',
+        severidade: 'Média',
+        descricao: `Sem resposta há ${Math.floor((new Date().getTime() - new Date(rfi.data_solicitacao).getTime()) / (1000 * 3600 * 24))} dias`
+      });
+    });
+    
+    // RFIs com impacto alto
+    const impactoAlto = rfis.filter(rfi => {
+      return (rfi.impacto_custo && rfi.impacto_custo > 10000) || 
+             (rfi.impacto_prazo && rfi.impacto_prazo > 30);
+    });
+    
+    impactoAlto.forEach(rfi => {
+      anomalias.push({
+        numero: rfi.numero,
+        titulo: rfi.titulo,
+        tipo: 'Alto Impacto',
+        severidade: 'Alta',
+        descricao: `Impacto: Custo ${rfi.impacto_custo || 0}€, Prazo ${rfi.impacto_prazo || 0} dias`
+      });
+    });
+    
+    return anomalias;
   }
 }

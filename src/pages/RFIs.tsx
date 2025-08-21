@@ -18,6 +18,25 @@ import {
   Edit,
   Trash2,
   Eye,
+  TrendingUp,
+  Users,
+  Target,
+  Activity,
+  Zap,
+  Shield,
+  RefreshCw,
+  Award,
+  TrendingDown,
+  Percent,
+  Hash,
+  Thermometer,
+  Gauge,
+  Layers,
+  AlertCircle,
+  Clock3,
+  CheckSquare,
+  Square,
+  ArrowUpRight,
 } from "lucide-react";
 import RFIForm from "../components/forms/RFIForm";
 import RelatorioRFIsPremium from "../components/RelatorioRFIsPremium";
@@ -30,6 +49,9 @@ import Modal from "../components/Modal";
 import toast from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
 import { PDFService } from "@/services/pdfService";
+import { RFIDashboard } from "@/components/RFIDashboard";
+import { RFIServices } from "@/lib/rfi-enhancements";
+import { rfiCache } from "@/lib/rfi-cache";
 
 export default function RFIs() {
   const [rfis, setRFIs] = useState<RFI[]>([]);
@@ -42,6 +64,7 @@ export default function RFIs() {
   const [showSavedRFIs, setShowSavedRFIs] = useState(false);
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [selectedRFI, setSelectedRFI] = useState<any>(null);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   // Filtros ativos
   const [filters, setFilters] = useState({
@@ -59,11 +82,11 @@ export default function RFIs() {
     loadRFIs();
   }, []);
 
-  const loadRFIs = async () => {
+  const loadRFIs = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      const data = await rfisAPI.getAll();
-      console.log("📋 RFIs carregados:", data);
+      const data = await rfiCache.getAllRFIs(forceRefresh);
+      console.log("📋 RFIs carregados (cache):", data);
       
       // Verificar se os RFIs têm o campo documents
       if (data && data.length > 0) {
@@ -147,18 +170,18 @@ export default function RFIs() {
       
       if (editingRFI) {
         console.log("🚀 Atualizando RFI:", editingRFI.id);
-        const result = await rfisAPI.update(editingRFI.id, rfiData);
+        const result = await rfiCache.updateRFI(editingRFI.id, rfiData);
         console.log("🚀 Resultado update:", result);
         toast.success("RFI atualizado com sucesso!");
       } else {
         console.log("🚀 Criando novo RFI");
-        const result = await rfisAPI.create(rfiData);
+        const result = await rfiCache.createRFI(rfiData);
         console.log("🚀 Resultado create:", result);
         toast.success("RFI criado com sucesso!");
       }
       
       console.log("🚀 Recarregando RFIs...");
-      await loadRFIs();
+      await loadRFIs(true); // Force refresh após operações de escrita
       console.log("🚀 Fechando modal...");
       setShowForm(false);
     } catch (error) {
@@ -170,9 +193,9 @@ export default function RFIs() {
   const handleDelete = async (id: string) => {
     if (confirm("Tem certeza que deseja eliminar este RFI?")) {
       try {
-        await rfisAPI.delete(id);
+        await rfiCache.deleteRFI(id);
         toast.success("RFI eliminado com sucesso!");
-        await loadRFIs();
+        await loadRFIs(true); // Force refresh após eliminação
       } catch (error) {
         toast.error("Erro ao eliminar RFI");
         console.error("Erro ao eliminar RFI:", error);
@@ -216,6 +239,10 @@ export default function RFIs() {
     }
   };
 
+  const handleViewSavedRFIs = () => {
+    setShowSavedRFIs(true);
+  };
+
   const clearFilters = () => {
     setFilters({
       search: "",
@@ -226,6 +253,19 @@ export default function RFIs() {
       dataInicio: "",
       dataFim: "",
     });
+  };
+
+  // Calcular estatísticas
+  const stats = {
+    total: rfis.length,
+    pendentes: rfis.filter(r => r.status === 'pendente').length,
+    em_analise: rfis.filter(r => r.status === 'em_analise').length,
+    respondidos: rfis.filter(r => r.status === 'respondido').length,
+    fechados: rfis.filter(r => r.status === 'fechado').length,
+    urgentes: rfis.filter(r => r.prioridade === 'urgente').length,
+    altas: rfis.filter(r => r.prioridade === 'alta').length,
+    medias: rfis.filter(r => r.prioridade === 'media').length,
+    baixas: rfis.filter(r => r.prioridade === 'baixa').length,
   };
 
   if (loading) {
@@ -240,37 +280,265 @@ export default function RFIs() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8 pt-16">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="space-y-8 animate-fade-in">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-blue-900 flex items-center gap-2">
-                <HelpCircle className="h-7 w-7 text-blue-500" /> RFIs (Pedidos de
-                Informação)
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Gestão centralizada de todos os pedidos de informação da obra.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowSavedRFIs(true)}
-                className="btn btn-outline flex items-center gap-2"
-              >
-                <Cloud className="h-5 w-5" /> RFIs Salvos
-              </button>
-              <button
-                onClick={() => setShowRelatorios(true)}
-                className="btn btn-outline flex items-center gap-2"
-              >
-                <BarChart3 className="h-5 w-5" /> Relatórios
-              </button>
-              <button
-                onClick={handleCreate}
-                className="btn btn-primary flex items-center gap-2"
-              >
-                <Plus className="h-5 w-5" /> Novo RFI
-              </button>
+          {/* Header Premium */}
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-8 text-white shadow-2xl">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                    <HelpCircle className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold">RFIs</h1>
+                    <p className="text-blue-100 text-lg">Pedidos de Informação</p>
+                  </div>
+                </div>
+                <p className="text-blue-100 text-lg max-w-2xl">
+                  Gestão centralizada e inteligente de todos os pedidos de informação da obra com analytics avançados.
+                </p>
+              </div>
+              
+              {/* Botões de Ação Premium */}
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={handleCreate}
+                  className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-2 border border-white/30 hover:scale-105"
+                >
+                  <Plus className="h-5 w-5" />
+                  Novo RFI
+                </button>
+                <button
+                  onClick={() => setShowRelatorios(true)}
+                  className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-2 border border-white/30 hover:scale-105"
+                >
+                  <BarChart3 className="h-5 w-5" />
+                  Relatórios
+                </button>
+                <button
+                  onClick={() => setShowSavedRFIs(true)}
+                  className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-2 border border-white/30 hover:scale-105"
+                >
+                  <Cloud className="h-5 w-5" />
+                  Salvos
+                </button>
+              </div>
             </div>
           </div>
+
+        {/* Estatísticas */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        >
+          {/* Total RFIs */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="group cursor-pointer relative"
+          >
+            <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-t-3xl"></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <HelpCircle className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                    <ArrowUpRight className="h-3 w-3" />
+                    <span>+{stats.total}</span>
+                  </div>
+                </div>
+                
+                <h3 className="text-sm font-medium text-gray-600 mb-2">Total de RFIs</h3>
+                <p className="text-2xl font-bold text-gray-900 mb-1">{stats.total}</p>
+                
+                <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                  <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-1000 ease-out" 
+                       style={{ width: `${(stats.total / 100) * 100}%` }}></div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* RFIs Pendentes */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="group cursor-pointer relative"
+          >
+            <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-amber-500/5 to-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-amber-500 rounded-t-3xl"></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <Clock className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+                
+                <h3 className="text-sm font-medium text-gray-600 mb-2">Pendentes</h3>
+                <p className="text-2xl font-bold text-gray-900 mb-1">{stats.pendentes}</p>
+                
+                <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                  <div className="h-1 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-1000 ease-out" 
+                       style={{ width: `${(stats.pendentes / stats.total) * 100}%` }}></div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* RFIs Respondidos */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="group cursor-pointer relative"
+          >
+            <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-green-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-t-3xl"></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <CheckCircle className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+                
+                <h3 className="text-sm font-medium text-gray-600 mb-2">Respondidos</h3>
+                <p className="text-2xl font-bold text-gray-900 mb-1">{stats.respondidos}</p>
+                
+                <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                  <div className="h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full transition-all duration-1000 ease-out" 
+                       style={{ width: `${(stats.respondidos / stats.total) * 100}%` }}></div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* RFIs Urgentes */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="group cursor-pointer relative"
+          >
+            <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 hover:scale-105 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-rose-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-rose-500 rounded-t-3xl"></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-rose-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <AlertTriangle className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+                
+                <h3 className="text-sm font-medium text-gray-600 mb-2">Urgentes</h3>
+                <p className="text-2xl font-bold text-gray-900 mb-1">{stats.urgentes}</p>
+                
+                <div className="w-full bg-gray-200 rounded-full h-1 mt-3">
+                  <div className="h-1 bg-gradient-to-r from-red-500 to-rose-500 rounded-full transition-all duration-1000 ease-out" 
+                       style={{ width: `${(stats.urgentes / stats.total) * 100}%` }}></div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+
+        {/* Conteúdo principal - Dashboard ou Lista */}
+        {showDashboard ? (
+          <>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Dashboard RFI</h2>
+              <button
+                onClick={() => setShowDashboard(false)}
+                className="btn btn-outline flex items-center space-x-2"
+              >
+                <Eye className="h-4 w-4" />
+                <span>Voltar à Lista</span>
+              </button>
+            </div>
+            <RFIDashboard
+              rfis={filteredRFIs}
+              onSearch={(query, options) => {
+                setFilters(prev => ({ ...prev, search: query }));
+              }}
+              onFilterChange={(newFilters) => {
+                setFilters(prev => ({ ...prev, ...newFilters }));
+              }}
+            />
+          </>
+        ) : (
+          <>
+                         {/* Botões de Ação Premium */}
+             <div className="flex flex-wrap gap-4 mb-8">
+               <div className="flex flex-wrap gap-3">
+                 <button
+                   onClick={handleCreate}
+                   className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105"
+                 >
+                   <Plus className="h-5 w-5" />
+                   <span>Novo RFI</span>
+                 </button>
+
+                 <button
+                   onClick={() => setShowRelatorios(true)}
+                   className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105"
+                 >
+                   <FileText className="h-5 w-5" />
+                   <span>Relatórios PDF</span>
+                 </button>
+
+                 <button
+                   onClick={() => setShowDashboard(true)}
+                   className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105"
+                 >
+                   <BarChart3 className="h-5 w-5" />
+                   <span>Dashboard</span>
+                 </button>
+               </div>
+
+               <div className="flex flex-wrap gap-3">
+                 <button
+                   onClick={() => setShowFilters(!showFilters)}
+                   className="bg-white/90 backdrop-blur-sm hover:bg-white text-gray-700 px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 border border-gray-200"
+                 >
+                   <Filter className="h-5 w-5" />
+                   <span>Filtros</span>
+                 </button>
+
+                 <button
+                   onClick={handleViewSavedRFIs}
+                   className="bg-white/90 backdrop-blur-sm hover:bg-white text-gray-700 px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 border border-gray-200"
+                 >
+                   <Cloud className="h-5 w-5" />
+                   <span>Ver Salvos</span>
+                 </button>
+
+                 <button
+                   onClick={() => {
+                     rfiCache.clear();
+                     toast.success("Cache limpo com sucesso!");
+                     loadRFIs(true);
+                   }}
+                   className="bg-white/90 backdrop-blur-sm hover:bg-white text-gray-700 px-6 py-3 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 border border-gray-200"
+                   title="Limpar cache e recarregar dados"
+                 >
+                   <RefreshCw className="h-5 w-5" />
+                   <span>Limpar Cache</span>
+                 </button>
+               </div>
+             </div>
+          </>
+        )}
 
       {/* Botão de Filtros */}
       <div className="flex items-center space-x-4">
@@ -381,36 +649,46 @@ export default function RFIs() {
         )}
       </AnimatePresence>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-blue-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700">
-                Nº
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700">
-                Título
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700">
-                Solicitante
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700">
-                Destinatário
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700">
-                Data
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700">
-                Prioridade
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-blue-700">
-                Estado
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-blue-700">
-                Ações
-              </th>
-            </tr>
-          </thead>
+                           <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+              <HelpCircle className="h-6 w-6" />
+              Lista de RFIs
+              <span className="text-blue-100 text-lg font-normal">
+                ({filteredRFIs.length} {filteredRFIs.length === 1 ? 'RFI' : 'RFIs'})
+              </span>
+            </h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+                       <thead className="bg-gradient-to-r from-gray-50 to-blue-50">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider w-20">
+                  Nº
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider min-w-0 flex-1">
+                  Título
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider w-32">
+                  Solicitante
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider w-32">
+                  Destinatário
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider w-24">
+                  Data
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider w-24">
+                  Prioridade
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider w-24">
+                  Estado
+                </th>
+                <th className="px-6 py-4 text-right text-sm font-bold text-gray-700 uppercase tracking-wider w-40">
+                  Ações
+                </th>
+              </tr>
+            </thead>
           <tbody className="divide-y divide-gray-200">
             {filteredRFIs.length === 0 && (
               <tr>
@@ -419,75 +697,115 @@ export default function RFIs() {
                 </td>
               </tr>
             )}
-            {filteredRFIs.map((rfi) => {
-              console.log("🎯 Renderizando RFI:", rfi.numero);
-              return (
-                <tr key={rfi.id} className="hover:bg-blue-50/40 transition">
-                  <td className="px-4 py-3 font-mono text-xs text-blue-900">
-                    {rfi.numero}
-                  </td>
-                  <td className="px-4 py-3 font-medium text-gray-900">
-                    {rfi.titulo}
-                  </td>
-                  <td className="px-4 py-3 text-gray-700">{rfi.solicitante}</td>
-                  <td className="px-4 py-3 text-gray-700">{rfi.destinatario}</td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {rfi.data_solicitacao}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`badge ${rfi.prioridade === "alta" ? "bg-red-100 text-red-700" : rfi.prioridade === "media" ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"}`}
-                    >
-                      {rfi.prioridade}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`badge ${rfi.status === "pendente" ? "bg-yellow-100 text-yellow-700" : rfi.status === "em_analise" ? "bg-blue-100 text-blue-700" : rfi.status === "respondido" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}
-                    >
-                      {rfi.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleShare(rfi)}
-                      className="btn btn-xs btn-outline mr-2"
-                      title="Partilhar RFI"
-                    >
-                      <Share2 className="h-3 w-3" />
-                    </button>
-                    <button
-                      onClick={() => handleIndividualReport(rfi)}
-                      className="btn btn-xs btn-outline mr-2"
-                      title="Relatório Individual"
-                    >
-                      <Download className="h-3 w-3" />
-                    </button>
-                    <button
-                      onClick={() => handleViewDocuments(rfi)}
-                      className="btn btn-xs btn-primary mr-2"
-                      title="Ver Documentos"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleEdit(rfi)}
-                      className="btn btn-xs btn-outline mr-2"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(rfi.id)}
-                      className="btn btn-xs btn-danger"
-                    >
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+                         {filteredRFIs.map((rfi, index) => {
+               console.log("🎯 Renderizando RFI:", rfi.numero);
+               return (
+                 <motion.tr 
+                   key={rfi.id} 
+                   initial={{ opacity: 0, y: 20 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   transition={{ delay: index * 0.05 }}
+                   className="hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 transition-all duration-300 group"
+                 >
+                   <td className="px-6 py-4 font-mono text-sm font-bold text-blue-600">
+                     {rfi.numero}
+                   </td>
+                   <td className="px-6 py-4 min-w-0">
+                     <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                       {rfi.titulo}
+                     </div>
+                     {rfi.descricao && (
+                       <div className="text-sm text-gray-500 mt-1 max-w-xs">
+                         <div className="break-words">
+                           {rfi.descricao.length > 100 ? `${rfi.descricao.substring(0, 100)}...` : rfi.descricao}
+                         </div>
+                       </div>
+                     )}
+                   </td>
+                   <td className="px-6 py-4 min-w-0">
+                     <div className="text-gray-700 font-medium truncate max-w-32">
+                       {rfi.solicitante}
+                     </div>
+                   </td>
+                   <td className="px-6 py-4 min-w-0">
+                     <div className="text-gray-700 font-medium truncate max-w-32">
+                       {rfi.destinatario}
+                     </div>
+                   </td>
+                   <td className="px-6 py-4">
+                     <div className="text-gray-600 font-medium">
+                       {new Date(rfi.data_solicitacao).toLocaleDateString('pt-PT')}
+                     </div>
+                   </td>
+                   <td className="px-6 py-4">
+                     <span
+                       className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
+                         rfi.prioridade === "urgente" ? "bg-red-100 text-red-800" :
+                         rfi.prioridade === "alta" ? "bg-orange-100 text-orange-800" :
+                         rfi.prioridade === "media" ? "bg-yellow-100 text-yellow-800" :
+                         "bg-green-100 text-green-800"
+                       }`}
+                     >
+                       {rfi.prioridade}
+                     </span>
+                   </td>
+                   <td className="px-6 py-4">
+                     <span
+                       className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
+                         rfi.status === "pendente" ? "bg-yellow-100 text-yellow-800" :
+                         rfi.status === "em_analise" ? "bg-blue-100 text-blue-800" :
+                         rfi.status === "respondido" ? "bg-green-100 text-green-800" :
+                         "bg-gray-100 text-gray-800"
+                       }`}
+                     >
+                       {rfi.status}
+                     </span>
+                   </td>
+                   <td className="px-6 py-4 text-right min-w-0">
+                     <div className="flex items-center justify-end gap-1 flex-wrap">
+                       <button
+                         onClick={() => handleShare(rfi)}
+                         className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-all duration-200 hover:scale-110"
+                         title="Partilhar RFI"
+                       >
+                         <Share2 className="h-4 w-4" />
+                       </button>
+                       <button
+                         onClick={() => handleIndividualReport(rfi)}
+                         className="p-1.5 text-green-600 hover:bg-green-100 rounded-lg transition-all duration-200 hover:scale-110"
+                         title="Relatório Individual"
+                       >
+                         <Download className="h-4 w-4" />
+                       </button>
+                       <button
+                         onClick={() => handleViewDocuments(rfi)}
+                         className="p-1.5 text-purple-600 hover:bg-purple-100 rounded-lg transition-all duration-200 hover:scale-110"
+                         title="Ver Documentos"
+                       >
+                         <Eye className="h-4 w-4" />
+                       </button>
+                       <button
+                         onClick={() => handleEdit(rfi)}
+                         className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:scale-110"
+                         title="Editar"
+                       >
+                         <Edit className="h-4 w-4" />
+                       </button>
+                       <button
+                         onClick={() => handleDelete(rfi.id)}
+                         className="p-1.5 text-red-600 hover:bg-red-100 rounded-lg transition-all duration-200 hover:scale-110"
+                         title="Eliminar"
+                       >
+                         <Trash2 className="h-4 w-4" />
+                       </button>
+                     </div>
+                   </td>
+                 </motion.tr>
+               );
+             })}
           </tbody>
         </table>
+        </div>
       </div>
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4">
