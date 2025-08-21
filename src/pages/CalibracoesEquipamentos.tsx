@@ -47,10 +47,13 @@ import CalibracoesEquipamentosFilters from '../components/CalibracoesEquipamento
 import CalibracoesEquipamentosForms from '../components/CalibracoesEquipamentosForms';
 import CalibracoesEquipamentosDetails from '../components/CalibracoesEquipamentosDetails';
 import RelatorioCalibracoesEquipamentosPremium from '../components/RelatorioCalibracoesEquipamentosPremium';
+import CalibracoesDashboard from '../components/CalibracoesDashboard';
+import RelatorioCalibracoesPremium from '../components/RelatorioCalibracoesPremium';
 import Modal from '../components/Modal';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function CalibracoesEquipamentos() {
+  const [viewMode, setViewMode] = useState<'dashboard' | 'list'>('dashboard');
   const [activeTab, setActiveTab] = useState<'equipamentos' | 'calibracoes' | 'manutencoes' | 'inspecoes'>('equipamentos');
   const [equipamentos, setEquipamentos] = useState<Equipamento[]>([]);
   const [calibracoes, setCalibracoes] = useState<Calibracao[]>([]);
@@ -63,6 +66,7 @@ export default function CalibracoesEquipamentos() {
   const [showForm, setShowForm] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [showRelatorio, setShowRelatorio] = useState(false);
+  const [showRelatorioPremium, setShowRelatorioPremium] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,6 +114,22 @@ export default function CalibracoesEquipamentos() {
   const handleView = (item: any) => {
     setSelectedItem(item);
     setShowDetails(true);
+  };
+
+  const handleAddEquipamento = () => {
+    setEditingItem(null);
+    setActiveTab('equipamentos');
+    setShowForm(true);
+    setViewMode('list'); // Voltar para a lista para mostrar o formulário
+  };
+
+  const handleViewDetails = (type: string, id: string) => {
+    setSelectedItem({ type, id });
+    setShowDetails(true);
+  };
+
+  const handleBackToList = () => {
+    setViewMode('list');
   };
 
   const handleDelete = async (id: string) => {
@@ -235,6 +255,24 @@ export default function CalibracoesEquipamentos() {
     return <LoadingSpinner />;
   }
 
+  // Renderizar Dashboard Premium ou Lista
+  if (viewMode === 'dashboard') {
+    return (
+      <CalibracoesDashboard
+        equipamentos={equipamentos}
+        calibracoes={calibracoes}
+        manutencoes={manutencoes}
+        inspecoes={inspecoes}
+        stats={stats}
+        onRefresh={loadData}
+        onAddEquipamento={handleAddEquipamento}
+        onViewDetails={handleViewDetails}
+        onBackToList={handleBackToList}
+        loading={loading}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 p-6">
       {/* Header */}
@@ -255,11 +293,25 @@ export default function CalibracoesEquipamentos() {
           </div>
           <div className="flex items-center space-x-3">
             <button
+              onClick={() => setViewMode('dashboard')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span>Dashboard</span>
+            </button>
+            <button
               onClick={() => setShowRelatorio(true)}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
             >
-              <BarChart3 className="h-4 w-4" />
+              <FileText className="h-4 w-4" />
               <span>Relatórios</span>
+            </button>
+            <button
+              onClick={() => setShowRelatorioPremium(true)}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span>Relatório Premium</span>
             </button>
             <button
               onClick={handleAdd}
@@ -830,7 +882,12 @@ export default function CalibracoesEquipamentos() {
       )}
 
       {showDetails && selectedItem && (
-        <Modal isOpen={showDetails} onClose={() => setShowDetails(false)} title="Detalhes de Calibrações e Equipamentos">
+        <Modal 
+          isOpen={showDetails} 
+          onClose={() => setShowDetails(false)} 
+          title="Detalhes de Calibrações e Equipamentos"
+          size="xl"
+        >
           <CalibracoesEquipamentosDetails
             isOpen={showDetails}
             onClose={() => setShowDetails(false)}
@@ -857,6 +914,16 @@ export default function CalibracoesEquipamentos() {
             }}
           />
         </Modal>
+      )}
+
+      {showRelatorioPremium && (
+        <RelatorioCalibracoesPremium
+          equipamentos={equipamentos}
+          calibracoes={calibracoes}
+          manutencoes={manutencoes}
+          inspecoes={inspecoes}
+          onClose={() => setShowRelatorioPremium(false)}
+        />
       )}
     </div>
   );

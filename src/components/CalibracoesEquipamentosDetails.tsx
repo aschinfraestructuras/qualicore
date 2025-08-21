@@ -21,7 +21,8 @@ import {
   Activity,
   BarChart3,
   Info,
-  AlertCircle
+  AlertCircle,
+  Shield
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { 
@@ -702,94 +703,55 @@ const CalibracoesEquipamentosDetails: React.FC<CalibracoesEquipamentosDetailsPro
   if (!isOpen) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 overflow-y-auto"
-    >
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:flex sm:p-0">
-        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-          <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+            <Settings className="w-5 h-5 text-purple-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Detalhes - {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+            </h2>
+            <p className="text-sm text-gray-500">
+              Visualizar informações detalhadas
+            </p>
+          </div>
         </div>
-
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
-        >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <Settings className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-white">
-                    Detalhes - {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-                  </h2>
-                  <p className="text-sm text-purple-100">
-                    Visualizar informações detalhadas
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                {itemId && (
-                  <>
-                    <button
-                      onClick={() => onEdit(itemId)}
-                      className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
-                      title="Editar"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(itemId)}
-                      className="p-2 text-white hover:bg-red-500 rounded-lg transition-colors"
-                      title="Eliminar"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={onClose}
-                  className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
-                  title="Fechar"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="px-6 py-6 max-h-96 overflow-y-auto">
-            {renderContent()}
-          </div>
-
-          {/* Footer */}
-          <div className="bg-gray-50 px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <Info className="w-4 h-4" />
-              <span>Detalhes completos do item selecionado</span>
-            </div>
-            <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2">
+          {itemId && (
+            <>
               <button
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                onClick={() => onEdit(itemId)}
+                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Editar"
               >
-                Fechar
+                <Edit className="w-4 h-4" />
               </button>
-            </div>
-          </div>
-        </motion.div>
+              <button
+                onClick={() => onDelete(itemId)}
+                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                title="Eliminar"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
       </div>
-    </motion.div>
+
+      {/* Content */}
+      <div className="max-h-[60vh] overflow-y-auto">
+        {renderContent()}
+      </div>
+
+      {/* Footer */}
+      <div className="bg-gray-50 px-4 py-3 rounded-lg flex items-center space-x-2 text-sm text-gray-500">
+        <Info className="w-4 h-4" />
+        <span>Detalhes completos do item selecionado</span>
+      </div>
+    </div>
   );
 };
 

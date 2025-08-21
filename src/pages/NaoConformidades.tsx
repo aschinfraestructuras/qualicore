@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { NaoConformidade, naoConformidadesAPI } from "@/lib/supabase-api";
 import NaoConformidadeForm from "@/components/forms/NaoConformidadeForm";
-import NaoConformidadeDashboard from "@/components/NaoConformidadeDashboard";
+import NaoConformidadeDashboardPremium from "@/components/NaoConformidadeDashboardPremium";
 import RelatorioNaoConformidadesPremium from "@/components/RelatorioNaoConformidadesPremium";
+import { NaoConformidadesNotificacoes } from "@/components/NaoConformidadesNotificacoes";
 import { ShareNaoConformidadeModal } from "@/components/ShareNaoConformidadeModal";
 import { SavedNaoConformidadesViewer } from "@/components/SavedNaoConformidadesViewer";
 import toast from "react-hot-toast";
@@ -28,7 +29,10 @@ import {
   User,
   Shield,
   Edit,
-  Trash2
+  Trash2,
+  BarChart3,
+  TrendingUp,
+  List
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -54,7 +58,8 @@ export default function NaoConformidades() {
   const [showSavedNCs, setShowSavedNCs] = useState(false);
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [selectedNC, setSelectedNC] = useState<any>(null);
-  const [showDashboard, setShowDashboard] = useState(true);
+
+  const [viewMode, setViewMode] = useState<'dashboard' | 'list'>('dashboard');
 
   useEffect(() => {
     loadNaoConformidades();
@@ -90,10 +95,13 @@ export default function NaoConformidades() {
     setShowForm(true);
   };
 
-  const handleCreateAuditoria = () => {
-    toast.success("Funcionalidade de auditoria será implementada em breve!");
-    // TODO: Implementar modal/formulário de auditoria
+  const handleViewDetails = (nc: any) => {
+    setSelectedNC(nc);
+    // Aqui seria implementada a visualização detalhada
+    toast.success(`Visualizando detalhes de ${nc.codigo}`);
   };
+
+
 
   const handleRelatorios = () => {
     setShowRelatorioModal(true);
@@ -329,6 +337,7 @@ export default function NaoConformidades() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <NaoConformidadesNotificacoes onViewDetails={handleViewDetails} />
             <button
               onClick={() => setShowSavedNCs(true)}
               className="btn btn-outline btn-md"
@@ -343,13 +352,7 @@ export default function NaoConformidades() {
               <Download className="h-4 w-4 mr-2" />
               Relatórios
             </button>
-            <button
-              onClick={handleCreateAuditoria}
-              className="btn btn-secondary btn-md"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              Auditoria
-            </button>
+
             <button
               onClick={handleCreateNC}
               className="btn btn-primary btn-md"
@@ -357,22 +360,22 @@ export default function NaoConformidades() {
               <Plus className="h-4 w-4 mr-2" />
               Nova NC
             </button>
-            <button
-              onClick={() => setShowDashboard(!showDashboard)}
-              className="btn btn-outline btn-md"
-            >
-              {showDashboard ? (
-                <>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Ver Lista
-                </>
-              ) : (
-                <>
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Ver Dashboard
-                </>
-              )}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setViewMode('dashboard')}
+                className={`btn btn-md ${viewMode === 'dashboard' ? 'btn-primary' : 'btn-outline'}`}
+              >
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Dashboard
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`btn btn-md ${viewMode === 'list' ? 'btn-primary' : 'btn-outline'}`}
+              >
+                <List className="h-4 w-4 mr-2" />
+                Lista
+              </button>
+            </div>
           </div>
         </div>
 
@@ -560,23 +563,23 @@ export default function NaoConformidades() {
             </h2>
 
             {/* Conteúdo principal - Dashboard ou Lista */}
-            {showDashboard ? (
-              <>
-                {console.log('NaoConformidades page: Mostrando dashboard com', naoConformidades.length, 'NCs')}
-                <NaoConformidadeDashboard
-                  naoConformidades={naoConformidades}
-                  onSearch={(query, options) => {
-                    setSearchTerm(query);
-                  }}
-                  onFilterChange={(newFilters) => {
-                    // Aplicar filtros do dashboard
-                    if (newFilters.tipo) setFilterTipo(newFilters.tipo);
-                    if (newFilters.severidade) setFilterSeveridade(newFilters.severidade);
-                    if (newFilters.categoria) setFilterCategoria(newFilters.categoria);
-                    if (newFilters.status) setFilterStatus(newFilters.status);
-                  }}
-                />
-              </>
+            {viewMode === 'dashboard' ? (
+              <NaoConformidadeDashboardPremium
+                naoConformidades={naoConformidades}
+                onSearch={(query, options) => {
+                  setSearchTerm(query);
+                }}
+                onFilterChange={(newFilters) => {
+                  // Aplicar filtros do dashboard
+                  if (newFilters.tipo) setFilterTipo(newFilters.tipo);
+                  if (newFilters.severidade) setFilterSeveridade(newFilters.severidade);
+                  if (newFilters.categoria) setFilterCategoria(newFilters.categoria);
+                  if (newFilters.status) setFilterStatus(newFilters.status);
+                }}
+                onCreateNC={handleCreateNC}
+                onViewDetails={handleViewDetails}
+                onRefresh={loadNaoConformidades}
+              />
             ) : (
               <>
                 {filteredNCs.length === 0 ? (
@@ -693,11 +696,12 @@ export default function NaoConformidades() {
       )}
 
       {/* MODAL DE RELATÓRIOS */}
-      <RelatorioNaoConformidadesPremium
-        isOpen={showRelatorioModal}
-        onClose={() => setShowRelatorioModal(false)}
-        naoConformidades={naoConformidades}
-      />
+      {showRelatorioModal && (
+        <RelatorioNaoConformidadesPremium
+          naoConformidades={naoConformidades}
+          onClose={() => setShowRelatorioModal(false)}
+        />
+      )}
 
       {/* MODAL DE PARTILHA */}
       {showShareModal && selectedNC && (
