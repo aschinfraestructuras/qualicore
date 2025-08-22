@@ -1254,85 +1254,109 @@ export default function Documentos() {
             )}
           </AnimatePresence>
 
-          {/* Actions Bar */}
+          {/* Actions Bar Premium */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+            className="bg-gradient-to-r from-white/80 to-blue-50/80 backdrop-blur-sm border border-gray-200/50 rounded-xl p-6 shadow-lg"
           >
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setViewMode("table")}
-                  className={`p-2 rounded-lg transition-colors ${
-                    viewMode === "table"
-                      ? "bg-primary-100 text-primary-600"
-                      : "text-gray-400 hover:text-gray-600"
-                  }`}
-                >
-                  <FileText className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-lg transition-colors ${
-                    viewMode === "grid"
-                      ? "bg-primary-100 text-primary-600"
-                      : "text-gray-400 hover:text-gray-600"
-                  }`}
-                >
-                  <FileIcon className="h-5 w-5" />
-                </button>
-              </div>
-
-              <span className="text-sm text-gray-600">
-                {sortedDocumentos.length} documento(s) encontrado(s)
-              </span>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              {selectedDocuments.length > 0 && (
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">
-                    {selectedDocuments.length} selecionado(s)
-                  </span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center space-x-6">
+                {/* View Mode Toggle */}
+                <div className="flex items-center space-x-2 bg-white/60 rounded-lg p-1 shadow-sm">
                   <button
-                    onClick={() => handleBulkAction("export")}
-                    className="btn btn-outline btn-sm"
+                    onClick={() => setViewMode("table")}
+                    className={`p-2 rounded-lg transition-all duration-300 ${
+                      viewMode === "table"
+                        ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md"
+                        : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                    }`}
                   >
-                    <Download className="h-4 w-4 mr-1" />
-                    Exportar
+                    <FileText className="h-5 w-5" />
                   </button>
                   <button
-                    onClick={() => handleBulkAction("delete")}
-                    className="btn btn-danger btn-sm"
+                    onClick={() => setViewMode("grid")}
+                    className={`p-2 rounded-lg transition-all duration-300 ${
+                      viewMode === "grid"
+                        ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md"
+                        : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                    }`}
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Eliminar
+                    <FileIcon className="h-5 w-5" />
                   </button>
                 </div>
-              )}
 
-              <button onClick={handleExport} className="btn btn-secondary btn-sm">
-                <Download className="h-4 w-4 mr-1" />
-                Exportar Todos
-              </button>
+                {/* Document Count */}
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center shadow-md">
+                      <FileText className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg font-semibold text-gray-800">
+                        {sortedDocumentos.length}
+                      </span>
+                      <span className="text-gray-600 font-medium">
+                        documento{sortedDocumentos.length !== 1 ? 's' : ''} encontrado{sortedDocumentos.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3">
+                {selectedDocuments.length > 0 && (
+                  <div className="flex items-center space-x-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-3 border border-emerald-200/50">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center">
+                        <span className="text-xs font-bold text-white">{selectedDocuments.length}</span>
+                      </div>
+                      <span className="text-sm font-medium text-emerald-700">
+                        selecionado{selectedDocuments.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleBulkAction("export")}
+                      className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Exportar
+                    </button>
+                    <button
+                      onClick={() => handleBulkAction("delete")}
+                      className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg hover:from-red-600 hover:to-pink-600 transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Eliminar
+                    </button>
+                  </div>
+                )}
+
+                <button 
+                  onClick={handleExport} 
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar Todos
+                </button>
+              </div>
             </div>
           </motion.div>
 
-          {/* Documents Table */}
+          {/* Documents Table Premium */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="card"
+            className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 overflow-hidden"
           >
-            <div className="card-content p-0">
+            <div className="p-0">
               <div className="overflow-x-auto">
-                <table className="table">
+                <table className="w-full">
                   <thead>
-                    <tr>
-                      <th className="w-12">
+                    <tr className="bg-gradient-to-r from-gray-50/80 to-blue-50/80 border-b border-gray-200/50">
+                      <th className="w-12 p-4 text-left">
                         <input
                           type="checkbox"
                           checked={
@@ -1347,59 +1371,67 @@ export default function Documentos() {
                               setSelectedDocuments([]);
                             }
                           }}
-                          className="rounded border-gray-300"
+                          className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 focus:ring-2"
                         />
                       </th>
-                      <th>
+                      <th className="p-4 text-left">
                         <button
                           onClick={() => {
                             setSortBy("codigo");
                             setSortOrder(sortOrder === "asc" ? "desc" : "asc");
                           }}
-                          className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
+                          className="flex items-center space-x-2 hover:text-indigo-600 transition-colors font-semibold text-gray-700"
                         >
                           <span>Código</span>
                           <ArrowUpDown className="h-4 w-4" />
                         </button>
                       </th>
-                      <th>Tipo</th>
-                      <th>Versão</th>
-                      <th>Responsável</th>
-                      <th>Zona</th>
-                      <th>
+                      <th className="p-4 text-left font-semibold text-gray-700">Tipo</th>
+                      <th className="p-4 text-left font-semibold text-gray-700">Versão</th>
+                      <th className="p-4 text-left font-semibold text-gray-700">Responsável</th>
+                      <th className="p-4 text-left font-semibold text-gray-700">Zona</th>
+                      <th className="p-4 text-left">
                         <button
                           onClick={() => {
                             setSortBy("estado");
                             setSortOrder(sortOrder === "asc" ? "desc" : "asc");
                           }}
-                          className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
+                          className="flex items-center space-x-2 hover:text-indigo-600 transition-colors font-semibold text-gray-700"
                         >
                           <span>Estado</span>
                           <ArrowUpDown className="h-4 w-4" />
                         </button>
                       </th>
-                      <th>Data Validade</th>
-                      <th>
+                      <th className="p-4 text-left font-semibold text-gray-700">Data Validade</th>
+                      <th className="p-4 text-left">
                         <button
                           onClick={() => {
                             setSortBy("data_criacao");
                             setSortOrder(sortOrder === "asc" ? "desc" : "asc");
                           }}
-                          className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
+                          className="flex items-center space-x-2 hover:text-indigo-600 transition-colors font-semibold text-gray-700"
                         >
                           <span>Criado</span>
                           <ArrowUpDown className="h-4 w-4" />
                         </button>
                       </th>
-                      <th className="w-20">Ações</th>
+                      <th className="p-4 text-left font-semibold text-gray-700 w-32">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     <AnimatePresence>
                       {sortedDocumentos.length === 0 ? (
                         <tr>
-                          <td colSpan={9} className="py-12">
-                            <div>Nenhum documento encontrado</div>
+                          <td colSpan={9} className="py-16 text-center">
+                            <div className="flex flex-col items-center space-y-4">
+                              <div className="w-16 h-16 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
+                                <FileText className="h-8 w-8 text-gray-400" />
+                              </div>
+                              <div>
+                                <p className="text-lg font-medium text-gray-900">Nenhum documento encontrado</p>
+                                <p className="text-gray-500">Tente ajustar os filtros ou criar um novo documento</p>
+                              </div>
+                            </div>
                           </td>
                         </tr>
                       ) : (
@@ -1414,9 +1446,9 @@ export default function Documentos() {
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ duration: 0.3, delay: index * 0.05 }}
-                              className="hover:bg-gray-50/50"
+                              className="hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 border-b border-gray-100/50 transition-all duration-200"
                             >
-                              <td>
+                              <td className="p-4">
                                 <input
                                   type="checkbox"
                                   checked={selectedDocuments.includes(doc.id)}
@@ -1434,32 +1466,32 @@ export default function Documentos() {
                                       );
                                     }
                                   }}
-                                  className="rounded border-gray-300"
+                                  className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 focus:ring-2"
                                 />
                               </td>
-                              <td>
-                                <div className="flex items-center space-x-2">
-                                  <TipoIcon
-                                    className={`h-4 w-4 ${tipoInfo.color}`}
-                                  />
-                                  <span className="font-medium text-gray-900">
+                              <td className="p-4">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center shadow-sm">
+                                    <TipoIcon className="h-4 w-4 text-white" />
+                                  </div>
+                                  <span className="font-semibold text-gray-900">
                                     {doc.codigo}
                                   </span>
                                 </div>
                               </td>
-                              <td>
-                                <span className="text-sm text-gray-700">
+                              <td className="p-4">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
                                   {tipoInfo.label}
                                 </span>
                               </td>
-                              <td>
-                                <span className="text-sm font-medium text-gray-900">
+                              <td className="p-4">
+                                <span className="text-sm font-semibold text-gray-900 bg-gray-100 px-2 py-1 rounded-md">
                                   {doc.versao}
                                 </span>
                               </td>
-                              <td>
-                                <div className="flex items-center space-x-2">
-                                  <div className="h-6 w-6 rounded-full bg-gradient-primary flex items-center justify-center">
+                              <td className="p-4">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center shadow-sm">
                                     <span className="text-xs font-bold text-white">
                                       {doc.responsavel
                                         .split(" ")
@@ -1467,23 +1499,29 @@ export default function Documentos() {
                                         .join("")}
                                     </span>
                                   </div>
-                                  <span className="text-sm text-gray-700">
+                                  <span className="text-sm font-medium text-gray-700">
                                     {doc.responsavel}
                                   </span>
                                 </div>
                               </td>
-                              <td>
-                                <span className="text-sm text-gray-700">
+                              <td className="p-4">
+                                <span className="text-sm font-medium text-gray-700 bg-blue-50 px-3 py-1 rounded-full">
                                   {doc.zona}
                                 </span>
                               </td>
-                              <td>
-                                <span className={`badge ${estadoInfo.color}`}>
+                              <td className="p-4">
+                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                                  estadoInfo.value === 'aprovado' ? 'bg-green-100 text-green-800' :
+                                  estadoInfo.value === 'em_analise' ? 'bg-orange-100 text-orange-800' :
+                                  estadoInfo.value === 'pendente' ? 'bg-blue-100 text-blue-800' :
+                                  estadoInfo.value === 'reprovado' ? 'bg-red-100 text-red-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}>
                                   {estadoInfo.label}
                                 </span>
                               </td>
-                              <td>
-                                <span className="text-sm text-gray-700">
+                              <td className="p-4">
+                                <span className="text-sm font-medium text-gray-700">
                                   {doc.data_validade
                                     ? new Date(
                                         doc.data_validade,
@@ -1491,18 +1529,18 @@ export default function Documentos() {
                                     : "-"}
                                 </span>
                               </td>
-                              <td>
-                                <span className="text-sm text-gray-500">
+                              <td className="p-4">
+                                <span className="text-sm font-medium text-gray-500">
                                   {new Date(doc.data_criacao).toLocaleDateString(
                                     "pt-BR",
                                   )}
                                 </span>
                               </td>
-                              <td>
-                                <div className="flex items-center space-x-1">
+                              <td className="p-4">
+                                <div className="flex items-center space-x-2">
                                   <button
                                     onClick={() => handleEditClick(doc)}
-                                    className="btn btn-xs btn-outline mr-2"
+                                    className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 shadow-sm hover:shadow-md"
                                     title="Editar"
                                   >
                                     <Edit className="h-4 w-4" />
@@ -1514,35 +1552,35 @@ export default function Documentos() {
                                         "Funcionalidade de impressão em desenvolvimento",
                                       );
                                     }}
-                                    className="btn btn-xs btn-outline mr-2"
+                                    className="p-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-200 shadow-sm hover:shadow-md"
                                     title="Imprimir"
                                   >
                                     <Printer className="h-4 w-4" />
                                   </button>
                                   <button
                                     onClick={() => handleGenerateRelatorioIndividual(doc)}
-                                    className="btn btn-xs btn-outline mr-2"
+                                    className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-sm hover:shadow-md"
                                     title="Gerar Relatório Individual"
                                   >
                                     <FileText className="h-4 w-4" />
                                   </button>
                                   <button
                                     onClick={() => handleShare(doc)}
-                                    className="btn btn-xs btn-outline mr-2"
+                                    className="p-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-sm hover:shadow-md"
                                     title="Compartilhar"
                                   >
                                     <Share2 className="h-4 w-4" />
                                   </button>
                                   <button
                                     onClick={() => handleViewDocuments(doc)}
-                                    className="btn btn-xs btn-primary mr-2"
+                                    className="p-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all duration-200 shadow-sm hover:shadow-md"
                                     title="Ver Documentos"
                                   >
                                     <Eye className="h-4 w-4" />
                                   </button>
                                   <button
                                     onClick={() => handleDelete(doc.id)}
-                                    className="btn btn-xs btn-danger"
+                                    className="p-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg hover:from-red-600 hover:to-pink-600 transition-all duration-200 shadow-sm hover:shadow-md"
                                     title="Eliminar"
                                   >
                                     <Trash2 className="h-4 w-4" />

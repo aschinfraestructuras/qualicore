@@ -211,7 +211,7 @@ export default function Fornecedores() {
     try {
       const pdfService = new PDFService();
 
-      await pdfService.generateFornecedoresIndividualReport([fornecedor]);
+      await pdfService.generateObrasIndividualReport([fornecedor]);
       toast.success("Relatório individual gerado com sucesso!");
     } catch (error) {
       console.error("Erro ao gerar relatório individual:", error);
@@ -240,55 +240,76 @@ export default function Fornecedores() {
   }
 
   return (
-    <div className="space-y-6 pt-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Gestão de Fornecedores
-          </h1>
-          <p className="text-gray-600">Controlo de fornecedores e parceiros</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <button
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-8 pt-16">
+      {/* Header Premium */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent mb-2">
+              Gestão de Fornecedores
+            </h1>
+            <p className="text-xl text-gray-600 flex items-center">
+              <Building className="h-5 w-5 mr-2 text-blue-500" />
+              Controlo de fornecedores e parceiros em tempo real
+            </p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <button
             onClick={() => setShowDashboard(!showDashboard)}
-            className="btn btn-outline btn-md"
+            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl group"
           >
-            <BarChart className="h-4 w-4 mr-2" />
+            <BarChart className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
             {showDashboard ? 'Lista' : 'Dashboard'}
           </button>
           <button 
-            className="btn btn-outline btn-md" 
+            className="inline-flex items-center px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl group" 
             onClick={() => setShowSavedFornecedores(true)}
           >
-            <Cloud className="h-4 w-4 mr-2" />
+            <Cloud className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
             Fornecedores Salvos
           </button>
-          <button className="btn btn-outline btn-md" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
+          <button 
+            className="inline-flex items-center px-4 py-2 bg-white text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl group" 
+            onClick={handleExport}
+          >
+            <Download className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
             Exportar
           </button>
-          <button className="btn btn-primary btn-md" onClick={handleCreate}>
-            <Plus className="h-4 w-4 mr-2" />
+          <button 
+            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg hover:shadow-xl group" 
+            onClick={handleCreate}
+          >
+            <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
             Novo Fornecedor
           </button>
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Botão de Filtros */}
-      <div className="flex items-center space-x-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="flex items-center space-x-4 mb-6"
+      >
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`p-2 rounded-lg shadow-soft hover:shadow-md transition-all ${
+          className={`inline-flex items-center px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 ${
             showFilters
-              ? "bg-primary-100 text-primary-600"
-              : "bg-white text-gray-600"
+              ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
+              : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
           }`}
           title="Filtros"
         >
-          <Filter className="h-5 w-5" />
+          <Filter className="h-4 w-4 mr-2" />
+          Filtros
         </button>
-      </div>
+      </motion.div>
 
       {/* Filtros Ativos */}
       <AnimatePresence>

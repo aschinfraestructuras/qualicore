@@ -4,13 +4,14 @@ import {
   Activity, Zap as Lightning, TrendingDown, Star, Crown, Sparkles, Rocket, Flame, Heart, Gem, Diamond, Plus, Download, Menu, Play, Pause, RotateCcw,
   ArrowRight, ArrowLeft, Move, GripVertical, Zap as LightningBolt, Sparkles as SparklesIcon, Star as StarIcon, Crown as CrownIcon, Globe as GlobeIcon, 
   Calendar, MapPin, Euro, TrendingUp as TrendingUpIcon, AlertCircle as AlertCircleIcon, CheckSquare, FileText as FileTextIcon, BarChart, PieChart, LineChart, Sun, Moon,
-  Linkedin, ExternalLink, Zap as LightningIcon, Sparkles as SparklesIcon2, HelpCircle, Grid3X3, FolderOpen, Layers, LayoutDashboard
+  Linkedin, ExternalLink, Zap as LightningIcon, Sparkles as SparklesIcon2, HelpCircle, Grid3X3, FolderOpen, Layers, LayoutDashboard, ArrowUp, X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { SGQCharts } from "../components/SGQCharts";
+import QuickNavigation from "../components/QuickNavigation";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -18,6 +19,9 @@ export default function Dashboard() {
   const [showAlerts, setShowAlerts] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [showQuickAccess, setShowQuickAccess] = useState(false);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'modules' | 'analytics'>('overview');
 
   // Dados reais - sem valores mock falsos
   const qualicoreData = {
@@ -35,8 +39,6 @@ export default function Dashboard() {
   const alertas = [
     { id: 1, tipo: 'info', modulo: 'Sistema', mensagem: 'Bem-vindo ao QUALICORE', tempo: 'Agora', prioridade: 'baixa' }
   ];
-
-
 
   // Módulos reorganizados por fluxo de trabalho
   const workflowSections = [
@@ -142,9 +144,19 @@ export default function Dashboard() {
     }
   };
 
+  // Scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollToTop(window.scrollY > 300);
+    };
 
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -283,8 +295,16 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+      </motion.div>
 
-
+      {/* Quick Navigation Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="sticky top-0 z-40"
+      >
+        <QuickNavigation darkMode={darkMode} />
       </motion.div>
 
       {/* Main Content */}
@@ -333,7 +353,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className="text-center mb-12"
+          className="text-center mb-8"
         >
           <motion.h1
             initial={{ opacity: 0, scale: 0.9 }}
@@ -353,109 +373,239 @@ export default function Dashboard() {
           </motion.p>
         </motion.div>
 
-        {/* SGQ Global Charts */}
+        {/* Navigation Tabs */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.0 }}
-          className="space-y-8"
+          className="flex justify-center mb-8"
         >
-          <SGQCharts darkMode={darkMode} />
+          <div className={`inline-flex rounded-2xl p-1 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+            {[
+              { id: 'overview', label: 'Visão Geral', icon: Eye },
+              { id: 'modules', label: 'Módulos', icon: Grid3X3 },
+              { id: 'analytics', label: 'Analytics', icon: BarChart3 }
+            ].map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex items-center space-x-2 px-6 py-3 rounded-xl transition-all duration-300 ${
+                    activeTab === tab.id
+                      ? `${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'} shadow-lg`
+                      : `${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-800'}`
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="font-medium">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </motion.div>
 
-        {/* Quick Access to Modules */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.4 }}
-          className="mt-16"
-        >
-          <div className="text-center mb-12">
-            <h2 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-3`}>
-              Acesso Rápido aos Módulos
-            </h2>
-            <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'} max-w-2xl mx-auto`}>
-              Navegue diretamente para qualquer módulo do sistema
-            </p>
-
-          </div>
-
-          {/* Categorias de Módulos */}
-          <div className="space-y-8">
-            {workflowSections.map((section, sectionIndex) => (
+        {/* Tab Content */}
+        <AnimatePresence mode="wait">
+          {activeTab === 'overview' && (
+            <motion.div
+              key="overview"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-8"
+            >
+              {/* SGQ Global Charts */}
+              <SGQCharts darkMode={darkMode} />
+              
+              {/* Quick Access to Most Used Modules */}
               <motion.div
-                key={section.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.6 + sectionIndex * 0.1 }}
-                className="space-y-4"
+                transition={{ delay: 0.2 }}
+                className="mt-12"
               >
-                {/* Cabeçalho da Categoria */}
-                <div className="flex items-center space-x-4 mb-6">
-                  <div className={`w-12 h-12 bg-gradient-to-r ${section.color} rounded-xl flex items-center justify-center shadow-lg`}>
-                    <section.icon className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                      {section.title}
-                    </h3>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {section.subtitle}
-                    </p>
-                  </div>
-                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
-                  <span className={`text-sm font-medium px-3 py-1 rounded-full ${darkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
-                    {section.modules.length} módulos
-                  </span>
-                </div>
+                                 <div className="text-center mb-8">
+                   <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} mb-3`}>
+                     Todos os Módulos do Sistema
+                   </h2>
+                   <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                     23 módulos organizados por categoria para acesso direto
+                   </p>
+                 </div>
 
-                {/* Grid de Módulos da Categoria */}
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {section.modules.map((module, moduleIndex) => (
+                                 {/* All Modules Grid */}
+                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                   {[
+                     // Planeamento & Gestão
+                     { id: "obras", nome: "Obras", path: "/obras", icon: HardHat, color: "from-slate-600 to-gray-700" },
+                     { id: "documentos", nome: "Documentos", path: "/documentos", icon: FolderOpen, color: "from-indigo-500 to-purple-500" },
+                     { id: "rfis", nome: "RFIs", path: "/rfis", icon: HelpCircle, color: "from-blue-500 to-cyan-500" },
+                     { id: "submissao-materiais", nome: "Submissão", path: "/submissao-materiais", icon: Upload, color: "from-purple-500 to-pink-500" },
+                     { id: "relatorios", nome: "Relatórios", path: "/relatorios", icon: BarChart3, color: "from-orange-500 to-red-500" },
+                     { id: "rececao-obra-garantias", nome: "Receção Obra", path: "/rececao-obra-garantias", icon: Building2, color: "from-indigo-500 to-purple-500" },
+                     
+                     // Qualidade
+                     { id: "normas", nome: "Normas", path: "/normas", icon: BookOpen, color: "from-emerald-500 to-teal-500" },
+                     { id: "checklists", nome: "Checklists", path: "/checklists", icon: ClipboardCheck, color: "from-purple-500 to-pink-500" },
+                     { id: "pie", nome: "PIE", path: "/pie", icon: Eye, color: "from-blue-500 to-cyan-500" },
+                     { id: "auditorias", nome: "Auditorias", path: "/auditorias", icon: FileCheck, color: "from-indigo-500 to-purple-500" },
+                     { id: "certificados", nome: "Certificados", path: "/certificados", icon: Award, color: "from-yellow-500 to-orange-500" },
+                     { id: "nao-conformidades", nome: "Não Conformidades", path: "/nao-conformidades", icon: AlertTriangle, color: "from-red-500 to-pink-500" },
+                     
+                     // Execução
+                     { id: "caracterizacao-solos", nome: "Solos", path: "/caracterizacao-solos", icon: Layers, color: "from-emerald-500 to-teal-500" },
+                     { id: "ensaios-compactacao", nome: "Compactação", path: "/ensaios-compactacao", icon: BarChart3, color: "from-blue-500 to-cyan-500" },
+                     { id: "controlo-betonagens", nome: "Betonagens", path: "/controlo-betonagens", icon: Wrench, color: "from-slate-600 to-gray-700" },
+                     { id: "armaduras", nome: "Armaduras", path: "/armaduras", icon: Package, color: "from-indigo-500 to-purple-500" },
+                     { id: "ensaios", nome: "Ensaios", path: "/ensaios", icon: TestTube, color: "from-purple-500 to-pink-500" },
+                     
+                     // Ferroviária
+                     { id: "via-ferrea", nome: "Via Férrea", path: "/via-ferrea", icon: Train, color: "from-indigo-500 to-purple-500" },
+                     { id: "pontes-tuneis", nome: "Pontes & Túneis", path: "/pontes-tuneis", icon: Building2, color: "from-slate-600 to-gray-700" },
+                     { id: "eletrificacao", nome: "Eletrificação", path: "/eletrificacao", icon: Zap, color: "from-yellow-500 to-orange-500" },
+                     { id: "sinalizacao", nome: "Sinalização", path: "/sinalizacao", icon: Bell, color: "from-red-500 to-pink-500" },
+                     { id: "estacoes", nome: "Estações", path: "/estacoes", icon: Building, color: "from-blue-500 to-cyan-500" },
+                     { id: "seguranca-ferroviaria", nome: "Segurança", path: "/seguranca-ferroviaria", icon: Shield, color: "from-green-500 to-emerald-500" },
+                     
+                     // Recursos
+                     { id: "materiais", nome: "Materiais", path: "/materiais", icon: Grid3X3, color: "from-purple-500 to-pink-500" },
+                     { id: "fornecedores", nome: "Fornecedores", path: "/fornecedores", icon: Users, color: "from-emerald-500 to-teal-500" },
+                     { id: "fornecedores-avancados", nome: "Fornecedores Av.", path: "/fornecedores-avancados", icon: Building2, color: "from-indigo-500 to-purple-500" },
+                     { id: "calibracoes-equipamentos", nome: "Calibrações", path: "/calibracoes-equipamentos", icon: Settings, color: "from-slate-600 to-gray-700" }
+                   ].map((module, index) => (
                     <motion.div
                       key={module.id}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 1.8 + sectionIndex * 0.1 + moduleIndex * 0.05 }}
+                      transition={{ delay: 0.3 + index * 0.1 }}
                       whileHover={{ scale: 1.05, y: -4 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => navigate(module.path)}
                       className={`relative p-5 rounded-2xl ${darkMode ? 'bg-gray-800/60' : 'bg-white/80'} border-2 ${darkMode ? 'border-gray-700/50' : 'border-gray-200/50'} shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group backdrop-blur-sm overflow-hidden`}
                     >
-                      {/* Background Gradient */}
-                      <div className={`absolute inset-0 bg-gradient-to-br ${section.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
-                      
-                      {/* Priority Badge */}
-                      {module.priority === 'alta' && (
-                        <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                      )}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${module.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
                       
                       <div className="relative z-10 text-center">
                         <motion.div 
-                          className={`w-12 h-12 bg-gradient-to-r ${section.color} rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:shadow-xl transition-all duration-300`}
+                          className={`w-12 h-12 bg-gradient-to-r ${module.color} rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:shadow-xl transition-all duration-300`}
                           whileHover={{ rotate: 5, scale: 1.1 }}
                         >
                           <module.icon className="h-6 w-6 text-white" />
                         </motion.div>
-                        <h4 className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-1 leading-tight`}>
+                        <h4 className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} leading-tight`}>
                           {module.nome}
                         </h4>
-                        <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}>
-                          {module.nomeEN}
-                        </div>
                       </div>
 
-                      {/* Hover Effect */}
                       <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-blue-400/30 transition-all duration-300"></div>
                     </motion.div>
                   ))}
                 </div>
               </motion.div>
-            ))}
-          </div>
+            </motion.div>
+          )}
 
+          {activeTab === 'modules' && (
+            <motion.div
+              key="modules"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-8"
+            >
+              {/* Categorias de Módulos */}
+              <div className="space-y-8">
+                {workflowSections.map((section, sectionIndex) => (
+                  <motion.div
+                    key={section.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: sectionIndex * 0.1 }}
+                    className="space-y-4"
+                  >
+                    {/* Cabeçalho da Categoria */}
+                    <div className="flex items-center space-x-4 mb-6">
+                      <div className={`w-12 h-12 bg-gradient-to-r ${section.color} rounded-xl flex items-center justify-center shadow-lg`}>
+                        <section.icon className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                          {section.title}
+                        </h3>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {section.subtitle}
+                        </p>
+                      </div>
+                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                      <span className={`text-sm font-medium px-3 py-1 rounded-full ${darkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
+                        {section.modules.length} módulos
+                      </span>
+                    </div>
 
-        </motion.div>
+                    {/* Grid de Módulos da Categoria */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                      {section.modules.map((module, moduleIndex) => (
+                        <motion.div
+                          key={module.id}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: sectionIndex * 0.1 + moduleIndex * 0.05 }}
+                          whileHover={{ scale: 1.05, y: -4 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => navigate(module.path)}
+                          className={`relative p-5 rounded-2xl ${darkMode ? 'bg-gray-800/60' : 'bg-white/80'} border-2 ${darkMode ? 'border-gray-700/50' : 'border-gray-200/50'} shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group backdrop-blur-sm overflow-hidden`}
+                        >
+                          {/* Background Gradient */}
+                          <div className={`absolute inset-0 bg-gradient-to-br ${section.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                          
+                          {/* Priority Badge */}
+                          {module.priority === 'alta' && (
+                            <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                          )}
+                          
+                          <div className="relative z-10 text-center">
+                            <motion.div 
+                              className={`w-12 h-12 bg-gradient-to-r ${section.color} rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:shadow-xl transition-all duration-300`}
+                              whileHover={{ rotate: 5, scale: 1.1 }}
+                            >
+                              <module.icon className="h-6 w-6 text-white" />
+                            </motion.div>
+                            <h4 className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-1 leading-tight`}>
+                              {module.nome}
+                            </h4>
+                            <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}>
+                              {module.nomeEN}
+                            </div>
+                          </div>
+
+                          {/* Hover Effect */}
+                          <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-blue-400/30 transition-all duration-300"></div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'analytics' && (
+            <motion.div
+              key="analytics"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-8"
+            >
+              {/* SGQ Global Charts */}
+              <SGQCharts darkMode={darkMode} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Footer */}
         <motion.div
@@ -481,6 +631,93 @@ export default function Dashboard() {
             </a>
           </div>
         </motion.div>
+      </div>
+
+      {/* Floating Quick Access Menu */}
+      <AnimatePresence>
+        {showQuickAccess && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            className="fixed bottom-6 left-6 z-50"
+          >
+                         <div className={`${darkMode ? 'bg-gray-800/95' : 'bg-white/95'} backdrop-blur-xl rounded-2xl shadow-2xl border ${darkMode ? 'border-gray-700/50' : 'border-gray-200/50'} p-4 w-80`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Acesso Rápido</h3>
+                <button
+                  onClick={() => setShowQuickAccess(false)}
+                  className={`p-1 rounded-lg ${darkMode ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'} transition-colors`}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+                             <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                 {[
+                   { id: "obras", nome: "Obras", path: "/obras", icon: HardHat, color: "from-slate-600 to-gray-700" },
+                   { id: "documentos", nome: "Documentos", path: "/documentos", icon: FolderOpen, color: "from-emerald-500 to-teal-500" },
+                   { id: "pie", nome: "PIE", path: "/pie", icon: Eye, color: "from-blue-500 to-cyan-500" },
+                   { id: "ensaios", nome: "Ensaios", path: "/ensaios", icon: TestTube, color: "from-indigo-500 to-purple-500" },
+                   { id: "checklists", nome: "Checklists", path: "/checklists", icon: ClipboardCheck, color: "from-purple-500 to-pink-500" },
+                   { id: "normas", nome: "Normas", path: "/normas", icon: BookOpen, color: "from-emerald-500 to-teal-500" },
+                   { id: "via-ferrea", nome: "Via Férrea", path: "/via-ferrea", icon: Train, color: "from-indigo-500 to-purple-500" },
+                   { id: "controlo-betonagens", nome: "Betonagens", path: "/controlo-betonagens", icon: Wrench, color: "from-slate-600 to-gray-700" }
+                 ].map((module) => (
+                  <motion.button
+                    key={module.id}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      navigate(module.path);
+                      setShowQuickAccess(false);
+                    }}
+                    className={`p-3 rounded-xl ${darkMode ? 'bg-gray-700/50 hover:bg-gray-600/50' : 'bg-gray-100/50 hover:bg-gray-200/50'} transition-all duration-200 text-left`}
+                  >
+                    <div className={`w-8 h-8 bg-gradient-to-r ${module.color} rounded-lg flex items-center justify-center mb-2`}>
+                      <module.icon className="h-4 w-4 text-white" />
+                    </div>
+                    <div className={`text-xs font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                      {module.nome}
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col space-y-3">
+        {/* Quick Access Toggle */}
+        <motion.button
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 1.5, type: "spring" }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setShowQuickAccess(!showQuickAccess)}
+          className={`w-14 h-14 ${darkMode ? 'bg-gray-800/90' : 'bg-white/90'} backdrop-blur-xl rounded-full shadow-2xl border ${darkMode ? 'border-gray-700/50' : 'border-gray-200/50'} flex items-center justify-center transition-all duration-300 hover:shadow-3xl`}
+        >
+          <Grid3X3 className={`h-6 w-6 ${darkMode ? 'text-white' : 'text-gray-700'}`} />
+        </motion.button>
+
+        {/* Scroll to Top */}
+        <AnimatePresence>
+          {showScrollToTop && (
+            <motion.button
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={scrollToTop}
+              className={`w-14 h-14 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:shadow-3xl`}
+            >
+              <ArrowUp className="h-6 w-6 text-white" />
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

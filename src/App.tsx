@@ -35,6 +35,8 @@ import Estacoes from './pages/Estacoes';
 import Eletrificacao from './pages/Eletrificacao';
 import FornecedoresAvancados from './pages/FornecedoresAvancados';
 import ChecklistPage from './pages/ChecklistPage';
+import Relatorios from './pages/Relatorios';
+import PontosInspecaoEnsaios from './pages/PontosInspecaoEnsaios';
 
 // Componentes
 import ProtectedRoute from './components/ProtectedRoute';
@@ -265,6 +267,22 @@ function App() {
             </ProtectedRoute>
           }>
             <Route index element={<FornecedoresAvancados />} />
+          </Route>
+          
+          <Route path="/relatorios" element={
+            <ProtectedRoute>
+              <PremiumLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Relatorios />} />
+          </Route>
+          
+          <Route path="/pie" element={
+            <ProtectedRoute>
+              <PremiumLayout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<PontosInspecaoEnsaios />} />
           </Route>
           
           <Route path="/checklist/:id" element={
