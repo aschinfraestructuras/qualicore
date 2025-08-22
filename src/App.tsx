@@ -1,768 +1,307 @@
-import {
-  Ensaio,
-  Documento,
-  Checklist,
-  Material,
-  Fornecedor,
-  NaoConformidade,
-  Obra,
-} from "@/types";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
-import toast from "react-hot-toast";
-import { useEffect } from "react";
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useAuthStore } from "./lib/auth";
-import { queryClient } from "./lib/queryClient";
-import { ErrorTrackingService } from "./lib/error-tracking";
-import { PerformanceMonitor } from "./lib/performance";
-import { SecurityService } from "./lib/security";
-import { PerformanceOptimizer } from "./lib/performance-optimizer";
-import { PerformanceAnalyzer } from "./lib/performance-analyzer";
-import Layout from "./components/Layout";
-import ModernLayout from "./components/ModernLayout";
-import PremiumLayout from "./components/PremiumLayout";
-import Dashboard from "./pages/Dashboard";
-import Ensaios from "./pages/Ensaios";
-import EnsaiosCompactacao from "./pages/EnsaiosCompactacao";
-import Checklists from "./pages/Checklists";
-import Materiais from "./pages/Materiais";
-import Fornecedores from "./pages/Fornecedores";
-import NaoConformidades from "./pages/NaoConformidades";
-import Documentos from "./pages/Documentos";
-import Relatorios from "./pages/Relatorios";
-import ViaFerrea from "./pages/ViaFerrea";
-import Sinalizacao from "./pages/Sinalizacao";
-import Eletrificacao from "./pages/Eletrificacao";
-import PontesTuneis from "./pages/PontesTuneis";
-import Estacoes from "./pages/Estacoes";
-import SegurancaFerroviaria from "./pages/SegurancaFerroviaria";
-import ControloBetonagens from "./pages/ControloBetonagens";
-import CaracterizacaoSolos from "./pages/CaracterizacaoSolos";
-import Normas from "./pages/Normas";
-import SubmissaoMateriais from "./pages/SubmissaoMateriais";
-import Certificados from "./pages/Certificados";
-import Obras from "./pages/Obras";
-import Landing from "./pages/Landing";
+import { Toaster } from 'react-hot-toast';
+import { queryClient } from './lib/queryClient';
+import { SecurityManager } from './lib/security/securityManager';
 
-import Login from "./pages/Login";
-import DocumentoForm from "./components/forms/DocumentoForm";
-import EnsaioForm from "./components/forms/EnsaioForm";
-import EnsaioCompactacaoForm from "./components/forms/EnsaioCompactacaoForm";
-import ChecklistForm from "./components/forms/ChecklistForm";
-import ObraForm from "./components/forms/ObraForm";
-import MaterialForm from "./components/forms/MaterialForm";
-import FornecedorForm from "./components/forms/FornecedorForm";
-import NaoConformidadeForm from "./components/forms/NaoConformidadeForm";
-import RFIForm from "./components/forms/RFIForm";
-import RFIs from "./pages/RFIs";
-import PontosInspecaoEnsaiosPage from "./pages/PontosInspecaoEnsaios";
-import PontosInspecaoEnsaiosEditor from "./components/pie/PontosInspecaoEnsaiosEditor";
-import RelatoriosPontosInspecao from "./pages/RelatoriosPontosInspecao";
-import Armaduras from "./pages/Armaduras";
-import FornecedoresAvancados from "./pages/FornecedoresAvancados";
-import CalibracoesEquipamentos from "./pages/CalibracoesEquipamentos";
-import Auditorias from "./pages/Auditorias";
-import RelatoriosAuditorias from "./pages/RelatoriosAuditorias";
-import RececaoObraGarantias from "./pages/RececaoObraGarantias";
-import "./styles/globals.css";
-import { ensaioCompactacaoService } from "./services/ensaioCompactacaoService";
-import LoadingSpinner from "./components/LoadingSpinner";
-import { AnalyticsDashboard } from "./components/AnalyticsDashboard";
-import { AuditDashboard } from "./components/AuditDashboard";
-import { RealTimeUpdates } from "./lib/real-time-updates";
-import { UIEnhancements } from "./lib/ui-enhancements";
-import PDFGlobalConfig from "./components/PDFGlobalConfig";
+// Importações de páginas
+import Landing from './pages/Landing';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Ensaios from './pages/Ensaios';
+import Checklists from './pages/Checklists';
+import Materiais from './pages/Materiais';
+import Fornecedores from './pages/Fornecedores';
+import NaoConformidades from './pages/NaoConformidades';
+import Documentos from './pages/Documentos';
+import Obras from './pages/Obras';
+import RFIs from './pages/RFIs';
+import EnsaiosCompactacao from './pages/EnsaiosCompactacao';
+import ControloBetonagens from './pages/ControloBetonagens';
+import CaracterizacaoSolos from './pages/CaracterizacaoSolos';
+import Armaduras from './pages/Armaduras';
+import Normas from './pages/Normas';
+import SubmissaoMateriais from './pages/SubmissaoMateriais';
+import Certificados from './pages/Certificados';
+import CalibracoesEquipamentos from './pages/CalibracoesEquipamentos';
+import Auditorias from './pages/Auditorias';
+import RececaoObraGarantias from './pages/RececaoObraGarantias';
+import ViaFerrea from './pages/ViaFerrea';
+import Sinalizacao from './pages/Sinalizacao';
+import SegurancaFerroviaria from './pages/SegurancaFerroviaria';
+import PontesTuneis from './pages/PontesTuneis';
+import Estacoes from './pages/Estacoes';
+import Eletrificacao from './pages/Eletrificacao';
+import FornecedoresAvancados from './pages/FornecedoresAvancados';
+import ChecklistPage from './pages/ChecklistPage';
+
+// Componentes
+import ProtectedRoute from './components/ProtectedRoute';
+import PremiumLayout from './components/PremiumLayout';
+
+// Configuração inicial de segurança
+SecurityManager.configure({
+  rateLimitEnabled: true,
+  auditLogEnabled: true,
+  maxRequestsPerMinute: 60,
+  maxRequestsPerHour: 1000,
+});
 
 function App() {
-  const { user, loading } = useAuthStore();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Verificar autenticação ao carregar a app
-    useAuthStore.getState().checkUser();
-    
-    // Setup básico apenas - serviços avançados desativados temporariamente
-    // SecurityService.setupSessionTimeout(30); // 30 minutos
-    // ErrorTrackingService.setupGlobalErrorHandler();
-    // PerformanceMonitor.setupPerformanceMonitoring();
-    // PerformanceOptimizer.setupAutoOptimizations();
-    // PerformanceAnalyzer.initialize();
-    // RealTimeUpdates.setupAutoRefresh(30000); // 30 segundos
-    // UIEnhancements.initialize();
-  }, []);
-
-  if (loading) {
-    return <LoadingSpinner message="Inicializando Qualicore..." variant="logo" />;
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
       <div className="App">
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: "#363636",
-            color: "#fff",
-          },
-          success: {
-            duration: 3000,
-            iconTheme: {
-              primary: "#10b981",
-              secondary: "#fff",
-            },
-          },
-          error: {
-            duration: 5000,
-            iconTheme: {
-              primary: "#ef4444",
-              secondary: "#fff",
-            },
-          },
-        }}
-      />
-      <Routes>
-        {/* Rotas públicas */}
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-
-        {/* Rotas protegidas - apenas para usuários autenticados */}
-        <Route
-          path="/dashboard"
-          element={
-            user ? (
+        <Routes>
+          {/* Páginas públicas */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          
+          {/* Páginas protegidas com layout */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Dashboard />} />
-        </Route>
-
-        <Route
-          path="/ensaios"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<Dashboard />} />
+          </Route>
+          
+          <Route path="/ensaios" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Ensaios />} />
-        </Route>
-
-        <Route
-          path="/ensaios-compactacao"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<Ensaios />} />
+          </Route>
+          
+          <Route path="/checklists" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<EnsaiosCompactacao />} />
-        </Route>
-
-        <Route
-          path="/checklists"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<Checklists />} />
+          </Route>
+          
+          <Route path="/materiais" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Checklists />} />
-        </Route>
-
-        <Route
-          path="/materiais"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<Materiais />} />
+          </Route>
+          
+          <Route path="/fornecedores" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Materiais />} />
-        </Route>
-
-        <Route
-          path="/fornecedores"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<Fornecedores />} />
+          </Route>
+          
+          <Route path="/nao-conformidades" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Fornecedores />} />
-        </Route>
-
-        <Route
-          path="/nao-conformidades"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<NaoConformidades />} />
+          </Route>
+          
+          <Route path="/documentos" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<NaoConformidades />} />
-        </Route>
-
-        <Route
-          path="/documentos"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<Documentos />} />
+          </Route>
+          
+          <Route path="/obras" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Documentos />} />
-        </Route>
-
-        <Route
-          path="/relatorios"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<Obras />} />
+          </Route>
+          
+          <Route path="/rfis" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Relatorios />} />
-        </Route>
-
-        <Route
-          path="/via-ferrea"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<RFIs />} />
+          </Route>
+          
+          <Route path="/ensaios-compactacao" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<ViaFerrea />} />
-        </Route>
-
-        <Route
-          path="/sinalizacao"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<EnsaiosCompactacao />} />
+          </Route>
+          
+          <Route path="/controlo-betonagens" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Sinalizacao />} />
-        </Route>
-
-        <Route
-          path="/eletrificacao"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<ControloBetonagens />} />
+          </Route>
+          
+          <Route path="/caracterizacao-solos" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Eletrificacao />} />
-        </Route>
-
-                <Route
-          path="/pontes-tuneis"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<CaracterizacaoSolos />} />
+          </Route>
+          
+          <Route path="/armaduras" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<PontesTuneis />} />
-        </Route>
-
-        <Route
-          path="/estacoes"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<Armaduras />} />
+          </Route>
+          
+          <Route path="/normas" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Estacoes />} />
-        </Route>
-
-        <Route
-          path="/seguranca-ferroviaria"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<Normas />} />
+          </Route>
+          
+          <Route path="/submissao-materiais" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<SegurancaFerroviaria />} />
-        </Route>
-
-        <Route
-          path="/controlo-betonagens"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<SubmissaoMateriais />} />
+          </Route>
+          
+          <Route path="/certificados" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<ControloBetonagens />} />
-        </Route>
-
-        <Route
-          path="/caracterizacao-solos"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<Certificados />} />
+          </Route>
+          
+          <Route path="/calibracoes-equipamentos" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<CaracterizacaoSolos />} />
-        </Route>
-
-        <Route
-          path="/normas"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<CalibracoesEquipamentos />} />
+          </Route>
+          
+          <Route path="/auditorias" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Normas />} />
-        </Route>
-
-        <Route
-          path="/submissao-materiais"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<Auditorias />} />
+          </Route>
+          
+          <Route path="/rececao-obra-garantias" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<SubmissaoMateriais />} />
-        </Route>
-
-        <Route
-          path="/certificados"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<RececaoObraGarantias />} />
+          </Route>
+          
+          <Route path="/via-ferrea" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Certificados />} />
-        </Route>
-        
-
-
-        <Route
-          path="/obras"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<ViaFerrea />} />
+          </Route>
+          
+          <Route path="/sinalizacao" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Obras />} />
-        </Route>
-
-        <Route
-          path="/rfis"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<Sinalizacao />} />
+          </Route>
+          
+          <Route path="/seguranca-ferroviaria" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<RFIs />} />
-        </Route>
-
-        <Route
-          path="/pie"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<SegurancaFerroviaria />} />
+          </Route>
+          
+          <Route path="/pontes-tuneis" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<PontosInspecaoEnsaiosPage />} />
-          <Route path="relatorios" element={<RelatoriosPontosInspecao />} />
-        </Route>
-
-        <Route
-          path="/pie/editor"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<PontesTuneis />} />
+          </Route>
+          
+          <Route path="/estacoes" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<PontosInspecaoEnsaiosEditor />} />
-        </Route>
-
-        <Route
-          path="/pie/editor/:id"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<Estacoes />} />
+          </Route>
+          
+          <Route path="/eletrificacao" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<PontosInspecaoEnsaiosEditor />} />
-        </Route>
-
-        <Route
-          path="/pie/view/:id"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<Eletrificacao />} />
+          </Route>
+          
+          <Route path="/fornecedores-avancados" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<PontosInspecaoEnsaiosEditor />} />
-        </Route>
-
-        <Route
-          path="/armaduras"
-          element={
-            user ? (
+            </ProtectedRoute>
+          }>
+            <Route index element={<FornecedoresAvancados />} />
+          </Route>
+          
+          <Route path="/checklist/:id" element={
+            <ProtectedRoute>
               <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<Armaduras />} />
-        </Route>
-
-        <Route
-          path="/fornecedores-avancados"
-          element={
-            user ? (
-              <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<FornecedoresAvancados />} />
-        </Route>
-
-        <Route
-          path="/calibracoes-equipamentos"
-          element={
-            user ? (
-              <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={<CalibracoesEquipamentos />} />
-        </Route>
-
-                   <Route
-        path="/auditorias"
-        element={
-          user ? (
-            <PremiumLayout />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      >
-        <Route index element={<Auditorias />} />
-        <Route path="relatorios" element={<RelatoriosAuditorias />} />
-      </Route>
-      <Route
-        path="/rececao-obra-garantias"
-        element={
-          user ? (
-            <PremiumLayout />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      >
-        <Route index element={<RececaoObraGarantias />} />
-      </Route>
-
-        {/* Rotas para ações rápidas */}
-        <Route
-          path="/documentos/novo"
-          element={
-            user ? (
-              <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={
-            <DocumentoForm
-              onSubmit={() => {
-                toast.success('Documento criado com sucesso!');
-                navigate('/documentos');
-              }}
-              onCancel={() => {
-                navigate('/documentos');
+            </ProtectedRoute>
+          }>
+            <Route index element={<ChecklistPage />} />
+          </Route>
+        </Routes>
+            
+            {/* Toaster para notificações */}
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: '#363636',
+                  color: '#fff',
+                },
+                success: {
+                  duration: 3000,
+                  iconTheme: {
+                    primary: '#10B981',
+                    secondary: '#fff',
+                  },
+                },
+                error: {
+                  duration: 5000,
+                  iconTheme: {
+                    primary: '#EF4444',
+                    secondary: '#fff',
+                  },
+                },
               }}
             />
-          } />
-        </Route>
-
-        <Route
-          path="/ensaios/novo"
-          element={
-            user ? (
-              <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={
-            <EnsaioForm
-              onSubmit={() => {
-                toast.success('Ensaio criado com sucesso!');
-                navigate('/ensaios');
-              }}
-              onCancel={() => {
-                navigate('/ensaios');
-              }}
-            />
-          } />
-        </Route>
-
-        <Route
-          path="/ensaios-compactacao/novo"
-          element={
-            user ? (
-              <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={
-            <EnsaioCompactacaoForm
-              onSubmit={async (ensaio) => {
-                try {
-                  await ensaioCompactacaoService.create(ensaio);
-                  toast.success('Ensaio de compactação criado com sucesso!');
-                  navigate('/ensaios-compactacao');
-                } catch (error) {
-                  console.error('Erro ao criar ensaio:', error);
-                  toast.error('Erro ao criar ensaio de compactação');
-                }
-              }}
-              onCancel={() => {
-                navigate('/ensaios-compactacao');
-              }}
-            />
-          } />
-        </Route>
-
-        <Route
-          path="/checklists/novo"
-          element={
-            user ? (
-              <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={
-            <ChecklistForm 
-              onSubmit={() => {
-                toast.success('Checklist criado com sucesso!');
-                navigate('/checklists');
-              }} 
-              onCancel={() => {
-                navigate('/checklists');
-              }} 
-            />
-          } />
-        </Route>
-
-        <Route
-          path="/obras/nova"
-          element={
-            user ? (
-              <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={
-            <ObraForm 
-              onSubmit={() => {
-                toast.success('Obra criada com sucesso!');
-                navigate('/obras');
-              }} 
-              onCancel={() => {
-                navigate('/obras');
-              }} 
-            />
-          } />
-        </Route>
-
-        <Route
-          path="/materiais/novo"
-          element={
-            user ? (
-              <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={
-            <MaterialForm 
-              onSubmit={() => {
-                toast.success('Material criado com sucesso!');
-                navigate('/materiais');
-              }} 
-              onCancel={() => {
-                navigate('/materiais');
-              }} 
-            />
-          } />
-        </Route>
-
-        <Route
-          path="/fornecedores/novo"
-          element={
-            user ? (
-              <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={
-            <FornecedorForm 
-              onSubmit={() => {
-                toast.success('Fornecedor criado com sucesso!');
-                navigate('/fornecedores');
-              }} 
-              onCancel={() => {
-                navigate('/fornecedores');
-              }} 
-            />
-          } />
-        </Route>
-
-        <Route
-          path="/nao-conformidades/nova"
-          element={
-            user ? (
-              <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={
-            <NaoConformidadeForm 
-              onSubmit={() => {
-                toast.success('Não conformidade criada com sucesso!');
-                navigate('/nao-conformidades');
-              }} 
-              onCancel={() => {
-                navigate('/nao-conformidades');
-              }} 
-            />
-          } />
-        </Route>
-
-        <Route
-          path="/rfis/novo"
-          element={
-            user ? (
-              <PremiumLayout />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        >
-          <Route index element={
-            <RFIForm 
-              onSubmit={() => {
-                toast.success('RFI criado com sucesso!');
-                navigate('/rfis');
-              }} 
-              onCancel={() => {
-                navigate('/rfis');
-              }} 
-            />
-          } />
-        </Route>
-
-        {/* Analytics Dashboard */}
-        <Route path="/analytics" element={<AnalyticsDashboard />} />
-        
-        {/* Audit Dashboard */}
-        <Route path="/audit" element={<AuditDashboard />} />
-        
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-      
-      {/* Configuração Global de PDFs */}
-      <PDFGlobalConfig />
-    </div>
-  </QueryClientProvider>
+       </div>
+     </QueryClientProvider>
   );
 }
 

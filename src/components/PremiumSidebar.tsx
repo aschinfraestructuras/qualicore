@@ -167,66 +167,60 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
 
   const modules = [
     {
-      section: "ensaios",
-      title: "ENSAIOS E CONTROLO",
+      section: "planeamento",
+      title: "PLANEAMENTO, GESTÃO & DOCUMENTAÇÃO",
       items: [
-        { name: "Ensaios", href: "/ensaios", icon: ClipboardList, badge: stats.ensaios.toString() },
-        { name: "Controlo Betonagens", href: "/controlo-betonagens", icon: Building, badge: "🆕" },
-        { name: "Caracterização Solos", href: "/caracterizacao-solos", icon: Layers, badge: "🆕" },
-        { name: "Armaduras", href: "/armaduras", icon: Package, badge: "🆕" },
+        { name: "Documentos", href: "/documentos", icon: Folder, badge: stats.documentos.toString() },
+        { name: "Obras", href: "/obras", icon: Building2, badge: stats.obras.toString() },
+        { name: "RFIs", href: "/rfis", icon: HelpCircle, badge: "0" },
+        { name: "Submissão Materiais", href: "/submissao-materiais", icon: Package, badge: "🆕" },
+        { name: "Relatórios", href: "/relatorios", icon: BarChart3, badge: "0" },
+        { name: "Receção Obra e Garantias", href: "/rececao-obra-garantias", icon: Building2, badge: "🆕" }
       ]
     },
     {
       section: "qualidade",
-      title: "QUALIDADE",
+      title: "SISTEMAS DE QUALIDADE",
       items: [
         { name: "Sistema de Normas", href: "/normas", icon: BookOpen, badge: "🌟" },
-        { name: "Submissão Materiais", href: "/submissao-materiais", icon: Package, badge: "🆕" },
-        { name: "Certificados e Registos", href: "/certificados", icon: Award, badge: "🆕" },
-        { name: "Calibrações e Equipamentos", href: "/calibracoes-equipamentos", icon: Settings, badge: "🆕" },
-                   { name: "Auditorias SGQ", href: "/auditorias", icon: Shield, badge: "🆕" },
-           { name: "Relatórios Auditorias", href: "/auditorias/relatorios", icon: FileText, badge: "📊" },
-        { name: "Receção de Obra e Garantias", href: "/rececao-obra-garantias", icon: Building2, badge: "🆕" },
         { name: "Checklists", href: "/checklists", icon: FileText, badge: "0" },
-        { name: "Não Conformidades", href: "/nao-conformidades", icon: AlertTriangle, badge: stats.ncs.toString() },
+        { name: "PIE - Pontos Inspeção", href: "/pie", icon: Shield, badge: "0" },
+        { name: "Auditorias", href: "/auditorias", icon: Shield, badge: "🆕" },
+        { name: "Certificados", href: "/certificados", icon: Award, badge: "🆕" },
+        { name: "Não Conformidades", href: "/nao-conformidades", icon: AlertTriangle, badge: stats.ncs.toString() }
       ]
     },
     {
-      section: "gestao",
-      title: "GESTÃO",
+      section: "execucao",
+      title: "EXECUÇÃO & CONTROLO",
       items: [
-        { name: "Obras", href: "/obras", icon: Building2, badge: stats.obras.toString() },
-        { name: "Materiais", href: "/materiais", icon: Grid3X3, badge: "0" },
-        { name: "Fornecedores", href: "/fornecedores", icon: Users, badge: "0" },
-        { name: "Fornecedores Avançados", href: "/fornecedores-avancados", icon: Building2, badge: "🆕" },
-        { name: "RFIs", href: "/rfis", icon: HelpCircle, badge: "0" },
+        { name: "Caracterização Solos", href: "/caracterizacao-solos", icon: Layers, badge: "🆕" },
+        { name: "Ensaios Compactação", href: "/ensaios-compactacao", icon: BarChart3, badge: "🆕" },
+        { name: "Controlo Betonagens", href: "/controlo-betonagens", icon: Building, badge: "🆕" },
+        { name: "Armaduras", href: "/armaduras", icon: Package, badge: "🆕" },
+        { name: "Ensaios", href: "/ensaios", icon: ClipboardList, badge: stats.ensaios.toString() }
       ]
     },
     {
-      section: "infraestrutura",
-      title: "INFRAESTRUTURA",
+      section: "ferrovia",
+      title: "INFRAESTRUTURA FERROVIÁRIA",
       items: [
         { name: "Via Férrea", href: "/via-ferrea", icon: Train, badge: "🆕" },
         { name: "Pontes & Túneis", href: "/pontes-tuneis", icon: Archive, badge: "🆕" },
-        { name: "Estações", href: "/estacoes", icon: Building, badge: "🆕" },
-      ]
-    },
-    {
-      section: "sistemas",
-      title: "SISTEMAS",
-      items: [
-        { name: "Sinalização", href: "/sinalizacao", icon: Activity, badge: "🆕" },
         { name: "Eletrificação", href: "/eletrificacao", icon: Zap, badge: "0" },
-        { name: "Segurança", href: "/seguranca-ferroviaria", icon: Shield, badge: "🆕" },
+        { name: "Sinalização", href: "/sinalizacao", icon: Activity, badge: "🆕" },
+        { name: "Estações", href: "/estacoes", icon: Building, badge: "🆕" },
+        { name: "Segurança Ferroviária", href: "/seguranca-ferroviaria", icon: Shield, badge: "🆕" }
       ]
     },
     {
-      section: "documentacao",
-      title: "DOCUMENTAÇÃO",
+      section: "recursos",
+      title: "GESTÃO DE RECURSOS",
       items: [
-        { name: "Documentos", href: "/documentos", icon: Folder, badge: stats.documentos.toString() },
-        { name: "PIE", href: "/pie", icon: Shield, badge: "0" },
-        { name: "Relatórios", href: "/relatorios", icon: BarChart3, badge: "0" },
+        { name: "Materiais", href: "/materiais", icon: Grid3X3, badge: "0" },
+        { name: "Fornecedores", href: "/fornecedores", icon: Users, badge: "0" },
+        { name: "Fornecedores Avançados", href: "/fornecedores-avancados", icon: Building2, badge: "🆕" },
+        { name: "Calibrações e Equipamentos", href: "/calibracoes-equipamentos", icon: Settings, badge: "🆕" }
       ]
     }
   ];

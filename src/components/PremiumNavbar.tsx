@@ -397,29 +397,38 @@ ${searchResults.join('\n\n')}
 
   const commands = [
     { name: "Dashboard", icon: "📊", category: "Navegação", path: "/dashboard", shortcut: "⌘D" },
-    { name: "Obras", icon: "🏗️", category: "Gestão", path: "/obras", shortcut: "⌘O" },
-    { name: "Ensaios", icon: "🧪", category: "Qualidade", path: "/ensaios", shortcut: "⌘E" },
-    { name: "Controlo Betonagens", icon: "🏗️", category: "Qualidade", path: "/controlo-betonagens", shortcut: "⌘B" },
-    { name: "Caracterização Solos", icon: "🌱", category: "Qualidade", path: "/caracterizacao-solos", shortcut: "⌘S" },
-    { name: "Sistema de Normas", icon: "📚", category: "Qualidade", path: "/normas", shortcut: "⌘N" },
-    { name: "Submissão Materiais", icon: "📦", category: "Qualidade", path: "/submissao-materiais", shortcut: "⌘M" },
-    { name: "Certificados e Registos", icon: "🏆", category: "Qualidade", path: "/certificados", shortcut: "⌘C" },
-    { name: "Checklists", icon: "✅", category: "Qualidade", path: "/checklists", shortcut: "⌘C" },
-    { name: "Não Conformidades", icon: "⚠️", category: "Qualidade", path: "/nao-conformidades", shortcut: "⌘N" },
-    { name: "Materiais", icon: "📦", category: "Gestão", path: "/materiais", shortcut: "⌘M" },
-    { name: "Fornecedores", icon: "🏢", category: "Gestão", path: "/fornecedores", shortcut: "⌘F" },
-    { name: "Fornecedores Avançados", icon: "🏢", category: "Gestão", path: "/fornecedores-avancados", shortcut: "⌘A" },
-    { name: "Calibrações e Equipamentos", icon: "⚙️", category: "Gestão", path: "/calibracoes-equipamentos", shortcut: "⌘C" },
-    { name: "RFIs", icon: "❓", category: "Gestão", path: "/rfis", shortcut: "⌘I" },
-    { name: "Via Férrea", icon: "🛤️", category: "Ferroviário", path: "/via-ferrea", shortcut: "⌘V" },
-    { name: "Sinalização", icon: "🚦", category: "Ferroviário", path: "/sinalizacao", shortcut: "⌘S" },
-    { name: "Eletrificação", icon: "⚡", category: "Ferroviário", path: "/eletrificacao", shortcut: "⌘E" },
-    { name: "Pontes & Túneis", icon: "🌉", category: "Ferroviário", path: "/pontes-tuneis", shortcut: "⌘P" },
-    { name: "Estações", icon: "🏢", category: "Ferroviário", path: "/estacoes", shortcut: "⌘T" },
-    { name: "Segurança", icon: "🛡️", category: "Ferroviário", path: "/seguranca-ferroviaria", shortcut: "⌘G" },
-    { name: "Documentos", icon: "📄", category: "Documentação", path: "/documentos", shortcut: "⌘D" },
-    { name: "PIE", icon: "🎯", category: "Documentação", path: "/pie", shortcut: "⌘P" },
-    { name: "Relatórios", icon: "📈", category: "Documentação", path: "/relatorios", shortcut: "⌘R" },
+    // Planeamento, Gestão & Documentação
+    { name: "Documentos", icon: "📄", category: "Planeamento & Documentação", path: "/documentos", shortcut: "⌘D" },
+    { name: "Obras", icon: "🏗️", category: "Planeamento & Documentação", path: "/obras", shortcut: "⌘O" },
+    { name: "RFIs", icon: "❓", category: "Planeamento & Documentação", path: "/rfis", shortcut: "⌘I" },
+    { name: "Submissão Materiais", icon: "📦", category: "Planeamento & Documentação", path: "/submissao-materiais", shortcut: "⌘M" },
+    { name: "Relatórios", icon: "📈", category: "Planeamento & Documentação", path: "/relatorios", shortcut: "⌘R" },
+    { name: "Receção Obra e Garantias", icon: "🏢", category: "Planeamento & Documentação", path: "/rececao-obra-garantias", shortcut: "⌘G" },
+    // Sistemas de Qualidade
+    { name: "Sistema de Normas", icon: "📚", category: "Sistemas de Qualidade", path: "/normas", shortcut: "⌘N" },
+    { name: "Checklists", icon: "✅", category: "Sistemas de Qualidade", path: "/checklists", shortcut: "⌘C" },
+    { name: "PIE - Pontos Inspeção", icon: "🎯", category: "Sistemas de Qualidade", path: "/pie", shortcut: "⌘P" },
+    { name: "Auditorias", icon: "🛡️", category: "Sistemas de Qualidade", path: "/auditorias", shortcut: "⌘A" },
+    { name: "Certificados", icon: "🏆", category: "Sistemas de Qualidade", path: "/certificados", shortcut: "⌘C" },
+    { name: "Não Conformidades", icon: "⚠️", category: "Sistemas de Qualidade", path: "/nao-conformidades", shortcut: "⌘N" },
+    // Execução & Controlo
+    { name: "Caracterização Solos", icon: "🌱", category: "Execução & Controlo", path: "/caracterizacao-solos", shortcut: "⌘S" },
+    { name: "Ensaios Compactação", icon: "📊", category: "Execução & Controlo", path: "/ensaios-compactacao", shortcut: "⌘E" },
+    { name: "Controlo Betonagens", icon: "🏗️", category: "Execução & Controlo", path: "/controlo-betonagens", shortcut: "⌘B" },
+    { name: "Armaduras", icon: "📦", category: "Execução & Controlo", path: "/armaduras", shortcut: "⌘A" },
+    { name: "Ensaios", icon: "🧪", category: "Execução & Controlo", path: "/ensaios", shortcut: "⌘E" },
+    // Infraestrutura Ferroviária
+    { name: "Via Férrea", icon: "🛤️", category: "Infraestrutura Ferroviária", path: "/via-ferrea", shortcut: "⌘V" },
+    { name: "Pontes & Túneis", icon: "🌉", category: "Infraestrutura Ferroviária", path: "/pontes-tuneis", shortcut: "⌘P" },
+    { name: "Eletrificação", icon: "⚡", category: "Infraestrutura Ferroviária", path: "/eletrificacao", shortcut: "⌘E" },
+    { name: "Sinalização", icon: "🚦", category: "Infraestrutura Ferroviária", path: "/sinalizacao", shortcut: "⌘S" },
+    { name: "Estações", icon: "🏢", category: "Infraestrutura Ferroviária", path: "/estacoes", shortcut: "⌘T" },
+    { name: "Segurança Ferroviária", icon: "🛡️", category: "Infraestrutura Ferroviária", path: "/seguranca-ferroviaria", shortcut: "⌘G" },
+    // Gestão de Recursos
+    { name: "Materiais", icon: "📦", category: "Gestão de Recursos", path: "/materiais", shortcut: "⌘M" },
+    { name: "Fornecedores", icon: "🏢", category: "Gestão de Recursos", path: "/fornecedores", shortcut: "⌘F" },
+    { name: "Fornecedores Avançados", icon: "🏢", category: "Gestão de Recursos", path: "/fornecedores-avancados", shortcut: "⌘A" },
+    { name: "Calibrações e Equipamentos", icon: "⚙️", category: "Gestão de Recursos", path: "/calibracoes-equipamentos", shortcut: "⌘C" },
   ];
 
   const filteredCommands = commands.filter((command) =>
@@ -438,10 +447,11 @@ ${searchResults.join('\n\n')}
 
   const categoryColors = {
     "Navegação": "blue",
-    "Qualidade": "emerald", 
-    "Gestão": "purple",
-    "Ferroviário": "orange",
-    "Documentação": "indigo"
+    "Planeamento & Documentação": "slate", 
+    "Sistemas de Qualidade": "emerald",
+    "Execução & Controlo": "blue",
+    "Infraestrutura Ferroviária": "indigo",
+    "Gestão de Recursos": "purple"
   };
 
   console.log("🎯 PremiumNavbar render - showCommandPalette:", showCommandPalette);
@@ -1049,6 +1059,36 @@ ${searchResults.join('\n\n')}
                 )}
               </div>
 
+              {/* Botão de Configuração de PDFs - PREMIUM */}
+              <button 
+                onClick={() => {
+                  console.log('🎯 Botão PDF CONFIG clicado!');
+                  toast.success('🎯 Abrindo configuração de PDFs...', {
+                    icon: '📄',
+                    duration: 2000,
+                    style: {
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }
+                  });
+                  // Abrir modal de configuração de PDFs
+                  const event = new CustomEvent('openPDFConfig');
+                  window.dispatchEvent(event);
+                }}
+                className="p-2.5 bg-gradient-to-r from-slate-600 to-slate-700 text-white hover:from-slate-700 hover:to-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110 rounded-xl border border-slate-500/30 backdrop-blur-sm group relative overflow-hidden"
+                title="Configuração de Relatórios"
+              >
+                <div className="relative z-10">
+                  <Settings className="h-4 w-4 group-hover:rotate-90 transition-transform duration-300" />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-sm"></div>
+              </button>
+
               {/* Notifications */}
               <div className="relative" ref={notificationsRef}>
                                  <button
@@ -1118,35 +1158,7 @@ ${searchResults.join('\n\n')}
                 )}
               </div>
 
-                             {/* Botão de Configuração de PDFs - PREMIUM */}
-               <button 
-                 onClick={() => {
-                   console.log('🎯 Botão PDF CONFIG clicado!');
-                   toast.success('🎯 Abrindo configuração de PDFs...', {
-                     icon: '📄',
-                     duration: 2000,
-                     style: {
-                       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                       color: 'white',
-                       borderRadius: '12px',
-                       padding: '16px',
-                       fontSize: '14px',
-                       fontWeight: '600'
-                     }
-                   });
-                   // Abrir modal de configuração de PDFs
-                   const event = new CustomEvent('openPDFConfig');
-                   window.dispatchEvent(event);
-                 }}
-                 className="p-2.5 bg-gradient-to-r from-slate-600 to-slate-700 text-white hover:from-slate-700 hover:to-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110 rounded-xl border border-slate-500/30 backdrop-blur-sm group relative overflow-hidden"
-                 title="Configuração de Relatórios"
-               >
-                 <div className="relative z-10">
-                   <Settings className="h-4 w-4 group-hover:rotate-90 transition-transform duration-300" />
-                 </div>
-                 <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                 <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-sm"></div>
-               </button>
+
             </div>
           </div>
         </div>
