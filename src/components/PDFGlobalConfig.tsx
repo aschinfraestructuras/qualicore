@@ -18,14 +18,23 @@ interface Obra {
 }
 
 const PDFGlobalConfig: React.FC = () => {
-  const [config, setConfig] = useState(PDFConfigService.getInstance().getConfig());
+  const [config, setConfig] = useState(() => {
+    try {
+      return PDFConfigService.getInstance().getConfig();
+    } catch (error) {
+      console.error('Erro ao carregar configuração inicial:', error);
+      return PDFConfigService.getInstance().getDefaultConfig();
+    }
+  });
   const [isOpen, setIsOpen] = useState(false);
   const [obras, setObras] = useState<Obra[]>([]);
   const [selectedObraId, setSelectedObraId] = useState<string>('');
+  const [loading, setLoading] = useState(false);
 
   // Listener para abrir o modal quando o botão da navbar for clicado
   useEffect(() => {
     const handleOpenPDFConfig = () => {
+      console.log('🎯 Evento openPDFConfig recebido!');
       setIsOpen(true);
     };
 
@@ -40,6 +49,7 @@ const PDFGlobalConfig: React.FC = () => {
   useEffect(() => {
     const loadObras = async () => {
       try {
+        setLoading(true);
         // Primeiro tentar carregar obras reais do módulo obras
         const { obrasAPI } = await import('../lib/supabase-api');
         const obrasReais = await obrasAPI.getAll();
@@ -101,6 +111,8 @@ const PDFGlobalConfig: React.FC = () => {
           }
         ];
         setObras(mockObras);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -166,6 +178,7 @@ const PDFGlobalConfig: React.FC = () => {
 
   const handleSave = () => {
     try {
+      console.log('💾 Salvando configuração:', config);
       PDFConfigService.getInstance().updateConfig(config);
       toast.success('Configuração salva com sucesso!', {
         icon: '✅',
@@ -181,16 +194,40 @@ const PDFGlobalConfig: React.FC = () => {
       });
       setIsOpen(false);
     } catch (error) {
+      console.error('Erro ao salvar configuração:', error);
       toast.error('Erro ao salvar configuração');
     }
   };
 
   const handleReset = () => {
-    const defaultConfig = PDFConfigService.getInstance().getDefaultConfig();
-    setConfig(defaultConfig);
-    setSelectedObraId('');
-    toast.success('Configuração resetada para valores padrão!');
+    try {
+      const defaultConfig = PDFConfigService.getInstance().getDefaultConfig();
+      setConfig(defaultConfig);
+      setSelectedObraId('');
+      toast.success('Configuração resetada para valores padrão!');
+    } catch (error) {
+      console.error('Erro ao resetar configuração:', error);
+      toast.error('Erro ao resetar configuração');
+    }
   };
+
+  const handleClose = () => {
+    setIsOpen(false);
+  };
+
+  // Fechar modal com ESC
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        handleClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEsc);
+      return () => document.removeEventListener('keydown', handleEsc);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -205,7 +242,7 @@ const PDFGlobalConfig: React.FC = () => {
               <p className="text-blue-100 mt-1">Personalize cabeçalhos, rodapés e design dos relatórios</p>
             </div>
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={handleClose}
               className="p-2 hover:bg-white/20 rounded-lg transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -352,9 +389,10 @@ const PDFGlobalConfig: React.FC = () => {
                     <select
                       value={selectedObraId}
                       onChange={(e) => handleObraSelect(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white hover:bg-green-50"
+                      disabled={loading}
+                      className="w-full px-4 py-3 border-2 border-green-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white hover:bg-green-50 disabled:opacity-50"
                     >
-                      <option value="">Selecione uma obra...</option>
+                      <option value="">{loading ? 'Carregando obras...' : 'Selecione uma obra...'}</option>
                       {obras.map(obra => (
                         <option key={obra.id} value={obra.id}>
                           {obra.codigo} - {obra.nome}

@@ -39,6 +39,7 @@ import ChecklistPage from './pages/ChecklistPage';
 // Componentes
 import ProtectedRoute from './components/ProtectedRoute';
 import PremiumLayout from './components/PremiumLayout';
+import PDFGlobalConfig from './components/PDFGlobalConfig';
 
 // Configuração inicial de segurança
 SecurityManager.configure({
@@ -274,34 +275,37 @@ function App() {
             <Route index element={<ChecklistPage />} />
           </Route>
         </Routes>
-            
-            {/* Toaster para notificações */}
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: '#363636',
-                  color: '#fff',
-                },
-                success: {
-                  duration: 3000,
-                  iconTheme: {
-                    primary: '#10B981',
-                    secondary: '#fff',
-                  },
-                },
-                error: {
-                  duration: 5000,
-                  iconTheme: {
-                    primary: '#EF4444',
-                    secondary: '#fff',
-                  },
-                },
-              }}
-            />
-       </div>
-     </QueryClientProvider>
+        
+        {/* Toaster para notificações */}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#10b981',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              duration: 5000,
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
+
+        {/* Modal Global de Configuração de PDFs */}
+        <PDFGlobalConfig />
+      </div>
+    </QueryClientProvider>
   );
 }
 
