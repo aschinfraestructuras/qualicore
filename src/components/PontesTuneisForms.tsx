@@ -223,9 +223,10 @@ export function PontesTuneisForms({ isOpen, onClose, data, onSubmit }: PontesTun
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
         >
           <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
+            initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
+            exit={{ scale: 0.98, opacity: 0 }}
+            transition={{ duration: 0.15 }}
             className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
           >
             {/* Header */}

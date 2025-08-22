@@ -32,6 +32,9 @@ import { TrilhoForm, TravessaForm, InspecaoForm } from '../components/ViaFerreaF
 import { TrilhoDetails, TravessaDetails, InspecaoDetails } from '../components/ViaFerreaDetails';
 import { ViaFerreaFilters } from '../components/ViaFerreaFilters';
 import { Pagination } from '../components/Pagination';
+import ViaFerreaDashboardPremium from '../components/ViaFerreaDashboardPremium';
+import RelatorioViaFerreaPremium from '../components/RelatorioViaFerreaPremium';
+import { ViaFerreaNotificacoes } from '../components/ViaFerreaNotificacoes';
 import { 
   FilterState, 
   TravessaFilterState,
@@ -123,6 +126,7 @@ export default function ViaFerrea() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [modalType, setModalType] = useState<'trilho' | 'travessa' | 'inspecao'>('trilho');
   const [editData, setEditData] = useState<any>(null);
+  const [showRelatorioModal, setShowRelatorioModal] = useState(false);
   
   // Estados para dados reais
   const [trilhos, setTrilhos] = useState<Trilho[]>([]);
@@ -605,6 +609,21 @@ export default function ViaFerrea() {
           </div>
           
           <div className="flex items-center space-x-3">
+            <ViaFerreaNotificacoes 
+              trilhos={trilhosData}
+              travessas={travessasData}
+              inspecoes={inspecoesData}
+            />
+            
+            <button
+              onClick={() => setShowRelatorioModal(true)}
+              className="px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
+              title="Relatórios Premium"
+            >
+              <FileText className="h-5 w-5" />
+              <span>Relatórios</span>
+            </button>
+            
             <button
               onClick={() => handleAddNew('trilho')}
               className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
@@ -742,8 +761,29 @@ export default function ViaFerrea() {
         transition={{ delay: 0.3 }}
       >
         {activeTab === 'dashboard' && (
+          <ViaFerreaDashboardPremium
+            trilhos={trilhosData}
+            travessas={travessasData}
+            inspecoes={inspecoesData}
+            onSearch={(query, options) => {
+              // Implementar busca
+              console.log('Busca:', query, options);
+            }}
+            onFilterChange={(filters) => {
+              // Implementar filtros
+              console.log('Filtros:', filters);
+            }}
+            onCreateTrilho={() => handleAddNew('trilho')}
+            onCreateTravessa={() => handleAddNew('travessa')}
+            onCreateInspecao={() => handleAddNew('inspecao')}
+            onViewDetails={(item, type) => handleView(type, item)}
+            onRefresh={loadData}
+          />
+        )}
+
+        {activeTab === 'dashboard_classic' && (
           <div className="glass-card p-8 rounded-2xl">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Dashboard Via Férrea</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Dashboard Via Férrea (Clássico)</h2>
             
             {/* Resumo Executivo */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -1765,6 +1805,16 @@ export default function ViaFerrea() {
                />
              )}
            </>
+         )}
+
+         {/* Modal de Relatórios Premium */}
+         {showRelatorioModal && (
+           <RelatorioViaFerreaPremium
+             trilhos={trilhosData}
+             travessas={travessasData}
+             inspecoes={inspecoesData}
+             onClose={() => setShowRelatorioModal(false)}
+           />
          )}
        </motion.div>
      </div>

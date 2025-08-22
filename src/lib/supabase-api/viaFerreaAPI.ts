@@ -347,11 +347,7 @@ export const inspecoesAPI = {
   async getAll(): Promise<Inspecao[]> {
     const { data, error } = await supabase
       .from('inspecoes')
-      .select(`
-        *,
-        trilhos(codigo),
-        travessas(codigo)
-      `)
+      .select('*')
       .order('data_inspecao', { ascending: false });
 
     if (error) {
@@ -366,11 +362,7 @@ export const inspecoesAPI = {
   async getById(id: string): Promise<Inspecao | null> {
     const { data, error } = await supabase
       .from('inspecoes')
-      .select(`
-        *,
-        trilhos(codigo),
-        travessas(codigo)
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 

@@ -2,14 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   TrendingUp, Activity, Building, MapPin, Calendar, AlertTriangle, CheckCircle, Clock,
-  Plus, Search, Filter, Download, Eye, Edit, Trash, Mountain, Gauge, Shield, FileText
+  Plus, Search, Filter, Download, Eye, Edit, Trash, Mountain, Gauge, Shield, FileText,
+  BarChart3, Bell, RefreshCw
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { pontesTuneisAPI } from '../lib/supabase-api/pontesTuneisAPI';
 import { PontesTuneisFilters } from '../components/PontesTuneisFilters';
 import { PontesTuneisForms } from '../components/PontesTuneisForms';
+import { InspecaoPontesTuneisForm } from '../components/InspecaoPontesTuneisForm';
 import { PontesTuneisDetails } from '../components/PontesTuneisDetails';
 import RelatorioPontesTuneisPremium from '../components/RelatorioPontesTuneisPremium';
+import PontesTuneisDashboardPremium from '../components/PontesTuneisDashboardPremium';
+import PontesTuneisNotificacoes from '../components/PontesTuneisNotificacoes';
 import Modal from '../components/Modal';
 import { applyFilters, getDefaultFilters, getActiveFiltersCount } from '../utils/filterUtils';
 import { exportToExcel, exportToCSV, exportToPDF } from '../utils/exportUtils';
@@ -58,7 +62,10 @@ export default function PontesTuneis() {
   const [inspecoes, setInspecoes] = useState<InspecaoPontesTuneis[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'list'>('dashboard');
   const [showForm, setShowForm] = useState(false);
+  const [showInspecaoForm, setShowInspecaoForm] = useState(false);
+  const [formType, setFormType] = useState<'ponte_tunel' | 'inspecao'>('ponte_tunel');
   const [showDetails, setShowDetails] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [filters, setFilters] = useState(getDefaultFilters());
@@ -96,23 +103,38 @@ export default function PontesTuneis() {
 
   const handleCreate = async (data: any) => {
     try {
-      await pontesTuneisAPI.pontesTuneis.create(data);
+      const newItem = await pontesTuneisAPI.pontesTuneis.create(data);
       toast.success('Ponte/Túnel criado com sucesso!');
       setShowForm(false);
-      loadData();
+      // Otimização: adicionar o novo item diretamente ao estado em vez de recarregar tudo
+      setPontesTuneis(prev => [...prev, newItem]);
     } catch (error) {
       console.error('Erro ao criar:', error);
       toast.error('Erro ao criar ponte/túnel');
     }
   };
 
+  const handleCreateInspecao = async (data: any) => {
+    try {
+      const newInspecao = await pontesTuneisAPI.inspecoes.create(data);
+      toast.success('Inspeção criada com sucesso!');
+      setShowInspecaoForm(false);
+      // Otimização: adicionar a nova inspeção diretamente ao estado
+      setInspecoes(prev => [...prev, newInspecao]);
+    } catch (error) {
+      console.error('Erro ao criar inspeção:', error);
+      toast.error('Erro ao criar inspeção');
+    }
+  };
+
   const handleUpdate = async (id: string, data: any) => {
     try {
-      await pontesTuneisAPI.pontesTuneis.update(id, data);
+      const updatedItem = await pontesTuneisAPI.pontesTuneis.update(id, data);
       toast.success('Ponte/Túnel atualizado com sucesso!');
       setShowForm(false);
       setShowDetails(false);
-      loadData();
+      // Otimização: atualizar o item diretamente no estado
+      setPontesTuneis(prev => prev.map(item => item.id === id ? updatedItem : item));
     } catch (error) {
       console.error('Erro ao atualizar:', error);
       toast.error('Erro ao atualizar ponte/túnel');
@@ -257,8 +279,9 @@ export default function PontesTuneis() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
       {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
         className="mb-8"
       >
         <div className="flex items-center justify-between">
@@ -272,6 +295,14 @@ export default function PontesTuneis() {
             </div>
           </div>
           <div className="flex items-center space-x-3">
+            <PontesTuneisNotificacoes 
+              onNotificationClick={(notificacao) => {
+                if (notificacao.url_acao) {
+                  // Navegar para a URL da ação
+                  console.log('Navegando para:', notificacao.url_acao);
+                }
+              }}
+            />
             <button
               onClick={() => {
                 setTipoRelatorio('pontesTuneis');
@@ -289,21 +320,45 @@ export default function PontesTuneis() {
               <Download className="h-4 w-4" />
               <span>Exportar</span>
             </button>
-            <button
-              onClick={() => setShowForm(true)}
-              className="px-6 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Nova Ponte/Túnel</span>
-            </button>
           </div>
+        </div>
+
+        {/* Navigation Tabs */}
+        <div className="flex space-x-1 mt-6 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`px-6 py-3 text-sm font-medium transition-colors relative ${
+              activeTab === 'dashboard'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <BarChart3 size={16} />
+              Dashboard Premium
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('list')}
+            className={`px-6 py-3 text-sm font-medium transition-colors relative ${
+              activeTab === 'list'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Building size={16} />
+              Lista de Estruturas
+            </div>
+          </button>
         </div>
       </motion.div>
 
       {/* Dashboard Stats */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, delay: 0.1 }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
       >
         <div className="glass-card p-6 rounded-xl">
@@ -355,17 +410,74 @@ export default function PontesTuneis() {
         </div>
       </motion.div>
 
-      {/* Filters */}
-      <PontesTuneisFilters
-        filters={filters}
-        onFiltersChange={setFilters}
-        activeFiltersCount={getActiveFiltersCount(filters)}
-      />
+      {/* Content based on active tab */}
+      {activeTab === 'dashboard' ? (
+        <PontesTuneisDashboardPremium
+          pontesTuneis={pontesTuneis}
+          travessas={[]} // Para compatibilidade com a interface
+          inspecoes={inspecoes}
+          onSearch={(query, options) => {
+            setFilters(prev => ({ ...prev, search: query }));
+            setActiveTab('list');
+          }}
+          onFilterChange={(newFilters) => {
+            setFilters(prev => ({ ...prev, ...newFilters }));
+            setActiveTab('list');
+          }}
+          onCreatePonteTunel={() => {
+            setFormType('ponte_tunel');
+            setShowForm(true);
+          }}
+          onCreateInspecao={() => {
+            setShowInspecaoForm(true);
+          }}
+          onViewDetails={(item, type) => {
+            setSelectedItem(item);
+            setShowDetails(true);
+          }}
+          onRefresh={loadData}
+        />
+      ) : (
+        <>
+          {/* Filters */}
+          <PontesTuneisFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            activeFiltersCount={getActiveFiltersCount(filters)}
+          />
+          
+          {/* Back to dashboard button and actions */}
+          <div className="mb-4 flex items-center justify-between">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              <BarChart3 size={16} />
+              Voltar ao Dashboard
+            </button>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setShowForm(true)}
+                className="px-6 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Nova Ponte/Túnel</span>
+              </button>
+              <button
+                onClick={() => setShowInspecaoForm(true)}
+                className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 flex items-center space-x-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Nova Inspeção</span>
+              </button>
+            </div>
+          </div>
 
       {/* Table */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, delay: 0.2 }}
         className="glass-card rounded-xl overflow-hidden"
       >
         <div className="overflow-x-auto">
@@ -516,6 +628,20 @@ export default function PontesTuneis() {
         />
       )}
 
+      {/* Inspeção Form */}
+      {showInspecaoForm && (
+        <InspecaoPontesTuneisForm
+          isOpen={showInspecaoForm}
+          onClose={() => {
+            setShowInspecaoForm(false);
+            setSelectedItem(null);
+          }}
+          data={selectedItem}
+          onSubmit={handleCreateInspecao}
+          pontesTuneis={pontesTuneis}
+        />
+      )}
+
       {/* Details */}
       {showDetails && selectedItem && (
         <PontesTuneisDetails
@@ -532,6 +658,9 @@ export default function PontesTuneis() {
           }}
           onDelete={() => handleDelete(selectedItem.id)}
         />
+      )}
+
+        </>
       )}
 
       {/* Modal de Relatórios */}

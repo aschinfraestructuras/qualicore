@@ -3,10 +3,11 @@ import { motion } from 'framer-motion';
 import {
   FileText, BarChart3, Filter, Download, CheckSquare, Square, 
   Building, Mountain, Calendar, MapPin, AlertTriangle, CheckCircle, Clock,
-  TrendingUp, Activity, Shield, Gauge
+  TrendingUp, Activity, Shield, Gauge, Target, Star, Zap, Database
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { PDFService } from '../services/pdfService';
+import { pontesTuneisAnalyticsService } from '../lib/pontes-tuneis-analytics';
 import {
   PonteTunel,
   InspecaoPontesTuneis,
@@ -35,7 +36,7 @@ export default function RelatorioPontesTuneisPremium({
   const [pontesTuneisSelecionadas, setPontesTuneisSelecionadas] = useState<string[]>([]);
   const [inspecoesSelecionadas, setInspecoesSelecionadas] = useState<string[]>([]);
   const [selecaoAtiva, setSelecaoAtiva] = useState(false);
-  const [tipoRelatorioSelecionado, setTipoRelatorioSelecionado] = useState<'executivo' | 'filtrado' | 'comparativo' | 'individual'>('executivo');
+  const [tipoRelatorioSelecionado, setTipoRelatorioSelecionado] = useState<'executivo' | 'filtrado' | 'comparativo' | 'individual' | 'analytics' | 'estrutural' | 'seguranca' | 'predictivo'>('executivo');
   const [filtros, setFiltros] = useState({
     search: '',
     tipo: '',
@@ -208,7 +209,14 @@ export default function RelatorioPontesTuneisPremium({
 
   const handleGerarRelatorio = async () => {
     try {
+      toast.loading('Gerando relatório premium...');
       const pdfService = new PDFService();
+      
+      // Buscar analytics se for relatório avançado
+      let analyticsData = null;
+      if (['analytics', 'estrutural', 'seguranca', 'predictivo'].includes(tipoRelatorioSelecionado)) {
+        analyticsData = await pontesTuneisAnalyticsService.getCompleteAnalytics('30d');
+      }
       
       if (tipoRelatorio === 'pontesTuneis') {
         const pontesTuneisParaRelatorio = getPontesTuneisParaRelatorio();
@@ -219,9 +227,11 @@ export default function RelatorioPontesTuneisPremium({
           filtros: filtros,
           titulo: `Relatório de Pontes e Túneis - ${tipoRelatorioSelecionado.toUpperCase()}`,
           incluirEstatisticas: true,
-          incluirGraficos: true
+          incluirGraficos: true,
+          analytics: analyticsData
         });
-        toast.success('Relatório de Pontes e Túneis gerado com sucesso!');
+        toast.dismiss();
+        toast.success('Relatório premium de Pontes e Túneis gerado com sucesso!');
       } else {
         const inspecoesParaRelatorio = getInspecoesParaRelatorio();
         
@@ -231,13 +241,16 @@ export default function RelatorioPontesTuneisPremium({
           filtros: filtros,
           titulo: `Relatório de Inspeções de Pontes e Túneis - ${tipoRelatorioSelecionado.toUpperCase()}`,
           incluirEstatisticas: true,
-          incluirGraficos: true
+          incluirGraficos: true,
+          analytics: analyticsData
         });
-        toast.success('Relatório de Inspeções gerado com sucesso!');
+        toast.dismiss();
+        toast.success('Relatório premium de Inspeções gerado com sucesso!');
       }
     } catch (error) {
+      toast.dismiss();
       console.error('Erro ao gerar relatório:', error);
-      toast.error('Erro ao gerar relatório');
+      toast.error('Erro ao gerar relatório premium');
     }
   };
 
@@ -378,10 +391,18 @@ export default function RelatorioPontesTuneisPremium({
               onChange={(e) => setTipoRelatorioSelecionado(e.target.value as any)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="executivo">Executivo</option>
-              <option value="filtrado">Filtrado</option>
-              <option value="comparativo">Comparativo</option>
-              <option value="individual">Individual</option>
+              <optgroup label="Relatórios Básicos">
+                <option value="executivo">📊 Executivo</option>
+                <option value="filtrado">🔍 Filtrado</option>
+                <option value="comparativo">📈 Comparativo</option>
+                <option value="individual">📄 Individual</option>
+              </optgroup>
+              <optgroup label="Relatórios Premium com Analytics">
+                <option value="analytics">📊 Analytics Completos</option>
+                <option value="estrutural">🏗️ Análise Estrutural</option>
+                <option value="seguranca">🛡️ Análise de Segurança</option>
+                <option value="predictivo">🔮 Análise Preditiva</option>
+              </optgroup>
             </select>
           </div>
           
